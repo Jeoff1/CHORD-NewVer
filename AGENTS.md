@@ -40,7 +40,10 @@ note for that area.
 - **Module notes:** `03-Modules/<Module>.md` (from `Templates/Module.md`).
 - **Development plan:** `04-Development/Development-Plan.md` sets the build
   order. Work on the current phase, follow its slice steps and definition of
-  done, and tick a task only once its checks pass.
+  done, and tick a task only once its checks pass. When a phase finishes,
+  set its **Status** in the plan's phase table, then end the report to the
+  user with two lists taken from that table: **Phases done** and **Phases
+  left**.
 
 Every development task ends with the vault matching the code:
 

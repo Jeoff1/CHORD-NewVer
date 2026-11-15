@@ -32,20 +32,23 @@ flowchart LR
   P9 -.-> P10[10 Music features, later]
 ```
 
-| Phase | Name                     | Size | Depends on |
-| ----- | ------------------------ | ---- | ---------- |
-| 0     | Engineering baseline     | S    | none       |
-| 1     | Church Setup and Access  | L    | 0          |
-| 2     | Members                  | M    | 1          |
-| 3     | Ministries and Events    | M    | 2          |
-| 4     | Giving                   | M    | 2          |
-| 5     | Records                  | M    | 2          |
-| 6     | Services                 | L    | 3, 4, 5    |
-| 7     | Worship Management       | M    | 3          |
-| 8     | Self-service and Reports | M    | 6, 7       |
-| 9     | Hardening and Release    | M    | 8          |
+| Phase | Name                     | Size | Depends on | Status              |
+| ----- | ------------------------ | ---- | ---------- | ------------------- |
+| 0     | Engineering baseline     | S    | none       | Done (2026-11-15)   |
+| 1     | Church Setup and Access  | L    | 0          | Next                |
+| 2     | Members                  | M    | 1          | Not started         |
+| 3     | Ministries and Events    | M    | 2          | Not started         |
+| 4     | Giving                   | M    | 2          | Not started         |
+| 5     | Records                  | M    | 2          | Not started         |
+| 6     | Services                 | L    | 3, 4, 5    | Not started         |
+| 7     | Worship Management       | M    | 3          | Not started         |
+| 8     | Self-service and Reports | M    | 6, 7       | Not started         |
+| 9     | Hardening and Release    | M    | 8          | Not started         |
+| 10    | Music features           | –    | 9          | Later (out of scope) |
 
-Sizes are relative (S < M < L). Phases 3, 4 and 5 don't depend on each
+This **Status** column is the record of phase progress. Statuses: Done
+(with date), In progress, Next, Not started. Sizes are relative
+(S < M < L). Phases 3, 4 and 5 don't depend on each
 other and can go in any order.
 
 > [!note] If the adviser wants to see Services early
