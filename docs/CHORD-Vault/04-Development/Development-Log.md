@@ -2,6 +2,30 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-15: Phase 0, engineering baseline
+
+- Made the first Git commit (the foundation) and did Phase 0 on the
+  branch `phase-0-baseline`.
+- Added `apps/core`:
+  - shared abstract models (`TimeStampedModel`, `PublicIdModel`);
+  - a project form renderer that gives every form Bootstrap markup;
+  - shared test-data builders;
+  - the home page.
+- Added the base template, with Bootstrap 5.3.3 and HTMX 2.0.4 stored in
+  `static/vendor/` ([[0002-server-rendered-ui]]).
+- Added sign in and sign out ([[Accounts]]).
+- Added `scripts/check.ps1` and coverage.py.
+- Added the denomination-free guard test.
+- Documented the conventions in [[Code-Conventions]].
+- Verified:
+  - `scripts/check.ps1` passed: Ruff clean, `manage.py check` clean, no
+    missing migrations, 13 tests passed, 100% coverage.
+  - The guard test failed as expected on a temporary file containing a
+    banned word; the file was then removed.
+  - On the development server: an anonymous visitor to `/` is redirected
+    to sign in, the sign-in page shows the Bootstrap form, and the vendor
+    files are served (HTTP 200).
+
 ## 2026-11-15: Development plan
 
 - Wrote the [[Development-Plan]]: ten phases for the management side, from

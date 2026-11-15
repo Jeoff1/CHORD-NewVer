@@ -63,4 +63,5 @@ Secrets stay out of the vault.
   model.
 - Secrets and real passwords go only in `.env`, never in code, Git, logs or
   docs.
-- Run `ruff check .` and `python manage.py check` before calling work done.
+- Run `.\scripts\check.ps1` (lint, format, Django checks, migrations,
+  tests with coverage) before calling work done; it must pass.

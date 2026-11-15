@@ -7,11 +7,13 @@ with each development task.
 
 ## Current status
 
-**Foundation set up (2026-11-15).** Django 5.2 project on PostgreSQL 17, a
-custom user model, and the [[0001-configure-behavior-not-identity|core design
-rule]] recorded. No church modules built yet.
+**Phase 0 done (2026-11-15).** The project has a Django 5.2 setup on
+PostgreSQL 17, a custom user model, sign in and sign out, a base page using
+Bootstrap and HTMX, one script that runs every check, and a test that
+enforces the [[0001-configure-behavior-not-identity|core design rule]]. No
+church modules are built yet.
 
-**Next:** Phase 0 (Engineering baseline) of the [[Development-Plan]].
+**Next:** Phase 1 (Church Setup and Access) of the [[Development-Plan]].
 
 ## Project
 
@@ -22,8 +24,10 @@ rule]] recorded. No church modules built yet.
 ## Architecture
 
 - [[Environment-Setup]]: running the project and its database
+- [[Code-Conventions]]: code layout, forms, UI and tests
 - Decisions (ADRs):
   - [[0001-configure-behavior-not-identity|0001 Configure behavior, not identity]]
+  - [[0002-server-rendered-ui|0002 Server-rendered UI with Bootstrap and HTMX]]
 
 ## Modules
 

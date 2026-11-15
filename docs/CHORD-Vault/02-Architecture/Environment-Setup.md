@@ -20,15 +20,23 @@ python manage.py createsuperuser   # first time only
 python manage.py runserver
 ```
 
+Then open <http://127.0.0.1:8000/> and sign in.
+
 ## Checks before calling work done
 
 ```powershell
-ruff check .
-ruff format --check .
-python manage.py check
-python manage.py makemigrations --check --dry-run
-python manage.py test
+.\scripts\check.ps1
 ```
+
+It runs, in order and stopping at the first failure:
+1. Ruff lint and format check.
+2. `manage.py check`.
+3. A check for missing migrations.
+4. The tests, under coverage.
+5. The coverage report.
+
+The tests create and remove a temporary database, `test_chord_newver_db`,
+which `chord_user` is allowed to create.
 
 ## Setting up on a new machine
 

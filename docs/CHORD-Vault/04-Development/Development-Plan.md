@@ -97,35 +97,28 @@ From [[0001-configure-behavior-not-identity]]:
 - [ ] The vault is updated: module note, [[00-Home]] status, and a
   [[Development-Log]] entry.
 
-## Conventions (decided in Phase 0 and 1)
+## Conventions
 
-| Topic           | Convention                                                                                               |
-| --------------- | -------------------------------------------------------------------------------------------------------- |
-| App layout      | One Django app per Module in `apps/`; shared code in `apps/core`.                                        |
-| Shared models   | `TimeStampedModel` (created/updated) and `PublicIdModel` (UUID used in URLs, so IDs can't be guessed).   |
-| Business rules  | `services.py` functions; Service Request steps in `apps/services/workflow.py`.                           |
-| UI              | Server-rendered Django templates, Bootstrap 5 and HTMX, stored in `static/vendor/` (no Node build step). |
-| Lists           | Paginated, searchable, filterable through one shared list mixin.                                         |
-| Deleting        | Members, giving, records and requests are archived or reversed, never hard-deleted.                      |
-| Money           | `DecimalField`; currency set in the Church Profile (default PHP).                                        |
-| Files           | Uploads go to private media and are served only through permission-checked views.                        |
-| Tests           | Django test runner; `apps/<module>/tests/`; shared test-data builders in `apps/core/testing.py`.         |
+See [[Code-Conventions]]. Update that note whenever a phase settles a
+convention.
 
 ## Phase 0: Engineering baseline
 
+**Status: done (2026-11-15).**
+
 Goal: a safe, repeatable project setup before any features are built.
 
-- [ ] Initialise Git, confirm that `.env` is ignored, and make the first
+- [x] Initialise Git, confirm that `.env` is ignored, and make the first
   commit.
-- [ ] Create `apps/core` with `TimeStampedModel`, `PublicIdModel` and
+- [x] Create `apps/core` with `TimeStampedModel`, `PublicIdModel` and
   test-data builders.
-- [ ] Add the base template: page layout, navigation area, messages and
+- [x] Add the base template: page layout, navigation area, messages and
   form styling. Bootstrap 5 and HTMX are stored in `static/vendor/`.
   Record the UI choice as decision 0002.
-- [ ] Add `scripts/check.ps1`, which runs every check in
+- [x] Add `scripts/check.ps1`, which runs every check in
   [[Environment-Setup]].
-- [ ] Add `coverage` to `requirements.txt`.
-- [ ] Add the **denomination-free guard test**, which fails if
+- [x] Add `coverage` to `requirements.txt`.
+- [x] Add the **denomination-free guard test**, which fails if
   "denomination", "tradition" or "religion" appears in models, forms,
   templates, fixtures or seed data.
 
@@ -404,7 +397,6 @@ sheet viewer. The management phases already prepare for them:
 
 | Phase | Decision                                                                                   | Current leaning                                                                                                                                                     |
 | ----- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0     | UI stack                                                                                   | Bootstrap 5 and HTMX, no Node build                                                                                                                                 |
 | 1     | Fixed or editable roles                                                                    | Editable, with seeded defaults                                                                                                                                      |
 | 4/6   | Where service fees are recorded ([[Services]] open question)                               | Service fees are kept in Services, not Giving, because a fee is not a gift. When Giving is on, a fee can be tagged to a Fund so it appears in the church's finance reports. |
 | 5/6   | What a record issued by a Service Request contains ([[Services]] open question)            | Its Record Type's fields, pre-filled from the request                                                                                                               |
