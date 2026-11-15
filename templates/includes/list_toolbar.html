@@ -1,0 +1,10 @@
+{# Search box for FilteredListView pages; keeps the page's other filters. #}
+<form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
+  <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 20rem"
+         placeholder="{{ placeholder|default:'Search' }}" aria-label="Search">
+  {% for name, value in request.GET.items %}
+    {% if name != "q" and name != "page" %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
+  {% endfor %}
+  <button type="submit" class="btn btn-outline-secondary">Search</button>
+  {% if q %}<a href="{% querystring q=None page=None %}" class="btn btn-link">Clear</a>{% endif %}
+</form>

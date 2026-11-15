@@ -27,6 +27,17 @@ class FormRenderingTests(SimpleTestCase):
         self.assertIn('class="form-control is-invalid"', html)
         self.assertIn('class="invalid-feedback d-block"', html)
 
+    def test_checkbox_list_options_are_styled_individually(self):
+        class PickForm(forms.Form):
+            days = forms.MultipleChoiceField(
+                choices=[("sat", "Saturday"), ("sun", "Sunday")],
+                widget=forms.CheckboxSelectMultiple,
+            )
+
+        html = str(PickForm())
+        self.assertEqual(html.count('class="form-check-input"'), 2)
+        self.assertIn('<label class="form-check-label" for="id_days_1">Sunday', html)
+
     def test_existing_widget_class_is_kept(self):
         class WideForm(forms.Form):
             note = forms.CharField(widget=forms.TextInput(attrs={"class": "w-50"}))

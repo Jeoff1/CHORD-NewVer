@@ -38,6 +38,9 @@ note for that area.
   reverse, would surprise a later reader, and was a real trade-off. Flag any
   change that contradicts an existing decision instead of overriding it.
 - **Module notes:** `03-Modules/<Module>.md` (from `Templates/Module.md`).
+- **Code conventions:** `02-Architecture/Code-Conventions.md` lists the
+  shared pieces every Module reuses (module gating, Labels, audit trail,
+  list and form views, test builders); read it before writing code.
 - **Development plan:** `04-Development/Development-Plan.md` sets the build
   order. Work on the current phase, follow its slice steps and definition of
   done, and tick a task only once its checks pass. When a phase finishes,

@@ -7,13 +7,13 @@ with each development task.
 
 ## Current status
 
-**Phase 0 done (2026-11-15).** The project has a Django 5.2 setup on
-PostgreSQL 17, a custom user model, sign in and sign out, a base page using
-Bootstrap and HTMX, one script that runs every check, and a test that
-enforces the [[0001-configure-behavior-not-identity|core design rule]]. No
-church modules are built yet.
+**Phase 1 done (2026-11-16).** A church can set itself up through the
+setup wizard (details, Labels, Modules) without stating a denomination,
+switch Modules on and off, and use its own wording. Users, editable Roles,
+the permission matrix, password reset and the audit trail work. No church
+Modules (Members, Giving and the others) are built yet.
 
-**Next:** Phase 1 (Church Setup and Access) of the [[Development-Plan]].
+**Next:** Phase 2 (Members) of the [[Development-Plan]].
 
 ## Project
 
@@ -28,6 +28,7 @@ church modules are built yet.
 - Decisions (ADRs):
   - [[0001-configure-behavior-not-identity|0001 Configure behavior, not identity]]
   - [[0002-server-rendered-ui|0002 Server-rendered UI with Bootstrap and HTMX]]
+  - [[0003-editable-roles|0003 Editable roles on Django groups, with a fixed Administrator]]
 
 ## Modules
 
@@ -36,7 +37,8 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 
 | Module     | Status      | Note           |
 | ---------- | ----------- | -------------- |
-| Accounts   | Started     | [[Accounts]]   |
+| Church Setup (core) | Built  | [[Church-Setup]] |
+| Accounts (core)     | Built  | [[Accounts]]   |
 | Services   | Designed    | [[Services]]   |
 | Members    | Not started |                |
 | Giving     | Not started |                |

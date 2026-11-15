@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% endblock %} · CHORD</title>
+  <title>{% block title %}{% endblock %} · {{ church.name|default:"CHORD" }}</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
   <script src="{% static 'vendor/bootstrap-5.3.3/bootstrap.bundle.min.js' %}" defer></script>
   <script src="{% static 'vendor/htmx-2.0.4/htmx.min.js' %}" defer></script>
@@ -11,7 +11,10 @@
 <body class="bg-body-tertiary" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <nav class="navbar navbar-expand-lg bg-body border-bottom">
     <div class="container">
-      <a class="navbar-brand fw-semibold" href="{% url 'core:home' %}">CHORD</a>
+      <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{% url 'home' %}">
+        {% if church.logo %}<img src="{{ church.logo.url }}" alt="" height="32" class="rounded">{% endif %}
+        {{ church.name|default:"CHORD" }}
+      </a>
       {% if user.is_authenticated %}
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#main-nav" aria-controls="main-nav"
@@ -19,14 +22,42 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="main-nav">
-          <ul class="navbar-nav me-auto">{% block nav %}{% endblock %}</ul>
-          <div class="d-flex align-items-center gap-3">
-            <span class="navbar-text">{{ user.get_full_name|default:user.get_username }}</span>
-            <form method="post" action="{% url 'accounts:logout' %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-outline-secondary btn-sm">Sign out</button>
-            </form>
-          </div>
+          <ul class="navbar-nav me-auto">
+            {% for entry in module_entries %}
+              {% if entry.url %}
+                <li class="nav-item"><a class="nav-link" href="{{ entry.url }}">{{ entry.name }}</a></li>
+              {% endif %}
+            {% endfor %}
+          </ul>
+          <ul class="navbar-nav">
+            {% if perms.church.change_churchprofile or perms.accounts.view_user or perms.accounts.view_role or perms.audit.view_auditevent %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administration</a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  {% if perms.church.change_churchprofile %}<li><a class="dropdown-item" href="{% url 'church:settings' section='details' %}">Church settings</a></li>{% endif %}
+                  {% if perms.accounts.view_user %}<li><a class="dropdown-item" href="{% url 'accounts:user_list' %}">Users</a></li>{% endif %}
+                  {% if perms.accounts.view_role %}<li><a class="dropdown-item" href="{% url 'accounts:role_list' %}">Roles and permissions</a></li>{% endif %}
+                  {% if perms.audit.view_auditevent %}<li><a class="dropdown-item" href="{% url 'audit:log' %}">Audit log</a></li>{% endif %}
+                </ul>
+              </li>
+            {% endif %}
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {{ user.get_full_name|default:user.get_username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My profile</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Change password</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'accounts:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item">Sign out</button>
+                  </form>
+                </li>
+              </ul>
+            </li>
+          </ul>
         </div>
       {% endif %}
     </div>

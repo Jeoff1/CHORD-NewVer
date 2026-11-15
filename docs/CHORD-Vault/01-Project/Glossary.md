@@ -23,6 +23,17 @@ The church's own word for a common concept, such as "Priest", "Pastor" or
 "Minister" for the person who officiates.
 _Avoid_: terminology preset
 
+**Role**:
+A named set of permissions the church gives to users, such as Finance or
+Records Keeper. The church edits roles; the Administrator role always has
+full access.
+_Avoid_: user type, position
+
+**Audit Trail**:
+The permanent record of who changed what, and when. Entries are never
+edited or removed.
+_Avoid_: history, log (alone)
+
 **Starter Catalog**:
 Neutral sample Service Types the church may copy and then edit.
 _Avoid_: preset, template, tradition

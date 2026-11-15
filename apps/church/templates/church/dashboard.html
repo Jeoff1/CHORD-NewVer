@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-1">{{ church.name }}</h1>
+  <p class="text-body-secondary mb-4">Welcome, {{ user.get_short_name|default:user.get_username }}.</p>
+
+  {% if not church.setup_completed %}
+    <div class="alert alert-warning">
+      Church setup isn't finished yet. An administrator can finish it from the setup wizard.
+    </div>
+  {% endif %}
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
+    {% for entry in module_entries %}
+      <div class="col">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h2 class="h5 card-title d-flex justify-content-between align-items-start gap-2">
+              {% if entry.url %}<a href="{{ entry.url }}" class="stretched-link text-decoration-none">{{ entry.name }}</a>{% else %}{{ entry.name }}{% endif %}
+              {% if not entry.url %}<span class="badge text-bg-secondary fw-normal">Coming soon</span>{% endif %}
+            </h2>
+            <p class="card-text text-body-secondary">{{ entry.description }}</p>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col">
+        <p class="text-body-secondary">No modules are switched on.</p>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

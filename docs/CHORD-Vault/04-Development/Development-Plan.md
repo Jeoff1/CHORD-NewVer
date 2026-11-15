@@ -35,8 +35,8 @@ flowchart LR
 | Phase | Name                     | Size | Depends on | Status              |
 | ----- | ------------------------ | ---- | ---------- | ------------------- |
 | 0     | Engineering baseline     | S    | none       | Done (2026-11-15)   |
-| 1     | Church Setup and Access  | L    | 0          | Next                |
-| 2     | Members                  | M    | 1          | Not started         |
+| 1     | Church Setup and Access  | L    | 0          | Done (2026-11-16)   |
+| 2     | Members                  | M    | 1          | Next                |
 | 3     | Ministries and Events    | M    | 2          | Not started         |
 | 4     | Giving                   | M    | 2          | Not started         |
 | 5     | Records                  | M    | 2          | Not started         |
@@ -130,54 +130,56 @@ base page.
 
 ## Phase 1: Church Setup and Access
 
+**Status: done (2026-11-16).** See [[Church-Setup]] and [[Accounts]].
+
 Goal: the configuration layer that every later module relies on.
 
 **Church Profile** (exactly one per installation)
 
-- [ ] Name, address, contact details, logo, currency and time zone.
-- [ ] Settings screen for administrators.
+- [x] Name, address, contact details, logo, currency and time zone.
+- [x] Settings screen for administrators.
 
 **Modules**
 
-- [ ] A module registry in code: code, name, URL namespace and nav entry
+- [x] A module registry in code: code, name, URL namespace and nav entry
   for each Module.
-- [ ] On/off settings stored on the Church Profile.
-- [ ] A `ModuleRequiredMixin` (returns 404 when off) and a navigation
+- [x] On/off settings stored on the Church Profile.
+- [x] A `ModuleRequiredMixin` (returns 404 when off) and a navigation
   context processor that shows only the modules switched on.
-- [ ] Tests showing that switching a module off hides it and keeps its
+- [x] Tests showing that switching a module off hides it and keeps its
   data.
 
 **Labels**
 
-- [ ] Label keys with neutral defaults (officiant, service, offering,
+- [x] Label keys with neutral defaults (officiant, service, offering,
   member, ministry, worship service), which the church can rename.
-- [ ] A `{% label "officiant" %}` template tag and a Python helper.
+- [x] A `{% label "officiant" %}` template tag and a Python helper.
 
 **Accounts and Roles**
 
-- [ ] Sign in and out, change and reset password (console email backend in
+- [x] Sign in and out, change and reset password (console email backend in
   development), own profile.
-- [ ] Roles built on Django groups. Seed editable default roles:
+- [x] Roles built on Django groups. Seed editable default roles:
   Administrator, Office Staff, Finance, Records Keeper, Worship Leader,
   Ministry Leader.
-- [ ] A permission matrix screen for editing what each role may do.
-- [ ] User management: create, deactivate and assign roles.
+- [x] A permission matrix screen for editing what each role may do.
+- [x] User management: create, deactivate and assign roles.
 
 **Audit trail**
 
-- [ ] A shared `AuditEvent` (actor, object, action, changed fields, time)
+- [x] A shared `AuditEvent` (actor, object, action, changed fields, time)
   and a `record_change()` helper. Every module uses it, so none needs its
   own audit table.
-- [ ] An audit log screen for administrators.
+- [x] An audit log screen for administrators.
 
 **First-run setup wizard**
 
-- [ ] Steps: church details, then Labels, then Modules. It never asks for
+- [x] Steps: church details, then Labels, then Modules. It never asks for
   a denomination. The Services step (Starter Catalog) is added in Phase 6.
 
 **Dashboard shell**
 
-- [ ] A home page with one card per enabled module.
+- [x] A home page with one card per enabled module.
 
 **Done when** a new installation can be set up through the wizard, and
 tests cover module switching, Labels and role permissions.
@@ -400,7 +402,6 @@ sheet viewer. The management phases already prepare for them:
 
 | Phase | Decision                                                                                   | Current leaning                                                                                                                                                     |
 | ----- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Fixed or editable roles                                                                    | Editable, with seeded defaults                                                                                                                                      |
 | 4/6   | Where service fees are recorded ([[Services]] open question)                               | Service fees are kept in Services, not Giving, because a fee is not a gift. When Giving is on, a fee can be tagged to a Fund so it appears in the church's finance reports. |
 | 5/6   | What a record issued by a Service Request contains ([[Services]] open question)            | Its Record Type's fields, pre-filled from the request                                                                                                               |
 | 6     | Whether non-members can request services                                                   | Yes, by giving contact details; no account needed                                                                                                                   |

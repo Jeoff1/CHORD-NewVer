@@ -20,7 +20,16 @@ python manage.py createsuperuser   # first time only
 python manage.py runserver
 ```
 
-Then open <http://127.0.0.1:8000/> and sign in.
+Then open <http://127.0.0.1:8000/> and sign in. On a new database, the
+first administrator (the superuser) is taken to the setup wizard. Other
+administrators are users given the Administrator role under
+**Administration → Users**.
+
+## Email
+
+Without email settings, emails such as password reset links print in the
+`runserver` console. To send real email, set the `DJANGO_EMAIL_*` keys
+listed in `.env.example`.
 
 ## Checks before calling work done
 

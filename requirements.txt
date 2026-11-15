@@ -1,6 +1,7 @@
 asgiref==3.13.0
 coverage==7.17.3
 Django==5.2.19
+pillow==13.0.0
 psycopg==3.3.8
 psycopg-binary==3.3.8
 python-dotenv==1.2.4

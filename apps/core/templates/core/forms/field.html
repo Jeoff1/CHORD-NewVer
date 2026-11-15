@@ -2,6 +2,15 @@
   <div class="form-check">
     {{ field }}
     {% if field.label %}{{ field.label_tag }}{% endif %}
+{% elif field.widget_type == "checkboxselectmultiple" or field.widget_type == "radioselect" %}
+  <fieldset{% if field.aria_describedby %} aria-describedby="{{ field.aria_describedby }}"{% endif %}>
+    {% if field.label %}<legend class="form-label fs-6">{{ field.label }}</legend>{% endif %}
+    {% for option in field %}
+      <div class="form-check">
+        {{ option.tag }}
+        <label class="form-check-label" for="{{ option.id_for_label }}">{{ option.choice_label }}</label>
+      </div>
+    {% endfor %}
 {% elif field.use_fieldset %}
   <fieldset{% if field.aria_describedby %} aria-describedby="{{ field.aria_describedby }}"{% endif %}>
     {% if field.label %}<legend class="form-label fs-6">{{ field.label }}</legend>{% endif %}
