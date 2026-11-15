@@ -19,11 +19,29 @@ CORE_PERMISSION_APPS = ("church", "accounts", "audit")
 # "app_label.codename" permissions each default role receives once. Each
 # later phase adds the permissions for its Module here.
 DEFAULT_ROLE_PERMISSIONS = {
-    "office_staff": [],
-    "finance": [],
-    "records_keeper": [],
-    "worship_leader": [],
-    "ministry_leader": [],
+    "office_staff": [
+        # Members (Phase 2)
+        "members.view_member",
+        "members.add_member",
+        "members.change_member",
+        "members.view_private_details",
+        "members.import_member",
+        "members.export_member",
+        "members.view_household",
+        "members.add_household",
+        "members.change_household",
+        "members.view_membershipstatus",
+        "members.view_relationshiptype",
+        "members.view_memberfield",
+    ],
+    "finance": ["members.view_member"],
+    "records_keeper": [
+        "members.view_member",
+        "members.view_private_details",
+        "members.view_household",
+    ],
+    "worship_leader": ["members.view_member"],
+    "ministry_leader": ["members.view_member"],
 }
 
 

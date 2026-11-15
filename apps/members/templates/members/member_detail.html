@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}{% if member %}{{ member }}{% else %}My {% label "member" as word %}{{ word|lower }} record{% endif %}{% endblock %}
+
+{% block content %}
+  {% if not member %}
+    <div class="text-center py-5">
+      <h1 class="h4">Your account isn't linked to a {{ labels.member|lower }} record</h1>
+      <p class="text-body-secondary">Ask the church office to link your account to your record.</p>
+    </div>
+  {% else %}
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        {% if not own_record %}<a href="{% url 'members:list' %}" class="small text-decoration-none">← {% label "member" plural=True %}</a>{% endif %}
+        <h1 class="h3 mb-1">{{ member.full_name }}</h1>
+        <span class="badge text-bg-primary">{{ member.status }}</span>
+        {% if member.is_archived %}<span class="badge text-bg-secondary">Archived {{ member.archived_at|date:"M j, Y" }}</span>{% endif %}
+      </div>
+      {% if not own_record %}
+        <div class="d-flex gap-2">
+          {% if perms.members.change_member %}
+            <a href="{% url 'members:update' public_id=member.public_id %}" class="btn btn-primary">Edit</a>
+            <form method="post" action="{% url 'members:archive' public_id=member.public_id %}">
+              {% csrf_token %}
+              {% if member.is_archived %}
+                <input type="hidden" name="archive" value="0">
+                <button type="submit" class="btn btn-outline-secondary">Restore</button>
+              {% else %}
+                <input type="hidden" name="archive" value="1">
+                <button type="submit" class="btn btn-outline-danger"
+                        onclick="return confirm('Archive {{ member.full_name|escapejs }}? Their record is kept and can be restored.')">Archive</button>
+              {% endif %}
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-4 col-lg-3">
+        <div class="card shadow-sm">
+          {% if member.photo %}
+            <img src="{% if own_record %}{% url 'members:my_photo' %}{% else %}{% url 'members:photo' public_id=member.public_id %}{% endif %}"
+                 class="card-img-top" alt="Photo of {{ member.full_name }}">
+          {% else %}
+            <div class="card-body text-center text-body-secondary py-5">No photo</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-md-8 col-lg-9">
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-4">Sex</dt><dd class="col-sm-8">{{ member.get_sex_display|default:"—" }}</dd>
+              {% if private %}
+                <dt class="col-sm-4">Birth date</dt><dd class="col-sm-8">{{ member.birth_date|date:"M j, Y"|default:"—" }}</dd>
+                <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{ member.email|default:"—" }}</dd>
+                <dt class="col-sm-4">Phone</dt><dd class="col-sm-8">{{ member.phone|default:"—" }}</dd>
+                <dt class="col-sm-4">Address</dt><dd class="col-sm-8">{{ member.address|linebreaksbr|default:"—" }}</dd>
+              {% endif %}
+              <dt class="col-sm-4">Date joined</dt><dd class="col-sm-8">{{ member.joined_on|date:"M j, Y"|default:"—" }}</dd>
+              {% if not own_record %}
+                <dt class="col-sm-4">Linked account</dt><dd class="col-sm-8">{{ member.user.get_username|default:"—" }}</dd>
+                <dt class="col-sm-4">Notes</dt><dd class="col-sm-8">{{ member.notes|linebreaksbr|default:"—" }}</dd>
+              {% endif %}
+              {% for value in custom_values %}
+                <dt class="col-sm-4">{{ value.label }}</dt>
+                <dd class="col-sm-8">
+                  {% if value.is_file %}
+                    <a href="{% if own_record %}{% url 'members:my_file' key=value.definition.key %}{% else %}{% url 'members:file' public_id=member.public_id key=value.definition.key %}{% endif %}">{{ value.text }}</a>
+                  {% else %}{{ value.text|default:"—" }}{% endif %}
+                </dd>
+              {% endfor %}
+            </dl>
+          </div>
+        </div>
+
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <h2 class="h5">Household</h2>
+            {% if member.household %}
+              <p class="mb-2">
+                {% if not own_record and perms.members.view_household %}<a href="{% url 'members:household_detail' public_id=member.household.public_id %}">{{ member.household }}</a>{% else %}{{ member.household }}{% endif %}
+                {% if member.relationship %}<span class="text-body-secondary">({{ member.relationship }})</span>{% endif %}
+              </p>
+              {% if household_members %}
+                <ul class="mb-0">
+                  {% for other in household_members %}
+                    <li>
+                      {% if own_record %}{{ other.full_name }}{% else %}<a href="{% url 'members:detail' public_id=other.public_id %}">{{ other.full_name }}</a>{% endif %}
+                      {% if other.relationship %}<span class="text-body-secondary">({{ other.relationship }})</span>{% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            {% else %}
+              <p class="text-body-secondary mb-0">Not in a household.</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if history %}
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h2 class="h5">Recent changes</h2>
+              <ul class="list-unstyled small mb-0">
+                {% for event in history %}
+                  <li class="mb-1">
+                    <span class="text-body-secondary">{{ event.occurred_at|date:"M j, Y g:i A" }}</span> ·
+                    {{ event.get_action_display }} by {{ event.actor.get_username|default:"System" }}{% if event.changes %}:
+                    {% for field, values in event.changes.items %}{{ field }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

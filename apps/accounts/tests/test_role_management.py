@@ -10,6 +10,17 @@ from apps.core.testing import make_administrator, make_user
 MATRIX = reverse("accounts:permission_matrix")
 
 
+def current_ticks():
+    """The matrix form as the page submits it: every editable role's ticks."""
+    managed = {p.pk for p in managed_permissions()}
+    return {
+        f"role-{role.pk}": [
+            str(p.pk) for p in role.permissions.all() if p.pk in managed
+        ]
+        for role in Role.objects.exclude(key="administrator")
+    }
+
+
 class RoleCrudTests(TestCase):
     def setUp(self):
         self.client.force_login(make_administrator())
@@ -70,27 +81,28 @@ class PermissionMatrixTests(TestCase):
 
     def test_saves_role_permissions_and_audits(self):
         self.client.force_login(make_administrator())
-        response = self.client.post(
-            MATRIX, {f"role-{self.finance.pk}": [str(self.view_audit.pk)]}
-        )
+        before = set(self.finance.permissions.all())
+        ticks = current_ticks()
+        ticks[f"role-{self.finance.pk}"].append(str(self.view_audit.pk))
+        response = self.client.post(MATRIX, ticks)
         self.assertRedirects(response, MATRIX)
-        self.assertEqual(list(self.finance.permissions.all()), [self.view_audit])
-        event = AuditEvent.objects.get()
+        self.assertEqual(
+            set(self.finance.permissions.all()), before | {self.view_audit}
+        )
+        event = AuditEvent.objects.get()  # only the changed role is recorded
         self.assertEqual(event.object_repr, "Finance")
-        self.assertEqual(event.changes["Permissions"], ["", "Can view audit event"])
+        self.assertIn("Can view audit event", event.changes["Permissions"][1])
 
     def test_ignores_unmanaged_permissions_and_administrator_column(self):
         self.client.force_login(make_administrator())
         administrator = Role.objects.get(key="administrator")
         session_perm = Permission.objects.get(codename="view_session")
-        self.client.post(
-            MATRIX,
-            {
-                f"role-{self.finance.pk}": [str(session_perm.pk), "junk"],
-                # Unticking everything for the Administrator must not apply.
-            },
-        )
-        self.assertEqual(self.finance.permissions.count(), 0)
+        before = set(self.finance.permissions.all())
+        ticks = current_ticks()
+        ticks[f"role-{self.finance.pk}"] += [str(session_perm.pk), "junk"]
+        # No Administrator ticks are sent; its permissions must stay.
+        self.client.post(MATRIX, ticks)
+        self.assertEqual(set(self.finance.permissions.all()), before)
         self.assertEqual(
             administrator.permissions.count(), managed_permissions().count()
         )

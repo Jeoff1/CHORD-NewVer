@@ -47,3 +47,30 @@ def complete_setup(**profile_fields):
         setattr(profile, name, value)
     profile.save()
     return profile
+
+
+def make_member(**fields):
+    """Create a member with unique defaults and the default status."""
+    from apps.members.models import Member, MembershipStatus
+
+    n = next(_sequence)
+    fields.setdefault("first_name", f"Person{n}")
+    fields.setdefault("last_name", "Tester")
+    fields.setdefault("status", MembershipStatus.default())
+    return Member.objects.create(**fields)
+
+
+def close_file_response(response):
+    """Close a FileResponse in a test without closing the test database.
+
+    Closing a response sends ``request_finished``, which normally closes the
+    database connection; Django's test client avoids that the same way.
+    """
+    from django.core.signals import request_finished
+    from django.db import close_old_connections
+
+    request_finished.disconnect(close_old_connections)
+    try:
+        response.close()
+    finally:
+        request_finished.connect(close_old_connections)

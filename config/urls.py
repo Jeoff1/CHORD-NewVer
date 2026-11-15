@@ -10,6 +10,7 @@ urlpatterns = [
     path("accounts/", include("apps.accounts.urls")),
     path("audit/", include("apps.audit.urls")),
     path("church/", include("apps.church.urls")),
+    path("members/", include("apps.members.urls")),
     path("", DashboardView.as_view(), name="home"),
 ]
 

@@ -25,6 +25,13 @@ first administrator (the superuser) is taken to the setup wizard. Other
 administrators are users given the Administrator role under
 **Administration → Users**.
 
+## Uploaded files
+
+- `media/` holds public uploads (the church logo).
+- `protected_media/` holds private uploads (member photos and files).
+  Neither folder is in Git; both must be included in backups along with
+  the database.
+
 ## Email
 
 Without email settings, emails such as password reset links print in the

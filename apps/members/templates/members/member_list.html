@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}{% label "member" plural=True %}{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{% label "member" plural=True %}</h1>
+    <div class="d-flex flex-wrap gap-2">
+      {% if perms.members.view_household %}<a href="{% url 'members:household_list' %}" class="btn btn-outline-secondary">Households</a>{% endif %}
+      {% if can_settings %}<a href="{% url 'members:status_list' %}" class="btn btn-outline-secondary">Settings</a>{% endif %}
+      {% if perms.members.import_member %}<a href="{% url 'members:import' %}" class="btn btn-outline-secondary">Import</a>{% endif %}
+      {% if perms.members.export_member %}<a href="{% url 'members:export' %}{% querystring page=None %}" class="btn btn-outline-secondary">Export CSV</a>{% endif %}
+      {% if perms.members.add_member %}<a href="{% url 'members:create' %}" class="btn btn-primary">Add {{ labels.member|lower }}</a>{% endif %}
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+    <ul class="nav nav-pills">
+      {% for key, title in show_choices %}
+        <li class="nav-item"><a class="nav-link{% if show == key %} active{% endif %}" href="{% querystring show=key page=None %}">{{ title }}</a></li>
+      {% endfor %}
+    </ul>
+    <form method="get" class="d-flex gap-2 align-items-center">
+      {% for name, value in request.GET.items %}{% if name != "status" and name != "page" %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}{% endfor %}
+      <label for="status-filter" class="visually-hidden">Status</label>
+      <select id="status-filter" name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        {% for status in statuses %}<option value="{{ status.pk }}"{% if status.pk == status_filter %} selected{% endif %}>{{ status.name }}</option>{% endfor %}
+      </select>
+      <noscript><button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button></noscript>
+    </form>
+  </div>
+
+  {% if private %}
+    {% include "includes/list_toolbar.html" with placeholder="Search by name, email or phone" %}
+  {% else %}
+    {% include "includes/list_toolbar.html" with placeholder="Search by name" %}
+  {% endif %}
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Status</th>
+            <th scope="col">Household</th>
+            {% if private %}<th scope="col">Email</th><th scope="col">Phone</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for person in object_list %}
+            <tr>
+              <td>
+                <a href="{% url 'members:detail' public_id=person.public_id %}" class="fw-semibold text-decoration-none">{{ person.last_name }}, {{ person.first_name }}{% if person.middle_name %} {{ person.middle_name }}{% endif %}{% if person.suffix %} {{ person.suffix }}{% endif %}</a>
+                {% if person.is_archived %}<span class="badge text-bg-secondary ms-1">Archived</span>{% endif %}
+              </td>
+              <td>{{ person.status }}</td>
+              <td>{{ person.household|default:"—" }}{% if person.relationship %} <span class="text-body-secondary small">({{ person.relationship }})</span>{% endif %}</td>
+              {% if private %}<td>{{ person.email|default:"—" }}</td><td>{{ person.phone|default:"—" }}</td>{% endif %}
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-center text-body-secondary py-4">No one found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% include "includes/pagination.html" %}
+{% endblock %}

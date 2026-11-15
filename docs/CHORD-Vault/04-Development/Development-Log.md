@@ -2,6 +2,37 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-16: Phase 2, Members
+
+- [[Members]] (`apps/members`):
+  - Member, Membership Status (with "counts as active"), Household and
+    Household Roles, with neutral defaults seeded;
+  - list, detail, add, edit, archive and restore;
+  - the own-record page, private photos and files;
+  - CSV import (preview, problem report, duplicate check) and CSV export
+    using the same columns;
+  - the privacy rules applied to lists, search, forms, import and export;
+  - default role permissions.
+- Shared pieces in `apps/core`:
+  - church-edited lists (`ChoiceItem`, `SettingList`, `setting_list_urls`);
+  - Custom Fields (`CustomFieldDefinition`, `CustomFieldsFormMixin`;
+    [[0004-custom-field-values-as-json]]);
+  - private file storage (`PRIVATE_MEDIA_ROOT`, `private_file_response`,
+    `PrivateFileInput`).
+- The "Members" Module now opens from the navigation and dashboard. The
+  account menu shows "My member record" for linked accounts.
+- Fixed while testing:
+  - an import file with only blank headers was reported as "no rows"
+    instead of "empty";
+  - the household list wasn't reliably ordered;
+  - the permission matrix tests now submit every role's ticks, as the page
+    does.
+- Verified:
+  - `scripts/check.ps1` passed: Ruff clean, `manage.py check` clean, no
+    missing migrations, 150 tests passed, 97% coverage. The
+    guard test passed.
+  - Migrations applied to the development database.
+
 ## 2026-11-16: Phase 1, Church Setup and Access
 
 - [[Church-Setup]] (`apps/church`):

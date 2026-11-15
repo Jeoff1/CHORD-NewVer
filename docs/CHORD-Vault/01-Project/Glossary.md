@@ -34,6 +34,11 @@ The permanent record of who changed what, and when. Entries are never
 edited or removed.
 _Avoid_: history, log (alone)
 
+**Church-edited List**:
+A short list a church defines for itself, such as Membership Statuses or
+Household Roles. Entries are switched off rather than deleted.
+_Avoid_: lookup table, dropdown values
+
 **Starter Catalog**:
 Neutral sample Service Types the church may copy and then edit.
 _Avoid_: preset, template, tradition
@@ -42,6 +47,39 @@ _Avoid_: preset, template, tradition
 A church's religious body. CHORD never records or uses it; see
 [[0001-configure-behavior-not-identity]].
 _Avoid_: Tradition, religion
+
+### People
+
+**Member**:
+A person in the church's directory, whatever their Membership Status. A
+visitor also has a Member record. Churches may rename it with the "member"
+Label.
+_Avoid_: contact, person record, parishioner (that's one church's Label)
+
+**Membership Status**:
+The church-edited state of a Member, such as Member, Visitor or Moved Away.
+Some statuses count as active.
+_Avoid_: member type, category
+
+**Household**:
+Members who live together, such as a family. Each person in it can have a
+Household Role.
+_Avoid_: family (not every household is a family)
+
+**Household Role**:
+A person's church-edited place in a Household, such as Head, Spouse or
+Child.
+_Avoid_: relationship type (the code's model name)
+
+**Custom Field**:
+A field the church adds to a kind of record, such as "Baptism date" on
+every Member. It can be required, and private.
+_Avoid_: extra field, user-defined field
+
+**Archive**:
+To take a record out of everyday lists without deleting it. Archiving can
+be undone.
+_Avoid_: delete, remove
 
 ### Services
 

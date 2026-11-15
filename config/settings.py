@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "apps.accounts.apps.AccountsConfig",
     "apps.audit.apps.AuditConfig",
     "apps.church.apps.ChurchConfig",
+    "apps.members.apps.MembersConfig",
 ]
 
 MIDDLEWARE = [
@@ -124,6 +125,8 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+# Uploads holding personal data; never served directly (apps/core/storage.py).
+PRIVATE_MEDIA_ROOT = BASE_DIR / "protected_media"
 
 # Email: printed to the console in development; set an SMTP backend in .env
 # for real sending.

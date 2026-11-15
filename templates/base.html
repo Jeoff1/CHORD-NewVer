@@ -47,6 +47,7 @@
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My profile</a></li>
+                {% if "members" in enabled_modules and user.member %}<li><a class="dropdown-item" href="{% url 'members:me' %}">My {{ labels.member|lower }} record</a></li>{% endif %}
                 <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Change password</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>

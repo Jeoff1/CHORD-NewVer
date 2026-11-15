@@ -36,8 +36,10 @@ def module_entries(profile):
 def church(request):
     """Template context: the Church Profile, its Labels and the module nav."""
     profile = getattr(request, "church", None) or ChurchProfile.load()
+    entries = module_entries(profile)
     return {
         "church": profile,
         "labels": profile.label_set,
-        "module_entries": module_entries(profile),
+        "module_entries": entries,
+        "enabled_modules": {entry.code for entry in entries},
     }

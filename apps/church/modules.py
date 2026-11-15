@@ -30,6 +30,7 @@ MODULES = (
         "Members",
         "People and households in the church.",
         "members",
+        url_name="members:list",
         label_key="member",
     ),
     Module(

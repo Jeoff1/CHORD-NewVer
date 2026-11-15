@@ -7,13 +7,14 @@ with each development task.
 
 ## Current status
 
-**Phase 1 done (2026-11-16).** A church can set itself up through the
-setup wizard (details, Labels, Modules) without stating a denomination,
-switch Modules on and off, and use its own wording. Users, editable Roles,
-the permission matrix, password reset and the audit trail work. No church
-Modules (Members, Giving and the others) are built yet.
+**Phase 2 done (2026-11-16).** Church setup, users and Roles, and the
+audit trail work. The first church Module is built: [[Members]].
+- the people directory, with households;
+- church-edited statuses and Custom Fields;
+- private details visible only with permission, and a "My record" page;
+- CSV import with a preview, and CSV export.
 
-**Next:** Phase 2 (Members) of the [[Development-Plan]].
+**Next:** Phase 3 (Ministries and Events) of the [[Development-Plan]].
 
 ## Project
 
@@ -29,6 +30,7 @@ Modules (Members, Giving and the others) are built yet.
   - [[0001-configure-behavior-not-identity|0001 Configure behavior, not identity]]
   - [[0002-server-rendered-ui|0002 Server-rendered UI with Bootstrap and HTMX]]
   - [[0003-editable-roles|0003 Editable roles on Django groups, with a fixed Administrator]]
+  - [[0004-custom-field-values-as-json|0004 Custom Field values stored as JSON on the record]]
 
 ## Modules
 
@@ -40,7 +42,7 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | Church Setup (core) | Built  | [[Church-Setup]] |
 | Accounts (core)     | Built  | [[Accounts]]   |
 | Services   | Designed    | [[Services]]   |
-| Members    | Not started |                |
+| Members    | Built       | [[Members]]    |
 | Giving     | Not started |                |
 | Events     | Not started |                |
 | Records    | Not started |                |

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ household.name }}{% endblock %}
+
+{% block content %}
+  <a href="{% url 'members:household_list' %}" class="small text-decoration-none">← Households</a>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{{ household.name }}</h1>
+    {% if perms.members.change_household %}<a href="{% url 'members:household_update' public_id=household.public_id %}" class="btn btn-primary">Edit</a>{% endif %}
+  </div>
+  {% if household.notes %}<p>{{ household.notes|linebreaksbr }}</p>{% endif %}
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th scope="col">Name</th><th scope="col">Role</th><th scope="col">Status</th></tr></thead>
+        <tbody>
+          {% for person in people %}
+            <tr>
+              <td>
+                <a href="{% url 'members:detail' public_id=person.public_id %}">{{ person.full_name }}</a>
+                {% if person.is_archived %}<span class="badge text-bg-secondary ms-1">Archived</span>{% endif %}
+              </td>
+              <td>{{ person.relationship|default:"—" }}</td>
+              <td>{{ person.status }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3" class="text-center text-body-secondary py-4">No one is in this household yet. Add people from their member pages.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

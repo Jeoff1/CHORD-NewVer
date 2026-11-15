@@ -36,8 +36,8 @@ flowchart LR
 | ----- | ------------------------ | ---- | ---------- | ------------------- |
 | 0     | Engineering baseline     | S    | none       | Done (2026-11-15)   |
 | 1     | Church Setup and Access  | L    | 0          | Done (2026-11-16)   |
-| 2     | Members                  | M    | 1          | Next                |
-| 3     | Ministries and Events    | M    | 2          | Not started         |
+| 2     | Members                  | M    | 1          | Done (2026-11-16)   |
+| 3     | Ministries and Events    | M    | 2          | Next                |
 | 4     | Giving                   | M    | 2          | Not started         |
 | 5     | Records                  | M    | 2          | Not started         |
 | 6     | Services                 | L    | 3, 4, 5    | Not started         |
@@ -186,27 +186,29 @@ tests cover module switching, Labels and role permissions.
 
 ## Phase 2: Members
 
+**Status: done (2026-11-16).** See [[Members]].
+
 Goal: the people directory that Giving, Records, Events and Services all
 refer to.
 
-- [ ] **Custom fields** in `apps/core`: church-defined extra fields (text,
+- [x] **Custom fields** in `apps/core`: church-defined extra fields (text,
   number, date, choice, yes/no, file). Built once here and reused by
   Services and Records.
-- [ ] **Membership Status**: a church-edited list. Defaults: Member,
+- [x] **Membership Status**: a church-edited list. Defaults: Member,
   Regular Attendee, Visitor, Inactive, Moved Away, Deceased.
-- [ ] **Member**: name, sex (optional), birth date, contact details,
+- [x] **Member**: name, sex (optional), birth date, contact details,
   address, photo, date joined, status, custom fields, and an optional link
   to a user account.
-- [ ] **Household**: grouping of members with church-edited relationship
+- [x] **Household**: grouping of members with church-edited relationship
   types (defaults: Head, Spouse, Child, Other).
-- [ ] List with search, filters and pagination; detail, create, edit and
+- [x] List with search, filters and pagination; detail, create, edit and
   archive screens.
-- [ ] CSV import with a preview step and error report, and CSV export.
+- [x] CSV import with a preview step and error report, and CSV export.
   Import matters because churches start with existing lists.
-- [ ] Privacy: birth date, contact details and address are visible only
+- [x] Privacy: birth date, contact details and address are visible only
   with permission. A member with a linked account can view their own
   record.
-- [ ] Audit trail on every change.
+- [x] Audit trail on every change.
 
 **Done when** a church can import its members and the privacy rules are
 tested.
