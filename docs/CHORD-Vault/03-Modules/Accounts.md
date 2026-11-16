@@ -13,20 +13,22 @@ the core; it can't be switched off. App: `apps/accounts`.
   deactivated, never deleted, so the audit trail keeps its actors (there is
   no delete permission).
 - **Role** (`accounts.Role`, built on Django's Group;
-  [[0003-editable-roles]]): a name, description and permissions. The six
-  default roles are created by a migration:
+  [[0003-editable-roles]]): a name, description and permissions. The five
+  default roles are created by migrations:
   - Administrator
   - Office Staff
-  - Finance
-  - Records Keeper
+  - Pastoral Staff (the [[Concept-Brief]]'s pastor)
   - Worship Leader
-  - Ministry Leader
+  - Team Member
+
+  Finance, Records Keeper and Ministry Leader were default roles until the
+  scope changed ([[0005-worship-planning-scope]]). The migration removed
+  each one that no user held; a church that put one to use keeps it.
 - **Default permissions** (`roles.py`):
   - After every migrate, the Administrator role receives every managed
     permission.
   - The other default roles receive what `DEFAULT_ROLE_PERMISSIONS` lists,
-    once each. That list is empty until later phases add Module
-    permissions.
+    once each. Each phase adds its Module's permissions there.
 - **Administrator rules:**
   - Administrators are active superusers and holders of the Administrator
     role.

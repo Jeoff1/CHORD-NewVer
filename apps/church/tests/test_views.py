@@ -43,16 +43,12 @@ def labels_data(**overrides):
     data = {
         "member__singular": "Member",
         "member__plural": "Members",
-        "ministry__singular": "Ministry",
-        "ministry__plural": "Ministries",
-        "officiant__singular": "Pastor",
-        "officiant__plural": "Pastors",
-        "service__singular": "Service",
-        "service__plural": "Services",
         "worship_service__singular": "Worship Service",
         "worship_service__plural": "Worship Services",
-        "offering__singular": "Offering",
-        "offering__plural": "Offerings",
+        "sermon__singular": "Homily",
+        "sermon__plural": "Homilies",
+        "lineup__singular": "Lineup",
+        "lineup__plural": "Lineups",
     }
     data.update(overrides)
     return data
@@ -72,11 +68,11 @@ class DashboardTests(TestCase):
         self.assertContains(response, "Church setup isn't finished yet")
 
     def test_shows_switched_on_modules_only(self):
-        complete_setup(disabled_modules=["giving"])
+        complete_setup(disabled_modules=["announcements"])
         self.client.force_login(make_administrator())
         response = self.client.get(reverse("home"))
-        self.assertContains(response, "Records")
-        self.assertNotContains(response, "Giving")
+        self.assertContains(response, "Worship")
+        self.assertNotContains(response, "Announcements")
         self.assertContains(response, "Administration")
 
     def test_plain_user_has_no_administration_menu(self):
@@ -101,7 +97,7 @@ class SetupWizardTests(TestCase):
         response = self.client.post(self.url("labels"), labels_data())
         self.assertRedirects(response, self.url("modules"))
         response = self.client.post(
-            self.url("modules"), {"enabled": ["members", "events", "services"]}
+            self.url("modules"), {"enabled": ["members", "worship"]}
         )
         self.assertRedirects(response, reverse("home"))
 
@@ -109,11 +105,8 @@ class SetupWizardTests(TestCase):
         self.assertTrue(profile.setup_completed)
         self.assertEqual(profile.name, "Grace Community Church")
         self.assertEqual(profile.currency, "PHP")
-        self.assertEqual(profile.label_set.get("officiant"), "Pastor")
-        self.assertEqual(
-            sorted(profile.disabled_modules),
-            ["giving", "ministries", "records", "worship"],
-        )
+        self.assertEqual(profile.label_set.get("sermon"), "Homily")
+        self.assertEqual(sorted(profile.disabled_modules), ["announcements", "teams"])
         self.assertEqual(AuditEvent.objects.count(), 3)
 
     def test_finished_wizard_redirects_to_settings(self):
@@ -150,11 +143,12 @@ class SettingsTests(TestCase):
         details = self.client.get(self.url("details"))
         self.assertContains(details, 'name="currency"')
         labels = self.client.get(self.url("labels"))
-        self.assertContains(labels, "e.g. Priest, Pastor, Minister, Elder")
-        self.assertContains(labels, 'name="officiant__plural"')
+        self.assertContains(labels, "e.g. Sermon, Homily, Message")
+        self.assertContains(labels, 'name="sermon__plural"')
         modules = self.client.get(self.url("modules"))
-        self.assertContains(modules, 'role="switch"', count=7)
-        self.assertContains(modules, " checked", count=7)
+        self.assertContains(modules, 'role="switch"', count=4)
+        self.assertContains(modules, " checked", count=4)
+        self.assertContains(modules, "Needs Worship switched on.")
 
     def test_settings_home_opens_details(self):
         response = self.client.get(reverse("church:settings_home"))
@@ -190,23 +184,29 @@ class SettingsTests(TestCase):
     def test_labels_change_module_names(self):
         self.client.post(
             self.url("labels"),
-            labels_data(ministry__singular="Group", ministry__plural="Groups"),
+            labels_data(member__singular="Parishioner", member__plural="Parishioners"),
         )
         response = self.client.get(reverse("home"))
-        self.assertContains(response, "Groups")
+        self.assertContains(response, "Parishioners")
         event = AuditEvent.objects.get()
         self.assertEqual(
-            event.changes["Label: Ministry"],
-            ["Ministry / Ministries", "Group / Groups"],
+            event.changes["Label: Member"],
+            ["Member / Members", "Parishioner / Parishioners"],
         )
 
     def test_switching_modules_off_and_on(self):
         self.client.post(self.url("modules"), {"enabled": ["members"]})
         profile = ChurchProfile.load()
-        self.assertEqual(len(profile.disabled_modules), 6)
+        self.assertEqual(len(profile.disabled_modules), 3)
         self.assertNotContains(self.client.get(reverse("home")), "Worship")
 
-        everything = ["members", "ministries", "events", "giving"]
-        everything += ["records", "services", "worship"]
+        everything = ["members", "worship", "teams", "announcements"]
         self.client.post(self.url("modules"), {"enabled": everything})
         self.assertEqual(ChurchProfile.load().disabled_modules, [])
+
+    def test_stale_module_codes_do_not_break_the_audit_trail(self):
+        ChurchProfile.objects.update(disabled_modules=["giving"])
+        self.client.post(self.url("modules"), {"enabled": ["members", "worship"]})
+        self.assertEqual(
+            sorted(ChurchProfile.load().disabled_modules), ["announcements", "teams"]
+        )

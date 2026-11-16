@@ -79,7 +79,7 @@
                     </span>
                     <span>
                       <span class="fw-semibold d-block">{{ entry.name }}</span>
-                      <span class="text-body-secondary small">{{ entry.description }}</span>
+                      <span class="text-body-secondary small">{{ entry.description }}{% if entry.requires %} Needs {{ entry.requires|join:" and " }} switched on.{% endif %}</span>
                     </span>
                   </label>
                 {% endfor %}

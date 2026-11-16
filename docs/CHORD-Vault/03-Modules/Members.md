@@ -5,8 +5,7 @@ status: built
 # Members
 
 The church's people directory: everyone the church keeps a record of,
-including visitors, with their households. Giving, Records, Events and
-Services refer to these records. App: `apps/members`. Module code
+including visitors, with their households. App: `apps/members`. Module code
 `members`; the Module's name follows the "member" Label (e.g.
 "Parishioners").
 
@@ -84,8 +83,7 @@ Services refer to these records. App: `apps/members`. Module code
 Default roles ([[Accounts]]):
 - **Office Staff** gets the everyday permissions, including private
   details, import and export, and can view the settings lists.
-- **Records Keeper** can view members, private details and households.
-- **Finance**, **Worship Leader** and **Ministry Leader** can view members.
+- **Pastoral Staff** and **Worship Leader** can view members.
 
 ## Church settings this module depends on
 
@@ -96,5 +94,6 @@ Default roles ([[Accounts]]):
 
 ## Open questions
 
-- None for now. Later Modules link to `Member` (givers, record subjects,
-  requesters, ministry members, team members).
+- None for now. The [[Concept-Brief]] asks only for a basic directory;
+  this Module stays as built. Team members are user accounts, and a Member
+  record can be linked to an account.

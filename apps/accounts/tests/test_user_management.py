@@ -64,7 +64,7 @@ class UserCreateTests(TestCase):
     def test_creates_user_with_roles_and_audits(self):
         admin = make_administrator()
         self.client.force_login(admin)
-        finance = Role.objects.get(key="finance")
+        team = Role.objects.get(key="team_member")
         response = self.client.post(
             reverse("accounts:user_create"),
             {
@@ -74,15 +74,15 @@ class UserCreateTests(TestCase):
                 "email": "tess@example.com",
                 "password1": TEST_PASSWORD,
                 "password2": TEST_PASSWORD,
-                "roles": [finance.pk],
+                "roles": [team.pk],
             },
         )
         self.assertRedirects(response, reverse("accounts:user_list"))
         user = User.objects.get(username="treasurer")
-        self.assertEqual(list(user.roles), [finance])
+        self.assertEqual(list(user.roles), [team])
         self.assertTrue(user.check_password(TEST_PASSWORD))
         event = AuditEvent.objects.get(action=AuditEvent.Action.CREATED)
-        self.assertEqual(event.changes["Roles"], ["", "Finance"])
+        self.assertEqual(event.changes["Roles"], ["", "Team Member"])
         self.assertNotIn("Password", event.changes)
 
 
@@ -96,7 +96,7 @@ class UserUpdateTests(TestCase):
 
     def test_changes_roles_and_keeps_plain_groups(self):
         other_group = Group.objects.create(name="Legacy group")
-        user = make_user(roles=["finance"])
+        user = make_user(roles=["team_member"])
         user.groups.add(other_group)
         office = Role.objects.get(key="office_staff")
         response = self.client.post(self.url(user), edit_data(user, roles=[office.pk]))
@@ -104,7 +104,7 @@ class UserUpdateTests(TestCase):
         self.assertEqual(list(user.roles), [office])
         self.assertIn(other_group, user.groups.all())
         event = AuditEvent.objects.get()
-        self.assertEqual(event.changes["Roles"], ["Finance", "Office Staff"])
+        self.assertEqual(event.changes["Roles"], ["Team Member", "Office Staff"])
 
     def test_deactivates_another_user(self):
         user = make_user()

@@ -1,17 +1,19 @@
 ---
-status: designed
+status: out of scope
 ---
 
 # Services
 
-Church services people request: weddings, burials, private Masses, child
-dedications, house blessings and any others the church defines. Not built
-yet; this note records the agreed design.
+> [!note] Out of scope since 2026-11-16
+> Requested services (weddings, burials and the like) are not part of the
+> worship planning scope ([[0005-worship-planning-scope]]). Nothing here
+> was built. The design is kept in case the scope widens again. In the
+> rest of the vault, "service" now means a Worship Service ([[Glossary]]).
 
-## Design
+## The design that was agreed
 
-- The church creates its own **Service Types** ([[Glossary]]). The system
-  has no built-in "Wedding" or "Private Mass" feature.
+- The church creates its own **Service Types**. The system has no built-in
+  "Wedding" or "Private Mass" feature.
 - Each Service Type has its own settings:
   - **Fee Mode**: no fee, fixed fee, optional donation, or amount set per
     request; plus whether the fee can be waived.
@@ -32,12 +34,7 @@ yet; this note records the agreed design.
   child dedication, private Mass/prayer service, house blessing) with no fees
   and few Requirements, which churches copy and edit.
 
-## Church settings this module depends on
+## Open questions when it was shelved
 
-Service Types, Fee Mode, Requirements, Labels (e.g. the word for the
-officiant).
-
-## Open questions
-
-- How payments are recorded and whether they link to the Giving module.
+- How payments are recorded.
 - What a church record issued by a Service Request contains.

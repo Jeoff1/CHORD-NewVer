@@ -17,24 +17,26 @@ of the core and can't be switched off. App: `apps/church`.
   finished. Load it with `ChurchProfile.load()`.
 - **Middleware** (`middleware.py`) puts the profile on `request.church`
   and activates the church's time zone for each request.
-- **Modules** (`modules.py`): the registry of the seven Modules (Members,
-  Ministries, Events, Giving, Records, Services, Worship).
-  - Each entry has a code, app label, main URL (none until the Module is
-    built) and an optional Label key for its name.
+- **Modules** (`modules.py`): the registry of the four Modules (Members,
+  Worship, Teams, Announcements; [[0005-worship-planning-scope]]).
+  - Each entry has a code, the Django apps that hold its models, a main
+    URL (none until the Module is built) and an optional Label key for
+    its name.
+  - A Module can **need** another: Teams needs Worship, so it counts as
+    switched off while Worship is off. The Modules settings page says so.
   - All Modules start switched on, and the church switches off what it
     doesn't use.
   - `ModuleRequiredMixin` returns 404 for a switched-off Module's pages.
   - The navigation and dashboard show only switched-on Modules. Data is
     never deleted when a Module is switched off.
-- **Labels** (`labels.py`): member, ministry, officiant, service, worship
-  service and offering.
+- **Labels** (`labels.py`): member, worship service, sermon and lineup.
   - Each has a neutral default singular and plural, which the church can
     edit.
-  - Use them in templates with `{% load church %}{% label "officiant" %}`
+  - Use them in templates with `{% load church %}{% label "sermon" %}`
     (`plural=True` for the plural; `as word` stores it in a variable), and
     in Python with `profile.label_set.get(key)`.
-  - Module names follow Labels: if the church calls ministries "Groups",
-    the Module is shown as Groups.
+  - Module names follow Labels: if the church calls members
+    "Parishioners", the Module is shown as Parishioners.
 - **Setup wizard** (`/church/setup/<section>/`): three steps, Church
   details, then Labels, then Modules. It never asks for a denomination.
   - Administrators are sent there from the home page until it's finished;
@@ -55,5 +57,4 @@ Modules and Labels.
 
 ## Open questions
 
-- None for now. The Services step of the wizard (Starter Catalog) is added
-  in Phase 6.
+- None for now.

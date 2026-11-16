@@ -33,9 +33,9 @@ class ChurchProfileTests(TestCase):
 
 class LabelsTests(TestCase):
     def test_defaults_and_church_wording(self):
-        labels = Labels({"officiant": {"singular": "Pastor", "plural": "Pastors"}})
-        self.assertEqual(labels.get("officiant"), "Pastor")
-        self.assertEqual(labels.get("officiant", plural=True), "Pastors")
+        labels = Labels({"sermon": {"singular": "Homily", "plural": "Homilies"}})
+        self.assertEqual(labels.get("sermon"), "Homily")
+        self.assertEqual(labels.get("sermon", plural=True), "Homilies")
         self.assertEqual(labels.get("member"), "Member")
         self.assertEqual(labels["member"], "Member")
 
@@ -45,27 +45,27 @@ class LabelsTests(TestCase):
 
     def test_template_tag(self):
         profile = ChurchProfile.load()
-        profile.labels = {"officiant": {"singular": "Priest", "plural": "Priests"}}
+        profile.labels = {"sermon": {"singular": "Message", "plural": "Messages"}}
         profile.save()
         template = Template(
-            "{% load church %}{% label 'officiant' %}|"
-            "{% label 'officiant' plural=True %}|"
-            "{% label 'officiant' as word %}{{ word|lower }}"
+            "{% load church %}{% label 'sermon' %}|"
+            "{% label 'sermon' plural=True %}|"
+            "{% label 'sermon' as word %}{{ word|lower }}"
         )
-        self.assertEqual(template.render(Context()), "Priest|Priests|priest")
+        self.assertEqual(template.render(Context()), "Message|Messages|message")
 
 
 class SampleModuleView(ModuleRequiredMixin, View):
-    module = "giving"
+    module = "announcements"
 
     def get(self, request):
-        return HttpResponse("giving page")
+        return HttpResponse("announcements page")
 
 
 class ModuleSwitchingTests(TestCase):
     def setUp(self):
         self.profile = ChurchProfile.load()
-        self.request = RequestFactory().get("/giving/")
+        self.request = RequestFactory().get("/announcements/")
         self.request.church = self.profile
 
     def test_every_module_starts_switched_on(self):
@@ -80,23 +80,33 @@ class ModuleSwitchingTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_switched_off_module_page_is_404(self):
-        self.profile.disabled_modules = ["giving"]
+        self.profile.disabled_modules = ["announcements"]
         self.profile.save()
         with self.assertRaises(Http404):
             SampleModuleView.as_view()(self.request)
 
     def test_switched_off_module_leaves_navigation(self):
-        self.profile.disabled_modules = ["giving", "records"]
+        self.profile.disabled_modules = ["announcements", "teams"]
         codes = [entry.code for entry in module_entries(self.profile)]
-        self.assertNotIn("giving", codes)
-        self.assertNotIn("records", codes)
+        self.assertNotIn("announcements", codes)
+        self.assertNotIn("teams", codes)
         self.assertIn("members", codes)
 
+    def test_module_counts_as_off_while_one_it_needs_is_off(self):
+        self.profile.disabled_modules = ["worship"]
+        self.assertFalse(is_enabled("teams", self.profile))
+        self.assertTrue(is_enabled("announcements", self.profile))
+        codes = [entry.code for entry in module_entries(self.profile)]
+        self.assertEqual(codes, ["members", "announcements"])
+
     def test_module_names_follow_labels(self):
-        self.profile.labels = {"ministry": {"singular": "Group", "plural": "Groups"}}
-        names = {e.code: e.name for e in module_entries(self.profile)}
-        self.assertEqual(names["ministries"], "Groups")
-        self.assertEqual(names["giving"], "Giving")
+        self.profile.labels = {
+            "member": {"singular": "Parishioner", "plural": "Parishioners"}
+        }
+        entries = {e.code: e for e in module_entries(self.profile)}
+        self.assertEqual(entries["members"].name, "Parishioners")
+        self.assertEqual(entries["worship"].name, "Worship")
+        self.assertEqual(entries["teams"].requires, ("Worship",))
 
 
 class TimeZoneMiddlewareTests(TestCase):

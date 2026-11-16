@@ -28,7 +28,7 @@ def profile_audit_fields():
         "Currency": "currency",
         "Time zone": "time_zone",
         "Switched-off modules": lambda p: [
-            MODULES_BY_CODE[c].name for c in p.disabled_modules
+            MODULES_BY_CODE[c].name for c in p.disabled_modules if c in MODULES_BY_CODE
         ],
         "Setup completed": "setup_completed",
     }

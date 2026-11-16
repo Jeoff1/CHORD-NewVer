@@ -15,13 +15,16 @@ class Module:
     code: str
     name: str
     description: str
-    # Django app label holding the Module's models and permissions.
-    app_label: str
+    # Django app labels holding the Module's models and permissions.
+    app_labels: tuple[str, ...]
     # URL name of the Module's main page; None until the Module is built.
     url_name: str | None = None
     # Label key whose plural names the Module in the UI, if the church can
-    # rename it (e.g. "ministry" -> "Ministries" or "Groups").
+    # rename it (e.g. "member" -> "Members" or "Parishioners").
     label_key: str | None = None
+    # Modules this one builds on: it counts as switched off while any of
+    # them is switched off.
+    requires: tuple[str, ...] = ()
 
 
 MODULES = (
@@ -29,47 +32,29 @@ MODULES = (
         "members",
         "Members",
         "People and households in the church.",
-        "members",
+        ("members",),
         url_name="members:list",
         label_key="member",
     ),
     Module(
-        "ministries",
-        "Ministries",
-        "Groups that serve in the church, and who belongs to them.",
-        "ministries",
-        label_key="ministry",
-    ),
-    Module(
-        "events",
-        "Events",
-        "The church calendar, venues and attendance.",
-        "events",
-    ),
-    Module(
-        "giving",
-        "Giving",
-        "Funds, contributions, receipts and giving statements.",
-        "giving",
-    ),
-    Module(
-        "records",
-        "Records",
-        "The church's official registers and certificates.",
-        "records",
-    ),
-    Module(
-        "services",
-        "Services",
-        "Services people request, such as weddings and burials.",
-        "services",
-        label_key="service",
-    ),
-    Module(
         "worship",
         "Worship",
-        "Songs, worship plans, teams and rehearsals.",
-        "worship",
+        "Worship services, their themes and song lineups, and the song library.",
+        ("worship", "songs"),
+        url_name="worship:home",
+    ),
+    Module(
+        "teams",
+        "Teams",
+        "Who serves at each worship service, and when people are available.",
+        ("teams",),
+        requires=("worship",),
+    ),
+    Module(
+        "announcements",
+        "Announcements",
+        "Notes to everyone, or to the team of one worship service.",
+        ("announcements",),
     ),
 )
 
@@ -85,11 +70,13 @@ def is_enabled(code, profile=None):
         from .models import ChurchProfile
 
         profile = ChurchProfile.load()
-    return code not in profile.disabled_modules
+    switched_off = set(profile.disabled_modules)
+    module = MODULES_BY_CODE[code]
+    return code not in switched_off and not switched_off.intersection(module.requires)
 
 
 def enabled_modules(profile):
-    return [m for m in MODULES if m.code not in profile.disabled_modules]
+    return [m for m in MODULES if is_enabled(m.code, profile)]
 
 
 class ModuleRequiredMixin:

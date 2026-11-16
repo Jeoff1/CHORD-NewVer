@@ -2,6 +2,37 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-17: Phase 3, worship schedule and themes; the scope change
+
+- **Scope.** The project now follows the [[Concept-Brief]]
+  ([[0005-worship-planning-scope]]). The [[Development-Plan]] was rewritten
+  around it: Phases 3 to 10 are new, and Giving, Records, Services,
+  Ministries and Events are out of scope.
+- **Re-scoped the configuration layer:**
+  - Modules are now Members, Worship, Teams and Announcements. A Module
+    can span several apps and can need another Module ([[Church-Setup]]).
+  - Labels are now member, worship service, sermon and lineup.
+  - Default roles are now Administrator, Office Staff, Pastoral Staff,
+    Worship Leader and Team Member ([[Accounts]]).
+  - Two data migrations tidy existing installations: stale Module switches
+    and Labels are dropped, and unused obsolete roles are removed.
+- **[[Worship]]** (`apps/worship`), first part:
+  - Service Templates with Song Slots, and one seeded neutral template;
+  - Worship Services, the schedule list and the month calendar;
+  - "Schedule weeks ahead" for templates with a usual day and time;
+  - Themes with Series, and notes shown only to people who plan;
+  - a headcount per service;
+  - default-role permissions and the audit trail.
+- Shared pieces: `apps/core/music.py` (Feel); a church-edited list's title
+  can follow a Label; test builders `make_service` and `make_theme`.
+- Installed the ML runtime chosen for later phases (ONNX Runtime,
+  tokenizers, NumPy, huggingface-hub); nothing uses it yet.
+- Verified:
+  - `scripts/check.ps1` passed: Ruff clean, `manage.py check` clean, no
+    missing migrations, 197 tests passed, 97% coverage. The guard test
+    passed.
+  - Migrations applied to the development database.
+
 ## 2026-11-16: Phase 2, Members
 
 - [[Members]] (`apps/members`):

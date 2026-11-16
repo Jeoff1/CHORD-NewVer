@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.audit.apps.AuditConfig",
     "apps.church.apps.ChurchConfig",
     "apps.members.apps.MembersConfig",
+    "apps.worship.apps.WorshipConfig",
 ]
 
 MIDDLEWARE = [

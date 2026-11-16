@@ -67,12 +67,13 @@ class SettingList:
 
     ``columns`` are ``(header, attribute)`` pairs shown in the list;
     ``nav`` is an optional ``callable(request) -> [(label, url)]`` that
-    links the list to its sibling settings pages.
+    links the list to its sibling settings pages. ``title`` may be a
+    ``callable(request) -> str`` when it uses one of the church's Labels.
     """
 
     model: type
     url_prefix: str
-    title: str
+    title: object
     item_name: str
     intro: str = ""
     module: str | None = None
@@ -96,6 +97,9 @@ class SettingList:
 
     def get_form_class(self):
         return self.form_class or modelform_factory(self.model, fields=self.fields)
+
+    def get_title(self, request):
+        return self.title(request) if callable(self.title) else self.title
 
     def audit_fields(self):
         """The form's fields, labelled by their verbose names."""
@@ -141,6 +145,7 @@ class SettingListView(SettingListMixin, ListView):
         can_change = self.request.user.has_perm(config.permission("change"))
         context.update(
             config=config,
+            title=config.get_title(self.request),
             nav_links=self.nav_links(),
             current_url=self.request.path,
             create_url=self.url("create") if can_add else None,

@@ -6,9 +6,10 @@ yet.
 
 | Topic          | Convention                                                                                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| App layout     | One Django app per Module in `apps/`. Shared code is in `apps/core`, and the audit trail in `apps/audit`.                        |
+| App layout     | Each Module is one or more Django apps in `apps/` (Worship is `apps/worship` and `apps/songs`); the Module registry lists them. Shared code is in `apps/core`, and the audit trail in `apps/audit`. |
 | Shared models  | `apps/core/models.py`: `TimeStampedModel` (created/updated) and `PublicIdModel` (UUID used in URLs, so IDs can't be guessed).    |
-| Business rules | `services.py` functions in each app (e.g. `apps/members/services.py`: import, export, archiving). _(planned)_ Service Request steps go in `apps/services/workflow.py`. |
+| Business rules | Plain functions outside the views, tested directly. A small app keeps them in `services.py` (e.g. `apps/members/services.py`). The worship apps name each file for what it decides (e.g. `apps/worship/scheduling.py`), because "service" there means a Worship Service. |
+| Large apps     | `apps/worship` splits `models/` and `views/` into one file per area (`schedule.py`, …); `models/__init__.py` exports every model. |
 | UI             | Django templates, Bootstrap 5 and HTMX from `static/vendor/` ([[0002-server-rendered-ui]]). Pages extend `templates/base.html`.  |
 | Page titles    | Every page sets `{% block title %}`; the base adds " · " and the church name.                                                    |
 | Forms          | `{{ form }}` is enough. The project form renderer adds the Bootstrap classes and error markup (`apps/core/forms.py`).            |
@@ -18,8 +19,8 @@ yet.
 | Module pages   | Every view of a Module puts `ModuleRequiredMixin` (with `module = "<code>"`) first, so a switched-off Module's pages return 404. |
 | Church wording | UI text for concepts in the Labels list uses `{% label %}` ([[Church-Setup]]).                                                   |
 | HTMX requests  | `base.html` sends the CSRF token in every HTMX request header.                                                                   |
-| Deleting       | Users are deactivated and members archived, never deleted. Church-edited list items and Custom Fields are switched off. _(planned)_ Giving, records and requests are reversed or archived. |
-| Money          | _(planned)_ `DecimalField`, in the currency set in the Church Profile.                                                           |
+| Deleting       | Users are deactivated and members archived, never deleted. Church-edited list items and Custom Fields are switched off. Worship services are cancelled, not deleted. |
+| Dates and times | Stored in UTC and shown in the church's time zone, which the middleware activates for each request. Code that runs outside a request (rules, the worker) asks `scheduling.church_time_zone()`. |
 | Files          | Only the church logo is public (`media/church/`). Personal files use private storage (see below). |
 
 ## Audit trail
@@ -51,6 +52,8 @@ description, sort order and active switch, plus `.active()` and
   permissions, with audit.
 - Items are switched off, never deleted.
 - `nav=` adds tabs that link sibling settings lists.
+- `title=` can be a function of the request when the title uses a Label
+  (e.g. "Sermon series").
 
 Seed neutral defaults with a data migration.
 
@@ -101,6 +104,9 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   - `make_administrator()`
   - `complete_setup(**profile_fields)`
   - `make_member(**fields)`
+  - `make_service(**fields)`: a worship service a week from now, on the
+    seeded template
+  - `make_theme(service=None, **fields)`
   - `TEST_PASSWORD`
   - `close_file_response(response)`: closes a file download in a test
     without also closing the test database connection.

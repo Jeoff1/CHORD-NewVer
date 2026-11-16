@@ -24,34 +24,22 @@ LABEL_DEFINITIONS = (
         "A person who belongs to the church, e.g. Member, Parishioner, Congregant.",
     ),
     LabelDefinition(
-        "ministry",
-        "Ministry",
-        "Ministries",
-        "A group that serves in the church, e.g. Ministry, Group, Organization.",
-    ),
-    LabelDefinition(
-        "officiant",
-        "Officiant",
-        "Officiants",
-        "The person who leads a service, e.g. Priest, Pastor, Minister, Elder.",
-    ),
-    LabelDefinition(
-        "service",
-        "Service",
-        "Services",
-        "Something people request from the church, e.g. Service, Sacrament, Rite.",
-    ),
-    LabelDefinition(
         "worship_service",
         "Worship Service",
         "Worship Services",
-        "The church's regular gathering for worship, e.g. Mass, Service, Gathering.",
+        "The church's gathering for worship, e.g. Mass, Service, Gathering.",
     ),
     LabelDefinition(
-        "offering",
-        "Offering",
-        "Offerings",
-        "Money given to the church, e.g. Offering, Tithe, Collection, Donation.",
+        "sermon",
+        "Sermon",
+        "Sermons",
+        "The talk given at a worship service, e.g. Sermon, Homily, Message.",
+    ),
+    LabelDefinition(
+        "lineup",
+        "Lineup",
+        "Lineups",
+        "The songs chosen for a worship service, e.g. Lineup, Set List, Song List.",
     ),
 )
 

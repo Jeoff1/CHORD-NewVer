@@ -26,11 +26,13 @@ class RoleCrudTests(TestCase):
         self.client.force_login(make_administrator())
 
     def test_list_shows_roles_and_counts(self):
-        make_user(roles=["finance"])
+        make_user(roles=["team_member"])
         response = self.client.get(reverse("accounts:role_list"))
-        self.assertContains(response, "Finance")
-        finance = next(r for r in response.context["object_list"] if r.key == "finance")
-        self.assertEqual(finance.user_count, 1)
+        self.assertContains(response, "Team Member")
+        team = next(
+            r for r in response.context["object_list"] if r.key == "team_member"
+        )
+        self.assertEqual(team.user_count, 1)
 
     def test_create_edit_delete(self):
         self.client.post(
@@ -68,7 +70,7 @@ class RoleCrudTests(TestCase):
 
 class PermissionMatrixTests(TestCase):
     def setUp(self):
-        self.finance = Role.objects.get(key="finance")
+        self.team = Role.objects.get(key="team_member")
         self.view_audit = Permission.objects.get(codename="view_auditevent")
 
     def test_viewer_sees_matrix_but_cannot_save(self):
@@ -76,33 +78,31 @@ class PermissionMatrixTests(TestCase):
         response = self.client.get(MATRIX)
         self.assertContains(response, "Can view audit event")
         self.assertNotContains(response, "Save permissions")
-        response = self.client.post(MATRIX, {f"role-{self.finance.pk}": [1]})
+        response = self.client.post(MATRIX, {f"role-{self.team.pk}": [1]})
         self.assertEqual(response.status_code, 403)
 
     def test_saves_role_permissions_and_audits(self):
         self.client.force_login(make_administrator())
-        before = set(self.finance.permissions.all())
+        before = set(self.team.permissions.all())
         ticks = current_ticks()
-        ticks[f"role-{self.finance.pk}"].append(str(self.view_audit.pk))
+        ticks[f"role-{self.team.pk}"].append(str(self.view_audit.pk))
         response = self.client.post(MATRIX, ticks)
         self.assertRedirects(response, MATRIX)
-        self.assertEqual(
-            set(self.finance.permissions.all()), before | {self.view_audit}
-        )
+        self.assertEqual(set(self.team.permissions.all()), before | {self.view_audit})
         event = AuditEvent.objects.get()  # only the changed role is recorded
-        self.assertEqual(event.object_repr, "Finance")
+        self.assertEqual(event.object_repr, "Team Member")
         self.assertIn("Can view audit event", event.changes["Permissions"][1])
 
     def test_ignores_unmanaged_permissions_and_administrator_column(self):
         self.client.force_login(make_administrator())
         administrator = Role.objects.get(key="administrator")
         session_perm = Permission.objects.get(codename="view_session")
-        before = set(self.finance.permissions.all())
+        before = set(self.team.permissions.all())
         ticks = current_ticks()
-        ticks[f"role-{self.finance.pk}"] += [str(session_perm.pk), "junk"]
+        ticks[f"role-{self.team.pk}"] += [str(session_perm.pk), "junk"]
         # No Administrator ticks are sent; its permissions must stay.
         self.client.post(MATRIX, ticks)
-        self.assertEqual(set(self.finance.permissions.all()), before)
+        self.assertEqual(set(self.team.permissions.all()), before)
         self.assertEqual(
             administrator.permissions.count(), managed_permissions().count()
         )

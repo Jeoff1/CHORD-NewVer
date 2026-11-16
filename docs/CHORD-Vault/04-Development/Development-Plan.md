@@ -1,10 +1,9 @@
 # Development Plan
 
-The build order for the **management side** of CHORD: church setup, people,
-calendar, giving, records, services and worship administration. The music
-features (ML song recommendation, playback, chord sheet viewer) come after
-this plan; [[#Phase 10 (later) Music features|Phase 10]] lists what the
-earlier phases must prepare for them.
+The build order for CHORD as a worship planning system, following the
+[[Concept-Brief]] ([[0005-worship-planning-scope]]). Phases 0 to 2 built
+the foundation under the earlier church-administration plan; from Phase 3
+on, every phase builds part of the brief.
 
 Tick a task only when its tests and checks pass (see
 [[#Definition of done]]). When a phase is finished, update [[00-Home]] and
@@ -13,49 +12,43 @@ add a [[Development-Log]] entry.
 ## Phase order
 
 Each phase builds only on finished phases, so nothing gets built twice.
-Shared pieces (module switching, Labels, audit trail, custom fields) come
-first so every later module reuses them instead of building its own.
 
 ```mermaid
 flowchart LR
   P0[0 Baseline] --> P1[1 Church Setup and Access] --> P2[2 Members]
-  P2 --> P3[3 Ministries and Events]
-  P2 --> P4[4 Giving]
-  P2 --> P5[5 Records]
-  P3 --> P6[6 Services]
-  P4 --> P6
-  P5 --> P6
-  P3 --> P7[7 Worship Management]
-  P6 --> P8[8 Self-service and Reports]
-  P7 --> P8
-  P8 --> P9[9 Hardening and Release]
-  P9 -.-> P10[10 Music features, later]
+  P1 --> P3[3 Worship schedule and themes]
+  P3 --> P4[4 Song pool]
+  P4 --> P5[5 Song suggestions]
+  P5 --> P6[6 Lineups and reports]
+  P6 --> P7[7 Song pages]
+  P6 --> P8[8 Teams and announcements]
+  P6 --> P9[9 Learning to rank]
+  P7 --> P10[10 Hardening and release]
+  P8 --> P10
+  P9 --> P10
 ```
 
-| Phase | Name                     | Size | Depends on | Status              |
-| ----- | ------------------------ | ---- | ---------- | ------------------- |
-| 0     | Engineering baseline     | S    | none       | Done (2026-11-15)   |
-| 1     | Church Setup and Access  | L    | 0          | Done (2026-11-16)   |
-| 2     | Members                  | M    | 1          | Done (2026-11-16)   |
-| 3     | Ministries and Events    | M    | 2          | Next                |
-| 4     | Giving                   | M    | 2          | Not started         |
-| 5     | Records                  | M    | 2          | Not started         |
-| 6     | Services                 | L    | 3, 4, 5    | Not started         |
-| 7     | Worship Management       | M    | 3          | Not started         |
-| 8     | Self-service and Reports | M    | 6, 7       | Not started         |
-| 9     | Hardening and Release    | M    | 8          | Not started         |
-| 10    | Music features           | –    | 9          | Later (out of scope) |
+| Phase | Name                          | Size | Depends on | Status            |
+| ----- | ----------------------------- | ---- | ---------- | ----------------- |
+| 0     | Engineering baseline          | S    | none       | Done (2026-11-15) |
+| 1     | Church Setup and Access       | L    | 0          | Done (2026-11-16) |
+| 2     | Members                       | M    | 1          | Done (2026-11-16) |
+| 3     | Worship schedule and themes   | M    | 1          | Done (2026-11-17) |
+| 4     | Song pool                     | M    | 3          | Next              |
+| 5     | Song suggestions              | L    | 4          | Not started       |
+| 6     | Lineups and reports           | L    | 5          | Not started       |
+| 7     | Song pages: chords and playback | L  | 6          | Not started       |
+| 8     | Teams and announcements       | M    | 6          | Not started       |
+| 9     | Learning to rank              | S    | 6          | Not started       |
+| 10    | Hardening and release         | M    | 7, 8, 9    | Not started       |
 
 This **Status** column is the record of phase progress. Statuses: Done
 (with date), In progress, Next, Not started. Sizes are relative
-(S < M < L). Phases 3, 4 and 5 don't depend on each
-other and can go in any order.
+(S < M < L). Phases 7, 8 and 9 don't depend on each other and can go in any
+order.
 
-> [!note] If the adviser wants to see Services early
-> Services is the clearest demonstration of the core rule. To show it
-> sooner, build Phase 6 straight after Phase 2 with only the no-fee,
-> no-record path, then add the Payment, scheduling and Record steps after
-> Phases 3 to 5.
+Out of scope since [[0005-worship-planning-scope]]: Giving, Records,
+Services (Service Requests), Ministries and Events.
 
 ## How each feature is built
 
@@ -66,8 +59,8 @@ than all models first and all screens later.
    term in the glossary first.
 2. Write the models and migration. Decide which parts are church settings
    (core rule check, below).
-3. Put the business rules in `apps/<module>/services.py` as plain
-   functions, and test them directly. Views stay thin.
+3. Put the business rules in plain functions outside the views, and test
+   them directly ([[Code-Conventions]]). Views stay thin.
 4. Build the views and templates with the shared mixins (module check,
    permission check, audit trail).
 5. Write tests: rules, permissions (allowed and denied), and the
@@ -95,8 +88,10 @@ From [[0001-configure-behavior-not-identity]]:
   users.
 - [ ] Switching off the module hides it and returns 404 for its pages,
   without losing data.
-- [ ] Changes to sensitive data (members, giving, records, requests) are in
-  the audit trail.
+- [ ] Changes to planning data (services, themes, lineups, songs, teams)
+  are in the audit trail.
+- [ ] Tests never use the network or download a model: outside services
+  and ML models are replaced by stand-ins.
 - [ ] The vault is updated: module note, [[00-Home]] status, and a
   [[Development-Log]] entry.
 
@@ -125,287 +120,204 @@ Goal: a safe, repeatable project setup before any features are built.
   "denomination", "tradition" or "religion" appears in models, forms,
   templates, fixtures or seed data.
 
-**Done when** the checks script passes and a signed-in user sees the empty
-base page.
-
 ## Phase 1: Church Setup and Access
 
 **Status: done (2026-11-16).** See [[Church-Setup]] and [[Accounts]].
 
 Goal: the configuration layer that every later module relies on.
 
-**Church Profile** (exactly one per installation)
-
-- [x] Name, address, contact details, logo, currency and time zone.
-- [x] Settings screen for administrators.
-
-**Modules**
-
-- [x] A module registry in code: code, name, URL namespace and nav entry
-  for each Module.
-- [x] On/off settings stored on the Church Profile.
-- [x] A `ModuleRequiredMixin` (returns 404 when off) and a navigation
-  context processor that shows only the modules switched on.
-- [x] Tests showing that switching a module off hides it and keeps its
-  data.
-
-**Labels**
-
-- [x] Label keys with neutral defaults (officiant, service, offering,
-  member, ministry, worship service), which the church can rename.
-- [x] A `{% label "officiant" %}` template tag and a Python helper.
-
-**Accounts and Roles**
-
-- [x] Sign in and out, change and reset password (console email backend in
-  development), own profile.
-- [x] Roles built on Django groups. Seed editable default roles:
-  Administrator, Office Staff, Finance, Records Keeper, Worship Leader,
-  Ministry Leader.
-- [x] A permission matrix screen for editing what each role may do.
-- [x] User management: create, deactivate and assign roles.
-
-**Audit trail**
-
-- [x] A shared `AuditEvent` (actor, object, action, changed fields, time)
-  and a `record_change()` helper. Every module uses it, so none needs its
-  own audit table.
-- [x] An audit log screen for administrators.
-
-**First-run setup wizard**
-
-- [x] Steps: church details, then Labels, then Modules. It never asks for
-  a denomination. The Services step (Starter Catalog) is added in Phase 6.
-
-**Dashboard shell**
-
-- [x] A home page with one card per enabled module.
-
-**Done when** a new installation can be set up through the wizard, and
-tests cover module switching, Labels and role permissions.
+- [x] **Church Profile** (exactly one per installation): name, address,
+  contact details, logo, currency and time zone, with a settings screen.
+- [x] **Modules**: a registry in code, on/off settings on the Church
+  Profile, `ModuleRequiredMixin` (404 when off), and navigation that shows
+  only switched-on Modules.
+- [x] **Labels** with neutral defaults, a `{% label %}` template tag and a
+  Python helper.
+- [x] **Accounts and Roles**: sign in and out, password change and reset,
+  own profile; Roles on Django groups with editable defaults; the
+  permission matrix; user management.
+- [x] **Audit trail**: a shared `AuditEvent` and `record_change()`, plus
+  the audit log screen.
+- [x] **Setup wizard**: church details, then Labels, then Modules. It
+  never asks for a denomination.
+- [x] **Dashboard** with one card per switched-on Module.
 
 ## Phase 2: Members
 
 **Status: done (2026-11-16).** See [[Members]].
 
-Goal: the people directory that Giving, Records, Events and Services all
-refer to.
+Goal: the people directory. The brief asks only for a basic one; this is
+kept as built.
 
-- [x] **Custom fields** in `apps/core`: church-defined extra fields (text,
-  number, date, choice, yes/no, file). Built once here and reused by
-  Services and Records.
-- [x] **Membership Status**: a church-edited list. Defaults: Member,
-  Regular Attendee, Visitor, Inactive, Moved Away, Deceased.
-- [x] **Member**: name, sex (optional), birth date, contact details,
-  address, photo, date joined, status, custom fields, and an optional link
-  to a user account.
-- [x] **Household**: grouping of members with church-edited relationship
-  types (defaults: Head, Spouse, Child, Other).
-- [x] List with search, filters and pagination; detail, create, edit and
-  archive screens.
-- [x] CSV import with a preview step and error report, and CSV export.
-  Import matters because churches start with existing lists.
-- [x] Privacy: birth date, contact details and address are visible only
-  with permission. A member with a linked account can view their own
-  record.
-- [x] Audit trail on every change.
+- [x] Custom Fields in `apps/core`.
+- [x] Membership Status and Household Roles as church-edited lists.
+- [x] Member and Household, with list, detail, add, edit and archive.
+- [x] CSV import with a preview, and CSV export.
+- [x] Privacy rules, the own-record page, and the audit trail.
 
-**Done when** a church can import its members and the privacy rules are
-tested.
+## Phase 3: Worship schedule and themes
 
-## Phase 3: Ministries and Events
+**Status: done (2026-11-17).** See [[Worship]].
 
-Goal: groups and a shared church calendar. Services scheduling and Worship
-plans both use the calendar.
+Goal: the brief's service scheduling and theme intake (pipeline stage 1),
+and the scope change itself.
 
-**Ministries**
-
-- [ ] Ministry, plus ministry membership with church-edited ministry roles
-  (defaults: Leader, Member).
-
-**Calendar**
-
-- [ ] **Event Type**: a church-edited list. Defaults: Worship Service,
-  Meeting, Fellowship, Outreach, Rehearsal, Other.
-- [ ] **Venue**: church rooms and places, used for conflict checks.
-- [ ] **Event**: time, venue, ministry, visibility and status. Simple
-  recurrence (weekly or monthly) for regular gatherings.
-- [ ] **Season**: named date ranges the church defines, with a colour. A
-  church defines none by default, and its calendar is then a plain
+- [x] Re-scope the Module registry, Labels and default roles
+  ([[0005-worship-planning-scope]]).
+- [x] **Service Template**: a church-edited kind of service with ordered
+  **Song Slots**, each with a feel, and an optional usual day and time.
+- [x] **Worship Service**: name, template, date and time, rehearsal time,
+  notes and a cancelled flag.
+- [x] The schedule list (upcoming and past, with search) and a month
   calendar.
-- [ ] Month, week and list views, and a venue conflict warning.
+- [x] **Schedule weeks ahead**: adds a template's service on its usual day
+  for the coming weeks, filling only the gaps.
+- [x] **Theme** per service: title, main scripture, notes and an optional
+  **Series** (a church-edited list). Notes are shown only to people who
+  plan.
+- [x] **Attendance**: a headcount per service.
+- [x] Default-role permissions, permission tests and the audit trail.
 
-**Attendance**
+**Done when** a service can be scheduled, given a theme and counted, and
+the tests cover weekly scheduling in the church's time zone.
 
-- [ ] Optional registration with capacity and a deadline.
-- [ ] Two ways to record attendance, chosen per Event Type: per person, or
-  a headcount only.
+## Phase 4: Song pool
 
-**Done when** recurring events, conflict detection and both attendance
-methods are tested.
+Goal: the songs the system knows, and the outside services and models that
+describe them (pipeline stages 3, 5 and 6 as reusable pieces).
 
-## Phase 4: Giving
+- [ ] **Song** (`apps/songs`): Spotify track ID, title, artist, album and
+  length; cached lyrics and their status; the worship check result; feel;
+  theme tags; an embedding; "the team knows it".
+- [ ] **Theme Tag**: a church-edited list of about 30 worship themes with
+  neutral defaults. **Trusted Artist**: a church-edited list, empty by
+  default.
+- [ ] A **Spotify client**: app token, track search with paging and the
+  genre filter, and error handling. Credentials come from `.env`.
+- [ ] An **LRCLIB client**: lookup by title, artist, album and length, one
+  request at a time, with a fallback search.
+- [ ] The **ML engine**: sentence embeddings and a zero-shot classifier
+  run with ONNX Runtime, plus a keyword stand-in used by every test.
+- [ ] **Song analysis**: the worship check, tag suggestions, the feel
+  guess and the embedding, from lyrics only.
+- [ ] The song library: list with filters, song page, and editing of tags,
+  feel, the worship check and "the team knows it".
 
-Goal: an accurate record of money given, with corrections that can be
-traced.
+**Done when** a song's lyrics can be fetched, analysed and corrected by
+hand, and the tests run without the network or model files.
 
-- [ ] **Fund**: a church-edited list (default: General Fund).
-- [ ] **Payment Method**: a church-edited list. Defaults: Cash, Check,
-  Bank Transfer, E-wallet, Other.
-- [ ] **Contribution**: a member, a named guest or anonymous; fund,
-  amount, date, method and reference.
-- [ ] **Batch entry** for recording a collection quickly, with batch
-  totals checked against the counted amount.
-- [ ] Corrections are made with reversing entries, never edits or deletion.
-  Every change is audited.
-- [ ] Printable receipts and member giving statements for a chosen period.
-- [ ] Reports by fund and period, with CSV export.
-- [ ] The UI uses the "offering" Label.
+## Phase 5: Song suggestions
 
-**Done when** totals reconcile in tests, including reversals.
+Goal: from a posted theme to ranked songs (pipeline stages 2 to 9).
 
-## Phase 5: Records
+- [ ] **Suggestion settings** (one row): search genres, phrases per theme,
+  pages per phrase, market, the four ranking weights, and the repeat
+  window.
+- [ ] **Season**: church-defined date ranges linked to Theme Tags; none by
+  default.
+- [ ] **Search Run**: phrases used, pages read, songs found, run time,
+  progress and status.
+- [ ] The pipeline: search phrases, Spotify search with the unfiltered
+  retry, cleanup, lyric lookups, analysis of new songs, ranking and
+  explanations.
+- [ ] Ranking: `w1·relevance + w2·familiarity + w3·season − w4·recency`
+  over every accepted song in the pool.
+- [ ] Sequencing: the top songs placed in the template's slots by feel.
+- [ ] The **search worker** (`manage.py run_worker`) and a progress panel
+  on the service page.
+- [ ] A way to try the pipeline without Spotify: ranking the pool alone,
+  and a command that seeds public-domain hymns.
 
-Goal: the church's official registers and certificates.
+**Done when** a run on a seeded pool produces a ranked, explained set of
+songs, and a failed outside call ends the run with a clear message.
 
-- [ ] **Record Type**: church-defined, with its own custom fields,
-  register numbering (book, page and entry, or none), and certificate
-  wording with placeholders. Neutral starter types: Baptism/Christening,
-  Child Dedication, Marriage, Funeral/Burial, Membership.
-- [ ] **Church Record**: the people involved (members or non-members),
-  date, place, officiant (Label), custom field values and register number.
-- [ ] A printable certificate page (print CSS, saved as PDF from the
-  browser).
-- [ ] A log of issued certificates.
-- [ ] Restricted access. Corrections are audited, and earlier values stay
-  visible.
+## Phase 6: Lineups and reports
 
-**Done when** each starter Record Type can be recorded and printed, and
-access rules are tested.
+Goal: review, confirmation and what follows from it (pipeline stage 10 and
+the data for stage 11).
 
-## Phase 6: Services
+- [ ] **Lineup** and **Lineup Item**: slot, order, service key, notes, the
+  reason it was suggested, and a lock.
+- [ ] Review: swap from ranked alternatives, lock, reorder, remove, add
+  from the pool, regenerate around locked songs.
+- [ ] Confirmation: the worship leader or pastoral staff confirm; a final
+  decision locks out everyone without that permission; sending back with
+  notes; reopening.
+- [ ] The team sees a lineup only once it is confirmed.
+- [ ] **Suggestion Feedback**: every kept, swapped and removed suggestion.
+- [ ] Usage: confirmed lineups feed familiarity and recency.
+- [ ] Reports: song usage with CSV export and overused songs; attendance.
 
-Goal: the Service Request workflow, where configurable church practice
-matters most. Design: [[Services]].
+**Done when** the confirmation rules are tested for every role, and the
+usage report matches the confirmed lineups.
 
-**Service Types**
+## Phase 7: Song pages: chords and playback
 
-- [ ] **Service Type**: Fee Mode (none, fixed, donation, per request),
-  whether the fee can be waived, approval needed, minimum notice,
-  officiant needed, Record Type produced (optional), venue needed, whether
-  it can be requested online, and custom fields.
-- [ ] **Requirements** for each Service Type: name, description, and
-  whether a file upload is needed.
-- [ ] **Starter Catalog**: copy sample Service Types (no fees, few
-  Requirements), then edit them. Added as a step in the setup wizard.
+Goal: one page per lineup song with the track, the chords and the key.
 
-**Workflow**
+- [ ] **Chord Sheet** in ChordPro, typed or pasted; Ultimate Guitar-style
+  text is converted on paste (ChordSheetJS, stored in `static/vendor/`).
+- [ ] The viewer: the sheet in the service key, a personal transpose, a
+  capo view and Nashville numbers.
+- [ ] Key tools: transpose by semitone or to a key, capo positions, and a
+  key from a singer's range.
+- [ ] **Spotify connection** per user (Authorization Code flow), with
+  tokens refreshed as needed.
+- [ ] Playback: the Web Playback SDK for connected Premium accounts, the
+  embedded player or an "Open in Spotify" link otherwise.
+- [ ] Saving a confirmed lineup as a Spotify playlist.
 
-- [ ] `workflow.py`: `steps_for(service_type)` and the allowed moves
-  between statuses, written as plain functions. Tests cover every
-  combination of Fee Mode, approval and record.
-- [ ] **Service Request** intake: the requester (a member, or a
-  non-member's contact details), the people involved, preferred dates and
-  custom fields.
-- [ ] A Requirements checklist with uploads and a staff check.
-- [ ] Payment step: amount by Fee Mode, waiver with a reason, and receipt.
-- [ ] Approval step, done by roles with the approve permission.
-- [ ] Scheduling: officiant, venue and time, with conflict checks against
-  the calendar and other requests. Scheduling creates a calendar Event.
-- [ ] Completion, then an optional Church Record pre-filled from the
-  request.
-- [ ] Cancellation and decline, each with a reason.
+**Done when** the viewer's transposing is tested, and playback falls back
+to the embedded player whenever the SDK can't be used.
 
-**Screens**
+## Phase 8: Teams and announcements
 
-- [ ] A request queue grouped by status, and a request detail page with a
-  panel for each step.
+Goal: who serves when, and notes to them.
 
-**Done when** the combination tests pass, and a church with no fees and no
-approval sees no payment or approval screens or statuses.
+- [ ] **Team Part**: a church-edited list (voice or instrument).
+- [ ] **Team Profile**: a user's parts and vocal range.
+- [ ] **Assignment**: who does which part at a service, with the person's
+  reply.
+- [ ] **Blackout Dates**, and "My schedule".
+- [ ] **Swap Request**: ask to be replaced; another person takes it.
+- [ ] **Announcements** to everyone or to one service's team.
 
-## Phase 7: Worship Management
+**Done when** nobody can be assigned on a blackout date, and a swap moves
+the assignment.
 
-Goal: song library and worship planning data. Playback, chord sheets and
-recommendations are not part of this phase.
+## Phase 9: Learning to rank
 
-- [ ] **Song**: title, authors, language, default key, tempo, time
-  signature, themes (a church-edited tag list), Bible references, lyrics
-  (optional), external links and licence reference.
-- [ ] **Song Slot**: a church-edited list of the places in a service where
-  songs are sung. Neutral defaults: Opening, Praise, Response, Offering,
-  Closing.
-- [ ] **Worship Plan** for a worship-service Event: an ordered list of
-  items (songs in slots, readings, other parts) and the people assigned to
-  them.
-- [ ] **Teams** (choir, band or any church-defined group): members with
-  church-edited parts (voice part or instrument), service assignments, and
-  rehearsals as calendar Events with attendance.
-- [ ] **Song Usage**: written automatically when a plan is finalised.
-  Records the song, date, slot, Season, Event Type and team. This is the
-  data the later recommendation model learns from.
+Goal: pipeline stage 11.
 
-**Done when** finalising a plan writes Song Usage rows, and plans are
-tested.
+- [ ] A training command that builds pairs from confirmed lineups and
+  fits the ranking weights.
+- [ ] Learned weights replace the hand-set ones once enough lineups are
+  confirmed; the church can switch back.
+- [ ] A page showing both sets of weights and what they were trained on.
 
-## Phase 8: Self-service and Reports
+**Done when** training on made-up feedback moves the weights the expected
+way, and too little data leaves the hand-set weights in place.
 
-Goal: let members do common tasks themselves, and give leaders an overview.
+## Phase 10: Hardening and release
 
-- [ ] **Member portal**: own profile and household, own giving statement,
-  event registration, and service requests for Service Types marked as
-  requestable online, including requirement uploads and request status.
-- [ ] **Notifications**: email and in-app messages for request status
-  changes, upcoming schedules and assignments. The church can edit the
-  wording.
-- [ ] **Dashboard**: figures for each enabled module, such as pending
-  requests, this month's giving, attendance trend and upcoming events.
-- [ ] **Reports** with CSV export for each module.
-- [ ] **Announcements**: church-wide, or for one ministry or team.
+Goal: ready for the proposal and for a real church.
 
-**Done when** a member account can complete a service request end to end,
-and portal permission tests pass.
-
-## Phase 9: Hardening and Release
-
-Goal: ready for real churches and for thesis evaluation.
-
-- [ ] Security review:
-  - a permission test for every view;
-  - upload type and size checks;
-  - private media;
-  - limits on repeated failed sign-ins;
-  - production settings (`manage.py check --deploy` clean).
-- [ ] Performance: check database query counts on list pages, and add
-  indexes and pagination where needed.
-- [ ] Mobile layout and basic accessibility pass.
-- [ ] A `seed_demo` command with several fictional church configurations,
-  for example one that charges fees and requires approval, and one with no
-  fees and no records. This shows that one codebase serves different
-  practices.
-- [ ] A backup and restore script (`pg_dump`) and a deployment guide in the
-  vault.
-- [ ] User acceptance testing with churches that work differently, using
-  the evaluation instrument the thesis requires.
-
-## Phase 10 (later): Music features
-
-Out of scope for now: ML song recommendation, audio playback and the chord
-sheet viewer. The management phases already prepare for them:
-
-- Song metadata (key, tempo, themes, language, Bible references) and
-  **Song Usage** history, which together are the model's training data
-  (Phase 7).
-- Seasons and Event Types as context for recommendations (Phase 3).
-- Private file storage and permission-checked serving, reused for audio
-  and chord sheet files (Phases 0 and 6).
+- [ ] Security review: a permission test for every view, upload checks,
+  limits on repeated failed sign-ins, production settings
+  (`manage.py check --deploy` clean).
+- [ ] Performance: query counts on list pages and the lineup page.
+- [ ] Mobile layout and basic accessibility pass, especially the song
+  page.
+- [ ] A `seed_demo` command with fictional churches that work differently.
+- [ ] A backup and restore script (`pg_dump`) and a deployment guide.
+- [ ] User acceptance testing with the evaluation instrument the proposal
+  requires.
 
 ## Decisions to make before their phase
 
-| Phase | Decision                                                                                   | Current leaning                                                                                                                                                     |
-| ----- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 4/6   | Where service fees are recorded ([[Services]] open question)                               | Service fees are kept in Services, not Giving, because a fee is not a gift. When Giving is on, a fee can be tagged to a Fund so it appears in the church's finance reports. |
-| 5/6   | What a record issued by a Service Request contains ([[Services]] open question)            | Its Record Type's fields, pre-filled from the request                                                                                                               |
-| 6     | Whether non-members can request services                                                   | Yes, by giving contact details; no account needed                                                                                                                   |
+| Phase | Decision                                                                 | Current leaning                                                                 |
+| ----- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| 9     | Must the proposal show a trained model? (the brief's open question)      | Build both: the rules pipeline works from day one, and training switches on once enough lineups are confirmed |
+| 10    | Whether Spotify's 5-user Development Mode limit is acceptable for the defence | Yes for the proposal; record it as a scaling limit                        |
 
 Record each decision in `02-Architecture/Decisions/` once it is made.

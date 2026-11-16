@@ -60,6 +60,32 @@ def make_member(**fields):
     return Member.objects.create(**fields)
 
 
+def make_service(**fields):
+    """Create a worship service a week from now, on the default template."""
+    import datetime
+
+    from django.utils import timezone
+
+    from apps.worship.models import ServiceTemplate, WorshipService
+
+    n = next(_sequence)
+    if "template" not in fields:
+        fields["template"] = ServiceTemplate.objects.active().first()
+    fields.setdefault("name", fields["template"].name)
+    fields.setdefault(
+        "starts_at", timezone.now() + datetime.timedelta(days=7, minutes=n)
+    )
+    return WorshipService.objects.create(**fields)
+
+
+def make_theme(service=None, **fields):
+    """Post a theme on a service (a new one unless given)."""
+    from apps.worship.models import Theme
+
+    fields.setdefault("title", "Grace that forgives")
+    return Theme.objects.create(service=service or make_service(), **fields)
+
+
 def close_file_response(response):
     """Close a FileResponse in a test without closing the test database.
 

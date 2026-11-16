@@ -15,10 +15,9 @@ class DefaultRolesTests(TestCase):
             {
                 "administrator",
                 "office_staff",
-                "finance",
-                "records_keeper",
+                "pastoral_staff",
                 "worship_leader",
-                "ministry_leader",
+                "team_member",
             },
         )
 
@@ -44,17 +43,17 @@ class DefaultRolesTests(TestCase):
 
 class SyncDefaultPermissionsTests(TestCase):
     def test_default_permission_is_granted_once(self):
-        finance = Role.objects.get(key="finance")
+        team = Role.objects.get(key="team_member")
         perm = Permission.objects.get(codename="view_auditevent")
-        defaults = {"finance": ["audit.view_auditevent"]}
+        defaults = {"team_member": ["audit.view_auditevent"]}
         with mock.patch.dict(roles.DEFAULT_ROLE_PERMISSIONS, defaults, clear=True):
             roles.sync_default_role_permissions()
-            self.assertIn(perm, finance.permissions.all())
+            self.assertIn(perm, team.permissions.all())
 
             # The church removes it; a later sync must not grant it again.
-            finance.permissions.remove(perm)
+            team.permissions.remove(perm)
             roles.sync_default_role_permissions()
-            self.assertNotIn(perm, finance.permissions.all())
+            self.assertNotIn(perm, team.permissions.all())
 
     def test_administrator_regains_any_removed_permission(self):
         administrator = Role.objects.get(key=roles.ADMINISTRATOR)
@@ -70,7 +69,7 @@ class AdministratorTests(TestCase):
         holder = make_user(roles=["administrator"])
         superuser = make_user(is_superuser=True)
         inactive = make_user(roles=["administrator"], is_active=False)
-        plain = make_user(roles=["finance"])
+        plain = make_user(roles=["team_member"])
         self.assertTrue(roles.is_administrator(holder))
         self.assertTrue(roles.is_administrator(superuser))
         self.assertFalse(roles.is_administrator(inactive))
@@ -79,4 +78,6 @@ class AdministratorTests(TestCase):
     def test_role_permissions_reach_the_user(self):
         user = make_user(roles=["administrator"])
         self.assertTrue(user.has_perm("church.change_churchprofile"))
-        self.assertFalse(make_user(roles=["finance"]).has_perm("accounts.view_user"))
+        self.assertFalse(
+            make_user(roles=["team_member"]).has_perm("accounts.view_user")
+        )

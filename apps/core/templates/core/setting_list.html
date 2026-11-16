@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ config.title }}{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
   {% if nav_links %}
@@ -11,7 +11,7 @@
     </ul>
   {% endif %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-    <h1 class="h3 mb-0">{{ config.title }}</h1>
+    <h1 class="h3 mb-0">{{ title }}</h1>
     {% if create_url %}<a href="{{ create_url }}" class="btn btn-primary">Add {{ config.item_name|lower }}</a>{% endif %}
   </div>
   {% if config.intro %}<p class="text-body-secondary">{{ config.intro }}</p>{% endif %}

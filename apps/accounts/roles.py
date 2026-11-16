@@ -33,22 +33,43 @@ DEFAULT_ROLE_PERMISSIONS = {
         "members.view_membershipstatus",
         "members.view_relationshiptype",
         "members.view_memberfield",
+        # Worship schedule (Phase 3)
+        "worship.view_worshipservice",
+        "worship.record_attendance",
     ],
-    "finance": ["members.view_member"],
-    "records_keeper": [
+    "pastoral_staff": [
         "members.view_member",
-        "members.view_private_details",
-        "members.view_household",
+        # Worship schedule (Phase 3)
+        "worship.view_worshipservice",
+        "worship.add_worshipservice",
+        "worship.change_worshipservice",
+        "worship.change_theme",
+        "worship.record_attendance",
+        "worship.view_servicetemplate",
+        "worship.add_servicetemplate",
+        "worship.change_servicetemplate",
+        "worship.view_sermonseries",
+        "worship.add_sermonseries",
+        "worship.change_sermonseries",
     ],
-    "worship_leader": ["members.view_member"],
-    "ministry_leader": ["members.view_member"],
+    "worship_leader": [
+        "members.view_member",
+        # Worship schedule (Phase 3)
+        "worship.view_worshipservice",
+        "worship.view_servicetemplate",
+        "worship.view_sermonseries",
+    ],
+    "team_member": [
+        # Worship schedule (Phase 3)
+        "worship.view_worshipservice",
+    ],
 }
 
 
 def managed_permission_apps():
     from apps.church.modules import MODULES
 
-    module_apps = [m.app_label for m in MODULES]
+    module_apps = [label for m in MODULES for label in m.app_labels]
     return [
         label
         for label in (*CORE_PERMISSION_APPS, *module_apps)
