@@ -87,6 +87,20 @@ Personal files (member photos, uploaded documents) use
   everything else downloads.
 - Edit forms show the current file with `PrivateFileInput(url=...)`.
 
+## Outside services and models
+
+- Every call to an outside service goes through `apps/core/http.py`
+  `request()`, which returns a `Response` with any status and raises
+  `HttpError` only when there is no answer. Each service gets a client
+  module that turns statuses into its own error (e.g. `SpotifyError`).
+- Clients take `sleep` (and `clock`) arguments, so tests check waiting
+  without waiting.
+- ML goes through `apps/songs/ml/get_engine()`, which `settings.ML_ENGINE`
+  picks ([[0006-onnx-runtime-for-song-analysis]]). Engines offer
+  `embed(texts)` and `score(text, labels)`; nothing else touches a model.
+- Only lyrics and the church's own text go into an engine. Lyrics are
+  never logged, printed or put in the audit trail.
+
 ## A new Module's permissions
 
 Model permissions appear in the permission matrix automatically, once the
@@ -107,9 +121,16 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   - `make_service(**fields)`: a worship service a week from now, on the
     seeded template
   - `make_theme(service=None, **fields)`
+  - `make_song(tags=(), **fields)`: a song with a unique Spotify ID
   - `TEST_PASSWORD`
   - `close_file_response(response)`: closes a file download in a test
     without also closing the test database connection.
+- The test runner (`ChordTestRunner`, `TEST_RUNNER` in settings) blocks the
+  network, sets `ML_ENGINE` to "keyword" and clears the Spotify
+  credentials. A test that needs an outside service wraps the code in
+  `FakeHttp()`, replies with `web.reply(method, url_prefix, data)` (or a
+  function of the call), and checks `web.calls`. Lyrics in tests are
+  invented or public domain.
 - Tests that upload files use `override_settings(MEDIA_ROOT=...)` or
   `override_settings(PRIVATE_MEDIA_ROOT=...)` with a temporary folder.
 - Every view gets tests for both an allowed user and a refused user.

@@ -34,8 +34,8 @@ flowchart LR
 | 1     | Church Setup and Access       | L    | 0          | Done (2026-11-16) |
 | 2     | Members                       | M    | 1          | Done (2026-11-16) |
 | 3     | Worship schedule and themes   | M    | 1          | Done (2026-11-17) |
-| 4     | Song pool                     | M    | 3          | Next              |
-| 5     | Song suggestions              | L    | 4          | Not started       |
+| 4     | Song pool                     | M    | 3          | Done (2026-11-17) |
+| 5     | Song suggestions              | L    | 4          | Next              |
 | 6     | Lineups and reports           | L    | 5          | Not started       |
 | 7     | Song pages: chords and playback | L  | 6          | Not started       |
 | 8     | Teams and announcements       | M    | 6          | Not started       |
@@ -183,25 +183,29 @@ the tests cover weekly scheduling in the church's time zone.
 
 ## Phase 4: Song pool
 
+**Status: done (2026-11-17).** See [[Worship]] and
+[[0006-onnx-runtime-for-song-analysis]].
+
 Goal: the songs the system knows, and the outside services and models that
 describe them (pipeline stages 3, 5 and 6 as reusable pieces).
 
-- [ ] **Song** (`apps/songs`): Spotify track ID, title, artist, album and
+- [x] **Song** (`apps/songs`): Spotify track ID, title, artist, album and
   length; cached lyrics and their status; the worship check result; feel;
   theme tags; an embedding; "the team knows it".
-- [ ] **Theme Tag**: a church-edited list of about 30 worship themes with
+- [x] **Theme Tag**: a church-edited list of about 30 worship themes with
   neutral defaults. **Trusted Artist**: a church-edited list, empty by
   default.
-- [ ] A **Spotify client**: app token, track search with paging and the
+- [x] A **Spotify client**: app token, track search with paging and the
   genre filter, and error handling. Credentials come from `.env`.
-- [ ] An **LRCLIB client**: lookup by title, artist, album and length, one
+- [x] An **LRCLIB client**: lookup by title, artist, album and length, one
   request at a time, with a fallback search.
-- [ ] The **ML engine**: sentence embeddings and a zero-shot classifier
+- [x] The **ML engine**: sentence embeddings and a zero-shot classifier
   run with ONNX Runtime, plus a keyword stand-in used by every test.
-- [ ] **Song analysis**: the worship check, tag suggestions, the feel
+- [x] **Song analysis**: the worship check, tag suggestions, the feel
   guess and the embedding, from lyrics only.
-- [ ] The song library: list with filters, song page, and editing of tags,
-  feel, the worship check and "the team knows it".
+- [x] The song library: list with filters, song page, and editing of tags,
+  feel, the worship check and "the team knows it". Also "Find on Spotify"
+  to add one track, and `manage.py process_songs`.
 
 **Done when** a song's lyrics can be fetched, analysed and corrected by
 hand, and the tests run without the network or model files.

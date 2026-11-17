@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Songs{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Songs</h1>
+    <div class="d-flex flex-wrap gap-2">
+      {% if settings_url %}<a href="{{ settings_url }}" class="btn btn-outline-secondary">Settings</a>{% endif %}
+      {% if perms.songs.add_song %}<a href="{% url 'songs:spotify_search' %}" class="btn btn-primary">Find on Spotify</a>{% endif %}
+    </div>
+  </div>
+
+  {% include "worship/includes/nav.html" with active="songs" %}
+
+  <form method="get" class="row g-2 align-items-end mb-3" aria-label="Filter songs">
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    <div class="col-sm-6 col-lg">
+      <label for="filter-check" class="form-label small mb-1">Worship check</label>
+      <select id="filter-check" name="check" class="form-select form-select-sm">
+        <option value="">Any</option>
+        {% for value, name in check_choices %}<option value="{{ value }}"{% if chosen.check == value %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg">
+      <label for="filter-tag" class="form-label small mb-1">Theme tag</label>
+      <select id="filter-tag" name="tag" class="form-select form-select-sm">
+        <option value="">Any</option>
+        {% for tag in tags %}<option value="{{ tag.pk }}"{% if chosen.tag == tag.pk|stringformat:"s" %} selected{% endif %}>{{ tag.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg">
+      <label for="filter-feel" class="form-label small mb-1">Feel</label>
+      <select id="filter-feel" name="feel" class="form-select form-select-sm">
+        <option value="">Any</option>
+        {% for value, name in feel_choices %}<option value="{{ value }}"{% if chosen.feel == value %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg">
+      <label for="filter-known" class="form-label small mb-1">Team</label>
+      <select id="filter-known" name="known" class="form-select form-select-sm">
+        <option value="">Any</option>
+        {% for value, name in known_choices %}<option value="{{ value }}"{% if chosen.known == value %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-sm-6 col-lg">
+      <label for="filter-lyrics" class="form-label small mb-1">Lyrics</label>
+      <select id="filter-lyrics" name="lyrics" class="form-select form-select-sm">
+        <option value="">Any</option>
+        {% for value, name in lyrics_choices %}<option value="{{ value }}"{% if chosen.lyrics == value %} selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-auto d-flex gap-2">
+      <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+      <a href="{% url 'songs:list' %}" class="btn btn-sm btn-link">Clear</a>
+    </div>
+  </form>
+
+  {% include "includes/list_toolbar.html" with placeholder="Search by title, artist or album" %}
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Song</th>
+            <th scope="col">Worship check</th>
+            <th scope="col">Feel</th>
+            <th scope="col">Theme tags</th>
+            <th scope="col">Team</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for song in object_list %}
+            <tr>
+              <td>
+                <a href="{% url 'songs:detail' public_id=song.public_id %}" class="fw-semibold text-decoration-none">{{ song.title }}</a>
+                <div class="small text-body-secondary">{{ song.artist }}</div>
+              </td>
+              <td>{% include "songs/includes/check_badge.html" %}</td>
+              <td>{{ song.get_feel_display|default:"—" }}</td>
+              <td>{% for tag in song.tags.all %}<span class="badge text-bg-light border me-1">{{ tag.name }}</span>{% empty %}<span class="text-body-secondary">—</span>{% endfor %}</td>
+              <td>{% if song.team_knows %}<span class="badge text-bg-success">Knows it</span>{% else %}<span class="text-body-secondary small">New</span>{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5" class="text-center text-body-secondary py-4">
+              {% if q or chosen.check or chosen.tag or chosen.feel or chosen.known or chosen.lyrics %}No songs match.{% else %}The song pool is empty. Songs are added as services' themes are searched{% if perms.songs.add_song %}, or with Find on Spotify{% endif %}.{% endif %}
+            </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% include "includes/pagination.html" %}
+{% endblock %}

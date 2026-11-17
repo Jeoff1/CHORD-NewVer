@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}{{ song.title }}{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+      <a href="{% url 'songs:list' %}" class="small text-decoration-none">← Songs</a>
+      <h1 class="h3 mb-1">{{ song.title }}</h1>
+      <div class="text-body-secondary">
+        {{ song.artist }}{% if song.album %} · {{ song.album }}{% endif %}{% if song.length_display %} · {{ song.length_display }}{% endif %}
+      </div>
+      {% if song.spotify_url %}<a href="{{ song.spotify_url }}" class="small" target="_blank" rel="noopener">Open in Spotify</a>{% endif %}
+    </div>
+    {% if perms.songs.change_song %}
+      <div class="d-flex flex-wrap gap-2">
+        <form method="post" action="{% url 'songs:check_again' public_id=song.public_id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-secondary">Check again</button>
+        </form>
+        <a href="{% url 'songs:update' public_id=song.public_id %}" class="btn btn-outline-primary">Edit</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h2 class="h5">Worship check</h2>
+          <p class="mb-1">
+            {% include "songs/includes/check_badge.html" %}
+            {% if worship_percent is not None %}<span class="text-body-secondary small ms-1">Lyrics score {{ worship_percent }}%</span>{% endif %}
+          </p>
+          {% if song.is_reviewed %}
+            <p class="small text-body-secondary mb-0">Reviewed by {{ song.reviewed_by|default:"a former user" }} on {{ song.reviewed_at|date:"M j, Y" }}.</p>
+          {% elif song.analysed_at %}
+            <p class="small text-body-secondary mb-0">Suggested by the analysis; nobody has reviewed it yet.</p>
+          {% endif %}
+
+          <h2 class="h5 mt-4">Theme tags</h2>
+          {% if ranked_tags %}
+            <ul class="list-inline mb-0">
+              {% for tag, score in ranked_tags %}
+                <li class="list-inline-item"><span class="badge text-bg-light border">{{ tag.name }}{% if score is not None %} <span class="text-body-secondary">{% widthratio score 1 100 %}%</span>{% endif %}</span></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-body-secondary mb-0">No tags yet.</p>
+          {% endif %}
+
+          <div class="row mt-4">
+            <div class="col-sm-6">
+              <h2 class="h6 mb-1">Feel</h2>
+              <p>{{ song.get_feel_display|default:"Not set" }}</p>
+            </div>
+            <div class="col-sm-6">
+              <h2 class="h6 mb-1">The team</h2>
+              <p>{% if song.team_knows %}Knows this song{% else %}Hasn't learned it yet{% endif %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body small text-body-secondary">
+          <div>Lyrics: {{ song.get_lyrics_status_display }}{% if song.lyrics_checked_at %}, looked up {{ song.lyrics_checked_at|date:"M j, Y g:i A" }}{% endif %}</div>
+          {% if song.analysed_at %}<div>Analysed {{ song.analysed_at|date:"M j, Y g:i A" }} ({{ song.analysed_with }})</div>{% endif %}
+          <div>Added {{ song.created_at|date:"M j, Y" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h5">Lyrics</h2>
+          {% if song.lyrics %}
+            <div class="border rounded p-2 bg-body-tertiary small" style="max-height: 32rem; overflow-y: auto">{{ song.lyrics|linebreaksbr }}</div>
+            <p class="small text-body-secondary mt-2 mb-0">From LRCLIB. Lyrics are copyrighted: keep them within the church's team.</p>
+          {% elif song.lyrics_status == "pending" %}
+            <p class="text-body-secondary mb-0">Not looked up yet. Lyrics are fetched the next time songs are processed.</p>
+          {% elif song.lyrics_status == "instrumental" %}
+            <p class="text-body-secondary mb-0">LRCLIB lists this track as instrumental, so it is set aside.</p>
+          {% elif song.lyrics_status == "failed" %}
+            <p class="text-body-secondary mb-0">The lookup failed. Use Check again to try once more.</p>
+          {% else %}
+            <p class="text-body-secondary mb-0">LRCLIB has no lyrics for this song, so it is set aside.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -51,6 +51,9 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.view_sermonseries",
         "worship.add_sermonseries",
         "worship.change_sermonseries",
+        # Song pool (Phase 4)
+        "songs.view_song",
+        "songs.view_themetag",
     ],
     "worship_leader": [
         "members.view_member",
@@ -58,6 +61,16 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.view_worshipservice",
         "worship.view_servicetemplate",
         "worship.view_sermonseries",
+        # Song pool (Phase 4)
+        "songs.view_song",
+        "songs.add_song",
+        "songs.change_song",
+        "songs.view_themetag",
+        "songs.add_themetag",
+        "songs.change_themetag",
+        "songs.view_trustedartist",
+        "songs.add_trustedartist",
+        "songs.change_trustedartist",
     ],
     "team_member": [
         # Worship schedule (Phase 3)
