@@ -260,11 +260,25 @@ class SuggestionSettingsTests(SuggestionViewTestCase):
             "weight_familiarity": 0.5,
             "weight_season": 0.2,
             "weight_recency": 0.4,
+            "weight_feel": 0.2,
             "repeat_window_weeks": 6,
             "suggestions_kept": 20,
         }
         data.update(overrides)
         return data
+
+    def test_the_recalibrated_defaults(self):
+        options = SuggestionSettings.load()
+        self.assertEqual(
+            options.weights(),
+            {
+                "relevance": 1.0,
+                "familiarity": 0.2,
+                "season": 0.15,
+                "recency": 0.3,
+                "feel": 0.15,
+            },
+        )
 
     def test_the_worship_leader_changes_the_settings_and_it_is_audited(self):
         self.client.force_login(self.leader)
@@ -276,8 +290,10 @@ class SuggestionSettingsTests(SuggestionViewTestCase):
         self.assertEqual(options.genres(), ["worship", "gospel"])
         self.assertEqual(options.market, "PH")
         self.assertEqual(options.weight_familiarity, 0.5)
+        self.assertEqual(options.weight_feel, 0.2)
         event = AuditEvent.objects.get(action=AuditEvent.Action.CHANGED)
-        self.assertEqual(event.changes["Familiarity weight"], ["0.3", "0.5"])
+        self.assertEqual(event.changes["Familiarity weight"], ["0.2", "0.5"])
+        self.assertEqual(event.changes["Feel mismatch weight"], ["0.15", "0.2"])
 
     def test_bad_values_are_refused(self):
         self.client.force_login(self.leader)
@@ -383,3 +399,106 @@ class DefaultRoleTests(TestCase):
         self.assertNotIn(
             "worship.change_suggestionsettings", self.permissions("pastoral_staff")
         )
+
+
+class CorrectionTests(SuggestionViewTestCase):
+    """One-click corrections from the suggestions panel (smoke test fixes)."""
+
+    def setUp(self):
+        super().setUp()
+        self.run = finished_run(self.service)
+        self.placed = self.run.suggestions.get(rank=1)
+        self.other = self.run.suggestions.get(rank=2)
+
+    def feel_url(self, suggestion):
+        return reverse(
+            "worship:suggestion_feel",
+            kwargs={"public_id": self.service.public_id, "pk": suggestion.pk},
+        )
+
+    def reject_url(self, suggestion):
+        return reverse(
+            "worship:suggestion_not_worship",
+            kwargs={"public_id": self.service.public_id, "pk": suggestion.pk},
+        )
+
+    def test_the_panel_offers_corrections_to_people_who_may_correct_songs(self):
+        self.client.force_login(self.leader)
+        response = self.client.get(url(self.service, "service"))
+        self.assertContains(response, self.feel_url(self.placed))
+        self.assertContains(response, "Not a worship song")
+        self.client.force_login(self.pastor)  # may suggest, not edit songs
+        response = self.client.get(url(self.service, "service"))
+        self.assertNotContains(response, self.feel_url(self.placed))
+
+    def test_setting_a_feel_keeps_it_places_again_and_is_audited(self):
+        self.client.force_login(self.leader)
+        response = self.client.post(
+            self.feel_url(self.other), {"feel": "upbeat"}, HTTP_HX_REQUEST="true"
+        )
+        self.assertContains(response, 'id="suggestions"')
+        self.assertNotContains(response, "<html")
+        song = self.other.song
+        song.refresh_from_db()
+        self.assertEqual(song.feel, "upbeat")
+        self.assertTrue(song.feel_reviewed)
+        self.assertFalse(song.is_reviewed)
+        self.other.refresh_from_db()
+        self.assertIsNotNone(self.other.slot)  # placed now
+        event = AuditEvent.objects.get(object_id=str(song.pk))
+        self.assertEqual(event.changes["Feel"], ["", "Upbeat"])
+
+    def test_without_htmx_the_page_reloads(self):
+        self.client.force_login(self.leader)
+        response = self.client.post(self.feel_url(self.other), {"feel": "slow"})
+        self.assertRedirects(response, url(self.service, "service") + "#suggestions")
+
+    def test_a_feel_must_be_one_of_the_three(self):
+        self.client.force_login(self.leader)
+        response = self.client.post(self.feel_url(self.other), {"feel": "fast"})
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(AuditEvent.objects.exists())
+
+    def test_not_a_worship_song_leaves_the_lineup_and_is_reviewed(self):
+        self.client.force_login(self.leader)
+        self.client.post(self.reject_url(self.placed), HTTP_HX_REQUEST="true")
+        song = self.placed.song
+        song.refresh_from_db()
+        self.assertEqual(song.worship_check, Song.WorshipCheck.REJECTED)
+        self.assertEqual(song.reviewed_by, self.leader)
+        response = self.client.get(url(self.service, "service"))
+        self.assertNotContains(response, "Placed Song")
+        self.other.refresh_from_db()
+        self.assertIsNotNone(self.other.slot)  # took the free slot
+
+    def test_corrections_need_both_permissions_and_this_service(self):
+        for user in (self.pastor, self.team_member):
+            self.client.force_login(user)
+            response = self.client.post(self.feel_url(self.other), {"feel": "slow"})
+            self.assertEqual(response.status_code, 403)
+        elsewhere = make_service()
+        self.client.force_login(self.leader)
+        response = self.client.post(
+            reverse(
+                "worship:suggestion_feel",
+                kwargs={"public_id": elsewhere.public_id, "pk": self.other.pk},
+            ),
+            {"feel": "slow"},
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+class ThemeNotesHintTests(SuggestionViewTestCase):
+    def test_a_theme_without_notes_gets_a_hint(self):
+        self.client.force_login(self.pastor)
+        response = self.client.get(url(self.service, "service"))
+        self.assertContains(response, "The theme has no sermon notes yet")
+        self.assertContains(response, url(self.service, "theme"))
+
+    def test_notes_are_not_required_and_the_hint_goes_with_them(self):
+        theme = self.service.theme
+        theme.notes = "The grace that forgives and restores."
+        theme.save()
+        self.client.force_login(self.leader)
+        response = self.client.get(url(self.service, "service"))
+        self.assertNotContains(response, "has no sermon notes")

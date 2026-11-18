@@ -34,6 +34,8 @@
           </p>
           {% if song.is_reviewed %}
             <p class="small text-body-secondary mb-0">Reviewed by {{ song.reviewed_by|default:"a former user" }} on {{ song.reviewed_at|date:"M j, Y" }}.</p>
+          {% elif song.analysed_at and song.worship_check == "unchecked" %}
+            <p class="small text-body-secondary mb-0">Waiting for a person's review: its artist isn't on the Trusted Artists list, so it isn't suggested until someone checks it.</p>
           {% elif song.analysed_at %}
             <p class="small text-body-secondary mb-0">Suggested by the analysis; nobody has reviewed it yet.</p>
           {% endif %}

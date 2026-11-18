@@ -42,6 +42,10 @@ administrators are users given the Administrator role under
   ([[0006-onnx-runtime-for-song-analysis]]). Check the free disk space
   first; the command refuses to leave less than 200 MB. To run without
   them, set `ML_ENGINE=keyword`.
+- **Which engine runs:** `ML_ENGINE` in `.env` picks it. When `.env` has
+  no `ML_ENGINE` line, CHORD uses `onnx`, the downloaded models. The tests
+  always use `keyword`, whatever `.env` says. See the smoke test below for
+  how to check.
 - **The search worker:** song suggestions need it running, in its own
   terminal: `python manage.py run_worker` (stop it with Ctrl+C). Run
   **one** only: a second one refuses to start ([[0007-search-worker]]).
@@ -52,8 +56,42 @@ administrators are users given the Administrator role under
   runs. Set `LRCLIB_USER_AGENT` to name the installation and a contact
   page.
 - **Trying suggestions without Spotify:** `python manage.py seed_hymns`
-  adds nine public-domain hymns to the song pool. Once the worker has
+  adds 23 public-domain hymns and carols to the song pool. Once the worker has
   analysed them, a service with a theme can use "Rank the song pool only".
+
+### Smoke test: suggestions with the real models
+
+From the `CHORD-NewVer` folder in PowerShell, without activating the
+virtual environment:
+
+```powershell
+# 1. Download the models into ml_models/ (once; about 120 MB)
+.\.venv\Scripts\python.exe manage.py download_models
+
+# 2. Check the app uses them: expect "ML_ENGINE: onnx" and "Missing models: none"
+.\.venv\Scripts\python.exe manage.py shell -c 'from django.conf import settings; from apps.songs.ml.catalog import MODELS; print(''ML_ENGINE:'', settings.ML_ENGINE); print(''Models folder:'', settings.ML_MODELS_DIR); print(''Missing models:'', [m.folder for m in MODELS if not m.is_installed(settings.ML_MODELS_DIR)] or ''none'')'
+
+#    Then load them: expect "Engine loaded: onnx:all-MiniLM-L6-v2"
+.\.venv\Scripts\python.exe manage.py shell -c 'from apps.songs.ml import get_engine; print(''Engine loaded:'', get_engine().name)'
+
+# 3. Terminal 1: the web server
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py runserver
+
+# 3. Terminal 2: the search worker (only one)
+.\.venv\Scripts\python.exe manage.py run_worker
+```
+
+- In Windows PowerShell 5.1, the `shell -c` code uses only single quotes
+  (doubled inside the outer ones): PowerShell drops double quotes from the
+  arguments it passes to Python.
+- `keyword` instead of `onnx` means `.env` sets `ML_ENGINE=keyword`;
+  delete that line. A song analysed by the other engine is analysed again
+  by the worker, since embeddings from different engines don't compare.
+- With `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` set, "Find songs"
+  calls Spotify for real. To try the pipeline without it, run
+  `.\.venv\Scripts\python.exe manage.py seed_hymns` and use "Rank the song
+  pool only".
 
 ## Email
 

@@ -52,14 +52,24 @@ class SuggestionSettings(models.Model):
     weight_relevance = _weight(
         "Theme match weight", 1.0, "How much a song's lyrics matching the theme count."
     )
+    # Defaults recalibrated for fixed-scale relevance (2026-11-18): the old
+    # per-run scaling stretched about 0.27 of similarity to the full 0-to-1,
+    # the fixed scale stretches 0.40, so the other weights shrank by about
+    # 0.27 / 0.40 to keep the same trade-offs.
     weight_familiarity = _weight(
-        "Familiarity weight", 0.3, "How much songs the team knows are preferred."
+        "Familiarity weight", 0.2, "How much songs the team knows are preferred."
     )
     weight_season = _weight(
-        "Season weight", 0.2, "How much songs that fit the current season count."
+        "Season weight", 0.15, "How much songs that fit the current season count."
     )
     weight_recency = _weight(
-        "Recent use weight", 0.4, "How much songs sung recently are held back."
+        "Recent use weight", 0.3, "How much songs sung recently are held back."
+    )
+    weight_feel = _weight(
+        "Feel mismatch weight",
+        0.15,
+        "How much a song loses when placed in a slot of another feel, for each "
+        "step between upbeat, mid-tempo and slow.",
     )
     repeat_window_weeks = models.PositiveSmallIntegerField(
         "Repeat window (weeks)",
@@ -97,6 +107,7 @@ class SuggestionSettings(models.Model):
             "familiarity": self.weight_familiarity,
             "season": self.weight_season,
             "recency": self.weight_recency,
+            "feel": self.weight_feel,
         }
 
 
@@ -192,6 +203,14 @@ class SearchRun(models.Model):
         help_text="Spotify was paused, so the run ranked the songs already in "
         "the pool.",
     )
+    # Information only, never used in a decision (Design-Decisions, Phase 5
+    # follow-up): which searches found nothing with the genre filter.
+    searches = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Each Spotify search: phrase, genre, pages, tracks found, and "
+        "whether it ran again without the genre.",
+    )
 
     class Meta:
         ordering = ["-created_at", "-pk"]
@@ -220,6 +239,10 @@ class SearchRun(models.Model):
         minutes, seconds = divmod(seconds, 60)
         return f"{minutes} min {seconds} s" if minutes else f"{seconds} s"
 
+    @property
+    def genre_dropped_searches(self):
+        return [search for search in self.searches if search.get("genre_dropped")]
+
 
 class Suggestion(models.Model):
     """A song a run ranked, with why. Songs placed in the service's song
@@ -237,12 +260,20 @@ class Suggestion(models.Model):
     familiarity = models.FloatField()
     season = models.FloatField()
     recency = models.FloatField()
+    match = models.FloatField(
+        null=True, blank=True, help_text="The raw similarity of theme and lyrics."
+    )
     slot = models.ForeignKey(
         TemplateSlot,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="+",
+    )
+    slot_reason = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Why the song is in its slot, when that needs saying.",
     )
     reasons = models.JSONField(default=list)
 

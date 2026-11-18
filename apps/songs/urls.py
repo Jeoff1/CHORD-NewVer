@@ -46,6 +46,11 @@ urlpatterns = [
         views.SongCheckAgainView.as_view(),
         name="check_again",
     ),
+    path(
+        "settings/worship-check/",
+        views.WorshipCheckSettingsView.as_view(),
+        name="check_settings",
+    ),
     *setting_list_urls(THEME_TAGS, route_prefix="settings/"),
     *setting_list_urls(TRUSTED_ARTISTS, route_prefix="settings/"),
 ]

@@ -36,6 +36,8 @@ def words(text):
 
 class KeywordEngine:
     name = "keyword"
+    # Bag-of-words cosines: 0 when no words are shared, rarely above 0.4.
+    similarity_range = (0.0, 0.40)
 
     def score(self, text, labels):
         present = set(words(text))

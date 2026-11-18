@@ -4,6 +4,7 @@ analysis and the church's corrections."""
 import re
 
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
@@ -104,7 +105,17 @@ class Song(PublicIdModel, TimeStampedModel):
         help_text="The model's score plus the Trusted Artist bonus, if any; "
         "the Worship Check uses it.",
     )
-    feel = models.CharField(max_length=10, choices=Feel.choices, blank=True)
+    feel = models.CharField(
+        max_length=10,
+        choices=Feel.choices,
+        blank=True,
+        help_text="Blank when the analysis wasn't sure; a person sets it.",
+    )
+    feel_reviewed = models.BooleanField(
+        "Feel set by a person",
+        default=False,
+        help_text="Analysing the song again keeps its feel.",
+    )
     tags = models.ManyToManyField(
         ThemeTag, blank=True, related_name="songs", verbose_name="theme tags"
     )
@@ -164,6 +175,53 @@ class Song(PublicIdModel, TimeStampedModel):
         scores = self.tag_scores or {}
         tagged = [(tag, scores.get(str(tag.pk))) for tag in self.tags.all()]
         return sorted(tagged, key=lambda pair: (-(pair[1] or 0), pair[0].name))
+
+
+class WorshipCheckSettings(models.Model):
+    """How the church decides the Worship Check from the model's score. One
+    row. These are church rules applied after the model: the artist name is
+    compared with the Trusted Artist list here, never given to a model, and
+    never a training feature (Design-Decisions, Phase 5 follow-up)."""
+
+    class UnlistedRule(models.TextChoices):
+        OFF = "off", "Treat every artist the same"
+        STRICTER = "stricter", "Artists not on the list need the stricter mark"
+        REVIEW = "review", "Songs by artists not on the list wait for a person"
+
+    pass_mark = models.FloatField(
+        "Pass mark",
+        default=0.5,
+        validators=[MinValueValidator(0.05), MaxValueValidator(0.95)],
+        help_text="A song passes the Worship Check when its worship score "
+        "reaches this (0 to 1).",
+    )
+    unlisted_rule = models.CharField(
+        "Artists not on the Trusted Artists list",
+        max_length=10,
+        choices=UnlistedRule.choices,
+        default=UnlistedRule.OFF,
+        help_text="With a rule on, add your trusted worship artists first: "
+        "an empty list holds back every song.",
+    )
+    unlisted_pass_mark = models.FloatField(
+        "Stricter pass mark",
+        default=0.9,
+        validators=[MinValueValidator(0.05), MaxValueValidator(0.99)],
+        help_text="Used for artists not on the list when the stricter rule is on.",
+    )
+
+    class Meta:
+        verbose_name = "worship check settings"
+        verbose_name_plural = "worship check settings"
+        default_permissions = ("change", "view")
+
+    def __str__(self):
+        return "Worship check settings"
+
+    @classmethod
+    def load(cls):
+        settings_row, _ = cls.objects.get_or_create(pk=1)
+        return settings_row
 
 
 class SpotifyLimit(models.Model):

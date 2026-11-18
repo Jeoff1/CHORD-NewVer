@@ -62,3 +62,16 @@ Check uses) includes it; the artist name never reaches an engine. Phase 9
 trains on `worship_model_score`, never on the bonus or any score that
 includes it. Songs analysed before this change were queued to be analysed
 again, keeping people's corrections.
+
+After the smoke test the same day ([[Design-Decisions]], Phase 5
+follow-up):
+
+- The pass mark of 0.5 is now a church setting, with an optional rule for
+  artists not on the Trusted Artists list, applied after the model.
+- Feel is left blank unless one feel scores at least 0.5 and beats the next
+  by 0.2.
+- Theme-to-lyrics cosines of all-MiniLM-L6-v2 run from about 0.2 (no
+  match) to 0.6 (a close match); ranking uses that fixed range.
+- The zero-shot model has only two classes (entailment and not
+  entailment), so a "neutral" class can't spread its tag scores; most tags
+  score above 0.9 on worship lyrics.

@@ -1,0 +1,18 @@
+{# One-click corrections to a suggested song: its feel, or "not a worship song". Expects `suggestion`, `service`, `can_correct` and `feel_choices`. The lineup is placed again and the panel comes back (HTMX); without JavaScript the page reloads. #}
+{% if can_correct %}
+  <div class="d-flex flex-wrap align-items-center gap-2 mt-1">
+    <form method="post" action="{% url 'worship:suggestion_feel' public_id=service.public_id pk=suggestion.pk %}" hx-post="{% url 'worship:suggestion_feel' public_id=service.public_id pk=suggestion.pk %}" hx-target="#suggestions" hx-swap="outerHTML" class="d-flex align-items-center gap-1">
+      {% csrf_token %}
+      <span class="small text-body-secondary">Feel{% if not suggestion.song.feel %} (not set){% endif %}:</span>
+      <div class="btn-group btn-group-sm" role="group" aria-label="Feel of {{ suggestion.song.title }}">
+        {% for value, label in feel_choices %}
+          <button type="submit" name="feel" value="{{ value }}" class="btn btn-outline-secondary py-0{% if suggestion.song.feel == value %} active{% endif %}"{% if suggestion.song.feel == value %} aria-pressed="true"{% endif %}>{{ label }}</button>
+        {% endfor %}
+      </div>
+    </form>
+    <form method="post" action="{% url 'worship:suggestion_not_worship' public_id=service.public_id pk=suggestion.pk %}" hx-post="{% url 'worship:suggestion_not_worship' public_id=service.public_id pk=suggestion.pk %}" hx-target="#suggestions" hx-swap="outerHTML" hx-confirm="Mark {{ suggestion.song.title }} as not a worship song? It won't be suggested again.">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-danger py-0">Not a worship song</button>
+    </form>
+  </div>
+{% endif %}

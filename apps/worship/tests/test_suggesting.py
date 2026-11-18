@@ -371,3 +371,74 @@ class WorkerTests(SuggestingTestCase):
         call_command("run_worker", "--once", stdout=out)
         self.assertFalse(Song.objects.filter(analysed_at=None).exists())
         self.assertIn("analysed", out.getvalue())
+
+
+class SmokeTestFixTests(SuggestingTestCase):
+    """Fixes from the smoke test of 2026-11-18."""
+
+    def test_a_run_keeps_one_version_of_each_song(self):
+        seed_hymns()
+        cover = Song.objects.create(
+            spotify_id="id-silent",
+            title="Silent Night (Live)",
+            artist="Cover Band",
+            lyrics=WORDS["Silent Night"] + "\nSleep in heavenly peace",
+            lyrics_status=Song.LyricsStatus.FOUND,
+        )
+        run = self.queue(use_spotify=False)
+        self.execute(run)
+        run.refresh_from_db()
+        songs = [s.song for s in run.suggestions.all()]
+        silent = [s for s in songs if s.title.startswith("Silent Night")]
+        self.assertEqual(len(silent), 1, run.message)
+        kept = run.suggestions.get(song=silent[0])
+        other = cover if silent[0] != cover else Song.objects.get(title="Silent Night")
+        self.assertTrue(any(other.artist in reason for reason in kept.reasons))
+        self.assertEqual(
+            Song.objects.filter(title__startswith="Silent Night").count(), 2
+        )
+
+    def test_suggestions_keep_the_raw_match_and_their_slot_reason_apart(self):
+        seed_hymns()
+        run = self.queue(use_spotify=False)
+        self.execute(run)
+        for suggestion in run.suggestions.all():
+            self.assertIsNotNone(suggestion.match)
+            self.assertFalse(
+                any("slot asks for" in reason for reason in suggestion.reasons)
+            )
+        self.assertEqual(run.weights["feel"], 0.15)
+
+    def test_each_search_is_recorded_for_information_only(self):
+        def reply(call):
+            if "genre:" in call["params"]["q"]:
+                return 200, {"tracks": {"items": [], "next": None}}
+            return 200, {"tracks": {"items": [api_track(*FOUND[0])], "next": None}}
+
+        run = self.queue()
+        with outside_world(search_reply=reply):
+            self.execute(run)
+        run.refresh_from_db()
+        self.assertEqual(len(run.searches), 4)
+        self.assertTrue(all(search["genre_dropped"] for search in run.searches))
+        self.assertEqual(run.searches[0]["genre"], "worship")
+        self.assertEqual(run.genre_dropped_searches, run.searches)
+        # The song found only without the genre is treated like any other.
+        holy = Song.objects.get(spotify_id="id-holy")
+        self.assertEqual(holy.worship_check, Song.WorshipCheck.ACCEPTED)
+
+    def test_place_again_follows_corrected_feels_and_checks(self):
+        seed_hymns()
+        run = self.queue(use_spotify=False)
+        self.execute(run)
+        placed, others = suggesting.results(run)
+        first = placed[0].song
+        first.worship_check = Song.WorshipCheck.REJECTED
+        first.save()
+        suggesting.place_again(run)
+        placed_after, _ = suggesting.results(run)
+        self.assertNotIn(first, [s.song for s in placed_after])
+        self.assertEqual(len(placed_after), 4)
+        self.assertFalse(
+            run.suggestions.filter(song=first, slot__isnull=False).exists()
+        )

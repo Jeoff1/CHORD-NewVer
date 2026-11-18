@@ -2,6 +2,51 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-18: Phase 5 smoke-test fixes
+
+The user's first live smoke test (seeded hymns, then Spotify) found nine
+issues; the agreed fixes are in [[Design-Decisions]] (Phase 5 follow-up).
+
+- **Fixed scale:** relevance and match labels come from the engine's
+  `similarity_range`, not the pool; "doesn't match the theme well" added.
+  Default weights recalibrated (familiarity 0.2, season 0.15, recent use
+  0.3); a migration moves a church still on the old defaults.
+- **Feel:** placement treats feel as a preference with a feel mismatch
+  weight (a setting, 0.15); feel is left blank when the analysis isn't
+  sure (a migration queues unreviewed songs for analysis again); one-click
+  feel correction in the panel, kept by later analysis (`feel_reviewed`).
+- **Worship check:** the pass mark is a church setting (Settings → Worship
+  check), with the optional rule for artists not on the Trusted Artists
+  list, off by default and applied after the model. Changing the rules or
+  the list rechecks unreviewed songs without a model. One-click "Not a
+  worship song". Each search's genre-filter result is recorded on the run,
+  for information only.
+- **Versions** of one song are grouped after ranking and one is kept; the
+  pool keeps all. A lineup never holds two songs with the same title.
+- A hint in the panel when the theme has no notes.
+- `seed_hymns` now adds 23 public-domain hymns, with eight carols, four
+  slow hymns and two Easter hymns.
+- Fixed: a similarity exactly on a label's line could get the label below
+  (floating point); relevance is now rounded first.
+- **Measured, not changed:** a "neutral" class for theme tags can't help;
+  the zero-shot model has only two classes. Awaiting a decision.
+- Notes: [[Worship]], [[Glossary]] (Pass Mark, Worship Check Settings,
+  Version; Feel and Worship Check reworded), [[0006-onnx-runtime-for-song-analysis]]
+  update, [[Code-Conventions]], [[Environment-Setup]] (with the smoke-test
+  commands), [[workflow-spec]] steps 6 to 9, the [[Development-Plan]]
+  (follow-up list, and tempo from LRCLIB as a future experiment), and
+  Design-Decisions (follow-up section; Phase 9 now also excludes the new
+  artist rule, the kept version and the genre record from training).
+- Verified:
+  - `scripts/check.ps1` passed: Ruff lint and format, `manage.py check`
+    clean, no missing migrations, 442 tests passed (404 before), 97%
+    coverage.
+  - Before-and-after rankings computed in memory with the ONNX models on
+    the smoke-test runs ("Grace and salvation", "The birth of Jesus"); the
+    two "Good News" recordings and three "Silent Night" versions now count
+    once each.
+  - Not applied to the development database yet: run `migrate`.
+
 ## 2026-11-18: Phase 5, song suggestions
 
 - **The suggestion pipeline** ([[Worship]]), from the work in progress

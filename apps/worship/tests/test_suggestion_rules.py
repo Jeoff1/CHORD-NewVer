@@ -2,15 +2,15 @@
 and seasons. They are plain functions, tested without views."""
 
 import datetime
-from types import SimpleNamespace
 
 from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
 
 from apps.core.music import Feel
 from apps.core.testing import make_song
 from apps.songs.ml.keyword import KeywordEngine
 from apps.songs.models import Song, ThemeTag
-from apps.worship import ranking, sequencing
+from apps.worship import ranking, sequencing, versions
 from apps.worship.models import Season, ServiceTemplate, TemplateSlot
 from apps.worship.phrases import candidates, search_phrases
 from apps.worship.ranking import Usage
@@ -64,18 +64,65 @@ class RankingTests(TestCase):
     def song(self, embedding, **fields):
         return make_song(embedding=embedding, **fields)
 
-    def test_relevance_runs_from_the_closest_to_the_farthest(self):
-        near = self.song([1.0, 0.0], title="Near")
-        middle = self.song([0.6, 0.8], title="Middle")
-        far = self.song([0.0, 1.0], title="Far")
-        ranked = ranking.rank(
-            [far, near, middle], theme_vector=[1.0, 0.0], day=DAY, weights=WEIGHTS
+    def test_relevance_is_on_a_fixed_scale(self):
+        # With the ONNX engine's range, 0.20 maps to 0 and 0.60 to 1.
+        scale = (0.20, 0.60)
+        self.assertEqual(ranking.relevance(0.60, scale), 1.0)
+        self.assertEqual(ranking.relevance(0.40, scale), 0.5)  # not 0.4999…
+        self.assertEqual(ranking.relevance(0.75, scale), 1.0)  # clipped
+        self.assertEqual(ranking.relevance(0.10, scale), 0.0)  # clipped
+
+    def test_the_same_match_gets_the_same_relevance_whatever_the_pool(self):
+        # Smoke test, 2026-11-18: a weak pool's best song used to score 1.0.
+        weak = self.song([0.3, (1 - 0.3**2) ** 0.5], title="Weak")
+        alone = ranking.rank([weak], theme_vector=[1.0, 0.0], day=DAY, weights=WEIGHTS)
+        strong = self.song([1.0, 0.0], title="Strong")
+        together = ranking.rank(
+            [weak, strong], theme_vector=[1.0, 0.0], day=DAY, weights=WEIGHTS
         )
-        self.assertEqual([r.song for r in ranked], [near, middle, far])
-        self.assertEqual([r.relevance for r in ranked], [1.0, 0.6, 0.0])
-        self.assertEqual(ranked[1].match, 0.6)
-        self.assertIn("Its lyrics match the theme closely.", ranked[0].reasons)
-        self.assertIn("Its lyrics match the theme a little.", ranked[2].reasons)
+        self.assertEqual(alone[0].relevance, 0.3)
+        self.assertEqual(together[1].relevance, 0.3)
+        self.assertEqual(together[1].song, weak)
+
+    def test_closest_first_with_fixed_labels(self):
+        scale = (0.20, 0.60)
+        cosines = {"Close": 0.55, "Fair": 0.45, "Little": 0.33, "Unrelated": 0.18}
+        songs = [
+            self.song([c, (1 - c * c) ** 0.5], title=title)
+            for title, c in cosines.items()
+        ]
+        ranked = ranking.rank(
+            reversed(songs),
+            theme_vector=[1.0, 0.0],
+            day=DAY,
+            weights=WEIGHTS,
+            similarity_range=scale,
+        )
+        self.assertEqual([r.song.title for r in ranked], list(cosines))
+        self.assertEqual(
+            [r.reasons[0] for r in ranked],
+            [
+                "Its lyrics match the theme closely.",
+                "Its lyrics match the theme fairly well.",
+                "Its lyrics match the theme a little.",
+                "Its lyrics don't match the theme well.",
+            ],
+        )
+        self.assertEqual(ranked[1].match, 0.45)
+
+    def test_match_label_thresholds(self):
+        self.assertEqual(
+            ranking.match_label(0.75), "Its lyrics match the theme closely."
+        )
+        self.assertEqual(
+            ranking.match_label(0.5), "Its lyrics match the theme fairly well."
+        )
+        self.assertEqual(
+            ranking.match_label(0.25), "Its lyrics match the theme a little."
+        )
+        self.assertEqual(
+            ranking.match_label(0.24), "Its lyrics don't match the theme well."
+        )
 
     def test_songs_without_an_embedding_are_left_out(self):
         only = self.song([0.5, 0.5])
@@ -84,7 +131,7 @@ class RankingTests(TestCase):
             Song.objects.all(), theme_vector=[1.0, 0.0], day=DAY, weights=WEIGHTS
         )
         self.assertEqual([r.song for r in ranked], [only])
-        self.assertEqual(ranked[0].relevance, 1.0)  # alone, it is the closest
+        self.assertEqual(ranked[0].relevance, 0.5)
 
     def test_familiarity_and_recent_use(self):
         known = self.song([1.0, 0.0], team_knows=True)
@@ -179,8 +226,12 @@ class RankingTests(TestCase):
         self.assertEqual(ranking._listing(["A", "B", "C"]), "A, B and C")
 
 
-def ranked_with_feels(*feels):
-    return [SimpleNamespace(song=SimpleNamespace(feel=feel)) for feel in feels]
+def item(title="Song", feel="", score=1.0, artist="Band", embedding=None, **fields):
+    """A ranked song, as ranking and grouping see it."""
+    song = Song(title=title, feel=feel, artist=artist, embedding=embedding, **fields)
+    return ranking.Ranked(
+        song, score, relevance=score, familiarity=0, season=0, recency=0, match=0
+    )
 
 
 class SequencingTests(TestCase):
@@ -189,38 +240,185 @@ class SequencingTests(TestCase):
         # Worship (slow), Response (slow).
         self.slots = list(ServiceTemplate.objects.get().slots.all())
 
-    def placed(self, ranked, slots=None):
+    def placed(self, ranked, slots=None, feel_weight=0.15):
         return {
-            p.slot.name: (p.index, p.reason)
-            for p in sequencing.place(ranked, slots or self.slots)
+            p.slot.name: (ranked[p.index].song.title, p.reason)
+            for p in sequencing.place(
+                ranked, slots or self.slots, feel_weight=feel_weight
+            )
         }
 
-    def test_songs_go_to_the_first_slot_of_their_feel_in_rank_order(self):
-        ranked = ranked_with_feels(
-            Feel.SLOW, Feel.UPBEAT, Feel.MID, Feel.SLOW, Feel.UPBEAT
-        )
+    def test_a_close_song_of_a_near_feel_beats_a_weak_song_of_the_right_feel(self):
+        # Smoke test, 2026-11-18: Joyful, Joyful (upbeat, 0.86) lost Praise
+        # to Amazing Grace (mid-tempo, 0.21).
+        ranked = [
+            item("Blessed", Feel.UPBEAT, 1.0),
+            item("Joyful", Feel.UPBEAT, 0.86),
+            item("Amazing", Feel.MID, 0.21),
+        ]
+        placed = self.placed(ranked, slots=self.slots[:2])
+        self.assertEqual(placed["Opening"], ("Blessed", ""))
+        self.assertEqual(placed["Praise"][0], "Joyful")
+        self.assertIn("isn't the mid-tempo this slot asks for", placed["Praise"][1])
+
+    def test_each_step_between_feels_costs_the_weight(self):
+        worship = self.slots[2:3]  # slow
+        # Upbeat is two steps from slow: 0.5 - 0.3 = 0.2 loses to 0.3.
+        ranked = [item("Upbeat", Feel.UPBEAT, 0.5), item("Slow", Feel.SLOW, 0.3)]
+        self.assertEqual(self.placed(ranked, worship)["Worship"][0], "Slow")
+        # 0.7 - 0.3 = 0.4 beats 0.3.
+        ranked = [item("Upbeat", Feel.UPBEAT, 0.7), item("Slow", Feel.SLOW, 0.3)]
+        self.assertEqual(self.placed(ranked, worship)["Worship"][0], "Upbeat")
+        self.assertEqual(sequencing.feel_distance(Feel.UPBEAT, Feel.SLOW), 2)
+        self.assertEqual(sequencing.feel_distance(Feel.MID, Feel.SLOW), 1)
+
+    def test_the_best_song_gets_its_own_feel_first(self):
+        ranked = [
+            item("Slow best", Feel.SLOW, 1.0),
+            item("Upbeat", Feel.UPBEAT, 0.9),
+            item("Mid", Feel.MID, 0.8),
+            item("Slow next", Feel.SLOW, 0.7),
+        ]
         placed = self.placed(ranked)
         self.assertEqual(
-            {name: index for name, (index, _) in placed.items()},
-            {"Opening": 1, "Praise": 2, "Worship": 0, "Response": 3},
+            {name: title for name, (title, _) in placed.items()},
+            {
+                "Opening": "Upbeat",
+                "Praise": "Mid",
+                "Worship": "Slow best",
+                "Response": "Slow next",
+            },
         )
         self.assertTrue(all(reason == "" for _, reason in placed.values()))
 
-    def test_an_empty_slot_takes_the_best_song_left_and_says_so(self):
-        ranked = ranked_with_feels(Feel.SLOW, Feel.SLOW, Feel.SLOW, Feel.MID)
-        placed = self.placed(ranked)
-        self.assertEqual(placed["Opening"][0], 2)
-        self.assertIn("No upbeat song ranked high enough", placed["Opening"][1])
+    def test_an_unknown_feel_costs_nothing_and_says_so(self):
+        ranked = [item("Unknown", "", 0.5), item("Slow", Feel.SLOW, 0.45)]
+        placed = self.placed(ranked, self.slots[2:3])
+        self.assertEqual(placed["Worship"][0], "Unknown")
+        self.assertIn("feel isn't known yet", placed["Worship"][1])
+
+    def test_one_title_once_per_lineup(self):
+        ranked = [
+            item("Good News", Feel.SLOW, 0.87, artist="Avalon"),
+            item("Good News (Live)", Feel.SLOW, 0.84, artist="Choir"),
+            item("Silent Night", Feel.SLOW, 0.7),
+        ]
+        placed = self.placed(ranked, self.slots[2:])
+        self.assertEqual(
+            sorted(title for title, _ in placed.values()), ["Good News", "Silent Night"]
+        )
 
     def test_fewer_songs_than_slots_leaves_slots_out(self):
-        placed = self.placed(ranked_with_feels(Feel.UPBEAT))
+        placed = self.placed([item("Only", Feel.UPBEAT)])
         self.assertEqual(list(placed), ["Opening"])
 
     def test_a_slot_without_a_feel_takes_any_song(self):
         template = ServiceTemplate.objects.create(name="Prayer night")
         any_slot = TemplateSlot.objects.create(template=template, name="Song")
-        placed = self.placed(ranked_with_feels(Feel.SLOW), slots=[any_slot])
-        self.assertEqual(placed, {"Song": (0, "")})
+        placed = self.placed([item("Any", Feel.SLOW)], slots=[any_slot])
+        self.assertEqual(placed, {"Song": ("Any", "")})
+
+    def test_without_the_feel_weight_rank_order_fills_the_slots(self):
+        ranked = [item(str(n), Feel.SLOW, 1 - n / 10) for n in range(4)]
+        placed = self.placed(ranked, feel_weight=0)
+        self.assertEqual([title for title, _ in placed.values()], ["0", "1", "2", "3"])
+
+
+def unit(cosine_with_first_axis):
+    c = cosine_with_first_axis
+    return [c, (1 - c * c) ** 0.5]
+
+
+class VersionTests(TestCase):
+    """Versions of one song (versions.py), with the thresholds calibrated in
+    the smoke test of 2026-11-18."""
+
+    def group(self, ranked, trusted=()):
+        return versions.group(
+            ranked, trusted_artists={name.lower() for name in trusted}
+        )
+
+    def test_titles_match(self):
+        self.assertTrue(versions.titles_match("Silent Night", "Silent Night (Live)"))
+        self.assertTrue(
+            versions.titles_match("Silent Night, Holy Night", "Silent Night")
+        )
+        # Begins the same way; only alike lyrics make them one song.
+        self.assertTrue(versions.titles_match("Holy", "Holy Ground"))
+        self.assertFalse(versions.titles_match("Holy", "Holiness"))
+        self.assertFalse(versions.titles_match("Silent Night", "Hark! the Herald"))
+        self.assertFalse(versions.titles_match("", "Silent Night"))
+
+    def test_versions_with_alike_lyrics_and_titles_are_one_song(self):
+        ranked = [
+            item(
+                "Silent Night, Holy Night", score=0.9, artist="Josh", embedding=unit(1)
+            ),
+            item("Silent Night", score=0.8, artist="Carpenters", embedding=unit(0.92)),
+            item("Hark!", score=0.7, artist="Choir", embedding=unit(0.6)),
+        ]
+        kept = self.group(ranked)
+        self.assertEqual(
+            [k.song.title for k in kept], ["Silent Night, Holy Night", "Hark!"]
+        )
+        self.assertEqual([s.artist for s in kept[0].versions], ["Carpenters"])
+        self.assertIn(
+            "Other versions in the pool: Silent Night (Carpenters).", kept[0].reasons
+        )
+
+    def test_different_titles_need_nearly_the_same_lyrics(self):
+        alike = [
+            item("Morning Song", embedding=unit(1)),
+            item("A New Day", embedding=unit(0.92)),
+        ]
+        self.assertEqual(len(self.group(alike)), 2)
+        same = [
+            item("Morning Song", embedding=unit(1)),
+            item("A New Day", embedding=unit(0.96)),
+        ]
+        self.assertEqual(len(self.group(same)), 1)
+
+    def test_one_title_with_other_lyrics_is_another_song(self):
+        ranked = [
+            item("Good News", artist="One", embedding=unit(1)),
+            item("Good News", artist="Two", embedding=unit(0.6)),
+        ]
+        self.assertEqual(len(self.group(ranked)), 2)
+
+    def test_the_kept_version_follows_the_preference_order(self):
+        def versions_of(**extra):
+            return [
+                item("Silent Night", score=0.9, artist="Best", embedding=unit(1)),
+                item(
+                    "Silent Night",
+                    score=0.8,
+                    artist="Other",
+                    embedding=unit(0.95),
+                    **extra,
+                ),
+            ]
+
+        kept = self.group(versions_of())
+        self.assertEqual(kept[0].song.artist, "Best")
+
+        kept = self.group(versions_of(), trusted=["Other"])
+        self.assertEqual(kept[0].song.artist, "Other")
+        self.assertIn("because its artist is a Trusted Artist", kept[0].reasons[-1])
+
+        kept = self.group(versions_of(reviewed_at=timezone.now()))
+        self.assertEqual(kept[0].song.artist, "Other")
+        self.assertIn("because a person has reviewed it", kept[0].reasons[-1])
+
+        kept = self.group(versions_of(team_knows=True))
+        self.assertEqual(kept[0].song.artist, "Other")
+        self.assertIn(
+            "Chosen over the version by Best because the team knows it.",
+            kept[0].reasons,
+        )
+
+    def test_one_song_is_left_alone(self):
+        only = [item("Solo", embedding=unit(1))]
+        self.assertEqual(self.group(only), only)
 
 
 class SeasonTests(SimpleTestCase):

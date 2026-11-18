@@ -5,8 +5,10 @@
 Each part runs from 0 to 1:
 
 - **relevance**: how close the song's lyrics are to the theme (cosine of
-  their embeddings), scaled so the closest candidate is 1 and the farthest
-  0, so the weights compare like with like;
+  their embeddings), on a fixed scale: the engine's ``similarity_range``
+  ``(low, high)`` maps to 0 and 1, and values outside it are clipped. The
+  same similarity always gives the same relevance and the same match label,
+  whatever else is in the pool (smoke test, 2026-11-18);
 - **familiarity**: 0.6 when the team knows the song, plus up to 0.4 for how
   often it has been used (five times or more counts fully);
 - **season**: 1 when the service falls in one of the church's Seasons and
@@ -20,6 +22,15 @@ its parts and the reasons shown beside it.
 
 import datetime
 from dataclasses import dataclass, field
+
+# Match labels by relevance. With the ONNX engine's range (0.20 to 0.60)
+# these are cosines of 0.50, 0.40 and 0.30.
+MATCH_LABELS = (
+    (0.75, "Its lyrics match the theme closely."),
+    (0.50, "Its lyrics match the theme fairly well."),
+    (0.25, "Its lyrics match the theme a little."),
+)
+NO_MATCH = "Its lyrics don't match the theme well."
 
 
 @dataclass(frozen=True)
@@ -38,6 +49,8 @@ class Ranked:
     recency: float
     match: float  # the raw cosine
     reasons: list = field(default_factory=list)
+    # Other versions of the same song, left out of the ranking (versions.py).
+    versions: list = field(default_factory=list)
 
 
 def song_usage(service):
@@ -54,6 +67,21 @@ def cosine(a, b):
     return sum(x * y for x, y in zip(a, b))
 
 
+def relevance(match, similarity_range):
+    """A similarity on the fixed 0-to-1 scale of ``similarity_range``,
+    rounded so a similarity exactly on a label's threshold gets that label
+    (0.40 is 0.5, not 0.4999…)."""
+    low, high = similarity_range
+    return round(min(1.0, max(0.0, (match - low) / (high - low))), 4)
+
+
+def match_label(relevance_value):
+    for threshold, label in MATCH_LABELS:
+        if relevance_value >= threshold:
+            return label
+    return NO_MATCH
+
+
 def familiarity(song, usage):
     known = 0.6 if song.team_knows else 0.0
     return known + 0.4 * min(usage.times / 5, 1.0)
@@ -68,14 +96,6 @@ def recency(usage, day, window_weeks):
     return max(0.0, 1 - days / (7 * window_weeks))
 
 
-def match_words(match_share):
-    if match_share >= 0.75:
-        return "closely"
-    if match_share >= 0.4:
-        return "fairly well"
-    return "a little"
-
-
 def rank(
     songs,
     *,
@@ -86,24 +106,26 @@ def rank(
     seasons=(),
     usage=None,
     window_weeks=0,
+    similarity_range=(0.0, 1.0),
 ):
     """Score and sort ``songs`` (each with an embedding) for one theme.
 
     ``theme_tags`` are the Theme Tag IDs the theme is about; ``seasons`` the
-    church's Seasons that contain ``day``; ``usage`` maps song IDs to Usage.
+    church's Seasons that contain ``day``; ``usage`` maps song IDs to Usage;
+    ``similarity_range`` is the engine's (see ``relevance``).
     """
     usage = usage or {}
-    songs = [song for song in songs if song.embedding]
-    matches = [cosine(theme_vector, song.embedding) for song in songs]
-    low, high = (min(matches), max(matches)) if matches else (0, 0)
     season_tags = {tag.pk: season for season in seasons for tag in season.tags.all()}
     theme_tags = set(theme_tags)
     ranked = []
-    for song, match in zip(songs, matches):
+    for song in songs:
+        if not song.embedding:
+            continue
+        match = cosine(theme_vector, song.embedding)
         used = usage.get(song.pk, Usage())
         tags = {tag.pk: tag for tag in song.tags.all()}
         parts = {
-            "relevance": (match - low) / (high - low) if high > low else 1.0,
+            "relevance": relevance(match, similarity_range),
             "familiarity": familiarity(song, used),
             "season": 1.0 if season_tags.keys() & tags.keys() else 0.0,
             "recency": recency(used, day, window_weeks),
@@ -114,7 +136,7 @@ def rank(
             + weights["season"] * parts["season"]
             - weights["recency"] * parts["recency"]
         )
-        reasons = [f"Its lyrics match the theme {match_words(parts['relevance'])}."]
+        reasons = [match_label(parts["relevance"])]
         shared = sorted(tags[pk].name for pk in theme_tags & tags.keys())
         if shared:
             reasons.append(f"About {_listing(shared)}, like the theme.")

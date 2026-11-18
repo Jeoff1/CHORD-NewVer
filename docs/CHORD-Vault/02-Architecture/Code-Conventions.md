@@ -97,7 +97,14 @@ Personal files (member photos, uploaded documents) use
   without waiting.
 - ML goes through `apps/songs/ml/get_engine()`, which `settings.ML_ENGINE`
   picks ([[0006-onnx-runtime-for-song-analysis]]). Engines offer
-  `embed(texts)` and `score(text, labels)`; nothing else touches a model.
+  `embed(texts)` and `score(text, labels)`, and declare a
+  `similarity_range` (the similarity of unrelated texts and of a close
+  match), which ranking uses as its fixed scale; nothing else touches a
+  model.
+- Church rules that use Spotify data, such as the Trusted Artist bonus and
+  the rule for artists not on the list, are applied after the model in
+  `apps/songs/analysis.py` (`decide_check`), never inside an engine, and
+  are never training features.
 - Only lyrics and the church's own text go into an engine. Lyrics are
   never logged, printed or put in the audit trail.
 - Spotify calls go through `SpotifyClient` only, which applies the

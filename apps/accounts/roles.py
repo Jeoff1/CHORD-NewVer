@@ -83,6 +83,9 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.change_season",
         "worship.view_suggestionsettings",
         "worship.change_suggestionsettings",
+        # Phase 5 smoke-test fixes
+        "songs.view_worshipchecksettings",
+        "songs.change_worshipchecksettings",
     ],
     "team_member": [
         # Worship schedule (Phase 3)

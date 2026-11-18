@@ -12,14 +12,19 @@ from apps.core.testing import make_song, make_user
 from apps.songs.analysis import (
     TAG_THRESHOLD,
     TRUSTED_ARTIST_BONUS,
+    CheckRules,
+    UnlistedRule,
     analyse,
     analyse_song,
+    apply_check_rules,
+    decide_check,
+    guess_feel,
     is_trusted,
     lyrics_text,
     trusted_artist_bonus,
 )
 from apps.songs.ml.keyword import KeywordEngine
-from apps.songs.models import Song, ThemeTag, TrustedArtist
+from apps.songs.models import Song, ThemeTag, TrustedArtist, WorshipCheckSettings
 
 HYMN = """Amazing grace, how sweet the sound
 That saved a wretch like me
@@ -105,7 +110,90 @@ class AnalyseTests(TestCase):
         )
         quiet = "Be still and rest, I kneel in quiet surrender"
         self.assertEqual(analyse(quiet, tags=[], engine=self.engine).feel, Feel.SLOW)
-        self.assertEqual(analyse(SECULAR, tags=[], engine=self.engine).feel, Feel.MID)
+
+    def test_feel_is_left_blank_when_unsure(self):
+        # Nothing points anywhere.
+        self.assertEqual(analyse(SECULAR, tags=[], engine=self.engine).feel, "")
+        # A near tie: one upbeat and one slow word each score 0.33.
+        self.assertEqual(guess_feel([0.33, 0.0, 0.33]), "")
+        # Clear winner, but too weak.
+        self.assertEqual(guess_feel([0.4, 0.0, 0.0]), "")
+        # Strong, but not clearly ahead of the next (0.82 against 0.79).
+        self.assertEqual(guess_feel([0.82, 0.11, 0.79]), "")
+        self.assertEqual(guess_feel([0.1, 0.2, 0.86]), Feel.SLOW)
+
+
+class CheckRuleTests(TestCase):
+    """The church's Worship Check rules, applied after the model
+    (Design-Decisions, Phase 5 follow-up)."""
+
+    def test_the_pass_mark_decides(self):
+        rules = CheckRules(pass_mark=0.7)
+        self.assertEqual(decide_check(0.69, trusted=False, rules=rules)[1], "rejected")
+        self.assertEqual(decide_check(0.7, trusted=False, rules=rules)[1], "accepted")
+
+    def test_the_stricter_rule_holds_back_unlisted_artists(self):
+        rules = CheckRules(unlisted_rule=UnlistedRule.STRICTER, unlisted_pass_mark=0.9)
+        self.assertEqual(decide_check(0.8, trusted=False, rules=rules)[1], "rejected")
+        self.assertEqual(decide_check(0.95, trusted=False, rules=rules)[1], "accepted")
+        self.assertEqual(decide_check(0.6, trusted=True, rules=rules)[1], "accepted")
+
+    def test_the_review_rule_waits_for_a_person(self):
+        rules = CheckRules(unlisted_rule=UnlistedRule.REVIEW)
+        self.assertEqual(decide_check(0.99, trusted=False, rules=rules)[1], "unchecked")
+        self.assertEqual(decide_check(0.6, trusted=True, rules=rules)[1], "accepted")
+        self.assertEqual(decide_check(0.1, trusted=False, rules=rules)[1], "rejected")
+
+    def test_the_rules_are_off_by_default(self):
+        row = WorshipCheckSettings.load()
+        self.assertEqual(row.pass_mark, 0.5)
+        self.assertEqual(row.unlisted_rule, UnlistedRule.OFF)
+        rules = CheckRules.load()
+        self.assertEqual(decide_check(0.5, trusted=False, rules=rules)[1], "accepted")
+
+    def test_a_song_waiting_for_review_keeps_its_suggested_tags(self):
+        rules = CheckRules(unlisted_rule=UnlistedRule.REVIEW)
+        grace = ThemeTag.objects.get(name="Grace")
+        result = analyse(
+            HYMN + "\nGrace and favor, undeserved",
+            tags=[grace],
+            engine=KeywordEngine(),
+            rules=rules,
+        )
+        self.assertEqual(result.check, "unchecked")
+        self.assertEqual(result.suggested_tags, [grace.pk])
+
+    def test_changing_the_rules_rechecks_unreviewed_songs_without_a_model(self):
+        grace = ThemeTag.objects.get(name="Grace")
+        song = make_song(
+            artist="Choir",
+            analysed_at=timezone.now(),
+            worship_model_score=0.6,
+            worship_score=0.6,
+            worship_check=Song.WorshipCheck.ACCEPTED,
+            tags=[grace],
+        )
+        song.tag_scores = {str(grace.pk): 0.9}
+        song.save()
+        reviewed = make_song(
+            analysed_at=timezone.now(),
+            worship_model_score=0.6,
+            worship_check=Song.WorshipCheck.ACCEPTED,
+            reviewed_at=timezone.now(),
+        )
+        WorshipCheckSettings.objects.update_or_create(pk=1, defaults={"pass_mark": 0.7})
+        self.assertEqual(apply_check_rules(), 1)
+        song.refresh_from_db()
+        reviewed.refresh_from_db()
+        self.assertEqual(song.worship_check, Song.WorshipCheck.REJECTED)
+        self.assertEqual(list(song.tags.all()), [])
+        self.assertEqual(reviewed.worship_check, Song.WorshipCheck.ACCEPTED)
+        # Adding the artist to the Trusted Artists list rechecks it at once.
+        TrustedArtist.objects.create(name="Choir")
+        song.refresh_from_db()
+        self.assertEqual(song.worship_check, Song.WorshipCheck.ACCEPTED)
+        self.assertEqual(song.worship_score, 0.85)
+        self.assertEqual(list(song.tags.all()), [grace])
 
 
 class AnalyseSongTests(TestCase):
@@ -165,6 +253,13 @@ class AnalyseSongTests(TestCase):
         self.assertEqual(song.worship_check, Song.WorshipCheck.ACCEPTED)
         self.assertTrue(song.team_knows)
         self.assertIsNotNone(song.analysed_at)
+
+    def test_a_feel_a_person_set_is_kept(self):
+        song = self.found(feel=Feel.SLOW, feel_reviewed=True)
+        analyse_song(song)
+        song.refresh_from_db()
+        self.assertEqual(song.feel, Feel.SLOW)
+        self.assertEqual(song.worship_check, Song.WorshipCheck.ACCEPTED)
 
     def test_songs_without_lyrics_are_left_alone(self):
         song = make_song(lyrics_status=Song.LyricsStatus.MISSING)

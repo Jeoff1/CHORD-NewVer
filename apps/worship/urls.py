@@ -99,6 +99,16 @@ urlpatterns = [
         suggestions.SuggestionPanelView.as_view(),
         name="suggestions",
     ),
+    path(
+        "services/<uuid:public_id>/suggestions/<int:pk>/feel/",
+        suggestions.SuggestionFeelView.as_view(),
+        name="suggestion_feel",
+    ),
+    path(
+        "services/<uuid:public_id>/suggestions/<int:pk>/not-worship/",
+        suggestions.NotWorshipView.as_view(),
+        name="suggestion_not_worship",
+    ),
     # Settings
     path(
         "settings/templates/",

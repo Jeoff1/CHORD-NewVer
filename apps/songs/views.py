@@ -16,9 +16,18 @@ from apps.core.views import FilteredListView, FormPageMixin
 from apps.worship.views.base import settings_nav
 
 from . import pool
-from .forms import SongForm, SpotifyTrackForm
-from .models import Song, ThemeTag
+from .analysis import apply_check_rules
+from .forms import SongForm, SpotifyTrackForm, WorshipCheckSettingsForm
+from .models import Song, ThemeTag, WorshipCheckSettings
 from .spotify import SpotifyClient, SpotifyError, block_message, current_block
+
+CHECK_SETTINGS_AUDIT_FIELDS = {
+    "Pass mark": "pass_mark",
+    "Artists not on the Trusted Artists list": lambda row: (
+        row.get_unlisted_rule_display()
+    ),
+    "Stricter pass mark": "unlisted_pass_mark",
+}
 
 
 class SongsMixin(ModuleRequiredMixin, LoginRequiredMixin, PermissionRequiredMixin):
@@ -236,3 +245,48 @@ class SpotifyAddView(SongsMixin, View):
         else:
             messages.info(request, f"{song} is already in the song pool.")
         return redirect(song_url(song))
+
+
+class WorshipCheckSettingsView(SongsMixin, FormPageMixin, UpdateView):
+    """The pass mark and the optional rule for artists not on the Trusted
+    Artists list. Saving decides the Worship Check again for every song no
+    person has reviewed (no model runs)."""
+
+    permission_required = "songs.change_worshipchecksettings"
+    form_class = WorshipCheckSettingsForm
+    page_title = "Worship check"
+    intro = (
+        "How a song's worship score decides whether it is suggested. The score "
+        "comes from the song's lyrics; a Trusted Artist adds 0.25. These are the "
+        "church's rules, applied after the analysis."
+    )
+
+    def get_object(self, queryset=None):
+        return WorshipCheckSettings.load()
+
+    def get_success_url(self):
+        return reverse("songs:check_settings")
+
+    def get_links(self):
+        return settings_nav(self.request)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        self.before = snapshot(self.object, CHECK_SETTINGS_AUDIT_FIELDS)
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        record_change(
+            self.request.user,
+            self.object,
+            AuditEvent.Action.CHANGED,
+            diff(self.before, snapshot(self.object, CHECK_SETTINGS_AUDIT_FIELDS)),
+        )
+        changed = apply_check_rules()
+        messages.success(
+            self.request,
+            f"The worship check settings were saved; {changed} "
+            f"song{'s' if changed != 1 else ''} checked again.",
+        )
+        return response

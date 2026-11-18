@@ -85,6 +85,12 @@ class _Model:
 
 
 class OnnxEngine:
+    # Theme-to-lyrics cosines of all-MiniLM-L6-v2 run from about 0.2 (no
+    # match) to 0.6 (a close match): measured in the smoke test of
+    # 2026-11-18, where "Hark! the Herald" scored 0.59 for a Christmas theme
+    # and Rock of Ages 0.18. Ranking maps this range onto 0 to 1.
+    similarity_range = (0.20, 0.60)
+
     def __init__(self, models_dir):
         models_dir = Path(models_dir)
         missing = [spec.folder for spec in MODELS if not spec.is_installed(models_dir)]

@@ -170,6 +170,7 @@ class SuggestionSettingsForm(forms.ModelForm):
             "weight_familiarity",
             "weight_season",
             "weight_recency",
+            "weight_feel",
             "repeat_window_weeks",
             "suggestions_kept",
         ]

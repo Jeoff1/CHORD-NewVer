@@ -6,6 +6,9 @@ Two engines share one small interface:
   product of two vectors is their similarity.
 - ``score(text, labels)`` returns, for each ``Label``, how likely (0 to 1)
   its hypothesis is true of the text. Labels are scored independently.
+- ``similarity_range`` is ``(low, high)``: the similarity of unrelated
+  texts and of a close match, so ranking can turn similarities into fixed
+  0-to-1 relevance and match labels.
 
 ``settings.ML_ENGINE`` picks the engine: "onnx" runs the downloaded models
 with ONNX Runtime (decision 0006); "keyword" is a light stand-in that counts

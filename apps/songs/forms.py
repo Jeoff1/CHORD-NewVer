@@ -3,7 +3,7 @@ import re
 from django import forms
 from django.db.models import Q
 
-from .models import Song, ThemeTag
+from .models import Song, ThemeTag, WorshipCheckSettings
 
 SPOTIFY_ID = re.compile(r"^[A-Za-z0-9]{22}$")
 
@@ -39,3 +39,25 @@ class SongForm(forms.ModelForm):
 
 class SpotifyTrackForm(forms.Form):
     spotify_id = forms.RegexField(regex=SPOTIFY_ID)
+
+
+class WorshipCheckSettingsForm(forms.ModelForm):
+    class Meta:
+        model = WorshipCheckSettings
+        fields = ["pass_mark", "unlisted_rule", "unlisted_pass_mark"]
+        widgets = {"unlisted_rule": forms.RadioSelect}
+
+    def clean(self):
+        cleaned = super().clean()
+        mark, stricter = cleaned.get("pass_mark"), cleaned.get("unlisted_pass_mark")
+        rule = cleaned.get("unlisted_rule")
+        if (
+            rule == WorshipCheckSettings.UnlistedRule.STRICTER
+            and mark is not None
+            and stricter is not None
+            and stricter <= mark
+        ):
+            self.add_error(
+                "unlisted_pass_mark", "The stricter mark must be above the pass mark."
+            )
+        return cleaned

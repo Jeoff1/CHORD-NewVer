@@ -22,7 +22,13 @@ development task.
 - [[Worship]]'s song suggestions: from a service's theme to ranked songs
   placed in its song slots, with reasons, carried out by one search worker
   ([[0007-search-worker]]) under the Spotify safeguards, and seen only by
-  the people who plan the service.
+  the people who plan the service. After the first smoke test (2026-11-18):
+  fixed match labels, feel as a placement preference with one-click
+  corrections, the church's worship check rules, and one version of each
+  song.
+
+**Open:** a better way to choose theme tags (the measured neutral-class fix
+can't apply to this model), waiting for a decision.
 
 **Next:** Phase 6 (Lineups and reports) of the [[Development-Plan]], with
 the Phase 6 items in [[Design-Decisions]].

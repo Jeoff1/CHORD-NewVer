@@ -14,9 +14,14 @@ Stages, with the progress shown on the service page:
 4. cleanup (``apps/songs/cleanup.py``), then new songs join the pool;
 5. lyrics for the new songs from LRCLIB;
 6. analysis of every pool song with lyrics but no current analysis;
-7. ranking of every song that passed the Worship Check (``ranking.py``);
-8. sequencing into the template's Song Slots (``sequencing.py``);
+7. ranking of every song that passed the Worship Check (``ranking.py``),
+   keeping one version of each song (``versions.py``);
+8. sequencing into the template's Song Slots, with feel as a preference
+   (``sequencing.py``);
 9. explanations, kept with each Suggestion.
+
+``place_again`` places a run's songs again after a person corrects a
+song's feel or Worship Check from the suggestions panel.
 
 A run with ``use_spotify`` off skips stages 2 to 5 and ranks the pool.
 
@@ -41,7 +46,7 @@ from apps.songs.models import Song, ThemeTag
 from apps.songs.pool import add_from_spotify, fetch_lyrics
 from apps.songs.spotify import SpotifyClient, SpotifyError, SpotifyPaused
 
-from . import ranking, scheduling, sequencing
+from . import ranking, scheduling, sequencing, versions
 from .models import SearchRun, Season, Suggestion, SuggestionSettings
 from .phrases import search_phrases
 
@@ -242,7 +247,7 @@ def _find_on_spotify(run, theme, options, spotify, engine, progress):
 
     genres = options.genres() or [""]
     searches = [(phrase, genre) for phrase in phrases for genre in genres]
-    tracks, pages = [], 0
+    tracks, pages, record = [], 0, []
     for done, (phrase, genre) in enumerate(searches):
         progress(
             10 + 30 * done // len(searches),
@@ -254,6 +259,18 @@ def _find_on_spotify(run, theme, options, spotify, engine, progress):
         )
         pages += result.pages_read
         tracks.extend(result.tracks)
+        # Information only: never used to decide anything about a song.
+        record.append(
+            {
+                "phrase": phrase,
+                "genre": genre,
+                "pages": result.pages_read,
+                "found": len(result.tracks),
+                "genre_dropped": result.genre_dropped,
+            }
+        )
+        run.searches = record
+        run.save(update_fields=["searches"])
 
     cleaned = clean_tracks(tracks)
     added, new_songs = 0, []
@@ -315,17 +332,19 @@ def _rank(run, theme_vector, options, engine):
         seasons=seasons,
         usage=ranking.song_usage(service),
         window_weeks=options.repeat_window_weeks,
+        similarity_range=getattr(engine, "similarity_range", (0.0, 1.0)),
     )
-    kept = ranked[: options.suggestions_kept]
+    distinct = versions.group(ranked)
+    kept = distinct[: options.suggestions_kept]
     placements = {
-        p.index: p for p in sequencing.place(kept, service.template.slots.all())
+        p.index: p
+        for p in sequencing.place(
+            kept, service.template.slots.all(), feel_weight=_feel_weight(run)
+        )
     }
     rows = []
     for index, item in enumerate(kept):
         placement = placements.get(index)
-        reasons = list(item.reasons)
-        if placement and placement.reason:
-            reasons.append(placement.reason)
         rows.append(
             Suggestion(
                 run=run,
@@ -336,15 +355,44 @@ def _rank(run, theme_vector, options, engine):
                 familiarity=item.familiarity,
                 season=item.season,
                 recency=item.recency,
+                match=item.match,
                 slot=placement.slot if placement else None,
-                reasons=reasons,
+                slot_reason=placement.reason if placement else "",
+                reasons=list(item.reasons),
             )
         )
     with transaction.atomic():
         Suggestion.objects.bulk_create(rows)
-        run.songs_ranked = len(ranked)
+        run.songs_ranked = len(distinct)
         run.save(update_fields=["songs_ranked"])
     return kept
+
+
+def _feel_weight(run):
+    """The feel weight the run used (runs before it existed had none)."""
+    return (run.weights or {}).get("feel", SuggestionSettings().weight_feel)
+
+
+def place_again(run):
+    """Place the run's songs in the slots again, after a person corrected a
+    song's feel or its Worship Check. Songs that no longer pass the check
+    are left out; the ranking stays as it was."""
+    suggestions = list(run.suggestions.select_related("song").order_by("rank"))
+    candidates = [
+        s for s in suggestions if s.song.worship_check == Song.WorshipCheck.ACCEPTED
+    ]
+    placements = {
+        p.index: p
+        for p in sequencing.place(
+            candidates, run.service.template.slots.all(), feel_weight=_feel_weight(run)
+        )
+    }
+    for suggestion in suggestions:
+        suggestion.slot, suggestion.slot_reason = None, ""
+    for index, placement in placements.items():
+        candidates[index].slot = placement.slot
+        candidates[index].slot_reason = placement.reason
+    Suggestion.objects.bulk_update(suggestions, ["slot", "slot_reason"])
 
 
 def _summary(run):
@@ -368,9 +416,12 @@ def latest_run(service):
 
 def results(run):
     """(placed, others): Suggestions placed in slots, in slot order, and the
-    other ranked songs."""
+    other ranked songs. Songs a person has since marked as not worship songs
+    are left out."""
     suggestions = list(
-        run.suggestions.select_related("song", "slot").prefetch_related("song__tags")
+        run.suggestions.select_related("song", "slot")
+        .prefetch_related("song__tags")
+        .filter(song__worship_check=Song.WorshipCheck.ACCEPTED)
     )
     placed = sorted(
         (s for s in suggestions if s.slot_id),

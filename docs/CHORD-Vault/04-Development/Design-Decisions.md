@@ -91,6 +91,55 @@ When the code above changes, update the [[Worship]] module note, [[0006-onnx-run
 
 ---
 
+## Phase 5 follow-up: smoke test fixes (done 2026-11-18)
+
+Agreed after the first live smoke test, with the seeded hymns and with Spotify.
+
+### Match labels and relevance on a fixed scale
+
+- Relevance is the theme-to-lyrics similarity on a fixed scale set by the engine (`similarity_range`; for all-MiniLM-L6-v2, 0.20 maps to 0 and 0.60 to 1), not rescaled per run. The same similarity always gets the same relevance and label, whatever else is in the pool.
+- Labels: similarity 0.50 or more "closely", 0.40 "fairly well", 0.30 "a little", below 0.30 "doesn't match the theme well".
+- Default weights recalibrated for the new scale: familiarity 0.3 → 0.2, season 0.2 → 0.15, recent use 0.4 → 0.3 (the old per-run scaling stretched about 0.27 of similarity to 0–1, the fixed scale 0.40). A church still on the old defaults moves to the new ones; weights a church chose stay.
+
+Tests: relevance is fixed and clipped; the same match gets the same relevance in any pool; each label's threshold; the new defaults.
+
+### Theme notes
+
+- Notes are not required. The suggestions panel shows a hint when the theme has none.
+
+Test: the hint shows without notes and goes with them.
+
+### Feel
+
+- Placement treats feel as a preference: a song in a slot of another feel loses the church's **feel mismatch weight** (default 0.15) for each step between upbeat, mid-tempo and slow. Placement is best first. A slot without a feel, or a song whose feel isn't known, costs nothing.
+- The analysis leaves feel blank when unsure: the best feel must score at least 0.5 and beat the next by 0.2.
+- One-click feel correction in the suggestions panel. A feel a person set is kept when the song is analysed again; the lineup is placed again at once.
+- Words per minute from LRCLIB's timed lyrics, as a tempo signal: a future experiment (Development Plan), not built.
+
+Tests: a close song of a near feel beats a weak song of the right feel; each step costs the weight; an unknown feel costs nothing and says so; feel left blank when unsure; a feel a person set is kept; the one-click correction re-places, is audited, and needs both permissions.
+
+### Worship check
+
+- The pass mark (default 0.5) is a church setting (Settings → Worship check). Changing it decides the check again for every song nobody has reviewed, from the stored model score; no model runs.
+- **Rule for artists not on the Trusted Artists list** (choice (c)): off by default. A church may choose that artists not on the list need a stricter pass mark (default 0.9), or that their songs wait for a person's review ("Not checked"). It is a church rule applied **after** the model, like the Trusted Artist bonus: the artist name is compared with the list outside any engine, never reaches the model, and is never a training feature (see Phase 9). Changing the list or the rule decides the check again for songs nobody has reviewed.
+- One-click "Not a worship song" in the suggestions panel (choice (d)): the song counts as Reviewed, leaves the lineup, and isn't suggested again.
+- Each Search Run records which searches found nothing in the genre and ran again without it (choice (e)). This is information only, shown in "About this search", and is never used in any decision about a song.
+
+Tests: the pass mark decides; the stricter and review rules; off by default; rechecking without a model, keeping reviewed songs; a Trusted Artist change rechecks; the settings page and its permissions; "Not a worship song" leaves the lineup; searches are recorded and a song found without the genre is treated like any other.
+
+### Versions of one song
+
+- After ranking, versions of one song are grouped: lyrics similarity at least 0.90 with titles that begin the same way, or at least 0.95 whatever the titles. One version is kept: the one the team knows, then one a person reviewed, then one by a Trusted Artist, then the best scored. Its reasons name the other versions. The pool keeps every version.
+- Placement never puts two songs with the same base title in one lineup.
+
+Tests: versions grouped by lyrics and titles; different titles need nearly the same lyrics; the same title with other lyrics is another song; the preference order; a run keeps one version; one title once per lineup.
+
+### Theme tags (measured, not changed)
+
+- Including a "neutral" class in the tag score can't help: the zero-shot model (deberta-v3-xsmall-zeroshot-v1.1-all-33) has only two classes, entailment and not entailment, so the score already uses all of them. Measured on the 23 seeded hymns and carols: identical tags, 12.5 tags over 0.5 per song either way. Waiting for the project owner's decision on another approach.
+
+---
+
 ## Phase 6: lineups and confirmation (current)
 
 ### The pastor's decision is final (question 9)
@@ -168,6 +217,6 @@ Decision: keep the Administrator role undeletable, with every permission. Update
 ### Keep Spotify data out of training
 
 - Training features may include only: lyrics-based scores (embedding similarity, raw model worship score, tag scores), the church's own data (team knows, usage, season, slot), and feedback labels (kept, swapped, removed).
-- Never use as a training feature: the Spotify artist name, title, album, track ID, length, the Trusted Artist bonus, or any score that includes the bonus. Use `worship_model_score`, not the adjusted score.
+- Never use as a training feature: the Spotify artist name, title, album, track ID, length, the Trusted Artist bonus, or any score that includes the bonus. Use `worship_model_score`, not the adjusted score. The same holds for the rule for artists not on the Trusted Artists list, which version of a song was kept, and the genre-filter record on a Search Run.
 
 Test: the feature list used for training contains none of the forbidden fields.

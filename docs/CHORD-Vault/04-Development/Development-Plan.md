@@ -271,6 +271,27 @@ Phase 5 tests in [[Design-Decisions]] pass: the raw score ignores the
 Trusted Artist list, a team member sees no suggestions, every Spotify
 safeguard holds, and a second worker refuses to start.
 
+### Phase 5 follow-up: smoke test fixes (done 2026-11-18)
+
+From the first live smoke test ([[Design-Decisions]], Phase 5 follow-up):
+
+- [x] Match labels and relevance on a fixed scale (the engine's
+  `similarity_range`), with "doesn't match the theme well"; default weights
+  recalibrated (familiarity 0.2, season 0.15, recent use 0.3).
+- [x] A hint in the suggestions panel when the theme has no notes.
+- [x] Feel: placement with a feel mismatch weight (a church setting,
+  default 0.15); feel left blank when the analysis isn't sure; one-click
+  feel correction in the panel, kept when the song is analysed again.
+- [x] Worship check: the pass mark as a church setting; the optional rule
+  for artists not on the Trusted Artists list (off by default); one-click
+  "Not a worship song"; each search's genre-filter result recorded for
+  information only.
+- [x] Versions of one song grouped, one kept; one title once per lineup.
+- [x] `seed_hymns`: 23 public-domain hymns, with Christmas carols, slow
+  hymns and Easter hymns.
+- [ ] Theme tags: measured; the neutral-class fix can't apply to this model.
+  Waiting for a decision on another approach.
+
 ## Phase 6: Lineups and reports
 
 Goal: review, confirmation and what follows from it (pipeline stage 10 and
@@ -405,6 +426,18 @@ Goal: ready for the proposal and for a real church.
 - [ ] A backup and restore script (`pg_dump`) and a deployment guide.
 - [ ] User acceptance testing with the evaluation instrument the proposal
   requires.
+
+## Future experiments
+
+Ideas worth measuring later. None is scheduled; build one only once a
+phase takes it on.
+
+- **Tempo from LRCLIB's timed lyrics** (smoke test, 2026-11-18). Lyrics say
+  little about tempo, so the feel guessed from them is often wrong. LRCLIB's
+  synced lyrics carry timestamps, so words or lines per minute could be a
+  rough tempo signal. It comes from LRCLIB, not Spotify, so it may be model
+  input. To try: keep the synced lyrics' timing when fetching, compute
+  words per minute, and compare it with feels people have set.
 
 ## Decisions to make before their phase
 

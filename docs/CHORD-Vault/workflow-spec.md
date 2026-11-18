@@ -33,14 +33,26 @@ SONG SELECTION (core module)
    tags. Its raw worship score is stored in its own field and depends only on
    the lyrics. The optional Trusted Artist bonus is a church rule applied after
    the model and stored separately; the artist name never reaches the model.
+   The pass mark (default 0.5) is a church setting. An optional church rule,
+   off by default, makes artists not on the Trusted Artists list need a
+   stricter mark or a person's review; it too is applied after the model and
+   is never model input or training data.
 7. Every accepted song in the pool is ranked, not only the songs this run
-   found: embedding similarity between theme and lyrics, plus familiarity
-   (past usage from confirmed lineups), season fit, and a penalty for recent
-   use.
-8. Top songs are placed in service slots (opener, praise, worship, response).
+   found: embedding similarity between theme and lyrics on a fixed scale
+   (labelled closely, fairly well, a little, or doesn't match well), plus
+   familiarity (past usage from confirmed lineups), season fit, and a penalty
+   for recent use. Versions of one song are grouped and one is kept (the team
+   knows it, then reviewed, then a Trusted Artist, then the best scored); the
+   pool keeps every version.
+8. Top songs are placed in service slots (opener, praise, worship, response),
+   with feel as a preference: a song of another feel loses a little score for
+   each step between upbeat, mid-tempo and slow. A lineup never holds two
+   songs with the same title. Feel is left unset when the analysis isn't sure.
 9. Each suggestion stores a reason it was picked. Suggestions are shown only
    to people with the suggest-songs permission (worship leader and pastor by
-   default), never to team members.
+   default), never to team members. From the suggestions, the leader can set
+   a song's feel or mark it "not a worship song" in one click. A theme
+   without notes gets a hint to add them; notes are not required.
 10. Leader reviews; leader or pastor confirms; pastor's decision wins:
     - If the leader confirms and the pastor edits afterwards, the lineup stays
       confirmed and is marked "Edited by pastor" with the time, shown to

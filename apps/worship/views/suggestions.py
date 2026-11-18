@@ -7,19 +7,24 @@ them: every view and panel here needs ``worship.suggest_songs``
 
 from django.conf import settings
 from django.contrib import messages
-from django.shortcuts import redirect
+from django.http import HttpResponseBadRequest
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView, UpdateView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.core.music import Feel
 from apps.core.views import FormPageMixin
+from apps.songs import pool
+from apps.songs.models import Song
 from apps.songs.spotify import block_message, current_block
 
 from .. import suggesting
 from ..forms import SuggestionSettingsForm
-from ..models import SuggestionSettings
+from ..models import Suggestion, SuggestionSettings
 from .base import ServiceMixin, WorshipMixin, settings_nav
 
 SUGGEST = "worship.suggest_songs"
@@ -33,6 +38,7 @@ SETTINGS_AUDIT_FIELDS = {
     "Familiarity weight": "weight_familiarity",
     "Season weight": "weight_season",
     "Recent use weight": "weight_recency",
+    "Feel mismatch weight": "weight_feel",
     "Repeat window (weeks)": "repeat_window_weeks",
     "Ranked songs kept": "suggestions_kept",
 }
@@ -52,6 +58,7 @@ def panel_context(service, user):
     run = suggesting.latest_run(service)
     placed, others = suggesting.results(run) if run else ([], [])
     block = current_block()
+    theme = service.posted_theme
     return {
         "run": run,
         "placed": placed,
@@ -61,7 +68,65 @@ def panel_context(service, user):
         "spotify_ready": spotify_configured() and not (block and block.is_pause),
         "spotify_configured": spotify_configured(),
         "block_message": block_message(block) if block else "",
+        "theme_needs_notes": bool(theme) and not theme.notes.strip(),
+        "can_correct": user.has_perm("songs.change_song"),
+        "feel_choices": Feel.choices,
     }
+
+
+class _CorrectionView(ServiceMixin, View):
+    """A one-click correction to a suggested song, from the panel. The run's
+    songs are placed again at once; an HTMX request gets the panel back."""
+
+    permission_required = (SUGGEST, "songs.change_song")
+
+    def post(self, request, public_id, pk):
+        suggestion = get_object_or_404(
+            Suggestion.objects.select_related("song", "run"),
+            pk=pk,
+            run__service=self.service,
+        )
+        song = suggestion.song
+        before = snapshot(song, pool.SONG_AUDIT_FIELDS)
+        if not self.correct(song):
+            return HttpResponseBadRequest("Choose upbeat, mid-tempo or slow.")
+        record_change(
+            request.user,
+            song,
+            AuditEvent.Action.CHANGED,
+            diff(before, snapshot(song, pool.SONG_AUDIT_FIELDS)),
+        )
+        suggesting.place_again(suggestion.run)
+        if request.headers.get("HX-Request"):
+            context = {"service": self.service}
+            context.update(panel_context(self.service, request.user))
+            return render(request, "worship/includes/suggestions.html", context)
+        return redirect(f"{self.service_url()}#suggestions")
+
+
+class SuggestionFeelView(_CorrectionView):
+    """Set a suggested song's feel. Analysing the song again keeps it."""
+
+    def correct(self, song):
+        feel = self.request.POST.get("feel", "")
+        if feel not in Feel.values:
+            return False
+        song.feel, song.feel_reviewed = feel, True
+        song.save(update_fields=["feel", "feel_reviewed", "updated_at"])
+        return True
+
+
+class NotWorshipView(_CorrectionView):
+    """Mark a suggested song as not a worship song. A person decided it, so
+    the song counts as Reviewed and analysis keeps the decision."""
+
+    def correct(self, song):
+        song.worship_check = Song.WorshipCheck.REJECTED
+        song.reviewed_at, song.reviewed_by = timezone.now(), self.request.user
+        song.save(
+            update_fields=["worship_check", "reviewed_at", "reviewed_by", "updated_at"]
+        )
+        return True
 
 
 class SuggestView(ServiceMixin, View):

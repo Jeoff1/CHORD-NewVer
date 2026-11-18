@@ -1,6 +1,6 @@
 {% load church %}
 {# Song suggestions for one service. Only for users with worship.suggest_songs; while a run is in progress it reloads itself every two seconds. #}
-{% label "lineup" as lineup_word %}{% label "worship_service" as service_word %}
+{% label "lineup" as lineup_word %}{% label "worship_service" as service_word %}{% label "sermon" as sermon_word %}
 <div id="suggestions" class="card shadow-sm mb-3"{% if run.is_active %} hx-get="{% url 'worship:suggestions' public_id=service.public_id %}" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
   <div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
@@ -17,6 +17,9 @@
 
     {% if block_message %}<div class="alert alert-warning small">{{ block_message }}</div>{% endif %}
     {% if not spotify_configured %}<p class="small text-body-secondary">Spotify isn't set up, so suggestions rank the songs already in the pool.</p>{% endif %}
+    {% if theme_needs_notes %}
+      <div class="alert alert-info small">The theme has no {{ sermon_word|lower }} notes yet. Songs match a fuller theme better: add a few sentences about the message{% if perms.worship.change_theme %} (<a href="{% url 'worship:theme' public_id=service.public_id %}">edit the theme</a>){% endif %}, then find songs again.</div>
+    {% endif %}
 
     {% if not service.posted_theme %}
       <p class="text-body-secondary mb-0">Post the theme first: suggestions start from it.</p>
@@ -39,9 +42,13 @@
           {% for suggestion in placed %}
             <li class="list-group-item d-flex gap-2">
               <div class="ms-1 flex-grow-1">
-                <div class="small text-body-secondary">{{ suggestion.slot.name }}</div>
+                <div class="small text-body-secondary">{{ suggestion.slot.name }}{% if suggestion.slot.feel %} ({{ suggestion.slot.get_feel_display|lower }}){% endif %}</div>
                 <div class="fw-semibold">{% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} <span class="fw-normal text-body-secondary">· {{ suggestion.song.artist }}</span></div>
-                <ul class="small mb-0 ps-3">{% for reason in suggestion.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+                <ul class="small mb-1 ps-3">
+                  {% for reason in suggestion.reasons %}<li>{{ reason }}</li>{% endfor %}
+                  {% if suggestion.slot_reason %}<li>{{ suggestion.slot_reason }}</li>{% endif %}
+                </ul>
+                {% include "worship/includes/suggestion_corrections.html" %}
               </div>
             </li>
           {% endfor %}
@@ -52,7 +59,9 @@
           <summary>Other choices ({{ others|length }})</summary>
           <ul class="list-unstyled small mt-2 mb-0">
             {% for suggestion in others %}
-              <li class="mb-1">{{ suggestion.rank }}. {% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} · {{ suggestion.song.artist }} <span class="text-body-secondary">({{ suggestion.reasons|first }})</span></li>
+              <li class="mb-2">{{ suggestion.rank }}. {% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} · {{ suggestion.song.artist }} <span class="text-body-secondary">({{ suggestion.reasons|first }})</span>
+                {% include "worship/includes/suggestion_corrections.html" %}
+              </li>
             {% endfor %}
           </ul>
         </details>
@@ -68,8 +77,13 @@
           {% if run.phrases %}<dt class="col-sm-4">Search phrases</dt><dd class="col-sm-8">{{ run.phrases|join:", " }}</dd>{% endif %}
           {% if run.use_spotify %}
             <dt class="col-sm-4">Spotify</dt><dd class="col-sm-8">{{ run.spotify_calls }} request{{ run.spotify_calls|pluralize }}, {{ run.pages_read }} page{{ run.pages_read|pluralize }} read; {{ run.songs_found }} songs found, {{ run.songs_added }} new{% if run.spotify_limits %}; {{ run.spotify_limits|length }} rate limit{{ run.spotify_limits|length|pluralize }} met{% endif %}</dd>
+            {% if run.searches %}
+              {% with dropped=run.genre_dropped_searches %}
+                <dt class="col-sm-4">Genre filter</dt><dd class="col-sm-8">{% if dropped %}{{ dropped|length }} of {{ run.searches|length }} searches found nothing in the genre and ran again without it: {% for search in dropped %}"{{ search.phrase }}"{% if not forloop.last %}, {% endif %}{% endfor %}. For information only.{% else %}Every search found songs within its genre.{% endif %}</dd>
+              {% endwith %}
+            {% endif %}
           {% endif %}
-          <dt class="col-sm-4">Songs</dt><dd class="col-sm-8 mb-0">{{ run.songs_analysed }} analysed, {{ run.songs_ranked }} ranked</dd>
+          <dt class="col-sm-4">Songs</dt><dd class="col-sm-8 mb-0">{{ run.songs_analysed }} analysed, {{ run.songs_ranked }} ranked (one version of each song)</dd>
         </dl>
       </details>
     {% endif %}

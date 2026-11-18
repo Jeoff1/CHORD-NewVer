@@ -75,12 +75,23 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
     alone;
   - the **Worship Score** (`worship_score`): the model's score plus 0.25
     for a Trusted Artist, a church rule applied after the model; the
-    artist name never reaches the engine. The Worship Check passes at 0.5
-    of this score. The song page shows the two apart;
-  - up to four Theme Tags scoring 0.5 or more, for worship songs only;
-  - a Feel guess (mid-tempo when nothing points anywhere);
+    artist name never reaches the engine. The song page shows the two
+    apart;
+  - the **Worship Check**, by the church's rules (**Worship Check
+    Settings**, Settings → Worship check): the song passes when its worship
+    score reaches the **pass mark** (default 0.5). An optional rule, off by
+    default, makes artists not on the Trusted Artists list need a stricter
+    mark (default 0.9) or wait for a person's review ("Not checked", and
+    the song page says why). Changing the rules or the Trusted Artists list
+    decides the check again for every song nobody has reviewed, from the
+    stored model score, without running a model;
+  - up to four Theme Tags scoring 0.5 or more, except for songs that fail
+    the check;
+  - a Feel guess, left blank unless one feel scores at least 0.5 and beats
+    the next by 0.2;
   - the embedding.
-  - A Reviewed song keeps its check, tags and feel when analysed again.
+  - A Reviewed song keeps its check, tags and feel when analysed again; a
+    song whose feel a person set (`feel_reviewed`) keeps its feel.
 - **Processing** (`pool.py`): `manage.py process_songs [--limit N]`
   fetches lyrics for songs that need them, then analyses songs whose
   lyrics are new. The model loads only when something needs analysis.
@@ -97,8 +108,8 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
   - Find on Spotify: search when the form is submitted (never as the user
     types) and add a track. A valid track ID is fetched from Spotify again,
     never taken from the form, unless the pool already has it;
-  - settings: Theme tags and Trusted artists, as tabs beside the worship
-    settings.
+  - settings: Theme tags, Trusted artists and Worship check, as tabs
+    beside the worship settings.
 - Adding, editing and Check again are in the audit trail; machine analysis
   is not.
 - Tests: `apps/songs/tests/` (clients, Spotify safeguards, cleanup, ML,
@@ -109,19 +120,22 @@ Spotify safeguards in `apps/songs`):
 
 - **Suggestion Settings** (`models/suggestions.py`, one row): search
   genres (default "worship"), phrases per theme (4), pages per phrase (2),
-  market, the four ranking weights (theme match 1.0, familiarity 0.3,
-  season 0.2, recent use 0.4), the repeat window (4 weeks) and how many
-  ranked songs a run keeps (20). Edited at Settings → Suggestion settings;
-  changes are audited.
+  market, the four ranking weights (theme match 1.0, familiarity 0.2,
+  season 0.15, recent use 0.3; recalibrated on 2026-11-18 for the fixed
+  relevance scale), the feel mismatch weight (0.15), the repeat window
+  (4 weeks) and how many ranked songs a run keeps (20). Edited at
+  Settings → Suggestion settings; changes are audited.
 - **Season**: a church-edited list with dates (once, or every year, which
   may run over the new year) and the Theme Tags that suit it. None at
   first, so season fit plays no part until the church adds one.
 - **Search Run**: one search for a service's songs: status, progress and
   stage, phrases, pages read, songs found, added, analysed and ranked, the
-  weights used, Spotify requests and every 429 met, and whether Spotify
-  was paused so the pool was ranked instead. **Suggestion**: a ranked song
-  of a run, with its rank, score and its parts, its slot (if placed) and
-  its reasons.
+  weights used, Spotify requests and every 429 met, whether Spotify was
+  paused so the pool was ranked instead, and each search's phrase, genre
+  and whether it ran again without the genre (information only, never used
+  in a decision). **Suggestion**: a ranked song of a run, with its rank,
+  score and its parts, the raw similarity (`match`), its slot (if placed)
+  with the slot's reason, and its reasons.
 - **The pipeline** (`suggesting.py`), carried out by the search worker:
   1. the theme's embedding and the Theme Tags it is about;
   2. search phrases: a short title, then KeyBERT-style phrases picked with
@@ -135,19 +149,29 @@ Spotify safeguards in `apps/songs`):
   6. analysis of every pool song not yet analysed by the current engine;
   7. ranking of every accepted song in the pool (`ranking.py`):
      `w1·relevance + w2·familiarity + w3·season − w4·recency`. Relevance is
-     the cosine of theme and lyrics embeddings, scaled from the farthest
-     candidate (0) to the closest (1). Familiarity is 0.6 for "the team
-     knows it" plus up to 0.4 for past use; recency falls from 1 on the
-     service's day to 0 at the end of the repeat window. Past use comes
-     from confirmed lineups (Phase 6), so for now only "the team knows it"
-     counts;
-  8. sequencing (`sequencing.py`): songs in rank order fill the first
-     empty slot of their feel; slots still empty take the best songs left,
-     and say so;
-  9. reasons, kept on each Suggestion.
+     the cosine of theme and lyrics embeddings on a fixed scale: the
+     engine's `similarity_range` (0.20 to 0.60 for all-MiniLM-L6-v2) maps
+     to 0 to 1, clipped. Its label is fixed too: "closely" from a cosine of
+     0.50, "fairly well" from 0.40, "a little" from 0.30, and "doesn't match
+     the theme well" below. Familiarity is 0.6 for "the team knows it" plus
+     up to 0.4 for past use; recency falls from 1 on the service's day to 0
+     at the end of the repeat window. Past use comes from confirmed lineups
+     (Phase 6), so for now only "the team knows it" counts;
+  8. versions (`versions.py`): versions of one song (lyrics at least 0.90
+     alike with titles that begin the same way, or 0.95 whatever the
+     titles) count once. The kept version is the one the team knows, then
+     one a person reviewed, then one by a Trusted Artist, then the best
+     scored; its reasons name the others. The pool keeps every version;
+  9. sequencing (`sequencing.py`): best placement first, feel as a
+     preference. A song in a slot of another feel loses the feel mismatch
+     weight per step (upbeat, mid-tempo, slow); an unknown feel or a slot
+     without one costs nothing. A lineup never holds two songs with the
+     same title. The slot's reason, when one is needed, is kept apart;
+  10. reasons, kept on each Suggestion.
 
   A "Rank the song pool only" run skips stages 2 to 5. A failed outside
-  call ends the run with a clear message.
+  call ends the run with a clear message. `place_again` places a run's
+  songs again after a one-click correction.
 - **Spotify safeguards** (`apps/songs/spotify.py`, Design-Decisions,
   Phase 5):
   - every Spotify call first checks the shared block: the latest
@@ -168,9 +192,11 @@ Spotify safeguards in `apps/songs`):
   holds a PostgreSQL advisory lock (`apps/core/locks.py`) while it runs,
   so a second worker, or `process_songs`, refuses to start. Runs left
   "running" by a stopped worker are marked failed when it starts.
-- **`manage.py seed_hymns`** adds nine public-domain hymns (words first
-  published before 1913) to the pool, to try suggestions without Spotify.
-  Running it again adds only missing ones.
+- **`manage.py seed_hymns`** adds 23 public-domain hymns to the pool:
+  general hymns, eight Christmas carols, four slow hymns and two Easter
+  hymns. Every text was first published before 1913, and every author and
+  translator died more than 70 years ago. Running it again adds only
+  missing ones.
 - **Screens**:
   - the service page's **Suggested lineup** panel (named by the "lineup"
     Label), only for people with `worship.suggest_songs`: "Find songs"
@@ -178,15 +204,23 @@ Spotify safeguards in `apps/songs`):
     while a run is in progress it shows the stage and reloads itself every
     two seconds (HTMX), and after a few minutes of waiting says how to
     start the worker; then the songs placed in the slots, with their
-    reasons, and the other choices. "About this search" (with
+    reasons, and the other choices. A theme without notes gets a hint to
+    add them (notes aren't required). "About this search" (with
     `worship.view_searchrun`) shows the phrases, pages, Spotify requests
-    and limits, and song counts;
+    and limits, which searches ran again without the genre, and song
+    counts;
+  - **one-click corrections** beside each suggested song, for people who
+    may also change songs (`songs.change_song`): set its feel (kept when
+    the song is analysed again), or mark it "Not a worship song" (it
+    counts as Reviewed and leaves the lineup). Both are audited, and the
+    lineup is placed again at once (HTMX);
   - settings: Seasons and Suggestion settings, as tabs beside the other
     worship settings.
 - Team members never see suggestions: the panel and its URLs need
   `worship.suggest_songs`, which only Worship Leader and Pastoral Staff
   get by default.
-- Tests: `apps/worship/tests/` (`test_suggestion_rules.py`,
+- Tests: `apps/worship/tests/` (`test_suggestion_rules.py`: phrases,
+  ranking, labels, versions, placement, seasons;
   `test_suggesting.py`, `test_suggestion_views.py`).
 
 ## Permissions
@@ -206,14 +240,16 @@ Spotify safeguards in `apps/songs`):
 | `worship.view_searchrun`                     | "About this search" in the panel         |
 | `worship.*_season`                           | The Seasons list                         |
 | `worship.change_suggestionsettings`          | Suggestion settings                      |
+| `songs.change_worshipchecksettings`          | Worship check settings                   |
+| `worship.suggest_songs` and `songs.change_song` | One-click corrections in the panel    |
 
 Default roles ([[Accounts]]):
 - **Pastoral Staff** schedule services, post themes, record headcounts and
   manage templates and series; they see songs, theme tags and seasons, and
   ask for song suggestions.
 - **Worship Leader** sees the schedule, manages the song pool, theme tags,
-  trusted artists, seasons and suggestion settings, and asks for song
-  suggestions.
+  trusted artists, the worship check, seasons and suggestion settings, asks
+  for song suggestions and corrects them in one click.
 - **Team Member** sees the schedule, never suggestions.
 - **Office Staff** see the schedule and record headcounts.
 
@@ -222,9 +258,12 @@ Default roles ([[Accounts]]):
 - Service Templates and their Song Slots
 - Series
 - Theme Tags and Trusted Artists
+- Worship Check Settings: pass mark, the rule for artists not on the
+  Trusted Artists list (off by default), the stricter pass mark
 - Seasons
 - Suggestion Settings: search genres, phrases per theme, pages per
-  phrase, market, ranking weights, repeat window, ranked songs kept
+  phrase, market, ranking weights, feel mismatch weight, repeat window,
+  ranked songs kept
 - The "worship service", "sermon" and "lineup" Labels
 - The church's time zone (Church Profile)
 - Installation settings in `.env`: `SPOTIFY_CLIENT_ID`,
@@ -233,10 +272,16 @@ Default roles ([[Accounts]]):
 
 ## Open questions
 
-- The Worship Check threshold and the Trusted Artist bonus are still
-  constants in `analysis.py`, not church settings.
+- The Trusted Artist bonus (0.25) is still a constant in `analysis.py`.
 - A quota lockout without a Retry-After pauses Spotify for 24 hours, and
   only time ends a pause (there is no "try Spotify now" button, so nobody
   can prolong a lockout). Both are choices to confirm.
-- Feel guessed from lyrics is weak (stately hymns come out upbeat); people
-  correct it once per song.
+- Feel guessed from lyrics is weak (stately hymns come out upbeat); it is
+  now left blank when unsure, and people set it in one click. Tempo from
+  LRCLIB's timed lyrics is a future experiment ([[Development-Plan]]).
+- Theme tags are near-ties: most tags score above 0.9 on worship lyrics.
+  A neutral class can't help (the model has only two classes); another
+  approach awaits a decision.
+- An unknown feel costs nothing in placement, so a song with no feel can
+  take a slot ahead of a closer song of a neighbouring feel (seen in the
+  smoke-test comparison). Setting feels removes it.

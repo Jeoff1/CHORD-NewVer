@@ -17,7 +17,13 @@ from apps.core.testing import (
     make_user,
 )
 from apps.songs import spotify
-from apps.songs.models import Song, SpotifyLimit, ThemeTag, TrustedArtist
+from apps.songs.models import (
+    Song,
+    SpotifyLimit,
+    ThemeTag,
+    TrustedArtist,
+    WorshipCheckSettings,
+)
 
 LIST = reverse("songs:list")
 SEARCH = reverse("songs:spotify_search")
@@ -353,3 +359,59 @@ class DefaultRoleTests(SongsTestCase):
         self.assertFalse(has("pastoral_staff", "change_song"))
         self.assertFalse(has("team_member", "view_song"))
         self.assertTrue(has("administrator", "change_themetag"))
+
+
+CHECK_SETTINGS = reverse("songs:check_settings")
+
+
+class WorshipCheckSettingsTests(SongsTestCase):
+    def data(self, **overrides):
+        data = {"pass_mark": 0.5, "unlisted_rule": "off", "unlisted_pass_mark": 0.9}
+        data.update(overrides)
+        return data
+
+    def test_off_by_default_and_the_worship_leader_changes_it(self):
+        song = make_song(
+            analysed_at=timezone.now(),
+            worship_model_score=0.6,
+            worship_score=0.6,
+            worship_check=Song.WorshipCheck.ACCEPTED,
+        )
+        self.client.force_login(make_user(roles=["worship_leader"]))
+        response = self.client.get(CHECK_SETTINGS)
+        self.assertContains(response, "Treat every artist the same")
+        response = self.client.post(
+            CHECK_SETTINGS, self.data(unlisted_rule="review"), follow=True
+        )
+        self.assertContains(response, "1 song checked again")
+        song.refresh_from_db()
+        self.assertEqual(song.worship_check, Song.WorshipCheck.UNCHECKED)
+        event = AuditEvent.objects.get(action=AuditEvent.Action.CHANGED)
+        self.assertEqual(
+            event.changes["Artists not on the Trusted Artists list"],
+            [
+                "Treat every artist the same",
+                "Songs by artists not on the list wait for a person",
+            ],
+        )
+        detail = self.client.get(url(song))
+        self.assertContains(detail, "Waiting for a person's review")
+
+    def test_the_stricter_mark_must_be_above_the_pass_mark(self):
+        self.client.force_login(make_user(roles=["worship_leader"]))
+        response = self.client.post(
+            CHECK_SETTINGS,
+            self.data(unlisted_rule="stricter", pass_mark=0.6, unlisted_pass_mark=0.5),
+        )
+        self.assertContains(response, "must be above the pass mark")
+
+    def test_the_pass_mark_stays_in_range(self):
+        self.client.force_login(make_user(roles=["worship_leader"]))
+        response = self.client.post(CHECK_SETTINGS, self.data(pass_mark=1.5))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(WorshipCheckSettings.load().pass_mark, 0.5)
+
+    def test_others_may_not_change_it(self):
+        for role in ("pastoral_staff", "team_member"):
+            self.client.force_login(make_user(roles=[role]))
+            self.assertEqual(self.client.get(CHECK_SETTINGS).status_code, 403)

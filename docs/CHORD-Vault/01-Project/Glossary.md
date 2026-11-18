@@ -98,7 +98,8 @@ _Avoid_: position, segment
 
 **Feel**:
 How a song moves: upbeat, mid-tempo or slow. The system guesses it from
-the lyrics and a person corrects it.
+the lyrics, leaves it unset when it isn't sure, and a person corrects it.
+Song Slots prefer songs of their feel but don't require them.
 _Avoid_: tempo, energy (Spotify no longer gives either)
 
 **Theme**:
@@ -122,11 +123,31 @@ LRCLIB, its Worship Check, Theme Tags, Feel, and whether the team knows
 it.
 _Avoid_: track (Spotify's word for the recording)
 
+**Version**:
+One of several Songs in the pool that are the same song: covers and live
+recordings, found by alike lyrics and titles. Suggestions show one version
+of each song; the pool keeps them all.
+_Avoid_: duplicate, cover (alone)
+
 **Worship Check**:
 Whether a Song reads as a Christian worship song: Not checked, Worship
-song, or Not a worship song. The analysis decides it from the Worship
-Score; a person can correct it. Only worship songs are suggested.
+song, or Not a worship song. The church's rules decide it from the
+Worship Score and the Pass Mark; a person can correct it. Only worship
+songs are suggested.
 _Avoid_: filter, classification
+
+**Pass Mark**:
+The Worship Score a Song needs to pass the Worship Check: a church
+setting, 0.5 unless the church changes it. With the church's optional
+rule, artists not on the Trusted Artists list need a stricter mark or a
+person's review.
+_Avoid_: threshold (in UI text), cut-off
+
+**Worship Check Settings**:
+The church's one set of Worship Check rules: the Pass Mark and the rule
+for artists not on the Trusted Artists list. They apply after the model;
+the artist name never reaches it.
+_Avoid_: classifier settings
 
 **Model's Worship Score**:
 How strongly a Song's lyrics read as worship, from the ML model and the
