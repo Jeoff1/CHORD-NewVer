@@ -18,7 +18,7 @@ from apps.worship.views.base import settings_nav
 from . import pool
 from .forms import SongForm, SpotifyTrackForm
 from .models import Song, ThemeTag
-from .spotify import SpotifyClient, SpotifyError
+from .spotify import SpotifyClient, SpotifyError, block_message, current_block
 
 
 class SongsMixin(ModuleRequiredMixin, LoginRequiredMixin, PermissionRequiredMixin):
@@ -27,6 +27,10 @@ class SongsMixin(ModuleRequiredMixin, LoginRequiredMixin, PermissionRequiredMixi
 
 def song_url(song):
     return reverse("songs:detail", kwargs={"public_id": song.public_id})
+
+
+def _percent(score):
+    return None if score is None else round(score * 100)
 
 
 class SongListView(SongsMixin, FilteredListView):
@@ -90,9 +94,13 @@ class SongDetailView(SongsMixin, DetailView):
         song = self.object
         context.update(
             ranked_tags=song.ranked_tags(),
-            worship_percent=(
-                round(song.worship_score * 100)
+            worship_percent=_percent(song.worship_model_score),
+            # The Trusted Artist bonus raised the score the check uses.
+            bonus_percent=(
+                _percent(song.worship_score - song.worship_model_score)
                 if song.worship_score is not None
+                and song.worship_model_score is not None
+                and song.worship_score > song.worship_model_score
                 else None
             ),
         )
@@ -161,7 +169,8 @@ class SongCheckAgainView(SongsMixin, View):
 
 
 class SpotifySearchView(SongsMixin, TemplateView):
-    """Find a track on Spotify and add it to the pool."""
+    """Find a track on Spotify and add it to the pool. It searches only when
+    the form is submitted, never as the user types (a Spotify safeguard)."""
 
     permission_required = "songs.add_song"
     template_name = "songs/spotify_search.html"
@@ -169,7 +178,13 @@ class SpotifySearchView(SongsMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         query = self.request.GET.get("q", "").strip()[:200]
-        context.update(q=query, tracks=None, problem="")
+        block = current_block()
+        context.update(
+            q=query,
+            tracks=None,
+            problem="",
+            block_message=block_message(block) if block else "",
+        )
         if not query:
             return context
         try:
@@ -194,10 +209,14 @@ class SpotifyAddView(SongsMixin, View):
         if not form.is_valid():
             messages.error(request, "That isn't a Spotify track.")
             return redirect("songs:spotify_search")
+        spotify_id = form.cleaned_data["spotify_id"]
+        # A Spotify safeguard: never fetch a track the pool already has.
+        known = Song.objects.filter(spotify_id=spotify_id).first()
+        if known is not None:
+            messages.info(request, f"{known} is already in the song pool.")
+            return redirect(song_url(known))
         try:
-            track = SpotifyClient.from_settings().get_track(
-                form.cleaned_data["spotify_id"]
-            )
+            track = SpotifyClient.from_settings().get_track(spotify_id)
         except SpotifyError as error:
             messages.error(request, str(error))
             return redirect("songs:spotify_search")

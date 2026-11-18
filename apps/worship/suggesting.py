@@ -19,9 +19,15 @@ Stages, with the progress shown on the service page:
 9. explanations, kept with each Suggestion.
 
 A run with ``use_spotify`` off skips stages 2 to 5 and ranks the pool.
-A failed outside call ends the run with a clear message.
+
+Spotify's safeguards (``apps/songs/spotify.py``): a 429 stops the run with
+a clear message; a quota lockout pauses Spotify, and the run goes on to
+rank the songs already in the pool (``fell_back``). Every Spotify call and
+429 is recorded on the run. Any other failed outside call ends the run with
+a clear message.
 """
 
+import datetime
 import logging
 
 from django.db import transaction
@@ -33,14 +39,16 @@ from apps.songs.lyrics import LrclibClient
 from apps.songs.ml import EngineUnavailable, get_engine
 from apps.songs.models import Song, ThemeTag
 from apps.songs.pool import add_from_spotify, fetch_lyrics
-from apps.songs.spotify import SpotifyClient, SpotifyError
+from apps.songs.spotify import SpotifyClient, SpotifyError, SpotifyPaused
 
-from . import ranking, sequencing
+from . import ranking, scheduling, sequencing
 from .models import SearchRun, Season, Suggestion, SuggestionSettings
 from .phrases import search_phrases
 
 logger = logging.getLogger(__name__)
 Status = SearchRun.Status
+# A run waiting longer than this suggests the search worker isn't running.
+QUEUE_WARNING = datetime.timedelta(minutes=2)
 
 
 class RunRefused(Exception):
@@ -121,19 +129,21 @@ class _Progress:
 
 
 def execute(run, *, spotify=None, lyrics_client=None, engine=None):
-    """Carry out a claimed run to the end; it finishes done or failed."""
-    try:
-        _execute(run, spotify, lyrics_client, engine)
-    except (RunFailed, SpotifyError, EngineUnavailable) as error:
-        _finish(run, Status.FAILED, str(error))
-    except Exception:
-        logger.exception("Search run %s failed", run.pk)
-        _finish(
-            run,
-            Status.FAILED,
-            "Something unexpected went wrong; the search worker's log has the "
-            "details.",
-        )
+    """Carry out a claimed run to the end; it finishes done or failed.
+    Times in its messages are in the church's time zone."""
+    with timezone.override(scheduling.church_time_zone()):
+        try:
+            _execute(run, spotify, lyrics_client, engine)
+        except (RunFailed, SpotifyError, EngineUnavailable) as error:
+            _finish(run, Status.FAILED, str(error))
+        except Exception:
+            logger.exception("Search run %s failed", run.pk)
+            _finish(
+                run,
+                Status.FAILED,
+                "Something unexpected went wrong; the search worker's log has the "
+                "details.",
+            )
     return run
 
 
@@ -151,7 +161,9 @@ def _execute(run, spotify, lyrics_client, engine):
     service = run.service
     theme = service.posted_theme
     if theme is None:
-        raise RunFailed("The service's theme was removed, so there is nothing to match.")
+        raise RunFailed(
+            "The service's theme was removed, so there is nothing to match."
+        )
     options = SuggestionSettings.load()
     run.weights = options.weights()
     run.save(update_fields=["weights"])
@@ -162,9 +174,18 @@ def _execute(run, spotify, lyrics_client, engine):
     theme_vector = engine.embed([text])[0]
     progress(5, "Reading the theme", theme_tags=theme_tag_ids(text, engine))
 
+    note = ""
     if run.use_spotify:
         spotify = spotify or SpotifyClient.from_settings()
-        new_songs = _find_on_spotify(run, theme, options, spotify, engine, progress)
+        try:
+            new_songs = _find_on_spotify(run, theme, options, spotify, engine, progress)
+        except SpotifyPaused as pause:
+            # Rule 5: a quota lockout must not stop suggestions.
+            new_songs, note = [], str(pause)
+            run.fell_back = True
+            run.save(update_fields=["fell_back"])
+        finally:
+            _record_spotify_usage(run, spotify)
         _fetch_lyrics(new_songs, lyrics_client or LrclibClient(), progress)
 
     _analyse_pool(engine, progress)
@@ -173,11 +194,31 @@ def _execute(run, spotify, lyrics_client, engine):
     suggestions = _rank(run, theme_vector, options, engine)
     if not suggestions:
         raise RunFailed(
-            "No songs could be ranked: no song in the pool has passed the "
-            "worship check yet."
-            + (" Try searching Spotify." if not run.use_spotify else "")
+            " ".join(
+                part
+                for part in (
+                    note,
+                    "No songs could be ranked: no song in the pool has passed "
+                    "the worship check yet.",
+                    "Try searching Spotify." if not run.use_spotify else "",
+                )
+                if part
+            )
         )
-    _finish(run, Status.DONE, _summary(run))
+    _finish(run, Status.DONE, " ".join(part for part in (note, _summary(run)) if part))
+
+
+def _record_spotify_usage(run, spotify):
+    run.spotify_calls = spotify.calls
+    run.spotify_limits = [
+        {
+            "at": limit.occurred_at.isoformat(),
+            "reason": limit.reason,
+            "retry_after": limit.retry_after,
+        }
+        for limit in spotify.limits
+    ]
+    run.save(update_fields=["spotify_calls", "spotify_limits"])
 
 
 def theme_tag_ids(text, engine):
@@ -192,7 +233,9 @@ def theme_tag_ids(text, engine):
 
 def _find_on_spotify(run, theme, options, spotify, engine, progress):
     progress(8, "Choosing search phrases")
-    phrases = search_phrases(theme.title, theme.text(), options.phrases_per_theme, engine)
+    phrases = search_phrases(
+        theme.title, theme.text(), options.phrases_per_theme, engine
+    )
     if not phrases:
         raise RunFailed("The theme has no words to search for; add a title or notes.")
     progress(10, "Searching Spotify", phrases=phrases)
@@ -220,7 +263,11 @@ def _find_on_spotify(run, theme, options, spotify, engine, progress):
         if song.lyrics_status == Song.LyricsStatus.PENDING:
             new_songs.append(song)
     progress(
-        40, "Adding songs", pages_read=pages, songs_found=len(cleaned), songs_added=added
+        40,
+        "Adding songs",
+        pages_read=pages,
+        songs_found=len(cleaned),
+        songs_added=added,
     )
     return new_songs
 
@@ -302,7 +349,7 @@ def _rank(run, theme_vector, options, engine):
 
 def _summary(run):
     parts = []
-    if run.use_spotify:
+    if run.use_spotify and not run.fell_back:
         parts.append(
             f"Searched {len(run.phrases)} phrase{'s' if len(run.phrases) != 1 else ''} "
             f"({run.pages_read} pages): {run.songs_found} songs found, "
@@ -331,3 +378,10 @@ def results(run):
     )
     others = [s for s in suggestions if not s.slot_id]
     return placed, others
+
+
+def worker_seems_stopped(run, now=None):
+    """Whether a run has waited so long that the search worker is probably
+    not running (the page then says how to start it)."""
+    now = now or timezone.now()
+    return run.status == Status.QUEUED and now - run.created_at > QUEUE_WARNING

@@ -1,22 +1,33 @@
 """The search worker: carries out queued Search Runs, and between them
-fetches lyrics and analyses new songs (decision 0007)."""
+fetches lyrics and analyses new songs (decision 0007).
+
+Run **one** worker only. It holds a PostgreSQL advisory lock while it runs,
+so a second worker (or ``process_songs``) refuses to start: this keeps
+Spotify and LRCLIB to one caller at a time (Design-Decisions, Phase 5).
+"""
 
 import time
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
+from apps.core.locks import SEARCH_WORKER, LockHeld, advisory_lock
 from apps.songs.lyrics import LrclibClient
 from apps.songs.ml import EngineUnavailable, get_engine
 from apps.songs.pool import process_pending
 from apps.worship import suggesting
 
 BACKLOG_BATCH = 5
+ALREADY_RUNNING = (
+    "Another search worker (or process_songs) is already running. Only one "
+    "may run at a time, so Spotify and LRCLIB get one request at a time."
+)
 
 
 class Command(BaseCommand):
     help = (
         "Run the search worker: find songs for queued suggestion requests, "
-        "then fetch lyrics and analyse new songs. Stop it with Ctrl+C."
+        "then fetch lyrics and analyse new songs. Only one may run. Stop it "
+        "with Ctrl+C."
     )
 
     def add_arguments(self, parser):
@@ -33,6 +44,14 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, once=False, interval=3.0, **options):
+        try:
+            with advisory_lock(SEARCH_WORKER):
+                self.run(once, interval)
+        except LockHeld as error:
+            raise CommandError(ALREADY_RUNNING) from error
+
+    def run(self, once, interval):
+        # Safe only because no other worker can be running (the lock).
         stale = suggesting.fail_stale_runs()
         if stale:
             self.stdout.write(f"Marked {stale} interrupted run(s) as failed.")

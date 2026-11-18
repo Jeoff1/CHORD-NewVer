@@ -42,10 +42,18 @@ administrators are users given the Administrator role under
   ([[0006-onnx-runtime-for-song-analysis]]). Check the free disk space
   first; the command refuses to leave less than 200 MB. To run without
   them, set `ML_ENGINE=keyword`.
-- **Lyrics and analysis:** `python manage.py process_songs` (add `-v 2` to
-  list each song) fetches lyrics from LRCLIB one at a time and analyses
-  new songs. Set `LRCLIB_USER_AGENT` to name the installation and a
-  contact page.
+- **The search worker:** song suggestions need it running, in its own
+  terminal: `python manage.py run_worker` (stop it with Ctrl+C). Run
+  **one** only: a second one refuses to start ([[0007-search-worker]]).
+  Between searches it fetches lyrics and analyses new songs.
+- **Lyrics and analysis without the worker:** `python manage.py
+  process_songs` (add `-v 2` to list each song) fetches lyrics from LRCLIB
+  one at a time and analyses new songs. It refuses to run while the worker
+  runs. Set `LRCLIB_USER_AGENT` to name the installation and a contact
+  page.
+- **Trying suggestions without Spotify:** `python manage.py seed_hymns`
+  adds nine public-domain hymns to the song pool. Once the worker has
+  analysed them, a service with a theme can use "Rank the song pool only".
 
 ## Email
 

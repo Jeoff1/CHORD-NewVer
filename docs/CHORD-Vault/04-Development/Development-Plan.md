@@ -35,8 +35,8 @@ flowchart LR
 | 2     | Members                       | M    | 1          | Done (2026-11-16) |
 | 3     | Worship schedule and themes   | M    | 1          | Done (2026-11-17) |
 | 4     | Song pool                     | M    | 3          | Done (2026-11-17) |
-| 5     | Song suggestions              | L    | 4          | Next              |
-| 6     | Lineups and reports           | L    | 5          | Not started       |
+| 5     | Song suggestions              | L    | 4          | Done (2026-11-18) |
+| 6     | Lineups and reports           | L    | 5          | Next              |
 | 7     | Song pages: chords and playback | L  | 6          | Not started       |
 | 8     | Teams and announcements       | M    | 6          | Not started       |
 | 9     | Learning to rank              | S    | 6          | Not started       |
@@ -217,48 +217,50 @@ hand, and the tests run without the network or model files.
 
 ## Phase 5: Song suggestions
 
+**Status: done (2026-11-18).** See [[Worship]] and [[0007-search-worker]].
+
 Goal: from a posted theme to ranked songs (pipeline stages 2 to 9).
 
-- [ ] **Suggestion settings** (one row): search genres, phrases per theme,
+- [x] **Suggestion settings** (one row): search genres, phrases per theme,
   pages per phrase, market, the four ranking weights, and the repeat
   window.
-- [ ] **Season**: church-defined date ranges linked to Theme Tags; none by
+- [x] **Season**: church-defined date ranges linked to Theme Tags; none by
   default.
-- [ ] **Search Run**: phrases used, pages read, songs found, run time,
+- [x] **Search Run**: phrases used, pages read, songs found, run time,
   progress and status.
-- [ ] The pipeline: search phrases, Spotify search with the unfiltered
+- [x] The pipeline: search phrases, Spotify search with the unfiltered
   retry, cleanup, lyric lookups, analysis of new songs, ranking and
   explanations.
-- [ ] Ranking: `w1·relevance + w2·familiarity + w3·season − w4·recency`
+- [x] Ranking: `w1·relevance + w2·familiarity + w3·season − w4·recency`
   over every accepted song in the pool.
-- [ ] Sequencing: the top songs placed in the template's slots by feel.
-- [ ] The **search worker** (`manage.py run_worker`) and a progress panel
+- [x] Sequencing: the top songs placed in the template's slots by feel.
+- [x] The **search worker** (`manage.py run_worker`) and a progress panel
   on the service page.
-- [ ] A way to try the pipeline without Spotify: ranking the pool alone,
+- [x] A way to try the pipeline without Spotify: ranking the pool alone,
   and a command that seeds public-domain hymns.
-- [ ] **Raw model score**: `Song.worship_model_score` holds the
+- [x] **Raw model score**: `Song.worship_model_score` holds the
   classifier's score, from the lyrics only. The Trusted Artist bonus is a
   church rule applied after the model and stored apart (the adjusted
   `worship_score`), with a code comment that it is never a training
   feature.
-- [ ] **Suggestions hidden from team members**: the service page's
+- [x] **Suggestions hidden from team members**: the service page's
   suggestion panel and every suggestion URL check `worship.suggest_songs`.
   `suggest_songs` and `view_searchrun` go to Worship Leader and Pastoral
   Staff only.
-- [ ] **Spotify safeguards** in `apps/songs/spotify.py`: stop on the first
+- [x] **Spotify safeguards** in `apps/songs/spotify.py`: stop on the first
   429; a shared "blocked until" time that the worker and web requests
   check; at most one retry; a Retry-After over an hour or
   `QUOTA_EXCEEDED` pauses Spotify, tells the worship leader and falls back
   to ranking the pool; never re-fetch a pooled track; no
   search-as-you-type; Spotify calls and 429s recorded on each Search Run.
-- [ ] **One worker**: `run_worker` takes a PostgreSQL advisory lock at
+- [x] **One worker**: `run_worker` takes a PostgreSQL advisory lock at
   startup, and a second worker refuses to start. `claim_next_run` stays as
   it is. Documented in `AGENTS.md` and `run_worker.py`.
-- [ ] Tests for `phrases.py`, `ranking.py`, `sequencing.py`,
+- [x] Tests for `phrases.py`, `ranking.py`, `sequencing.py`,
   `suggesting.py` and `cleanup.py` (a live-only song is kept; a live
   duplicate of a studio song is dropped; karaoke, instrumental and backing
   tracks are always dropped).
-- [ ] When the code changes, update [[Worship]],
+- [x] When the code changes, update [[Worship]],
   [[0006-onnx-runtime-for-song-analysis]] and the [[Glossary]] (Worship
   Check, Trusted Artist), and record the search worker in its own
   decision.

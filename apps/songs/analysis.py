@@ -2,10 +2,11 @@
 
 From the lyrics alone, the ML engine gives:
 
-- the **worship check**: whether the lyrics read as a Christian worship
-  song. A song by one of the church's Trusted Artists needs less
-  confidence; the artist is compared with the church's list here, outside
-  the engine, so no Spotify data is model input;
+- the **model's worship score**: how strongly the lyrics read as a
+  Christian worship song. It depends on the lyrics alone;
+- the **worship check**, decided from the worship score: the model's score
+  plus the Trusted Artist bonus, a church rule applied after the model
+  (see ``trusted_artist_bonus``);
 - **theme tag** suggestions, scored against the church's Theme Tags (up
   to four, and only for songs that pass the worship check);
 - a **feel** guess (upbeat, mid-tempo or slow);
@@ -69,7 +70,8 @@ MAX_TAGS = 4
 @dataclass
 class Analysis:
     engine: str
-    worship_score: float
+    model_score: float  # the engine's score, from the lyrics alone
+    worship_score: float  # model_score plus any Trusted Artist bonus
     accepted: bool
     tag_scores: dict  # ThemeTag pk -> score
     suggested_tags: list  # ThemeTag pks, best first
@@ -93,15 +95,30 @@ def tag_label(tag):
     return Label(f"This text is about {tag.name}.", frozenset(tag.keyword_set()))
 
 
+def trusted_artist_bonus(model_score, trusted):
+    """The worship score: the model's score plus the Trusted Artist bonus.
+
+    This is a church rule applied after the model, not model input: the
+    artist name (Spotify data) never reaches an engine. Neither the bonus
+    nor any score that includes it may ever be a training feature; training
+    uses ``Song.worship_model_score`` (Design-Decisions, Phases 5 and 9).
+    """
+    if not trusted:
+        return model_score
+    return min(1.0, model_score + TRUSTED_ARTIST_BONUS)
+
+
 def analyse(lyrics, *, tags, trusted=False, engine=None):
-    """Analyse lyrics against ``tags`` (Theme Tags). Changes nothing."""
+    """Analyse lyrics against ``tags`` (Theme Tags). Changes nothing.
+
+    ``trusted`` says whether the song's artist is a Trusted Artist; it only
+    adjusts the worship score after the engine has run."""
     engine = engine or get_engine()
     text = lyrics_text(lyrics)
     tags = list(tags)
 
-    worship_score = max(engine.score(text, list(WORSHIP)))
-    if trusted:
-        worship_score = min(1.0, worship_score + TRUSTED_ARTIST_BONUS)
+    model_score = max(engine.score(text, list(WORSHIP)))
+    worship_score = trusted_artist_bonus(model_score, trusted)
 
     accepted = worship_score >= WORSHIP_THRESHOLD
 
@@ -119,6 +136,7 @@ def analyse(lyrics, *, tags, trusted=False, engine=None):
 
     return Analysis(
         engine=engine.name,
+        model_score=round(model_score, 4),
         worship_score=round(worship_score, 4),
         accepted=accepted,
         tag_scores=tag_scores,
@@ -154,12 +172,14 @@ def analyse_song(song, engine=None):
     # correction saved in the meantime is never overwritten.
     with transaction.atomic():
         fresh = Song.objects.select_for_update().get(pk=song.pk)
+        song.worship_model_score = result.model_score
         song.worship_score = result.worship_score
         song.tag_scores = {str(pk): score for pk, score in result.tag_scores.items()}
         song.embedding = result.embedding
         song.analysed_with = result.engine
         song.analysed_at = timezone.now()
         fields = [
+            "worship_model_score",
             "worship_score",
             "tag_scores",
             "embedding",

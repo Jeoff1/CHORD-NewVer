@@ -1,7 +1,10 @@
 """The song library screens and the song settings lists."""
 
+import datetime
+
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.accounts.models import Role
 from apps.audit.models import AuditEvent
@@ -14,7 +17,7 @@ from apps.core.testing import (
     make_user,
 )
 from apps.songs import spotify
-from apps.songs.models import Song, ThemeTag, TrustedArtist
+from apps.songs.models import Song, SpotifyLimit, ThemeTag, TrustedArtist
 
 LIST = reverse("songs:list")
 SEARCH = reverse("songs:spotify_search")
@@ -118,6 +121,7 @@ class SongDetailTests(SongsTestCase):
             lyrics="Invented words of praise",
             lyrics_status=Song.LyricsStatus.FOUND,
             worship_check=Song.WorshipCheck.ACCEPTED,
+            worship_model_score=0.8125,
             worship_score=0.8125,
             tags=[ThemeTag.objects.get(name="Joy")],
         )
@@ -126,7 +130,7 @@ class SongDetailTests(SongsTestCase):
         self.client.force_login(make_user(perms=VIEWER))
         response = self.client.get(url(song))
         self.assertContains(response, "4:05")
-        self.assertContains(response, "Lyrics score 81%")
+        self.assertContains(response, "Lyrics score 81%</span>")
         self.assertContains(response, "Joy")
         self.assertContains(response, "72%")
         self.assertContains(response, "Invented words of praise")
@@ -134,6 +138,16 @@ class SongDetailTests(SongsTestCase):
             response, f"https://open.spotify.com/track/{song.spotify_id}"
         )
         self.assertNotContains(response, url(song, "update"))
+
+    def test_shows_the_trusted_artist_bonus_apart(self):
+        song = make_song(
+            worship_check=Song.WorshipCheck.ACCEPTED,
+            worship_model_score=0.4,
+            worship_score=0.65,
+        )
+        self.client.force_login(make_user(perms=VIEWER))
+        response = self.client.get(url(song))
+        self.assertContains(response, "Lyrics score 40%, plus 25% as a Trusted Artist")
 
     def test_needs_permission(self):
         self.client.force_login(make_user())
@@ -204,10 +218,38 @@ class SpotifySearchTests(SongsTestCase):
         response = self.client.get(SEARCH, {"q": "grace"})
         self.assertContains(response, "SPOTIFY_CLIENT_ID")
 
+    @override_settings(**SPOTIFY_KEYS)
     def test_empty_search_calls_nobody(self):
+        # No search-as-you-type: opening the page sends nothing to Spotify.
         self.client.force_login(make_user(perms=FINDER))
-        response = self.client.get(SEARCH)
+        with FakeHttp() as web:
+            response = self.client.get(SEARCH)
         self.assertIsNone(response.context["tracks"])
+        self.assertEqual(web.calls, [])
+        self.assertNotContains(response, "hx-trigger")
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_a_spotify_pause_is_shown_and_respected(self):
+        now = timezone.now()
+        SpotifyLimit.objects.create(
+            occurred_at=now,
+            reason=SpotifyLimit.Reason.QUOTA,
+            blocked_until=now + datetime.timedelta(hours=24),
+        )
+        self.client.force_login(make_user(perms=FINDER))
+        with FakeHttp() as web:
+            response = self.client.get(SEARCH, {"q": "morning"})
+        self.assertEqual(web.calls, [])
+        self.assertContains(response, "CHORD has paused Spotify until")
+
+    @override_settings(**SPOTIFY_KEYS)
+    def test_adding_a_track_already_in_the_pool_never_calls_spotify(self):
+        known = make_song(spotify_id=SPOTIFY_ID)
+        self.client.force_login(make_user(perms=FINDER))
+        with FakeHttp() as web:
+            response = self.client.post(ADD, {"spotify_id": SPOTIFY_ID})
+        self.assertEqual(web.calls, [])
+        self.assertRedirects(response, url(known))
 
     @override_settings(**SPOTIFY_KEYS)
     def test_lists_tracks_and_marks_those_in_the_pool(self):

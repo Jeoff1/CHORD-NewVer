@@ -71,7 +71,8 @@ def search_phrases(title, text, count, engine):
     theme_vector, *vectors = engine.embed([text, *pool])
     closeness = [_similarity(theme_vector, v) for v in vectors]
     chosen = []
-    while pool and len(phrases) + len(chosen) < count:
+    # ``chosen`` holds the picks' indexes; each pick is also in ``phrases``.
+    while pool and len(phrases) < count:
         best, best_score = None, None
         for i, phrase in enumerate(pool):
             if any(set(phrase.split()) <= set(c.split()) for c in phrases):

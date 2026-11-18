@@ -123,10 +123,21 @@ it.
 _Avoid_: track (Spotify's word for the recording)
 
 **Worship Check**:
-Whether a Song's lyrics read as a Christian worship song: Not checked,
-Worship song, or Not a worship song. The analysis decides it from the
-lyrics; a person can correct it. Only worship songs are suggested.
+Whether a Song reads as a Christian worship song: Not checked, Worship
+song, or Not a worship song. The analysis decides it from the Worship
+Score; a person can correct it. Only worship songs are suggested.
 _Avoid_: filter, classification
+
+**Model's Worship Score**:
+How strongly a Song's lyrics read as worship, from the ML model and the
+lyrics alone (`worship_model_score`). Anything model-related, such as
+training, uses this score.
+_Avoid_: raw score (in UI text), confidence
+
+**Worship Score**:
+The Model's Worship Score plus the Trusted Artist bonus, if the Song's
+artist is a Trusted Artist. The Worship Check uses it; training never does.
+_Avoid_: adjusted score (in UI text)
 
 **Theme Tag**:
 A worship theme a Song can be about, such as Grace or Hope, from a
@@ -135,7 +146,8 @@ _Avoid_: category, topic, genre (a genre is Spotify's)
 
 **Trusted Artist**:
 An artist on the church's list whose Songs pass the Worship Check more
-easily. The list starts empty.
+easily: a bonus added to the Worship Score by a church rule after the
+model runs. The artist name never reaches the model. The list starts empty.
 _Avoid_: approved artist, whitelist
 
 **Reviewed**:
@@ -148,3 +160,40 @@ The songs chosen for a Worship Service, in order. Churches may rename it
 with the "lineup" Label (Set List, Song List). The team sees it only once
 it is confirmed.
 _Avoid_: setlist, worship plan, playlist (a playlist is on Spotify)
+
+### Song suggestions
+
+**Search Run**:
+One search for a Worship Service's songs, from its Theme to ranked
+Suggestions: its progress, what it searched, and what it found.
+_Avoid_: job, task, search (alone)
+
+**Suggestion**:
+A Song a Search Run ranked for a Worship Service, with its score and the
+reasons it was picked. Some are placed in the Song Slots; the rest are
+choices for swapping. Suggestions are not a Lineup: team members never
+see them.
+_Avoid_: recommendation (Spotify's word), pick
+
+**Search Worker**:
+The one background process (`manage.py run_worker`) that carries out
+Search Runs and fetches and analyses songs between them.
+_Avoid_: job queue, Celery, background task
+
+**Season**:
+A church-edited time of the year, such as a time of preparation before a
+festival, with the Theme Tags that suit it. Songs with those tags rank
+higher for Worship Services in it. None are defined at first.
+_Avoid_: liturgical season, church year (not every church keeps one)
+
+**Suggestion Settings**:
+The church's one set of choices for finding and ranking songs: search
+genres, phrases per Theme, pages per phrase, market, the ranking weights,
+the repeat window and how many ranked songs a run keeps.
+_Avoid_: preferences, configuration
+
+**Spotify Limit**:
+A 429 answer from Spotify, kept with its reason and Retry-After. While one
+is in force, CHORD doesn't call Spotify. A quota lockout, or a wait over an
+hour, **pauses** Spotify: suggestions then rank the Song Pool instead.
+_Avoid_: ban, block (alone)

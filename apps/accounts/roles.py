@@ -54,6 +54,10 @@ DEFAULT_ROLE_PERMISSIONS = {
         # Song pool (Phase 4)
         "songs.view_song",
         "songs.view_themetag",
+        # Song suggestions (Phase 5); never for team members
+        "worship.suggest_songs",
+        "worship.view_searchrun",
+        "worship.view_season",
     ],
     "worship_leader": [
         "members.view_member",
@@ -71,6 +75,14 @@ DEFAULT_ROLE_PERMISSIONS = {
         "songs.view_trustedartist",
         "songs.add_trustedartist",
         "songs.change_trustedartist",
+        # Song suggestions (Phase 5); never for team members
+        "worship.suggest_songs",
+        "worship.view_searchrun",
+        "worship.view_season",
+        "worship.add_season",
+        "worship.change_season",
+        "worship.view_suggestionsettings",
+        "worship.change_suggestionsettings",
     ],
     "team_member": [
         # Worship schedule (Phase 3)

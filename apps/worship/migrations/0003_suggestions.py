@@ -8,105 +8,329 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('songs', '0002_seed_theme_tags'),
-        ('worship', '0002_seed_default_template'),
+        ("songs", "0002_seed_theme_tags"),
+        ("worship", "0002_seed_default_template"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SuggestionSettings',
+            name="SuggestionSettings",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('search_genres', models.CharField(blank=True, default='worship', help_text='Spotify genres to search within, separated by commas. A search that finds nothing in a genre is run again without it. Leave blank to search every genre.', max_length=200)),
-                ('phrases_per_theme', models.PositiveSmallIntegerField(default=4, help_text='How many words or short phrases from the theme to search for.', validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(10)])),
-                ('pages_per_phrase', models.PositiveSmallIntegerField(default=2, help_text='Spotify returns 10 songs a page.', validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(5)])),
-                ('market', models.CharField(blank=True, help_text='Two-letter country code, such as PH or US, to find only songs playable there. Leave blank for any country.', max_length=2)),
-                ('weight_relevance', models.FloatField(default=1.0, help_text="How much a song's lyrics matching the theme count.", validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(10)], verbose_name='Theme match weight')),
-                ('weight_familiarity', models.FloatField(default=0.3, help_text='How much songs the team knows are preferred.', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(10)], verbose_name='Familiarity weight')),
-                ('weight_season', models.FloatField(default=0.2, help_text='How much songs that fit the current season count.', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(10)], verbose_name='Season weight')),
-                ('weight_recency', models.FloatField(default=0.4, help_text='How much songs sung recently are held back.', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(10)], verbose_name='Recent use weight')),
-                ('repeat_window_weeks', models.PositiveSmallIntegerField(default=4, help_text='A song sung within this many weeks is held back; the more recent, the more.', validators=[django.core.validators.MaxValueValidator(52)], verbose_name='Repeat window (weeks)')),
-                ('suggestions_kept', models.PositiveSmallIntegerField(default=20, help_text='How many ranked songs each run keeps as choices.', validators=[django.core.validators.MinValueValidator(5), django.core.validators.MaxValueValidator(100)], verbose_name='Ranked songs kept')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "search_genres",
+                    models.CharField(
+                        blank=True,
+                        default="worship",
+                        help_text="Spotify genres to search within, separated by commas. A search that finds nothing in a genre is run again without it. Leave blank to search every genre.",
+                        max_length=200,
+                    ),
+                ),
+                (
+                    "phrases_per_theme",
+                    models.PositiveSmallIntegerField(
+                        default=4,
+                        help_text="How many words or short phrases from the theme to search for.",
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(10),
+                        ],
+                    ),
+                ),
+                (
+                    "pages_per_phrase",
+                    models.PositiveSmallIntegerField(
+                        default=2,
+                        help_text="Spotify returns 10 songs a page.",
+                        validators=[
+                            django.core.validators.MinValueValidator(1),
+                            django.core.validators.MaxValueValidator(5),
+                        ],
+                    ),
+                ),
+                (
+                    "market",
+                    models.CharField(
+                        blank=True,
+                        help_text="Two-letter country code, such as PH or US, to find only songs playable there. Leave blank for any country.",
+                        max_length=2,
+                    ),
+                ),
+                (
+                    "weight_relevance",
+                    models.FloatField(
+                        default=1.0,
+                        help_text="How much a song's lyrics matching the theme count.",
+                        validators=[
+                            django.core.validators.MinValueValidator(0),
+                            django.core.validators.MaxValueValidator(10),
+                        ],
+                        verbose_name="Theme match weight",
+                    ),
+                ),
+                (
+                    "weight_familiarity",
+                    models.FloatField(
+                        default=0.3,
+                        help_text="How much songs the team knows are preferred.",
+                        validators=[
+                            django.core.validators.MinValueValidator(0),
+                            django.core.validators.MaxValueValidator(10),
+                        ],
+                        verbose_name="Familiarity weight",
+                    ),
+                ),
+                (
+                    "weight_season",
+                    models.FloatField(
+                        default=0.2,
+                        help_text="How much songs that fit the current season count.",
+                        validators=[
+                            django.core.validators.MinValueValidator(0),
+                            django.core.validators.MaxValueValidator(10),
+                        ],
+                        verbose_name="Season weight",
+                    ),
+                ),
+                (
+                    "weight_recency",
+                    models.FloatField(
+                        default=0.4,
+                        help_text="How much songs sung recently are held back.",
+                        validators=[
+                            django.core.validators.MinValueValidator(0),
+                            django.core.validators.MaxValueValidator(10),
+                        ],
+                        verbose_name="Recent use weight",
+                    ),
+                ),
+                (
+                    "repeat_window_weeks",
+                    models.PositiveSmallIntegerField(
+                        default=4,
+                        help_text="A song sung within this many weeks is held back; the more recent, the more.",
+                        validators=[django.core.validators.MaxValueValidator(52)],
+                        verbose_name="Repeat window (weeks)",
+                    ),
+                ),
+                (
+                    "suggestions_kept",
+                    models.PositiveSmallIntegerField(
+                        default=20,
+                        help_text="How many ranked songs each run keeps as choices.",
+                        validators=[
+                            django.core.validators.MinValueValidator(5),
+                            django.core.validators.MaxValueValidator(100),
+                        ],
+                        verbose_name="Ranked songs kept",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'suggestion settings',
-                'verbose_name_plural': 'suggestion settings',
-                'default_permissions': ('change', 'view'),
+                "verbose_name": "suggestion settings",
+                "verbose_name_plural": "suggestion settings",
+                "default_permissions": ("change", "view"),
             },
         ),
         migrations.CreateModel(
-            name='SearchRun',
+            name="SearchRun",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('use_spotify', models.BooleanField(default=True, help_text='Off: rank the songs already in the pool.')),
-                ('status', models.CharField(choices=[('queued', 'Waiting'), ('running', 'Running'), ('done', 'Done'), ('failed', 'Failed')], default='queued', max_length=10)),
-                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('started_at', models.DateTimeField(blank=True, null=True)),
-                ('finished_at', models.DateTimeField(blank=True, null=True)),
-                ('progress', models.PositiveSmallIntegerField(default=0)),
-                ('stage', models.CharField(blank=True, max_length=200)),
-                ('message', models.TextField(blank=True)),
-                ('phrases', models.JSONField(blank=True, default=list)),
-                ('theme_tags', models.JSONField(blank=True, default=list, help_text='Theme Tag IDs the theme is about.')),
-                ('pages_read', models.PositiveIntegerField(default=0)),
-                ('songs_found', models.PositiveIntegerField(default=0)),
-                ('songs_added', models.PositiveIntegerField(default=0)),
-                ('songs_analysed', models.PositiveIntegerField(default=0)),
-                ('songs_ranked', models.PositiveIntegerField(default=0)),
-                ('weights', models.JSONField(blank=True, default=dict)),
-                ('requested_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('service', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='search_runs', to='worship.worshipservice')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "use_spotify",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Off: rank the songs already in the pool.",
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("queued", "Waiting"),
+                            ("running", "Running"),
+                            ("done", "Done"),
+                            ("failed", "Failed"),
+                        ],
+                        default="queued",
+                        max_length=10,
+                    ),
+                ),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("started_at", models.DateTimeField(blank=True, null=True)),
+                ("finished_at", models.DateTimeField(blank=True, null=True)),
+                ("progress", models.PositiveSmallIntegerField(default=0)),
+                ("stage", models.CharField(blank=True, max_length=200)),
+                ("message", models.TextField(blank=True)),
+                ("phrases", models.JSONField(blank=True, default=list)),
+                (
+                    "theme_tags",
+                    models.JSONField(
+                        blank=True,
+                        default=list,
+                        help_text="Theme Tag IDs the theme is about.",
+                    ),
+                ),
+                ("pages_read", models.PositiveIntegerField(default=0)),
+                ("songs_found", models.PositiveIntegerField(default=0)),
+                ("songs_added", models.PositiveIntegerField(default=0)),
+                ("songs_analysed", models.PositiveIntegerField(default=0)),
+                ("songs_ranked", models.PositiveIntegerField(default=0)),
+                ("weights", models.JSONField(blank=True, default=dict)),
+                (
+                    "requested_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "service",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="search_runs",
+                        to="worship.worshipservice",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at', '-pk'],
-                'permissions': [('suggest_songs', 'Can ask for song suggestions')],
-                'get_latest_by': 'created_at',
-                'default_permissions': ('view',),
+                "ordering": ["-created_at", "-pk"],
+                "permissions": [("suggest_songs", "Can ask for song suggestions")],
+                "get_latest_by": "created_at",
+                "default_permissions": ("view",),
             },
         ),
         migrations.CreateModel(
-            name='Season',
+            name="Season",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('description', models.CharField(blank=True, max_length=250)),
-                ('sort_order', models.PositiveSmallIntegerField(default=0, help_text='Lower numbers come first.')),
-                ('is_active', models.BooleanField(default=True, help_text="Inactive items stay on existing records but can't be chosen for new ones.", verbose_name='Active')),
-                ('starts_on', models.DateField(verbose_name='Starts')),
-                ('ends_on', models.DateField(verbose_name='Ends')),
-                ('repeats_yearly', models.BooleanField(default=False, help_text='Use only the month and day, so the season comes back every year. Leave off for seasons whose dates move.', verbose_name='Every year')),
-                ('tags', models.ManyToManyField(help_text='Songs with any of these tags fit the season.', related_name='seasons', to='songs.themetag', verbose_name='theme tags')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=100, unique=True)),
+                ("description", models.CharField(blank=True, max_length=250)),
+                (
+                    "sort_order",
+                    models.PositiveSmallIntegerField(
+                        default=0, help_text="Lower numbers come first."
+                    ),
+                ),
+                (
+                    "is_active",
+                    models.BooleanField(
+                        default=True,
+                        help_text="Inactive items stay on existing records but can't be chosen for new ones.",
+                        verbose_name="Active",
+                    ),
+                ),
+                ("starts_on", models.DateField(verbose_name="Starts")),
+                ("ends_on", models.DateField(verbose_name="Ends")),
+                (
+                    "repeats_yearly",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Use only the month and day, so the season comes back every year. Leave off for seasons whose dates move.",
+                        verbose_name="Every year",
+                    ),
+                ),
+                (
+                    "tags",
+                    models.ManyToManyField(
+                        help_text="Songs with any of these tags fit the season.",
+                        related_name="seasons",
+                        to="songs.themetag",
+                        verbose_name="theme tags",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order', 'name'],
-                'abstract': False,
-                'default_permissions': ('add', 'change', 'view'),
+                "ordering": ["sort_order", "name"],
+                "abstract": False,
+                "default_permissions": ("add", "change", "view"),
             },
         ),
         migrations.CreateModel(
-            name='Suggestion',
+            name="Suggestion",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('rank', models.PositiveSmallIntegerField()),
-                ('score', models.FloatField()),
-                ('relevance', models.FloatField()),
-                ('familiarity', models.FloatField()),
-                ('season', models.FloatField()),
-                ('recency', models.FloatField()),
-                ('reasons', models.JSONField(default=list)),
-                ('run', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='suggestions', to='worship.searchrun')),
-                ('slot', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='worship.templateslot')),
-                ('song', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='suggestions', to='songs.song')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("rank", models.PositiveSmallIntegerField()),
+                ("score", models.FloatField()),
+                ("relevance", models.FloatField()),
+                ("familiarity", models.FloatField()),
+                ("season", models.FloatField()),
+                ("recency", models.FloatField()),
+                ("reasons", models.JSONField(default=list)),
+                (
+                    "run",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="suggestions",
+                        to="worship.searchrun",
+                    ),
+                ),
+                (
+                    "slot",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to="worship.templateslot",
+                    ),
+                ),
+                (
+                    "song",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="suggestions",
+                        to="songs.song",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['rank'],
-                'default_permissions': (),
-                'constraints': [models.UniqueConstraint(fields=('run', 'song'), name='one_song_per_run')],
+                "ordering": ["rank"],
+                "default_permissions": (),
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("run", "song"), name="one_song_per_run"
+                    )
+                ],
             },
         ),
     ]

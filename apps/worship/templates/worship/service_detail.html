@@ -42,7 +42,7 @@
         </div>
       </div>
 
-      {% block planning %}{% endblock %}
+      {% if can_suggest %}{% include "worship/includes/suggestions.html" %}{% endif %}
 
       {% if service.notes %}
         <div class="card shadow-sm mb-3">

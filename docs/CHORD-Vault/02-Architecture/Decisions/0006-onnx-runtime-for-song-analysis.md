@@ -51,3 +51,14 @@ ONNX Runtime, `tokenizers` and NumPy together take about 60 MB.
   process_songs`, and from Phase 5 in the search worker.
 - The quantised embedding model needs a CPU with AVX2; use `--full` on one
   without it.
+
+## Update (2026-11-18)
+
+The model's score and the Trusted Artist bonus are now kept apart
+([[Design-Decisions]], Phase 5). `Song.worship_model_score` holds the
+engine's score, from the lyrics alone. The 0.25 bonus is a church rule
+applied after the model, and only `Song.worship_score` (which the Worship
+Check uses) includes it; the artist name never reaches an engine. Phase 9
+trains on `worship_model_score`, never on the bonus or any score that
+includes it. Songs analysed before this change were queued to be analysed
+again, keeping people's corrections.

@@ -100,6 +100,17 @@ Personal files (member photos, uploaded documents) use
   `embed(texts)` and `score(text, labels)`; nothing else touches a model.
 - Only lyrics and the church's own text go into an engine. Lyrics are
   never logged, printed or put in the audit trail.
+- Spotify calls go through `SpotifyClient` only, which applies the
+  safeguards ([[Design-Decisions]], Phase 5): it checks the shared block
+  (`spotify.current_block()`, a `SpotifyLimit` row) before every request,
+  saves and logs every 429, retries at most once, and raises
+  `SpotifyRateLimited` or `SpotifyPaused`. Catch `SpotifyPaused` where a
+  feature can carry on without Spotify; show `block_message()` to people.
+  The client counts `calls` and keeps `limits` for the caller to record.
+- Work that calls Spotify or LRCLIB outside a web request runs in the
+  search worker ([[0007-search-worker]]). A command that does such work
+  takes `advisory_lock(SEARCH_WORKER)` (`apps/core/locks.py`) and refuses
+  to run when `LockHeld` is raised.
 
 ## A new Module's permissions
 
@@ -125,6 +136,13 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   - `TEST_PASSWORD`
   - `close_file_response(response)`: closes a file download in a test
     without also closing the test database connection.
+  - `quiet_logger(test, name="apps.songs.spotify")`: silences a logger
+    for one test, such as the Spotify client's 429 warnings.
+- Spotify tests use `TestCase` (the client reads the shared block from the
+  database) and pass the client a fake `clock` and `sleep`, so waiting
+  moves the fake clock instead of the test. A test of "another process"
+  opens a second connection with `connections.create_connection("default")`
+  and closes it at the end.
 - The test runner (`ChordTestRunner`, `TEST_RUNNER` in settings) blocks the
   network, sets `ML_ENGINE` to "keyword" and clears the Spotify
   credentials. A test that needs an outside service wraps the code in

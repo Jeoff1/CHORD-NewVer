@@ -2,8 +2,9 @@ from django.urls import path
 
 from apps.core.setting_lists import SettingList, setting_list_urls
 
-from .models import SermonSeries
-from .views import schedule
+from .forms import SeasonForm
+from .models import Season, SermonSeries
+from .views import schedule, suggestions
 from .views.base import settings_nav
 
 app_name = "worship"
@@ -16,6 +17,44 @@ SERIES_LIST = SettingList(
     intro="Groups of services whose themes belong together. Choose a series "
     "when posting a service's theme.",
     module="worship",
+    nav=settings_nav,
+)
+
+
+def _season_dates(season):
+    dates = f"{season.starts_on:%b} {season.starts_on.day} to "
+    dates += f"{season.ends_on:%b} {season.ends_on.day}"
+    if season.repeats_yearly:
+        return f"{dates}, every year"
+    return f"{dates}, {season.ends_on.year}"
+
+
+SEASONS_LIST = SettingList(
+    model=Season,
+    url_prefix="seasons",
+    title="Seasons",
+    item_name="Season",
+    intro="Times of the church's year, each with the theme tags that suit it. "
+    "Songs with those tags rank higher for services in the season. With no "
+    "seasons, season fit plays no part in suggestions.",
+    module="worship",
+    fields=[
+        "name",
+        "starts_on",
+        "ends_on",
+        "repeats_yearly",
+        "tags",
+        "description",
+        "sort_order",
+        "is_active",
+    ],
+    form_class=SeasonForm,
+    columns=[
+        ("Name", "name"),
+        ("Dates", _season_dates),
+        ("Theme tags", lambda season: ", ".join(t.name for t in season.tags.all())),
+        ("Active", "is_active"),
+    ],
     nav=settings_nav,
 )
 
@@ -49,6 +88,17 @@ urlpatterns = [
         schedule.AttendanceView.as_view(),
         name="attendance",
     ),
+    # Song suggestions
+    path(
+        "services/<uuid:public_id>/suggest/",
+        suggestions.SuggestView.as_view(),
+        name="suggest",
+    ),
+    path(
+        "services/<uuid:public_id>/suggestions/",
+        suggestions.SuggestionPanelView.as_view(),
+        name="suggestions",
+    ),
     # Settings
     path(
         "settings/templates/",
@@ -65,5 +115,11 @@ urlpatterns = [
         schedule.TemplateUpdateView.as_view(),
         name="template_update",
     ),
+    path(
+        "settings/suggestions/",
+        suggestions.SuggestionSettingsView.as_view(),
+        name="suggestion_settings",
+    ),
     *setting_list_urls(SERIES_LIST, route_prefix="settings/"),
+    *setting_list_urls(SEASONS_LIST, route_prefix="settings/"),
 ]

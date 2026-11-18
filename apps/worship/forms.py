@@ -1,7 +1,20 @@
+import re
+
 from django import forms
+from django.db.models import Q
 from django.forms import inlineformset_factory
 
-from .models import SermonSeries, ServiceTemplate, TemplateSlot, Theme, WorshipService
+from apps.songs.models import ThemeTag
+
+from .models import (
+    Season,
+    SermonSeries,
+    ServiceTemplate,
+    SuggestionSettings,
+    TemplateSlot,
+    Theme,
+    WorshipService,
+)
 from .scheduling import MAX_WEEKS_AHEAD
 
 MOMENT_FORMAT = "%Y-%m-%dT%H:%M"
@@ -140,3 +153,75 @@ class ScheduleAheadForm(forms.Form):
         self.fields["template"].queryset = ServiceTemplate.objects.active().filter(
             weekday__isnull=False, start_time__isnull=False
         )
+
+
+# --- Song suggestions --------------------------------------------------------
+
+
+class SuggestionSettingsForm(forms.ModelForm):
+    class Meta:
+        model = SuggestionSettings
+        fields = [
+            "search_genres",
+            "phrases_per_theme",
+            "pages_per_phrase",
+            "market",
+            "weight_relevance",
+            "weight_familiarity",
+            "weight_season",
+            "weight_recency",
+            "repeat_window_weeks",
+            "suggestions_kept",
+        ]
+
+    def clean_market(self):
+        market = self.cleaned_data["market"].strip().upper()
+        if market and not re.fullmatch(r"[A-Z]{2}", market):
+            raise forms.ValidationError("Use a two-letter country code, such as PH.")
+        return market
+
+    def clean_search_genres(self):
+        genres = [g.strip() for g in self.cleaned_data["search_genres"].split(",")]
+        return ", ".join(g for g in genres if g)
+
+
+class SeasonForm(forms.ModelForm):
+    class Meta:
+        model = Season
+        fields = [
+            "name",
+            "starts_on",
+            "ends_on",
+            "repeats_yearly",
+            "tags",
+            "description",
+            "sort_order",
+            "is_active",
+        ]
+        widgets = {
+            "starts_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "ends_on": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            "tags": forms.CheckboxSelectMultiple,
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current = (
+            list(self.instance.tags.values_list("pk", flat=True))
+            if self.instance.pk
+            else []
+        )
+        self.fields["tags"].queryset = ThemeTag.objects.filter(
+            Q(is_active=True) | Q(pk__in=current)
+        )
+
+    def clean(self):
+        cleaned = super().clean()
+        starts, ends = cleaned.get("starts_on"), cleaned.get("ends_on")
+        if starts and ends and ends < starts and not cleaned.get("repeats_yearly"):
+            self.add_error(
+                "ends_on",
+                "The season must end on or after its start. A yearly season may "
+                "run over the new year.",
+            )
+        return cleaned

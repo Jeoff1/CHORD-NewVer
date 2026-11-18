@@ -30,7 +30,7 @@
           <h2 class="h5">Worship check</h2>
           <p class="mb-1">
             {% include "songs/includes/check_badge.html" %}
-            {% if worship_percent is not None %}<span class="text-body-secondary small ms-1">Lyrics score {{ worship_percent }}%</span>{% endif %}
+            {% if worship_percent is not None %}<span class="text-body-secondary small ms-1">Lyrics score {{ worship_percent }}%{% if bonus_percent %}, plus {{ bonus_percent }}% as a Trusted Artist{% endif %}</span>{% endif %}
           </p>
           {% if song.is_reviewed %}
             <p class="small text-body-secondary mb-0">Reviewed by {{ song.reviewed_by|default:"a former user" }} on {{ song.reviewed_at|date:"M j, Y" }}.</p>

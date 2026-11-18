@@ -32,6 +32,7 @@ from ..forms import (
 )
 from ..models import ServiceTemplate, Theme, WorshipService
 from .base import ServiceMixin, WorshipMixin, can_plan, service_url, settings_nav
+from .suggestions import can_suggest, panel_context
 
 # --- Services ----------------------------------------------------------------
 
@@ -108,11 +109,17 @@ class ServiceDetailView(ServiceMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         service = self.service
+        user = self.request.user
         context.update(
             theme=service.posted_theme,
-            can_plan=can_plan(self.request.user),
+            can_plan=can_plan(user),
             attendance_form=AttendanceForm(instance=service),
+            can_suggest=can_suggest(user),
         )
+        # Suggestions are an unconfirmed lineup: only people who may suggest
+        # songs get them, never team members.
+        if context["can_suggest"]:
+            context.update(panel_context(service, user))
         return context
 
 

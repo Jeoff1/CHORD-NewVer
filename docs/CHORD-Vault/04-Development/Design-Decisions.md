@@ -8,7 +8,7 @@ These decisions answer the open questions in `docs/workflow-review.md`, section 
 
 ---
 
-## Phase 5: song suggestions (current)
+## Phase 5: song suggestions (done 2026-11-18)
 
 ### Trusted Artist bonus (review question 1)
 
@@ -91,7 +91,7 @@ When the code above changes, update the [[Worship]] module note, [[0006-onnx-run
 
 ---
 
-## Phase 6: lineups and confirmation
+## Phase 6: lineups and confirmation (current)
 
 ### The pastor's decision is final (question 9)
 

@@ -1,6 +1,7 @@
 """Test-data builders and stand-ins shared by every module's tests."""
 
 import json
+import logging
 import urllib.parse
 from itertools import count
 
@@ -16,6 +17,14 @@ _sequence = count(1)
 
 
 # --- Outside services --------------------------------------------------------
+
+
+def quiet_logger(test, name="apps.songs.spotify"):
+    """Silence a logger for the rest of ``test`` (by default the Spotify
+    client's 429 warnings, which tests meet on purpose)."""
+    logger = logging.getLogger(name)
+    test.addCleanup(setattr, logger, "disabled", logger.disabled)
+    logger.disabled = True
 
 
 def _no_network(method, url, **kwargs):

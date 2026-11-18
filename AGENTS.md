@@ -75,7 +75,10 @@ condition against this rule.
 - **Spotify calls follow the safeguards** in
   `04-Development/Design-Decisions.md`: stop on the first 429, respect
   Retry-After across all processes, never retry in a loop, pause all Spotify
-  calls on `QUOTA_EXCEEDED`, and run only one worker.
+  calls on `QUOTA_EXCEEDED`, and run only one worker. `SpotifyClient`
+  (`apps/songs/spotify.py`) applies them; never call Spotify around it.
+  The worker holds a PostgreSQL advisory lock (`apps/core/locks.py`), so a
+  second worker or `process_songs` refuses to start.
 - **LRCLIB requests go one at a time,** and every result is cached.
 - **Tests never use the network or load a model.** Use the stand-ins the
   project provides; a test that needs Spotify, LRCLIB or a real model is

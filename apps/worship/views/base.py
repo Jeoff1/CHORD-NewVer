@@ -16,6 +16,12 @@ SETTINGS_PAGES = [
     ("{sermon} series", "worship.view_sermonseries", "worship:series_list"),
     ("Theme tags", "songs.view_themetag", "songs:theme_tags_list"),
     ("Trusted artists", "songs.view_trustedartist", "songs:trusted_artists_list"),
+    ("Seasons", "worship.view_season", "worship:seasons_list"),
+    (
+        "Suggestion settings",
+        "worship.change_suggestionsettings",
+        "worship:suggestion_settings",
+    ),
 ]
 
 

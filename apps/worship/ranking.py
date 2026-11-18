@@ -96,9 +96,7 @@ def rank(
     songs = [song for song in songs if song.embedding]
     matches = [cosine(theme_vector, song.embedding) for song in songs]
     low, high = (min(matches), max(matches)) if matches else (0, 0)
-    season_tags = {
-        tag.pk: season for season in seasons for tag in season.tags.all()
-    }
+    season_tags = {tag.pk: season for season in seasons for tag in season.tags.all()}
     theme_tags = set(theme_tags)
     ranked = []
     for song, match in zip(songs, matches):

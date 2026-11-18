@@ -59,8 +59,8 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
 - **Outside services**, all through `apps/core/http.py`:
   - `spotify.py`: the app's own token (Client Credentials), track search
     10 a page with paging up to offset 1000, a `genre:` filter that is
-    dropped when it finds nothing, one track by ID, and a single retry
-    after an expired token or a short rate limit.
+    dropped when it finds nothing, one track by ID, and one retry after an
+    expired token. The Spotify safeguards (Phase 5) are below.
   - `lyrics.py`: LRCLIB lookup by title, first artist, album and length,
     then a search by title and artist when it misses (closest length
     wins). One request at a time, 0.35 s apart, named by
@@ -71,7 +71,12 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
   disk would keep less than 200 MB free.
 - **Analysis** (`analysis.py`), from the lyrics only, with repeated lines
   dropped:
-  - the Worship Check passes at 0.5; a Trusted Artist adds 0.25;
+  - the **Model's Worship Score** (`worship_model_score`), from the lyrics
+    alone;
+  - the **Worship Score** (`worship_score`): the model's score plus 0.25
+    for a Trusted Artist, a church rule applied after the model; the
+    artist name never reaches the engine. The Worship Check passes at 0.5
+    of this score. The song page shows the two apart;
   - up to four Theme Tags scoring 0.5 or more, for worship songs only;
   - a Feel guess (mid-tempo when nothing points anywhere);
   - the embedding.
@@ -79,7 +84,8 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
 - **Processing** (`pool.py`): `manage.py process_songs [--limit N]`
   fetches lyrics for songs that need them, then analyses songs whose
   lyrics are new. The model loads only when something needs analysis.
-  Lyrics never appear in its output or the audit trail.
+  Lyrics never appear in its output or the audit trail. It refuses to run
+  while the search worker runs, which does the same work between runs.
 - **Screens** (`/worship/songs/`):
   - the song list, with search and filters (Worship Check, Theme Tag,
     Feel, team, lyrics status);
@@ -88,13 +94,100 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
   - Edit: correct the Worship Check, Theme Tags and Feel, and set "the
     team knows it"; saving marks the song Reviewed;
   - Check again: queues a fresh lookup and analysis;
-  - Find on Spotify: search and add a track (a valid track ID is fetched
-    from Spotify again, never taken from the form);
+  - Find on Spotify: search when the form is submitted (never as the user
+    types) and add a track. A valid track ID is fetched from Spotify again,
+    never taken from the form, unless the pool already has it;
   - settings: Theme tags and Trusted artists, as tabs beside the worship
     settings.
 - Adding, editing and Check again are in the audit trail; machine analysis
   is not.
-- Tests: `apps/songs/tests/` (clients, ML, analysis, pool, views).
+- Tests: `apps/songs/tests/` (clients, Spotify safeguards, cleanup, ML,
+  analysis, pool, commands, views).
+
+Built in Phase 5, **song suggestions** (`apps/worship`, with the
+Spotify safeguards in `apps/songs`):
+
+- **Suggestion Settings** (`models/suggestions.py`, one row): search
+  genres (default "worship"), phrases per theme (4), pages per phrase (2),
+  market, the four ranking weights (theme match 1.0, familiarity 0.3,
+  season 0.2, recent use 0.4), the repeat window (4 weeks) and how many
+  ranked songs a run keeps (20). Edited at Settings → Suggestion settings;
+  changes are audited.
+- **Season**: a church-edited list with dates (once, or every year, which
+  may run over the new year) and the Theme Tags that suit it. None at
+  first, so season fit plays no part until the church adds one.
+- **Search Run**: one search for a service's songs: status, progress and
+  stage, phrases, pages read, songs found, added, analysed and ranked, the
+  weights used, Spotify requests and every 429 met, and whether Spotify
+  was paused so the pool was ranked instead. **Suggestion**: a ranked song
+  of a run, with its rank, score and its parts, its slot (if placed) and
+  its reasons.
+- **The pipeline** (`suggesting.py`), carried out by the search worker:
+  1. the theme's embedding and the Theme Tags it is about;
+  2. search phrases: a short title, then KeyBERT-style phrases picked with
+     maximal marginal relevance (`phrases.py`);
+  3. a Spotify search per phrase and genre, retried without the genre
+     when it finds nothing;
+  4. cleanup (`apps/songs/cleanup.py`): karaoke, instrumental and backing
+     tracks dropped; a live version dropped only when the plain version
+     was also found;
+  5. lyrics from LRCLIB for songs new to the pool;
+  6. analysis of every pool song not yet analysed by the current engine;
+  7. ranking of every accepted song in the pool (`ranking.py`):
+     `w1·relevance + w2·familiarity + w3·season − w4·recency`. Relevance is
+     the cosine of theme and lyrics embeddings, scaled from the farthest
+     candidate (0) to the closest (1). Familiarity is 0.6 for "the team
+     knows it" plus up to 0.4 for past use; recency falls from 1 on the
+     service's day to 0 at the end of the repeat window. Past use comes
+     from confirmed lineups (Phase 6), so for now only "the team knows it"
+     counts;
+  8. sequencing (`sequencing.py`): songs in rank order fill the first
+     empty slot of their feel; slots still empty take the best songs left,
+     and say so;
+  9. reasons, kept on each Suggestion.
+
+  A "Rank the song pool only" run skips stages 2 to 5. A failed outside
+  call ends the run with a clear message.
+- **Spotify safeguards** (`apps/songs/spotify.py`, Design-Decisions,
+  Phase 5):
+  - every Spotify call first checks the shared block: the latest
+    **Spotify Limit** row still in force, in the database, so the worker
+    and web requests all respect it;
+  - a 429 is saved as a Spotify Limit with its reason and Retry-After, and
+    logged. A wait of up to 30 s is waited out and the request tried once
+    more; a second 429 or a longer wait stops the run;
+  - `QUOTA_EXCEEDED`, or a Retry-After over an hour, **pauses** Spotify
+    until Retry-After, or for 24 hours when Spotify gives none. A run that
+    meets a pause ranks the pool instead, and the service page and Find on
+    Spotify say until when;
+  - no search-as-you-type; a track already in the pool is never fetched;
+  - Spotify requests and 429s are recorded on each Search Run.
+- **The search worker** (`manage.py run_worker`,
+  [[0007-search-worker]]): claims waiting runs oldest first and carries
+  them out, then works through songs that need lyrics or analysis. It
+  holds a PostgreSQL advisory lock (`apps/core/locks.py`) while it runs,
+  so a second worker, or `process_songs`, refuses to start. Runs left
+  "running" by a stopped worker are marked failed when it starts.
+- **`manage.py seed_hymns`** adds nine public-domain hymns (words first
+  published before 1913) to the pool, to try suggestions without Spotify.
+  Running it again adds only missing ones.
+- **Screens**:
+  - the service page's **Suggested lineup** panel (named by the "lineup"
+    Label), only for people with `worship.suggest_songs`: "Find songs"
+    (when Spotify is set up and not paused) and "Rank the song pool only";
+    while a run is in progress it shows the stage and reloads itself every
+    two seconds (HTMX), and after a few minutes of waiting says how to
+    start the worker; then the songs placed in the slots, with their
+    reasons, and the other choices. "About this search" (with
+    `worship.view_searchrun`) shows the phrases, pages, Spotify requests
+    and limits, and song counts;
+  - settings: Seasons and Suggestion settings, as tabs beside the other
+    worship settings.
+- Team members never see suggestions: the panel and its URLs need
+  `worship.suggest_songs`, which only Worship Leader and Pastoral Staff
+  get by default.
+- Tests: `apps/worship/tests/` (`test_suggestion_rules.py`,
+  `test_suggesting.py`, `test_suggestion_views.py`).
 
 ## Permissions
 
@@ -109,13 +202,19 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
 | `songs.change_song`                          | Correcting a song; Check again           |
 | `songs.add_song`                             | Find on Spotify                          |
 | `songs.*_themetag`, `*_trustedartist`        | The song settings lists                  |
+| `worship.suggest_songs`                      | The suggestions panel; asking for suggestions |
+| `worship.view_searchrun`                     | "About this search" in the panel         |
+| `worship.*_season`                           | The Seasons list                         |
+| `worship.change_suggestionsettings`          | Suggestion settings                      |
 
 Default roles ([[Accounts]]):
 - **Pastoral Staff** schedule services, post themes, record headcounts and
-  manage templates and series; they see songs and theme tags.
-- **Worship Leader** sees the schedule and manages the song pool, theme
-  tags and trusted artists.
-- **Team Member** sees the schedule.
+  manage templates and series; they see songs, theme tags and seasons, and
+  ask for song suggestions.
+- **Worship Leader** sees the schedule, manages the song pool, theme tags,
+  trusted artists, seasons and suggestion settings, and asks for song
+  suggestions.
+- **Team Member** sees the schedule, never suggestions.
 - **Office Staff** see the schedule and record headcounts.
 
 ## Church settings this module depends on
@@ -123,7 +222,10 @@ Default roles ([[Accounts]]):
 - Service Templates and their Song Slots
 - Series
 - Theme Tags and Trusted Artists
-- The "worship service" and "sermon" Labels
+- Seasons
+- Suggestion Settings: search genres, phrases per theme, pages per
+  phrase, market, ranking weights, repeat window, ranked songs kept
+- The "worship service", "sermon" and "lineup" Labels
 - The church's time zone (Church Profile)
 - Installation settings in `.env`: `SPOTIFY_CLIENT_ID`,
   `SPOTIFY_CLIENT_SECRET`, `ML_ENGINE`, `ML_MODELS_DIR`,
@@ -131,8 +233,10 @@ Default roles ([[Accounts]]):
 
 ## Open questions
 
-- The Worship Check threshold and the Trusted Artist bonus are constants
-  in `analysis.py`; Phase 5's suggestion settings may make them church
-  settings.
+- The Worship Check threshold and the Trusted Artist bonus are still
+  constants in `analysis.py`, not church settings.
+- A quota lockout without a Retry-After pauses Spotify for 24 hours, and
+  only time ends a pause (there is no "try Spotify now" button, so nobody
+  can prolong a lockout). Both are choices to confirm.
 - Feel guessed from lyrics is weak (stately hymns come out upbeat); people
   correct it once per song.

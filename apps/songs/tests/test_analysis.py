@@ -11,10 +11,12 @@ from apps.core.music import Feel
 from apps.core.testing import make_song, make_user
 from apps.songs.analysis import (
     TAG_THRESHOLD,
+    TRUSTED_ARTIST_BONUS,
     analyse,
     analyse_song,
     is_trusted,
     lyrics_text,
+    trusted_artist_bonus,
 )
 from apps.songs.ml.keyword import KeywordEngine
 from apps.songs.models import Song, ThemeTag, TrustedArtist
@@ -58,9 +60,12 @@ class AnalyseTests(TestCase):
 
     def test_trusted_artist_adds_confidence(self):
         one_word = "Glory over the hills"
-        self.assertFalse(analyse(one_word, tags=[], engine=self.engine).accepted)
+        plain = analyse(one_word, tags=[], engine=self.engine)
+        self.assertFalse(plain.accepted)
         trusted = analyse(one_word, tags=[], trusted=True, engine=self.engine)
         self.assertTrue(trusted.accepted)
+        self.assertEqual(trusted.model_score, plain.model_score)
+        self.assertGreater(trusted.worship_score, trusted.model_score)
 
     def test_suggests_the_best_fitting_tags(self):
         grace = ThemeTag.objects.get(name="Grace")
@@ -165,6 +170,56 @@ class AnalyseSongTests(TestCase):
         song = make_song(lyrics_status=Song.LyricsStatus.MISSING)
         self.assertIsNone(analyse_song(song))
         self.assertIsNone(song.analysed_at)
+
+    def test_raw_model_score_ignores_the_trusted_artist_list(self):
+        # Design-Decisions, Phase 5: only lyrics may affect the model's score.
+        lyrics = "Glory over the hills"
+        plain = self.found(lyrics, artist="Choir A")
+        listed = self.found(lyrics, artist="Choir B")
+        TrustedArtist.objects.create(name="Choir B")
+        analyse_song(plain)
+        analyse_song(listed)
+        plain.refresh_from_db()
+        listed.refresh_from_db()
+        self.assertEqual(plain.worship_model_score, listed.worship_model_score)
+
+    def test_adjusted_score_has_the_bonus_only_for_listed_artists(self):
+        lyrics = "Glory over the hills"
+        plain = self.found(lyrics, artist="Choir A")
+        listed = self.found(lyrics, artist="Choir B")
+        TrustedArtist.objects.create(name="Choir B")
+        analyse_song(plain)
+        analyse_song(listed)
+        plain.refresh_from_db()
+        listed.refresh_from_db()
+        self.assertEqual(plain.worship_score, plain.worship_model_score)
+        self.assertAlmostEqual(
+            listed.worship_score, listed.worship_model_score + TRUSTED_ARTIST_BONUS
+        )
+        self.assertEqual(plain.worship_check, Song.WorshipCheck.REJECTED)
+        self.assertEqual(listed.worship_check, Song.WorshipCheck.ACCEPTED)
+
+    def test_the_bonus_never_goes_past_one(self):
+        self.assertEqual(trusted_artist_bonus(0.9, trusted=True), 1.0)
+        self.assertEqual(trusted_artist_bonus(0.9, trusted=False), 0.9)
+
+    def test_the_artist_never_reaches_the_engine(self):
+        seen = []
+
+        class Recorder(KeywordEngine):
+            def score(self, text, labels):
+                seen.append(text)
+                return super().score(text, labels)
+
+            def embed(self, texts):
+                seen.extend(texts)
+                return super().embed(texts)
+
+        TrustedArtist.objects.create(name="Unmistakable Artist Name")
+        song = self.found("Glory over the hills", artist="Unmistakable Artist Name")
+        analyse_song(song, Recorder())
+        self.assertTrue(seen)
+        self.assertFalse(any("Unmistakable" in text for text in seen))
 
     def test_trusted_artist_matches_any_credited_artist(self):
         TrustedArtist.objects.create(name="Grace Band")

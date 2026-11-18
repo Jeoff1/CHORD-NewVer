@@ -177,6 +177,22 @@ class SearchRun(models.Model):
     songs_ranked = models.PositiveIntegerField(default=0)
     weights = models.JSONField(default=dict, blank=True)
 
+    # Spotify usage, for the safeguards (Design-Decisions, Phase 5).
+    spotify_calls = models.PositiveIntegerField(
+        default=0, help_text="Requests sent to Spotify during the run."
+    )
+    spotify_limits = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Each 429 met: when, why and the Retry-After, in seconds.",
+    )
+    fell_back = models.BooleanField(
+        "Ranked the pool instead",
+        default=False,
+        help_text="Spotify was paused, so the run ranked the songs already in "
+        "the pool.",
+    )
+
     class Meta:
         ordering = ["-created_at", "-pk"]
         default_permissions = ("view",)

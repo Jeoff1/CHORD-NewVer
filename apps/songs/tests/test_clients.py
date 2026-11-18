@@ -1,6 +1,6 @@
 """The Spotify and LRCLIB clients, against FakeHttp (never the network)."""
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from apps.core import http
 from apps.core.testing import FakeHttp
@@ -35,7 +35,10 @@ def client(**kwargs):
     return SpotifyClient("id", "secret", **kwargs)
 
 
-class SpotifySearchTests(SimpleTestCase):
+class SpotifySearchTests(TestCase):
+    """Uses the database: every call checks the shared Spotify block.
+    The 429 safeguards are tested in ``test_spotify_limits.py``."""
+
     def web(self):
         web = FakeHttp()
         web.reply("POST", spotify.TOKEN_URL, {"access_token": "t1", "expires_in": 3600})
@@ -119,25 +122,6 @@ class SpotifySearchTests(SimpleTestCase):
             result = client().search_tracks("grace")
         self.assertEqual(len(result.tracks), 1)
         self.assertEqual(web.paths().count(spotify.TOKEN_URL), 2)
-
-    def test_waits_out_a_short_rate_limit(self):
-        waits = []
-        answers = iter([(429, {}), (200, page([track(1)]))])
-        with self.web() as web:
-            web.reply(
-                "GET",
-                SEARCH,
-                lambda call: next(answers),
-                headers={"retry-after": "3"},
-            )
-            client(sleep=waits.append).search_tracks("grace")
-        self.assertEqual(waits, [3])
-
-    def test_long_rate_limit_is_an_error(self):
-        with self.web() as web:
-            web.reply("GET", SEARCH, {}, status=429, headers={"retry-after": "600"})
-            with self.assertRaisesMessage(SpotifyError, "limiting requests"):
-                client().search_tracks("grace")
 
     def test_error_carries_spotify_message(self):
         with self.web() as web:

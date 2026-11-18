@@ -89,7 +89,21 @@ class Song(PublicIdModel, TimeStampedModel):
     worship_check = models.CharField(
         max_length=10, choices=WorshipCheck.choices, default=WorshipCheck.UNCHECKED
     )
-    worship_score = models.FloatField(null=True, blank=True)
+    # The model's score reads the lyrics alone. The Trusted Artist bonus is a
+    # church rule added afterwards, so it lives only in ``worship_score``;
+    # training and anything else model-related uses ``worship_model_score``.
+    worship_model_score = models.FloatField(
+        "Model's worship score",
+        null=True,
+        blank=True,
+        help_text="From the lyrics alone.",
+    )
+    worship_score = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="The model's score plus the Trusted Artist bonus, if any; "
+        "the Worship Check uses it.",
+    )
     feel = models.CharField(max_length=10, choices=Feel.choices, blank=True)
     tags = models.ManyToManyField(
         ThemeTag, blank=True, related_name="songs", verbose_name="theme tags"
@@ -150,3 +164,37 @@ class Song(PublicIdModel, TimeStampedModel):
         scores = self.tag_scores or {}
         tagged = [(tag, scores.get(str(tag.pk))) for tag in self.tags.all()]
         return sorted(tagged, key=lambda pair: (-(pair[1] or 0), pair[0].name))
+
+
+class SpotifyLimit(models.Model):
+    """A 429 from Spotify, and until when CHORD leaves Spotify alone.
+
+    Every row is kept as a record of Spotify's limits. The row whose
+    ``blocked_until`` is still ahead is the block that every process (the
+    search worker and web requests) checks before calling Spotify.
+    """
+
+    class Reason(models.TextChoices):
+        RATE_LIMIT = "rate_limit", "Rate limit"
+        LONG_WAIT = "long_wait", "Long wait (treated as a quota lockout)"
+        QUOTA = "quota", "Quota exceeded"
+
+    occurred_at = models.DateTimeField()
+    reason = models.CharField(max_length=12, choices=Reason.choices)
+    retry_after = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Seconds Spotify asked CHORD to wait."
+    )
+    blocked_until = models.DateTimeField()
+
+    class Meta:
+        ordering = ["-occurred_at", "-pk"]
+        default_permissions = ()
+
+    def __str__(self):
+        return f"{self.get_reason_display()} at {self.occurred_at:%Y-%m-%d %H:%M}"
+
+    @property
+    def is_pause(self):
+        """A quota lockout or a wait so long it is treated like one: Spotify
+        is paused and suggestions rank the pool instead."""
+        return self.reason != self.Reason.RATE_LIMIT

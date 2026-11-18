@@ -2,6 +2,47 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-18: Phase 5, song suggestions
+
+- **The suggestion pipeline** ([[Worship]]), from the work in progress
+  committed earlier: Suggestion Settings, Seasons, Search Runs and
+  Suggestions; search phrases, Spotify search with the unfiltered retry,
+  cleanup, lyrics, analysis, ranking over the whole pool, sequencing into
+  the song slots, and reasons.
+- **Fixed** in that work: `phrases.py` counted each chosen phrase twice,
+  so a run searched about half the phrases the settings asked for.
+- **Built to [[Design-Decisions]], Phase 5:**
+  - the model's worship score (`Song.worship_model_score`, lyrics only)
+    kept apart from the Trusted Artist bonus (`worship_score`); a
+    migration queues analysed songs to be analysed again;
+  - the Spotify safeguards in `apps/songs/spotify.py`, with the shared
+    block saved as **Spotify Limit** rows; a quota pause makes a run rank
+    the pool instead; Spotify requests and 429s are recorded on each run;
+    Find on Spotify never fetches a pooled track and shows a pause;
+  - one search worker, enforced by a PostgreSQL advisory lock
+    (`apps/core/locks.py`), which `process_songs` also takes;
+  - suggestions only for `worship.suggest_songs` (Worship Leader and
+    Pastoral Staff by default).
+- **Screens:** the Suggested lineup panel on the service page (HTMX
+  progress while a run works), and Seasons and Suggestion settings in the
+  worship settings.
+- **`manage.py seed_hymns`**: nine public-domain hymns, to try
+  suggestions without Spotify.
+- **Notes:** [[0007-search-worker]] (new); [[0006-onnx-runtime-for-song-analysis]]
+  update note; [[Glossary]] (Worship Check, Trusted Artist, and six new
+  terms); [[Code-Conventions]]; [[Environment-Setup]]; `AGENTS.md` (one
+  worker, and where the safeguards live); the [[Development-Plan]] Phase 5
+  ticked and set Done; Design-Decisions' Phase 5 heading set done.
+- Verified:
+  - `scripts/check.ps1` passed: Ruff lint and format, `manage.py check`
+    clean, no missing migrations, 404 tests passed (298 before), 97%
+    coverage. The guard test passed.
+  - Not verified live: Spotify (no credentials in `.env` yet) and the ONNX
+    models on the new pipeline. The tests use FakeHttp and the keyword
+    engine.
+  - The migrations were not applied to the development database; run
+    `python manage.py migrate`.
+
 ## 2026-11-18: the user's decisions on the remaining contradictions
 
 - **Source order:** the [[Concept-Brief]] now ranks after

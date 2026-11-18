@@ -8,7 +8,7 @@ development task.
 
 ## Current status
 
-**Phase 4 done (2026-11-17).** The project's scope is now the
+**Phase 5 done (2026-11-18).** The project's scope is now the
 [[Concept-Brief]] ([[0005-worship-planning-scope]]). Built so far:
 
 - church setup, users and Roles, and the audit trail;
@@ -16,14 +16,16 @@ development task.
 - [[Worship]]: the schedule of worship services, service templates with
   song slots, themes and series, and headcounts;
 - [[Worship]]'s song pool: songs from Spotify, lyrics from LRCLIB, and
-  their analysis by ONNX models (worship check, theme tags, feel,
-  embedding), with the song library to correct it.
+  their analysis by ONNX models (the model's worship score, kept apart
+  from the Trusted Artist bonus; theme tags; feel; embedding), with the
+  song library to correct it;
+- [[Worship]]'s song suggestions: from a service's theme to ranked songs
+  placed in its song slots, with reasons, carried out by one search worker
+  ([[0007-search-worker]]) under the Spotify safeguards, and seen only by
+  the people who plan the service.
 
-**Next:** Phase 5 (Song suggestions) of the [[Development-Plan]]. It also
-builds the Phase 5 items in [[Design-Decisions]] (agreed 2026-11-18): the
-raw model score kept apart from the Trusted Artist bonus, the Spotify
-safeguards, one search worker enforced by an advisory lock, and
-suggestions hidden from team members.
+**Next:** Phase 6 (Lineups and reports) of the [[Development-Plan]], with
+the Phase 6 items in [[Design-Decisions]].
 
 ## Project
 
@@ -44,6 +46,7 @@ suggestions hidden from team members.
   - [[0004-custom-field-values-as-json|0004 Custom Field values stored as JSON on the record]]
   - [[0005-worship-planning-scope|0005 Worship planning is the scope; church administration stays light]]
   - [[0006-onnx-runtime-for-song-analysis|0006 Song analysis runs ONNX models, with a keyword stand-in]]
+  - [[0007-search-worker|0007 One search worker, a management command polling the database]]
 
 ## Modules
 

@@ -1,0 +1,77 @@
+{% load church %}
+{# Song suggestions for one service. Only for users with worship.suggest_songs; while a run is in progress it reloads itself every two seconds. #}
+{% label "lineup" as lineup_word %}{% label "worship_service" as service_word %}
+<div id="suggestions" class="card shadow-sm mb-3"{% if run.is_active %} hx-get="{% url 'worship:suggestions' public_id=service.public_id %}" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
+      <h2 class="h5 mb-0">Suggested {{ lineup_word|lower }}</h2>
+      {% if service.posted_theme and not run.is_active %}
+        <form method="post" action="{% url 'worship:suggest' public_id=service.public_id %}" class="d-flex flex-wrap gap-2">
+          {% csrf_token %}
+          {% if spotify_ready %}<button type="submit" name="source" value="spotify" class="btn btn-sm btn-primary">{% if run %}Find songs again{% else %}Find songs{% endif %}</button>{% endif %}
+          <button type="submit" name="source" value="pool" class="btn btn-sm {% if spotify_ready %}btn-outline-primary{% else %}btn-primary{% endif %}">Rank the song pool only</button>
+        </form>
+      {% endif %}
+    </div>
+    <p class="small text-body-secondary">Seen only by people who plan the {{ service_word|lower }}; the team sees the {{ lineup_word|lower }} once it is confirmed.</p>
+
+    {% if block_message %}<div class="alert alert-warning small">{{ block_message }}</div>{% endif %}
+    {% if not spotify_configured %}<p class="small text-body-secondary">Spotify isn't set up, so suggestions rank the songs already in the pool.</p>{% endif %}
+
+    {% if not service.posted_theme %}
+      <p class="text-body-secondary mb-0">Post the theme first: suggestions start from it.</p>
+    {% elif not run %}
+      <p class="text-body-secondary mb-0">No suggestions yet.</p>
+    {% elif run.is_active %}
+      <div class="progress mb-2" role="progressbar" aria-label="Finding songs" aria-valuenow="{{ run.progress }}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: {{ run.progress }}%">{{ run.progress }}%</div>
+      </div>
+      <p class="small mb-0" aria-live="polite">{{ run.stage|default:"Waiting for the search worker" }}</p>
+      {% if worker_seems_stopped %}
+        <div class="alert alert-warning small mt-2 mb-0">Still waiting. The search worker may not be running: start it with <code>python manage.py run_worker</code>.</div>
+      {% endif %}
+    {% elif run.status == "failed" %}
+      <div class="alert alert-danger mb-0">{{ run.message }}</div>
+    {% else %}
+      <p class="small text-body-secondary">{{ run.message }}</p>
+      {% if placed %}
+        <ol class="list-group list-group-numbered mb-3">
+          {% for suggestion in placed %}
+            <li class="list-group-item d-flex gap-2">
+              <div class="ms-1 flex-grow-1">
+                <div class="small text-body-secondary">{{ suggestion.slot.name }}</div>
+                <div class="fw-semibold">{% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} <span class="fw-normal text-body-secondary">· {{ suggestion.song.artist }}</span></div>
+                <ul class="small mb-0 ps-3">{% for reason in suggestion.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+              </div>
+            </li>
+          {% endfor %}
+        </ol>
+      {% endif %}
+      {% if others %}
+        <details>
+          <summary>Other choices ({{ others|length }})</summary>
+          <ul class="list-unstyled small mt-2 mb-0">
+            {% for suggestion in others %}
+              <li class="mb-1">{{ suggestion.rank }}. {% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} · {{ suggestion.song.artist }} <span class="text-body-secondary">({{ suggestion.reasons|first }})</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
+    {% endif %}
+
+    {% if run and show_run_details %}
+      <details class="mt-3 small">
+        <summary>About this search</summary>
+        <dl class="row mt-2 mb-0">
+          <dt class="col-sm-4">Asked for</dt><dd class="col-sm-8">{{ run.created_at|date:"M j, g:i A" }}{% if run.requested_by %} by {{ run.requested_by }}{% endif %}{% if not run.use_spotify %} (song pool only){% endif %}</dd>
+          <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ run.get_status_display }}{% if run.run_time_display %}, {{ run.run_time_display }}{% endif %}{% if run.fell_back %}; Spotify was paused, so the pool was ranked instead{% endif %}</dd>
+          {% if run.phrases %}<dt class="col-sm-4">Search phrases</dt><dd class="col-sm-8">{{ run.phrases|join:", " }}</dd>{% endif %}
+          {% if run.use_spotify %}
+            <dt class="col-sm-4">Spotify</dt><dd class="col-sm-8">{{ run.spotify_calls }} request{{ run.spotify_calls|pluralize }}, {{ run.pages_read }} page{{ run.pages_read|pluralize }} read; {{ run.songs_found }} songs found, {{ run.songs_added }} new{% if run.spotify_limits %}; {{ run.spotify_limits|length }} rate limit{{ run.spotify_limits|length|pluralize }} met{% endif %}</dd>
+          {% endif %}
+          <dt class="col-sm-4">Songs</dt><dd class="col-sm-8 mb-0">{{ run.songs_analysed }} analysed, {{ run.songs_ranked }} ranked</dd>
+        </dl>
+      </details>
+    {% endif %}
+  </div>
+</div>
