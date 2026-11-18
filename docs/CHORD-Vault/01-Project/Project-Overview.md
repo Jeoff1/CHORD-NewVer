@@ -18,7 +18,7 @@ announcements and song history. The full description is the
   [[0001-configure-behavior-not-identity]].
 - **Songs come from Spotify, searched per theme** (adviser request).
   Spotify data is never model input: the models read only lyrics from
-  LRCLIB and the church's own tags.
+  LRCLIB, the church's theme text and the church's own tags.
 - **Small scale.** One church per installation and five users or fewer,
   which is also what Spotify's Development Mode allows.
 - **Lyrics and chord sheets are copyrighted.** They stay private to the
@@ -32,8 +32,9 @@ teams and availability, announcements, song usage and headcounts, and the
 member directory.
 
 Out: giving and finance, church records and certificates, requested
-services such as weddings, and leadership appointments
-([[0005-worship-planning-scope]]).
+services such as weddings, ministries, events, leadership appointment and
+ordination, SMS messaging, check-in and follow-up, and per-person
+attendance ([[0005-worship-planning-scope]]).
 
 ## Relationship to the first CHORD
 

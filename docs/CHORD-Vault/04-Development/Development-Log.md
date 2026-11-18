@@ -2,6 +2,74 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-18: the user's decisions on the remaining contradictions
+
+- **Source order:** the [[Concept-Brief]] now ranks after
+  [[Design-Decisions]] and before the [[workflow-spec]], in `AGENTS.md`
+  and in the header of Design-Decisions.
+- **Notifications:** Phase 6 shows an "Edited by pastor" mark with its
+  time to everyone who can see the lineup, with no notification system.
+  Phase 8 notifies the assigned team members in the app. Changed in
+  Design-Decisions (Phases 6 and 8), the spec and the plan.
+- **Spotify playlist:** saved automatically on confirmation; with no
+  connection, or on a 429, it is skipped and a "Save to Spotify" button
+  lets the leader retry. Changed in Design-Decisions (Phase 7), the spec
+  and the plan.
+- **One worker:** Phase 5 enforces it with a PostgreSQL advisory lock
+  taken at worker startup; `claim_next_run` stays. Changed in
+  Design-Decisions (Phase 5, with a test and a reminder to update the
+  Worship note, decision 0006 and the Glossary with the code), the spec
+  and the plan.
+- **Office Staff** stays: added to the brief's roles table and the spec as
+  an optional role that keeps the member directory up to date.
+- **[[Development-Plan]]:**
+  - the out-of-scope line now matches the brief;
+  - Phase 5 now lists the Design-Decisions items: the raw model score,
+    suggestions hidden from team members, the Spotify safeguards, one
+    worker, the missing tests, and the notes to update;
+  - Phase 6 now has the pastor's rules and the tests for each role;
+  - Phase 7 now has Find chords, the chord-sheet count per lineup, the
+    practise-along toggle, and the automatic playlist;
+  - Phase 8 now has in-app notifications;
+  - Phase 9 now excludes Spotify data from the training features, with a
+    test;
+  - the Phase 10 Development Mode question is moved to "Decided since".
+- [[Project-Overview]] and [[00-Home]]: theme text as model input, and
+  the brief's full out-of-scope list. [[0003-editable-roles]]: a dated
+  update note (five default roles; the finance and records examples are
+  out of scope).
+- The spec's "What to produce" section moved to [[Review-Prompt]]
+  (`04-Development/Reviews/`).
+- Checks: documentation only, no code changed, so `scripts/check.ps1` was
+  not run. Every `[[link]]` in the changed notes resolves.
+
+## 2026-11-18: vault aligned with the updated brief and design decisions
+
+- `AGENTS.md`, the [[Concept-Brief]] and [[Design-Decisions]] were updated
+  by the user, answering the open questions of the workflow review
+  (`docs/workflow-review.md`). The rest of the vault now follows them:
+  - [[workflow-spec]]: theme text as model input, live versions, ranking
+    the whole pool, the raw model score and the Trusted Artist bonus,
+    suggestions hidden from team members, the pastor's decision rules,
+    training features, chord sheets allowed early with approval of team
+    members' pastes, encrypted tokens, the playback 429 fallback, a new
+    Spotify safeguards section, an undeletable Administrator, and which
+    expected tables are stored as fields.
+  - [[0005-worship-planning-scope]]: the brief's longer out-of-scope list,
+    the main module's priority, the stack departures (ONNX Runtime, JSON
+    embeddings instead of pgvector; job queue still to record), Members
+    beyond the basic directory, and the Administrator role.
+  - [[Development-Plan]] Phase 7: chord sheets allowed before
+    confirmation, approval of team members' pastes as a permission,
+    encrypted Spotify tokens, the playback 429 fallback, the safeguards for
+    server-side calls, and the Design-Decisions tests.
+  - [[00-Home]]: links to the workflow spec and Design-Decisions, and the
+    Phase 5 status note.
+- Branch: `master` (Phase 4) was merged into `phase-4-song-pool` first, so
+  these notes build on the Phase 4 vault.
+- Checks: documentation only, no code changed, so `scripts/check.ps1` was
+  not run. Links were checked by hand.
+
 ## 2026-11-17: Phase 4, the song pool
 
 - **[[Worship]]'s song pool** (`apps/songs`):

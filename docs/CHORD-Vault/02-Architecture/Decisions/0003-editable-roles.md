@@ -31,3 +31,10 @@ can't lock itself out.
 - Only permissions that CHORD's models declare appear in the permission
   matrix. Framework permissions (sessions, admin log) and stale rows are
   hidden.
+
+## Update (2026-11-18)
+
+There are now five default roles: Administrator, Office Staff, Pastoral
+Staff, Worship Leader and Team Member ([[0005-worship-planning-scope]]).
+The finance and records examples above are out of scope; the reasoning for
+editable roles still holds.

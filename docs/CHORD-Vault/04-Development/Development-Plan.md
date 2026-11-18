@@ -48,7 +48,12 @@ This **Status** column is the record of phase progress. Statuses: Done
 order.
 
 Out of scope since [[0005-worship-planning-scope]]: Giving, Records,
-Services (Service Requests), Ministries and Events.
+Services (Service Requests), Ministries, Events, leadership appointment and
+ordination, SMS messaging, check-in and follow-up, and per-person
+attendance.
+
+Each phase also builds its section of [[Design-Decisions]], with the tests
+listed there. Where the two disagree, Design-Decisions wins.
 
 ## How each feature is built
 
@@ -231,9 +236,38 @@ Goal: from a posted theme to ranked songs (pipeline stages 2 to 9).
   on the service page.
 - [ ] A way to try the pipeline without Spotify: ranking the pool alone,
   and a command that seeds public-domain hymns.
+- [ ] **Raw model score**: `Song.worship_model_score` holds the
+  classifier's score, from the lyrics only. The Trusted Artist bonus is a
+  church rule applied after the model and stored apart (the adjusted
+  `worship_score`), with a code comment that it is never a training
+  feature.
+- [ ] **Suggestions hidden from team members**: the service page's
+  suggestion panel and every suggestion URL check `worship.suggest_songs`.
+  `suggest_songs` and `view_searchrun` go to Worship Leader and Pastoral
+  Staff only.
+- [ ] **Spotify safeguards** in `apps/songs/spotify.py`: stop on the first
+  429; a shared "blocked until" time that the worker and web requests
+  check; at most one retry; a Retry-After over an hour or
+  `QUOTA_EXCEEDED` pauses Spotify, tells the worship leader and falls back
+  to ranking the pool; never re-fetch a pooled track; no
+  search-as-you-type; Spotify calls and 429s recorded on each Search Run.
+- [ ] **One worker**: `run_worker` takes a PostgreSQL advisory lock at
+  startup, and a second worker refuses to start. `claim_next_run` stays as
+  it is. Documented in `AGENTS.md` and `run_worker.py`.
+- [ ] Tests for `phrases.py`, `ranking.py`, `sequencing.py`,
+  `suggesting.py` and `cleanup.py` (a live-only song is kept; a live
+  duplicate of a studio song is dropped; karaoke, instrumental and backing
+  tracks are always dropped).
+- [ ] When the code changes, update [[Worship]],
+  [[0006-onnx-runtime-for-song-analysis]] and the [[Glossary]] (Worship
+  Check, Trusted Artist), and record the search worker in its own
+  decision.
 
 **Done when** a run on a seeded pool produces a ranked, explained set of
-songs, and a failed outside call ends the run with a clear message.
+songs, a failed outside call ends the run with a clear message, and the
+Phase 5 tests in [[Design-Decisions]] pass: the raw score ignores the
+Trusted Artist list, a team member sees no suggestions, every Spotify
+safeguard holds, and a second worker refuses to start.
 
 ## Phase 6: Lineups and reports
 
@@ -244,35 +278,78 @@ the data for stage 11).
   reason it was suggested, and a lock.
 - [ ] Review: swap from ranked alternatives, lock, reorder, remove, add
   from the pool, regenerate around locked songs.
-- [ ] Confirmation: the worship leader or pastoral staff confirm; a final
-  decision locks out everyone without that permission; sending back with
-  notes; reopening.
+- [ ] Confirmation: the worship leader or pastoral staff confirm; sending
+  back with notes. The pastor's final say is a permission held by the
+  pastoral role, not a check on a role name:
+  - once the pastor has confirmed or edited a lineup, the worship leader
+    can't change it until the pastor reopens it;
+  - if the pastor edits a lineup the leader confirmed, it stays confirmed
+    and is marked "Edited by pastor" with the time, shown to everyone who
+    can see it. No notifications in this phase (they come in Phase 8).
 - [ ] The team sees a lineup only once it is confirmed.
 - [ ] **Suggestion Feedback**: every kept, swapped and removed suggestion.
-- [ ] Usage: confirmed lineups feed familiarity and recency.
-- [ ] Reports: song usage with CSV export and overused songs; attendance.
+- [ ] Usage: `ranking.song_usage()` reads confirmed lineups, so
+  familiarity and recency start counting.
+- [ ] Reports: song usage with CSV export and overused songs; attendance
+  (a headcount per service).
 
-**Done when** the confirmation rules are tested for every role, and the
-usage report matches the confirmed lineups.
+**Done when** the usage report matches the confirmed lineups, and these
+are tested for every role: the leader can confirm; the pastor's edit keeps
+the lineup confirmed and shows the mark with its time; the leader is
+blocked after the pastor confirms or edits; reopening unblocks the leader;
+a team member can't see an unconfirmed lineup, by page or by URL.
 
 ## Phase 7: Song pages: chords and playback
 
 Goal: one page per lineup song with the track, the chords and the key.
+The rules and tests for this phase are in [[Design-Decisions]] (Phase 7).
 
 - [ ] **Chord Sheet** in ChordPro, typed or pasted; Ultimate Guitar-style
   text is converted on paste (ChordSheetJS, stored in `static/vendor/`).
+  Only the original ChordPro text and its key are stored.
+- [ ] **Find chords**: a song without a sheet shows an action that opens a
+  search on free sources such as Worship Together and Ultimate Guitar, in
+  a new tab. Nothing is fetched or scraped; the chart is pasted by hand.
+- [ ] Each lineup shows how many of its songs have a chord sheet.
+- [ ] When sheets can be added: at any time, for any song in the pool, so
+  the worship leader can add one ahead of time. A sheet is required only
+  once the song is in a confirmed lineup.
+- [ ] Approval: a sheet added by the worship leader or the pastor is
+  approved at once. A team member may paste a sheet for a song in a
+  confirmed lineup; it is saved as pending, other team members can't see
+  it, and the worship leader or the pastor approves it. Approving is a
+  permission the Worship Leader and Pastoral Staff roles hold, not a check
+  on a role name.
 - [ ] The viewer: the sheet in the service key, a personal transpose, a
   capo view and Nashville numbers.
+- [ ] A practise-along toggle that shows the chords in the recording's
+  original key, since Spotify audio can't be pitch-shifted.
 - [ ] Key tools: transpose by semitone or to a key, capo positions, and a
   key from a singer's range.
 - [ ] **Spotify connection** per user (Authorization Code flow), with
-  tokens refreshed as needed.
+  tokens refreshed as needed. Access and refresh tokens are stored
+  **encrypted** with Fernet from `cryptography`, with the key in `.env`
+  (`SPOTIFY_TOKEN_KEY`); add `cryptography` to `requirements.txt` and the
+  key to `.env.example`. Tokens are never shown or logged, encrypted or
+  not.
 - [ ] Playback: the Web Playback SDK for connected Premium accounts, the
-  embedded player or an "Open in Spotify" link otherwise.
-- [ ] Saving a confirmed lineup as a Spotify playlist.
+  embedded player or an "Open in Spotify" link otherwise. An SDK call that
+  gets a 429 shows a short message and falls back to the embedded player
+  or the link, with no automatic retry.
+- [ ] On confirmation, the lineup is saved automatically as a Spotify
+  playlist on the worship leader's account. With no Spotify connection, or
+  on a 429, it is skipped, the lineup stays confirmed, and a "Save to
+  Spotify" button lets the leader try again later.
+- [ ] The Phase 5 Spotify safeguards cover every server-side Spotify call
+  this phase adds, such as creating the playlist.
 
 **Done when** the viewer's transposing is tested, and playback falls back
-to the embedded player whenever the SDK can't be used.
+to the embedded player whenever the SDK can't be used. Also tested: a team
+member's paste is pending; the worship leader or the pastor can approve
+it; other team members can't see a pending sheet; a stored token is not
+the plain token, and decrypts back to it; confirming saves the playlist
+for a connected leader, and without a connection or on a 429 the lineup
+is still confirmed and the "Save to Spotify" button shows.
 
 ## Phase 8: Teams and announcements
 
@@ -285,9 +362,13 @@ Goal: who serves when, and notes to them.
 - [ ] **Blackout Dates**, and "My schedule".
 - [ ] **Swap Request**: ask to be replaced; another person takes it.
 - [ ] **Announcements** to everyone or to one service's team.
+- [ ] In-app notifications: when the pastor edits a confirmed lineup, the
+  team members assigned to that service are notified in the app (no email
+  or SMS).
 
-**Done when** nobody can be assigned on a blackout date, and a swap moves
-the assignment.
+**Done when** nobody can be assigned on a blackout date, a swap moves the
+assignment, and a pastor's edit to a confirmed lineup notifies its
+assigned team members and nobody else.
 
 ## Phase 9: Learning to rank
 
@@ -298,9 +379,15 @@ Goal: pipeline stage 11.
 - [ ] Learned weights replace the hand-set ones once enough lineups are
   confirmed; the church can switch back.
 - [ ] A page showing both sets of weights and what they were trained on.
+- [ ] Training features are only lyrics-based scores (embedding
+  similarity, `worship_model_score`, tag scores), the church's own data
+  (team knows it, usage, season, slot) and feedback labels. Never the
+  Spotify artist, title, album, track ID or length, the Trusted Artist
+  bonus, or any score that includes it.
 
 **Done when** training on made-up feedback moves the weights the expected
-way, and too little data leaves the hand-set weights in place.
+way, too little data leaves the hand-set weights in place, and a test
+shows the training feature list holds none of the forbidden fields.
 
 ## Phase 10: Hardening and release
 
@@ -322,6 +409,11 @@ Goal: ready for the proposal and for a real church.
 | Phase | Decision                                                                 | Current leaning                                                                 |
 | ----- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | 9     | Must the proposal show a trained model? (the brief's open question)      | Build both: the rules pipeline works from day one, and training switches on once enough lineups are confirmed |
-| 10    | Whether Spotify's 5-user Development Mode limit is acceptable for the defence | Yes for the proposal; record it as a scaling limit                        |
 
 Record each decision in `02-Architecture/Decisions/` once it is made.
+
+Decided since:
+
+- **Spotify's 5-user Development Mode limit** (Phase 10): acceptable. CHORD
+  stays in Development Mode, and the limit is noted as a scaling
+  constraint ([[Concept-Brief]], 2026-11-18).
