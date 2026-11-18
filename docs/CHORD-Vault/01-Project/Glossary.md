@@ -1,6 +1,6 @@
 # CHORD (new version)
 
-A church administration system usable by any Christian church. Churches
+A worship planning system usable by any Christian church. Churches
 configure what they do; the system never asks what denomination they are.
 
 ## Language
@@ -13,43 +13,106 @@ Modules and Labels.
 _Avoid_: tenant, organization
 
 **Module**:
-A feature area (Members, Giving, Events, Services, Records, Worship,
-Ministries) that ships in every installation and that the church switches on
-or off.
+A feature area (Members, Worship, Teams, Announcements) that ships in every
+installation and that the church switches on or off. A Module can need
+another: Teams counts as off while Worship is off.
 _Avoid_: plugin, add-on
 
 **Label**:
-The church's own word for a common concept, such as "Priest", "Pastor" or
-"Minister" for the person who officiates.
+The church's own word for a common concept, such as "Sermon", "Homily" or
+"Message" for the talk given at a service.
 _Avoid_: terminology preset
 
-**Starter Catalog**:
-Neutral sample Service Types the church may copy and then edit.
-_Avoid_: preset, template, tradition
+**Role**:
+A named set of permissions the church gives to users, such as Worship
+Leader or Team Member. The church edits roles; the Administrator role
+always has full access.
+_Avoid_: user type, position
+
+**Audit Trail**:
+The permanent record of who changed what, and when. Entries are never
+edited or removed.
+_Avoid_: history, log (alone)
+
+**Church-edited List**:
+A short list a church defines for itself, such as Membership Statuses,
+Series or Theme Tags. Entries are switched off rather than deleted.
+_Avoid_: lookup table, dropdown values
 
 **Denomination**:
 A church's religious body. CHORD never records or uses it; see
 [[0001-configure-behavior-not-identity]].
 _Avoid_: Tradition, religion
 
-### Services
+### People
 
-**Service Type**:
-A service the church offers, defined by the church, such as a wedding, burial,
-private Mass, child dedication or house blessing.
-_Avoid_: sacrament (not every church calls these sacraments), service template
+**Member**:
+A person in the church's directory, whatever their Membership Status. A
+visitor also has a Member record. Churches may rename it with the "member"
+Label.
+_Avoid_: contact, person record, parishioner (that's one church's Label)
 
-**Service Request**:
-One request for a Service Type, going through that Service Type's steps from
-request to completion.
-_Avoid_: booking, reservation, appointment
+**Membership Status**:
+The church-edited state of a Member, such as Member, Visitor or Moved Away.
+Some statuses count as active.
+_Avoid_: member type, category
 
-**Fee Mode**:
-How a Service Type is paid for: no fee, a fixed fee, an optional donation, or
-an amount set per request.
-_Avoid_: price, stipend (a stipend is one church's word for a fixed fee)
+**Household**:
+Members who live together, such as a family. Each person in it can have a
+Household Role.
+_Avoid_: family (not every household is a family)
 
-**Requirement**:
-Something the requester must provide or complete before a Service Request can
-proceed, such as a baptismal certificate or a seminar.
-_Avoid_: prerequisite, document
+**Household Role**:
+A person's church-edited place in a Household, such as Head, Spouse or
+Child.
+_Avoid_: relationship type (the code's model name)
+
+**Custom Field**:
+A field the church adds to a kind of record, such as "Baptism date" on
+every Member. It can be required, and private.
+_Avoid_: extra field, user-defined field
+
+**Archive**:
+To take a record out of everyday lists without deleting it. Archiving can
+be undone.
+_Avoid_: delete, remove
+
+### Worship planning
+
+**Worship Service**:
+One gathering for worship on one date. Churches may rename it with the
+"worship service" Label (Mass, Service, Gathering). The
+[[Concept-Brief]] calls it a service.
+_Avoid_: event, service (alone, in code and notes)
+
+**Service Template**:
+A kind of Worship Service the church holds, such as its main weekly
+service or a youth night, with its Song Slots and an optional usual day
+and time.
+_Avoid_: service type, event type
+
+**Song Slot**:
+A place in a Service Template where a song is sung, in order, such as
+Opening or Response, with the Feel that suits it.
+_Avoid_: position, segment
+
+**Feel**:
+How a song moves: upbeat, mid-tempo or slow. The system guesses it from
+the lyrics and a person corrects it.
+_Avoid_: tempo, energy (Spotify no longer gives either)
+
+**Theme**:
+What a Worship Service's message is about: a title, a main scripture and
+notes. Song suggestions start from it.
+_Avoid_: topic, sermon (the sermon is the talk; the Theme describes it)
+
+**Series**:
+A church-edited group of Worship Services whose Themes belong together.
+Shown with the "sermon" Label, as in "Sermon series".
+_Avoid_: campaign, season (a season is a time of year)
+
+**Lineup**:
+The songs chosen for a Worship Service, in order. Churches may rename it
+with the "lineup" Label (Set List, Song List). The team sees it only once
+it is confirmed.
+_Avoid_: setlist, worship plan, playlist (a playlist is on Spotify)

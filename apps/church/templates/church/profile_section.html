@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{% if wizard %}Set up your church{% else %}Church settings{% endif %}{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+      {% if wizard %}
+        <h1 class="h3 mb-1">Set up your church</h1>
+        <p class="text-body-secondary mb-3">Step {{ step_number }} of {{ sections|length }}: {{ section_title }}</p>
+        <div class="progress mb-4" role="progressbar" aria-label="Setup progress"
+             aria-valuenow="{{ step_number }}" aria-valuemin="0" aria-valuemax="{{ sections|length }}" style="height: .5rem">
+          <div class="progress-bar" style="width: {% widthratio step_number sections|length 100 %}%"></div>
+        </div>
+      {% else %}
+        <h1 class="h3 mb-3">Church settings</h1>
+        <ul class="nav nav-tabs mb-4">
+          {% for key, title in sections %}
+            <li class="nav-item">
+              <a class="nav-link{% if key == section %} active" aria-current="page{% endif %}"
+                 href="{% url 'church:settings' section=key %}">{{ title }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      <p class="text-body-secondary">
+        {% if section == "details" %}
+          Your church's name and contact details, shown on screens and printed documents.
+        {% elif section == "labels" %}
+          Choose the words your church uses. CHORD shows them wherever these ideas appear.
+        {% elif section == "modules" %}
+          Switch on the parts of CHORD your church uses. A switched-off module is hidden;
+          its data is kept, and switching it back on brings everything back.
+        {% endif %}
+      </p>
+
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form method="post"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>
+            {% csrf_token %}
+            {% if section == "labels" %}
+              {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead>
+                    <tr><th scope="col">Idea</th><th scope="col">Singular</th><th scope="col">Plural</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for definition, singular, plural in form.rows %}
+                      <tr>
+                        <td>
+                          <div class="fw-semibold">{{ definition.singular }}</div>
+                          <div class="form-text mt-0">{{ definition.help_text }}</div>
+                        </td>
+                        <td>
+                          <label for="{{ singular.id_for_label }}" class="visually-hidden">{{ singular.label }}</label>
+                          {{ singular }}
+                          {% for error in singular.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </td>
+                        <td>
+                          <label for="{{ plural.id_for_label }}" class="visually-hidden">{{ plural.label }}</label>
+                          {{ plural }}
+                          {% for error in plural.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% elif section == "modules" %}
+              {% for error in form.enabled.errors %}<div class="alert alert-danger">{{ error }}</div>{% endfor %}
+              <div class="list-group mb-3">
+                {% for entry, checked in form.rows %}
+                  <label class="list-group-item d-flex gap-3 align-items-start" for="module-{{ entry.code }}">
+                    <span class="form-check form-switch mb-0">
+                      <input class="form-check-input" type="checkbox" role="switch" name="enabled"
+                             value="{{ entry.code }}" id="module-{{ entry.code }}"{% if checked %} checked{% endif %}>
+                    </span>
+                    <span>
+                      <span class="fw-semibold d-block">{{ entry.name }}</span>
+                      <span class="text-body-secondary small">{{ entry.description }}{% if entry.requires %} Needs {{ entry.requires|join:" and " }} switched on.{% endif %}</span>
+                    </span>
+                  </label>
+                {% endfor %}
+              </div>
+            {% else %}
+              {{ form }}
+            {% endif %}
+
+            <div class="d-flex gap-2">
+              {% if wizard %}
+                {% if previous_url %}<a href="{{ previous_url }}" class="btn btn-outline-secondary">Back</a>{% endif %}
+                <button type="submit" class="btn btn-primary">{% if is_last_step %}Finish setup{% else %}Next{% endif %}</button>
+              {% else %}
+                <button type="submit" class="btn btn-primary">Save</button>
+              {% endif %}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

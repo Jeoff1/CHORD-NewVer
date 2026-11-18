@@ -1,29 +1,88 @@
 # CHORD (new version) agent guidance
 
+CHORD is a worship planning system: a service's theme becomes a confirmed
+song lineup with tracks, chord sheets and keys. Its scope is the concept
+brief in `docs/CHORD-Vault/01-Project/Concept-Brief.md` (decision 0005).
+
+## Scope and priorities
+
+**The main module is the theme-based song lineup.** CHORD's core is the
+pipeline that turns a service's theme into a suggested song lineup from
+Spotify, followed by review, confirmation, chord sheets, keys and playback.
+It comes first: when effort or time is limited, finish and polish this
+module before any supporting module, and never let supporting work delay it.
+
+**Supporting church management stays minimal.** Build only what helps the
+worship workflow, in its smallest useful form:
+
+- Service scheduling and service templates
+- Themes and sermon series
+- Team roster: assignments, availability and swap requests
+- Member directory: the Members module stays as built (households, CSV
+  import); don't extend it further without asking
+- Announcements to the whole team or one service team
+- Attendance as a headcount per service
+- Song usage report
+
+**Out of scope:** giving and finance, records, requested services,
+ministries, events, leadership appointment or ordination workflows, SMS
+messaging, check-in and follow-up, and per-person attendance. Raise it with
+the user before building any of them. When unsure whether a feature is
+minimal enough, ask, and suggest the smallest version that serves worship
+planning.
+
 ## Core rule: configure behavior, not identity
 
 CHORD serves any Christian church and never asks for its denomination
 (see `docs/CHORD-Vault/02-Architecture/Decisions/0001-configure-behavior-not-identity.md`).
 Every feature follows this:
 
-- **Every Module ships in every installation.** A church switches a Module on
-  or off; a switched-off Module is hidden, and its data stays intact.
-- **Church practice is data the church enters.** Anything that differs between
-  churches (which services exist, fees, Requirements, approval and notice
-  rules, record types, giving funds, song slots, calendar seasons, wording)
-  is a model or setting the church edits, with neutral defaults.
-- **Code branches only on settings.** Write `if service_type.fee_mode !=
-  FeeMode.NONE`, never a check on denomination, tradition or church name.
-  When a feature seems to need "if church X does Y", add a setting for Y.
-- **Optional steps disappear when unused.** A Service Type with no fee has no
-  payment step and no unpaid status; the same goes for approval and records.
+- **Every Module ships in every installation.** A church switches a Module
+  on or off; a switched-off Module is hidden, and its data stays intact.
+- **Church practice is data the church enters.** Anything that differs
+  between churches (which kinds of service it holds, their song slots,
+  theme tags, seasons, team parts, search genres, ranking weights,
+  wording) is a model or setting the church edits, with neutral defaults.
+- **Code branches only on settings.** Write `if template.repeats_weekly`,
+  never a check on denomination, tradition or church name. When a feature
+  seems to need "if church X does Y", add a setting for Y.
+- **Optional steps disappear when unused.** A church that defines no
+  seasons gets no season scoring; one that never records a headcount sees
+  no attendance report.
 - **Use the church's Labels in UI text** for concepts whose wording differs
-  between churches (officiant, service, offering).
+  between churches (member, worship service, sermon, lineup).
 - **Denomination-free.** Denomination, Tradition and religion stay out of
   models, forms, seed data, fixtures and UI copy.
 
 Before finishing any feature, check every new model, form, seed row and
 condition against this rule.
+
+## Outside services and models
+
+- **Spotify data is never model input or a training feature.** Spotify
+  supplies candidates and playback only. The models read only LRCLIB lyrics,
+  the church's theme text and the church's own tags, and ranking features
+  come from the church's own data. The Spotify artist name, title, album,
+  track ID and length, and any score adjusted by them (such as the Trusted
+  Artist bonus), never reach a model or a training set.
+- **Store only these Spotify fields:** track ID, title, artist, album and
+  length. Never store audio.
+- **Lyrics come only from LRCLIB,** never from Spotify or an unofficial
+  Spotify lyrics endpoint.
+- **Never call Spotify Recommendations, Audio Features or Audio Analysis.**
+- **Never scrape Ultimate Guitar** or use its private or mobile API. Chord
+  sheets are pasted in by people and converted to ChordPro.
+- **Spotify calls follow the safeguards** in
+  `04-Development/Design-Decisions.md`: stop on the first 429, respect
+  Retry-After across all processes, never retry in a loop, pause all Spotify
+  calls on `QUOTA_EXCEEDED`, and run only one worker.
+- **LRCLIB requests go one at a time,** and every result is cached.
+- **Tests never use the network or load a model.** Use the stand-ins the
+  project provides; a test that needs Spotify, LRCLIB or a real model is
+  wrong.
+- Lyrics and chord sheets are copyrighted: keep them inside the
+  installation, and never put them in fixtures, seed data, the vault or
+  logs. Seed data may use public-domain hymns only.
 
 ## Documentation: the Obsidian vault
 
@@ -38,12 +97,47 @@ note for that area.
   reverse, would surprise a later reader, and was a real trade-off. Flag any
   change that contradicts an existing decision instead of overriding it.
 - **Module notes:** `03-Modules/<Module>.md` (from `Templates/Module.md`).
+- **Code conventions:** `02-Architecture/Code-Conventions.md` lists the
+  shared pieces every Module reuses (module gating, Labels, audit trail,
+  list and form views, test builders); read it before writing code.
 - **Development plan:** `04-Development/Development-Plan.md` sets the build
   order. Work on the current phase, follow its slice steps and definition of
   done, and tick a task only once its checks pass. When a phase finishes,
   set its **Status** in the plan's phase table, then end the report to the
   user with two lists taken from that table: **Phases done** and **Phases
   left**.
+- **Workflow spec:** `workflow-spec.md` describes the intended workflow.
+- **Design decisions:** `04-Development/Design-Decisions.md` holds agreed
+  decisions and safeguards, grouped by phase. Before starting a phase, read
+  its section and build what it lists, including its tests. Don't build
+  items for a later phase early. At the end of the phase, say which of its
+  items are done and which tests cover them.
+
+## Agreed design: what wins, and when to ask
+
+When sources disagree, follow them in this order:
+
+1. The rules in this file
+2. Numbered decision records in `02-Architecture/Decisions/`
+3. `04-Development/Design-Decisions.md`
+4. `workflow-spec.md`
+5. `04-Development/Development-Plan.md`
+
+If a lower source contradicts a higher one, flag it and fix the lower one
+after I agree; never quietly follow the lower one.
+
+Workflow rules that hold in every phase:
+
+- Team members see a lineup only after it is confirmed.
+- The pastor's decision on a lineup is final. Build this as a permission
+  held by the pastoral role, never as a check on a role name, so it follows
+  the core rule above.
+- If a task would break any rule in this file or an agreed decision, stop
+  and ask me first. Explain the conflict and suggest an option that keeps
+  the rule. If something is unclear, ask instead of guessing.
+- When I approve a design change, update `Design-Decisions.md`,
+  `workflow-spec.md` and, for a hard-to-reverse choice, a numbered decision
+  record, in the same task, and mention it in your summary.
 
 Every development task ends with the vault matching the code:
 
@@ -65,6 +159,8 @@ Secrets stay out of the vault.
 - Custom user model `accounts.User` (`apps/accounts`). Keep it as the user
   model.
 - Secrets and real passwords go only in `.env`, never in code, Git, logs or
-  docs.
+  docs. That includes the Spotify client secret and the token encryption
+  key. Users' Spotify tokens are stored in the database **encrypted**
+  (Fernet, key from `.env`), and never shown or logged.
 - Run `.\scripts\check.ps1` (lint, format, Django checks, migrations,
   tests with coverage) before calling work done; it must pass.

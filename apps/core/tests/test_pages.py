@@ -7,13 +7,13 @@ from apps.core.testing import make_user
 
 class HomePageTests(TestCase):
     def test_anonymous_user_is_sent_to_sign_in(self):
-        response = self.client.get(reverse("core:home"))
+        response = self.client.get(reverse("home"))
         self.assertRedirects(response, reverse("accounts:login") + "?next=/")
 
     def test_signed_in_user_sees_base_page(self):
         self.client.force_login(make_user(first_name="Ana"))
-        response = self.client.get(reverse("core:home"))
-        self.assertContains(response, "Welcome, Ana")
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, "Welcome, Ana.")
         self.assertContains(response, "Sign out")
         self.assertContains(response, "vendor/htmx-2.0.4/htmx.min.js")
         self.assertContains(response, "vendor/bootstrap-5.3.3/bootstrap.min.css")

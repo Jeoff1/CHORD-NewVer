@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Import {% label "member" plural=True %}{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+      <a href="{% url 'members:list' %}" class="small text-decoration-none">← {% label "member" plural=True %}</a>
+      <h1 class="h3 mb-3">Import {{ labels.member|lower }} list</h1>
+      <p class="text-body-secondary">
+        Bring in an existing list from a spreadsheet. You'll see every row checked
+        before anything is saved, and only rows without problems are imported.
+      </p>
+
+      <div class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            {{ form }}
+            <div class="d-flex flex-wrap gap-2">
+              <button type="submit" class="btn btn-primary">Check the file</button>
+              <a href="{% url 'members:import_template' %}" class="btn btn-outline-secondary">Download a blank template</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h5">Columns</h2>
+          <p class="small text-body-secondary">
+            Column names must match these (capital letters don't matter). Only First name
+            and Last name are required; leave other cells blank if you don't know them.
+            Write dates as YYYY-MM-DD or MM/DD/YYYY. A blank Status uses the first status
+            in your list. Households that don't exist yet are created.
+          </p>
+          <div class="d-flex flex-wrap gap-1">
+            {% for header, getter in columns %}<span class="badge text-bg-light border fw-normal">{{ header }}</span>{% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

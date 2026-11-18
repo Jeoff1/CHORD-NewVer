@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Calendar: {{ month|date:"F Y" }}{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{% label "worship_service" plural=True %}</h1>
+    {% if perms.worship.add_worshipservice %}<a href="{% url 'worship:service_create' %}" class="btn btn-primary">Add {{ labels.worship_service|lower }}</a>{% endif %}
+  </div>
+
+  {% include "worship/includes/nav.html" with active="calendar" %}
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="?month={{ previous_month }}" class="btn btn-outline-secondary btn-sm">← Previous</a>
+    <h2 class="h5 mb-0">{{ month|date:"F Y" }}</h2>
+    <a href="?month={{ next_month }}" class="btn btn-outline-secondary btn-sm">Next →</a>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" style="table-layout: fixed; min-width: 44rem">
+        <thead>
+          <tr>{% for name in weekday_names %}<th scope="col" class="text-center small text-body-secondary">{{ name }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for week in weeks %}
+            <tr>
+              {% for day in week %}
+                <td class="align-top p-1{% if not day.in_month %} bg-body-tertiary{% endif %}" style="height: 6.5rem">
+                  <div class="small text-end{% if day.is_today %} fw-bold text-primary{% elif not day.in_month %} text-body-secondary{% endif %}">{{ day.date.day }}</div>
+                  {% for service in day.services %}
+                    <a href="{% url 'worship:service' public_id=service.public_id %}"
+                       class="d-block small rounded px-1 mb-1 text-decoration-none {% if service.is_cancelled %}text-bg-secondary text-decoration-line-through{% else %}text-bg-primary{% endif %}"
+                       title="{{ service.name }}{% if service.posted_theme %}: {{ service.posted_theme.title }}{% endif %}">
+                      {{ service.starts_at|date:"g:i A" }} {{ service.name }}
+                    </a>
+                  {% endfor %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

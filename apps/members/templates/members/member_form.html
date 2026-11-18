@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+      <h1 class="h3 mb-3">{{ page_title }}</h1>
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+        {% for title, fields in form.sections %}
+          <div class="card shadow-sm mb-3">
+            <div class="card-body">
+              <h2 class="h5 mb-3">{{ title }}</h2>
+              <div class="row">
+                {% for field in fields %}
+                  <div class="{% if field.widget_type == 'textarea' or field.widget_type == 'clearablefile' or field.widget_type == 'privatefile' %}col-12{% else %}col-md-6{% endif %} mb-3">
+                    {{ field.as_field_group }}
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+        <div class="d-flex gap-2 mb-4">
+          <button type="submit" class="btn btn-primary">Save</button>
+          {% if cancel_url %}<a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancel</a>{% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

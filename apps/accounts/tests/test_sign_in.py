@@ -16,7 +16,7 @@ class SignInTests(TestCase):
             reverse("accounts:login"),
             {"username": user.username, "password": TEST_PASSWORD},
         )
-        self.assertRedirects(response, reverse("core:home"))
+        self.assertRedirects(response, reverse("home"))
         self.assertEqual(int(self.client.session[SESSION_KEY]), user.pk)
 
     def test_wrong_password_shows_error(self):
@@ -31,7 +31,7 @@ class SignInTests(TestCase):
     def test_signed_in_user_skips_sign_in_page(self):
         self.client.force_login(make_user())
         response = self.client.get(reverse("accounts:login"))
-        self.assertRedirects(response, reverse("core:home"))
+        self.assertRedirects(response, reverse("home"))
 
     def test_sign_out_requires_post(self):
         self.client.force_login(make_user())

@@ -35,3 +35,6 @@ Thumbs.db
 
 # Obsidian per-user UI state
 .obsidian/workspace*.json
+
+# Downloaded ML model files (see docs: Technology-Stack)
+ml_models/

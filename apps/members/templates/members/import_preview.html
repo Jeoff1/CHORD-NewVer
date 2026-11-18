@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Check import{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-1">Check before importing</h1>
+  <p class="text-body-secondary">File: {{ file_name }}. Nothing has been saved yet.</p>
+
+  {% if check.missing_columns %}
+    <div class="alert alert-danger">
+      The file has no {{ check.missing_columns|join:" or " }} column. Fix the column
+      names and upload the file again.
+    </div>
+  {% endif %}
+  {% if check.ignored_columns %}
+    <div class="alert alert-warning">
+      These columns aren't recognised and will be ignored: {{ check.ignored_columns|join:", " }}.
+    </div>
+  {% endif %}
+
+  <div class="row g-3 mb-3">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm"><div class="card-body">
+        <div class="text-body-secondary small">Ready to import</div>
+        <div class="fs-3 fw-semibold text-success">{{ check.ready|length }}</div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm"><div class="card-body">
+        <div class="text-body-secondary small">Rows with problems</div>
+        <div class="fs-3 fw-semibold {% if check.with_problems %}text-danger{% endif %}">{{ check.with_problems|length }}</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mb-4">
+    {% if check.ready and not check.missing_columns %}
+      <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary">Import {{ check.ready|length }} {% if check.ready|length == 1 %}person{% else %}people{% endif %}</button>
+      </form>
+    {% endif %}
+    {% if check.with_problems %}<a href="{% url 'members:import_problems' %}" class="btn btn-outline-secondary">Download rows with problems</a>{% endif %}
+    <form method="post" action="{% url 'members:import_cancel' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-secondary">Start over</button>
+    </form>
+  </div>
+
+  {% if check.with_problems %}
+    <h2 class="h5">Rows with problems <span class="text-body-secondary fw-normal small">(these won't be imported)</span></h2>
+    <div class="card shadow-sm mb-4">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th scope="col">Line</th><th scope="col">Name</th><th scope="col">Problems</th></tr></thead>
+          <tbody>
+            {% for row in check.with_problems %}
+              <tr>
+                <td>{{ row.number }}</td>
+                <td>{{ row.name }}</td>
+                <td><ul class="mb-0 ps-3 text-danger small">{% for problem in row.problems %}<li>{{ problem }}</li>{% endfor %}</ul></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if preview_rows %}
+    <h2 class="h5">Ready to import</h2>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th scope="col">Line</th><th scope="col">Name</th><th scope="col">Status</th><th scope="col">Household</th></tr></thead>
+          <tbody>
+            {% for row in preview_rows %}
+              <tr>
+                <td>{{ row.number }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.form.cleaned_data.status }}</td>
+                <td>{{ row.household_name|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if more_ready %}<p class="small text-body-secondary mt-2">…and {{ more_ready }} more.</p>{% endif %}
+  {% endif %}
+{% endblock %}

@@ -2,17 +2,38 @@
 
 ## Goal
 
-A church administration system that any Christian church can use: members,
-giving, events, church services (weddings, burials, private Masses and
-others), records, worship planning and ministries.
+A worship planning system: the person who gives the message posts the
+service's theme, the system suggests songs whose lyrics fit it, the
+worship leader shapes the lineup, and the team opens one page per song
+with the track, the chords and the key. Light church management sits
+around that: the service schedule, a member directory, team rosters,
+announcements and song history. The full description is the
+[[Concept-Brief]].
 
-## Key constraint
+## Key constraints
 
-The system is **generic** and **never asks for the church's denomination**
-(adviser requirement). Churches differ in practice: one charges for weddings
-and another doesn't; one offers private Masses and another has none. Those
-differences are handled as settings each church edits, never as
-denomination-specific features. See [[0001-configure-behavior-not-identity]].
+- **Generic.** The system never asks for the church's denomination
+  (adviser requirement). Churches differ in practice, and those differences
+  are settings each church edits, never denomination-specific features. See
+  [[0001-configure-behavior-not-identity]].
+- **Songs come from Spotify, searched per theme** (adviser request).
+  Spotify data is never model input: the models read only lyrics from
+  LRCLIB and the church's own tags.
+- **Small scale.** One church per installation and five users or fewer,
+  which is also what Spotify's Development Mode allows.
+- **Lyrics and chord sheets are copyrighted.** They stay private to the
+  installation's users.
+
+## Scope
+
+In: worship services and themes, song suggestions, lineups and their
+confirmation, the song pool, chord sheets and keys, Spotify playback,
+teams and availability, announcements, song usage and headcounts, and the
+member directory.
+
+Out: giving and finance, church records and certificates, requested
+services such as weddings, and leadership appointments
+([[0005-worship-planning-scope]]).
 
 ## Relationship to the first CHORD
 

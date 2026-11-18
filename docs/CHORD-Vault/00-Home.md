@@ -1,22 +1,26 @@
 # CHORD (new version) Vault
 
-Development notes for the second-option rebuild of CHORD: a church
-administration system any Christian church can use without stating its
-denomination. These notes describe what the code actually does; update them
-with each development task.
+Development notes for CHORD: a worship planning system that turns a
+service's theme into a confirmed song lineup with tracks, chord sheets and
+keys. Any Christian church can use it without stating its denomination.
+These notes describe what the code actually does; update them with each
+development task.
 
 ## Current status
 
-**Phase 0 done (2026-11-15).** The project has a Django 5.2 setup on
-PostgreSQL 17, a custom user model, sign in and sign out, a base page using
-Bootstrap and HTMX, one script that runs every check, and a test that
-enforces the [[0001-configure-behavior-not-identity|core design rule]]. No
-church modules are built yet.
+**Phase 3 done (2026-11-17).** The project's scope is now the
+[[Concept-Brief]] ([[0005-worship-planning-scope]]). Built so far:
 
-**Next:** Phase 1 (Church Setup and Access) of the [[Development-Plan]].
+- church setup, users and Roles, and the audit trail;
+- [[Members]]: the people directory;
+- [[Worship]]: the schedule of worship services, service templates with
+  song slots, themes and series, and headcounts.
+
+**Next:** Phase 4 (Song pool) of the [[Development-Plan]].
 
 ## Project
 
+- [[Concept-Brief]]: what the system is for, in full
 - [[Project-Overview]]: goal, adviser constraint, scope
 - [[Glossary]]: the project's terms
 - [[Technology-Stack]]
@@ -28,25 +32,28 @@ church modules are built yet.
 - Decisions (ADRs):
   - [[0001-configure-behavior-not-identity|0001 Configure behavior, not identity]]
   - [[0002-server-rendered-ui|0002 Server-rendered UI with Bootstrap and HTMX]]
+  - [[0003-editable-roles|0003 Editable roles on Django groups, with a fixed Administrator]]
+  - [[0004-custom-field-values-as-json|0004 Custom Field values stored as JSON on the record]]
+  - [[0005-worship-planning-scope|0005 Worship planning is the scope; church administration stays light]]
 
 ## Modules
 
 Each module gets a note in `03-Modules/` once work on it starts (template:
 `Templates/Module`).
 
-| Module     | Status      | Note           |
-| ---------- | ----------- | -------------- |
-| Accounts   | Started     | [[Accounts]]   |
-| Services   | Designed    | [[Services]]   |
-| Members    | Not started |                |
-| Giving     | Not started |                |
-| Events     | Not started |                |
-| Records    | Not started |                |
-| Worship    | Not started |                |
-| Ministries | Not started |                |
+| Module              | Status      | Note             |
+| ------------------- | ----------- | ---------------- |
+| Church Setup (core) | Built       | [[Church-Setup]] |
+| Accounts (core)     | Built       | [[Accounts]]     |
+| Members             | Built       | [[Members]]      |
+| Worship             | In progress | [[Worship]]      |
+| Teams               | Not started |                  |
+| Announcements       | Not started |                  |
+
+Out of scope: Services ([[Services]] keeps the old design), Giving,
+Records, Ministries and Events.
 
 ## Development
 
-- [[Development-Plan]]: phased build order for the management side, with
-  task checklists
+- [[Development-Plan]]: phased build order, with task checklists
 - [[Development-Log]]: dated record of what changed and how it was verified

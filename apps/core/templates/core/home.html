@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-
-{% block title %}Home{% endblock %}
-
-{% block content %}
-  <h1 class="h3">Welcome, {{ user.get_short_name|default:user.get_username }}</h1>
-  <p class="text-body-secondary">Church setup and modules will appear here as they are built.</p>
-{% endblock %}
