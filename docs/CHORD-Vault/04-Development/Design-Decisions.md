@@ -111,12 +111,12 @@ Test: the hint shows without notes and goes with them.
 
 ### Feel
 
-- Placement treats feel as a preference: a song in a slot of another feel loses the church's **feel mismatch weight** (default 0.15) for each step between upbeat, mid-tempo and slow. Placement is best first. A slot without a feel, or a song whose feel isn't known, costs nothing.
+- Placement treats feel as a preference: a song in a slot of another feel loses the church's **feel mismatch weight** (default 0.15) for each step between upbeat, mid-tempo and slow. Placement is best first. A slot without a feel costs nothing. A song whose feel isn't known costs half a step (0.075 with the default weight) in a slot that asks for a feel, so an unknown feel never beats a known close match (decided after the before-and-after comparison, 2026-11-18).
 - The analysis leaves feel blank when unsure: the best feel must score at least 0.5 and beat the next by 0.2.
 - One-click feel correction in the suggestions panel. A feel a person set is kept when the song is analysed again; the lineup is placed again at once.
 - Words per minute from LRCLIB's timed lyrics, as a tempo signal: a future experiment (Development Plan), not built.
 
-Tests: a close song of a near feel beats a weak song of the right feel; each step costs the weight; an unknown feel costs nothing and says so; feel left blank when unsure; a feel a person set is kept; the one-click correction re-places, is audited, and needs both permissions.
+Tests: a close song of a near feel beats a weak song of the right feel; each step costs the weight; an unknown feel costs half a step, says so, and never beats a known close match; feel left blank when unsure; a feel a person set is kept; the one-click correction re-places, is audited, and needs both permissions.
 
 ### Worship check
 
@@ -136,7 +136,12 @@ Tests: versions grouped by lyrics and titles; different titles need nearly the s
 
 ### Theme tags (measured, not changed)
 
-- Including a "neutral" class in the tag score can't help: the zero-shot model (deberta-v3-xsmall-zeroshot-v1.1-all-33) has only two classes, entailment and not entailment, so the score already uses all of them. Measured on the 23 seeded hymns and carols: identical tags, 12.5 tags over 0.5 per song either way. Waiting for the project owner's decision on another approach.
+- Including a "neutral" class in the tag score can't help: the zero-shot model (deberta-v3-xsmall-zeroshot-v1.1-all-33) has only two classes, entailment and not entailment, so the score already uses all of them. Measured on the 23 seeded hymns and carols: identical tags, 12.5 tags over 0.5 per song either way.
+- Then measured (2026-11-18), aiming for 3 to 5 sensible tags per song:
+  - (a) tags that stand out from the song's own scores: on probabilities, nearly today's tags; on the model's margins (entailment logit minus not-entailment logit), at mean + 1.0 sd almost today's tags (Faith on 18 of 23 hymns), at mean + 1.25 sd too few (Christ the Lord Is Risen Today keeps only Faith);
+  - (a) against each tag's own average margin over the pool (so an always-on tag like Faith must stand out): at z ≥ 0.5, 4.1 tags per song, Faith on 2 of 23, and the first tags usually right (Abide with Me: Trust, Surrender, Comfort, Guidance; Christ the Lord Is Risen Today: Resurrection, Joy), but a noisy tail (Blessed Assurance still gets Birth of Jesus and Resurrection);
+  - (c) embedding similarity between lyrics and each tag's name and keywords: 2.3 to 3.4 tags per song, and it misses obvious tags (Silent Night without Birth of Jesus, the Easter hymn without Resurrection).
+- Not applied. Waiting for the project owner's decision.
 
 ---
 

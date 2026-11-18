@@ -291,11 +291,36 @@ class SequencingTests(TestCase):
         )
         self.assertTrue(all(reason == "" for _, reason in placed.values()))
 
-    def test_an_unknown_feel_costs_nothing_and_says_so(self):
+    def test_an_unknown_feel_costs_half_a_step(self):
+        self.assertEqual(sequencing.feel_distance("", Feel.SLOW), 0.5)
+        self.assertEqual(sequencing.feel_distance("", ""), 0)
+        # 0.5 - 0.075 = 0.425 loses to a known slow song at 0.45...
         ranked = [item("Unknown", "", 0.5), item("Slow", Feel.SLOW, 0.45)]
+        self.assertEqual(self.placed(ranked, self.slots[2:3])["Worship"][0], "Slow")
+        # ...but beats a much weaker one, and says why it is there.
+        ranked = [item("Unknown", "", 0.5), item("Slow", Feel.SLOW, 0.3)]
         placed = self.placed(ranked, self.slots[2:3])
         self.assertEqual(placed["Worship"][0], "Unknown")
         self.assertIn("feel isn't known yet", placed["Worship"][1])
+
+    def test_an_unknown_feel_never_beats_a_known_close_match(self):
+        # Smoke-test comparison, 2026-11-18: Come, Thou Fount (feel unset,
+        # 0.39) took Praise from Blessed Assurance (upbeat, 0.52).
+        ranked = [
+            item("Blessed Assurance", Feel.UPBEAT, 0.52),
+            item("Come, Thou Fount", "", 0.39),
+        ]
+        praise = self.slots[1:2]  # mid-tempo
+        self.assertEqual(self.placed(ranked, praise)["Praise"][0], "Blessed Assurance")
+        # At the same score, the matching known feel always wins.
+        ranked = [item("Unknown", "", 0.5), item("Mid", Feel.MID, 0.5)]
+        self.assertEqual(self.placed(ranked, praise)["Praise"][0], "Mid")
+
+    def test_a_slot_without_a_feel_charges_nothing_for_an_unknown_feel(self):
+        template = ServiceTemplate.objects.create(name="Prayer night")
+        any_slot = TemplateSlot.objects.create(template=template, name="Song")
+        ranked = [item("Unknown", "", 0.5), item("Slow", Feel.SLOW, 0.49)]
+        self.assertEqual(self.placed(ranked, [any_slot]), {"Song": ("Unknown", "")})
 
     def test_one_title_once_per_lineup(self):
         ranked = [

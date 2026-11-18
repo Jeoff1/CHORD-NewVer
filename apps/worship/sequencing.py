@@ -4,9 +4,11 @@
 Feel is a preference, not a rule (smoke test, 2026-11-18): a song placed in
 a slot of another feel loses ``feel_weight`` from its score for each step
 between the feels (upbeat, mid-tempo, slow), so upbeat in a slow slot costs
-two steps. A slot without a feel, or a song whose feel isn't known yet,
-costs nothing. Placements are made best first: the highest adjusted score
-of any song in any empty slot, then the next.
+two steps. A song whose feel isn't known yet costs half a step in a slot
+that asks for a feel, so it never beats a song of a known, matching feel
+with the same score (decision of 2026-11-18). A slot without a feel costs
+nothing. Placements are made best first: the highest adjusted score of any
+song in any empty slot, then the next.
 
 A lineup never holds two songs with the same title (versions of one song
 are already grouped, ``versions.py``).
@@ -18,6 +20,8 @@ from apps.core.music import Feel
 from apps.songs.cleanup import base_title
 
 FEEL_STEPS = {Feel.UPBEAT: 0, Feel.MID: 1, Feel.SLOW: 2}
+# An unknown feel counts as this many steps from any feel a slot asks for.
+UNKNOWN_FEEL_STEPS = 0.5
 
 
 @dataclass
@@ -28,9 +32,12 @@ class Placement:
 
 
 def feel_distance(song_feel, slot_feel):
-    """Steps between two feels; 0 when either is unknown or "any"."""
-    if song_feel not in FEEL_STEPS or slot_feel not in FEEL_STEPS:
+    """Steps between a song's feel and a slot's: 0 when the slot takes any
+    feel, half a step when the song's feel isn't known."""
+    if slot_feel not in FEEL_STEPS:
         return 0
+    if song_feel not in FEEL_STEPS:
+        return UNKNOWN_FEEL_STEPS
     return abs(FEEL_STEPS[song_feel] - FEEL_STEPS[slot_feel])
 
 
@@ -38,13 +45,13 @@ def _reason(song, slot, distance):
     if not slot.feel:
         return ""
     wanted = slot.get_feel_display().lower()
+    if not song.feel:
+        return f"Its feel isn't known yet; this slot asks for {wanted}."
     if distance:
         return (
             f"Its feel ({song.get_feel_display().lower()}) isn't the {wanted} "
             "this slot asks for, but it fit best."
         )
-    if not song.feel:
-        return f"Its feel isn't known yet; this slot asks for {wanted}."
     return ""
 
 

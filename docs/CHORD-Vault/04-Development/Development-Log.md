@@ -2,6 +2,23 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-18: unset feel costs half a step; theme-tag options measured
+
+- **Placement:** a song whose feel isn't known now costs half a step (0.075
+  with the default feel weight) in a slot that asks for a feel, so it never
+  beats a known close match. In the before-and-after comparison, Come, Thou
+  Fount (feel unset, 0.39) had taken Praise from Blessed Assurance
+  (upbeat, 0.52). Updated: [[Design-Decisions]], [[workflow-spec]] step 8,
+  [[Worship]].
+- **Theme tags, measured only** on the 23 seeded hymns with the ONNX
+  models, aiming for 3 to 5 tags per song: (a) stand-out on probabilities
+  or margins, (a) against each tag's own average margin, and (c) lyrics
+  embedding against each tag's name and keywords. Results are in
+  Design-Decisions (Phase 5 follow-up). Nothing applied.
+- Verified: `scripts/check.ps1` passed: Ruff lint and format,
+  `manage.py check` clean, no missing migrations, 444 tests passed, 97%
+  coverage.
+
 ## 2026-11-18: Phase 5 smoke-test fixes
 
 The user's first live smoke test (seeded hymns, then Spotify) found nine

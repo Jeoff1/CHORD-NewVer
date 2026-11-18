@@ -164,9 +164,10 @@ Spotify safeguards in `apps/songs`):
      scored; its reasons name the others. The pool keeps every version;
   9. sequencing (`sequencing.py`): best placement first, feel as a
      preference. A song in a slot of another feel loses the feel mismatch
-     weight per step (upbeat, mid-tempo, slow); an unknown feel or a slot
-     without one costs nothing. A lineup never holds two songs with the
-     same title. The slot's reason, when one is needed, is kept apart;
+     weight per step (upbeat, mid-tempo, slow); an unknown feel costs half
+     a step, so it never beats a known close match; a slot without a feel
+     costs nothing. A lineup never holds two songs with the same title.
+     The slot's reason, when one is needed, is kept apart;
   10. reasons, kept on each Suggestion.
 
   A "Rank the song pool only" run skips stages 2 to 5. A failed outside
@@ -280,8 +281,6 @@ Default roles ([[Accounts]]):
   now left blank when unsure, and people set it in one click. Tempo from
   LRCLIB's timed lyrics is a future experiment ([[Development-Plan]]).
 - Theme tags are near-ties: most tags score above 0.9 on worship lyrics.
-  A neutral class can't help (the model has only two classes); another
-  approach awaits a decision.
-- An unknown feel costs nothing in placement, so a song with no feel can
-  take a slot ahead of a closer song of a neighbouring feel (seen in the
-  smoke-test comparison). Setting feels removes it.
+  A neutral class can't help (the model has only two classes). Options
+  measured on the 23 hymns ([[Design-Decisions]], Phase 5 follow-up); a
+  choice awaits a decision.

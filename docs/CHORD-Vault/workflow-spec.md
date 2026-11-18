@@ -47,7 +47,8 @@ SONG SELECTION (core module)
 8. Top songs are placed in service slots (opener, praise, worship, response),
    with feel as a preference: a song of another feel loses a little score for
    each step between upbeat, mid-tempo and slow. A lineup never holds two
-   songs with the same title. Feel is left unset when the analysis isn't sure.
+   songs with the same title. Feel is left unset when the analysis isn't sure;
+   an unset feel costs half a step, so it never beats a known close match.
 9. Each suggestion stores a reason it was picked. Suggestions are shown only
    to people with the suggest-songs permission (worship leader and pastor by
    default), never to team members. From the suggestions, the leader can set
