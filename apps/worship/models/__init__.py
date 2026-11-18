@@ -5,10 +5,15 @@ from .schedule import (
     Theme,
     WorshipService,
 )
+from .suggestions import SearchRun, Season, Suggestion, SuggestionSettings
 
 __all__ = [
+    "SearchRun",
+    "Season",
     "SermonSeries",
     "ServiceTemplate",
+    "Suggestion",
+    "SuggestionSettings",
     "TemplateSlot",
     "Theme",
     "WorshipService",

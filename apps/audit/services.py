@@ -24,6 +24,8 @@ def display_value(value):
         return ""
     if isinstance(value, bool):
         return "Yes" if value else "No"
+    if isinstance(value, models.Manager):  # a many-to-many field
+        value = value.all()
     if isinstance(value, models.QuerySet | list | tuple | set):
         return ", ".join(sorted(str(v) for v in value))
     if isinstance(value, dict):
