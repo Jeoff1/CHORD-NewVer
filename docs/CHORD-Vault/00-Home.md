@@ -8,15 +8,18 @@ development task.
 
 ## Current status
 
-**Phase 3 done (2026-11-17).** The project's scope is now the
+**Phase 4 done (2026-11-17).** The project's scope is now the
 [[Concept-Brief]] ([[0005-worship-planning-scope]]). Built so far:
 
 - church setup, users and Roles, and the audit trail;
 - [[Members]]: the people directory;
 - [[Worship]]: the schedule of worship services, service templates with
-  song slots, themes and series, and headcounts.
+  song slots, themes and series, and headcounts;
+- [[Worship]]'s song pool: songs from Spotify, lyrics from LRCLIB, and
+  their analysis by ONNX models (worship check, theme tags, feel,
+  embedding), with the song library to correct it.
 
-**Next:** Phase 4 (Song pool) of the [[Development-Plan]].
+**Next:** Phase 5 (Song suggestions) of the [[Development-Plan]].
 
 ## Project
 
@@ -35,6 +38,7 @@ development task.
   - [[0003-editable-roles|0003 Editable roles on Django groups, with a fixed Administrator]]
   - [[0004-custom-field-values-as-json|0004 Custom Field values stored as JSON on the record]]
   - [[0005-worship-planning-scope|0005 Worship planning is the scope; church administration stays light]]
+  - [[0006-onnx-runtime-for-song-analysis|0006 Song analysis runs ONNX models, with a keyword stand-in]]
 
 ## Modules
 

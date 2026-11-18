@@ -177,6 +177,23 @@ def make_theme(service=None, **fields):
     return Theme.objects.create(service=service or make_service(), **fields)
 
 
+def make_song(*, tags=(), **fields):
+    """Create a song in the pool with a unique Spotify ID.
+
+    Lyrics in tests must be invented or public domain (AGENTS.md).
+    """
+    from apps.songs.models import Song
+
+    n = next(_sequence)
+    fields.setdefault("title", f"Song {n}")
+    fields.setdefault("artist", "Test Artist")
+    fields.setdefault("spotify_id", f"track{n:017d}")
+    song = Song.objects.create(**fields)
+    if tags:
+        song.tags.set(tags)
+    return song
+
+
 def close_file_response(response):
     """Close a FileResponse in a test without closing the test database.
 

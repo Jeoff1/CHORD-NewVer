@@ -2,4 +2,5 @@
 <ul class="nav nav-pills mb-3">
   <li class="nav-item"><a class="nav-link{% if active == 'schedule' %} active{% endif %}" href="{% url 'worship:home' %}">Schedule</a></li>
   <li class="nav-item"><a class="nav-link{% if active == 'calendar' %} active{% endif %}" href="{% url 'worship:calendar' %}">Calendar</a></li>
+  {% if perms.songs.view_song %}<li class="nav-item"><a class="nav-link{% if active == 'songs' %} active{% endif %}" href="{% url 'songs:list' %}">Songs</a></li>{% endif %}
 </ul>

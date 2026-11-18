@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Find on Spotify{% endblock %}
+
+{% block content %}
+  <a href="{% url 'songs:list' %}" class="small text-decoration-none">← Songs</a>
+  <h1 class="h3 mb-2">Find on Spotify</h1>
+  <p class="text-body-secondary">Search by title or artist, and add a track to the song pool. Its lyrics are then fetched and analysed like every other song.</p>
+
+  <form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
+    <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 24rem" placeholder="Title or artist" aria-label="Title or artist" maxlength="200">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+
+  {% if problem %}
+    <div class="alert alert-warning">{{ problem }}</div>
+  {% elif tracks is not None %}
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Track</th>
+              <th scope="col">Album</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for track, public_id in tracks %}
+              <tr>
+                <td><span class="fw-semibold">{{ track.title }}</span><div class="small text-body-secondary">{{ track.artist }}</div></td>
+                <td class="small">{{ track.album }}</td>
+                <td class="text-end">
+                  {% if public_id %}
+                    <a href="{% url 'songs:detail' public_id=public_id %}" class="btn btn-sm btn-outline-secondary">In the pool</a>
+                  {% else %}
+                    <form method="post" action="{% url 'songs:spotify_add' %}">
+                      {% csrf_token %}
+                      <input type="hidden" name="spotify_id" value="{{ track.spotify_id }}">
+                      <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="3" class="text-center text-body-secondary py-4">Spotify found nothing for "{{ q }}".</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

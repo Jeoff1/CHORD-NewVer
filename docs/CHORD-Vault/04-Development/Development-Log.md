@@ -2,6 +2,42 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-17: Phase 4, the song pool
+
+- **[[Worship]]'s song pool** (`apps/songs`):
+  - Song, Theme Tag (30 neutral tags seeded, with keywords) and Trusted
+    Artist (empty);
+  - the Spotify client (app token, paged search, genre filter with an
+    unfiltered retry, one track by ID) and the LRCLIB client (one request
+    at a time, fallback search, Retry-After);
+  - the ML engine: ONNX Runtime models or the keyword stand-in
+    ([[0006-onnx-runtime-for-song-analysis]]), and `manage.py
+    download_models`;
+  - analysis from lyrics only: worship check, up to four theme tags, feel
+    guess and embedding; a reviewed song keeps its corrections;
+  - `manage.py process_songs` for lyrics and analysis;
+  - the song library: list with filters, song page, editing, Check again,
+    Find on Spotify, and the two settings lists;
+  - default-role permissions and the audit trail.
+- Shared pieces: `apps/core/http.py` (every outside call) and, in
+  `apps/core/testing.py`, `ChordTestRunner` (network blocked, keyword
+  engine), `FakeHttp` and `make_song`.
+- Model choice: the 13 MB xtremedistil zero-shot model was tried and
+  dropped for DeBERTa-v3-xsmall (96 MB). On four public-domain hymns and
+  four invented secular songs, DeBERTa passed every hymn (0.86 to 0.999)
+  and failed every secular song (0.01 or less). An invented love song in
+  church imagery also passed (0.85); people correct such cases.
+- Verified:
+  - `scripts/check.ps1` passed: Ruff clean, `manage.py check` clean, no
+    missing migrations, 298 tests passed, 97% coverage. The guard test
+    passed. `ml/onnx.py` is 52% covered: tests never load a model.
+  - By hand: `download_models` fetched both models, and the ONNX engine
+    analysed the eight sample texts in about 1 s each. Three live LRCLIB
+    lookups gave the expected found, found and not found.
+  - Not verified live: Spotify, because no credentials are in `.env` yet.
+    Its client is tested against the documented response shapes.
+  - Migrations applied to the development database.
+
 ## 2026-11-17: Phase 3, worship schedule and themes; the scope change
 
 - **Scope.** The project now follows the [[Concept-Brief]]

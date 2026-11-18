@@ -111,6 +111,38 @@ A church-edited group of Worship Services whose Themes belong together.
 Shown with the "sermon" Label, as in "Sermon series".
 _Avoid_: campaign, season (a season is a time of year)
 
+**Song Pool**:
+Every song the system has checked, with its lyrics and analysis. It grows
+from Spotify with each Theme; there is no typing songs in by hand.
+_Avoid_: song database, catalogue
+
+**Song**:
+One track in the Song Pool: what Spotify says it is, its lyrics from
+LRCLIB, its Worship Check, Theme Tags, Feel, and whether the team knows
+it.
+_Avoid_: track (Spotify's word for the recording)
+
+**Worship Check**:
+Whether a Song's lyrics read as a Christian worship song: Not checked,
+Worship song, or Not a worship song. The analysis decides it from the
+lyrics; a person can correct it. Only worship songs are suggested.
+_Avoid_: filter, classification
+
+**Theme Tag**:
+A worship theme a Song can be about, such as Grace or Hope, from a
+church-edited list. The analysis suggests up to four per Song.
+_Avoid_: category, topic, genre (a genre is Spotify's)
+
+**Trusted Artist**:
+An artist on the church's list whose Songs pass the Worship Check more
+easily. The list starts empty.
+_Avoid_: approved artist, whitelist
+
+**Reviewed**:
+A Song whose Worship Check, Theme Tags or Feel a person has saved. Later
+analysis keeps those and renews only the scores.
+_Avoid_: verified, approved
+
 **Lineup**:
 The songs chosen for a Worship Service, in order. Churches may rename it
 with the "lineup" Label (Set List, Song List). The team sees it only once

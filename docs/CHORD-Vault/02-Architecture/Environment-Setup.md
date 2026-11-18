@@ -32,6 +32,21 @@ administrators are users given the Administrator role under
   Neither folder is in Git; both must be included in backups along with
   the database.
 
+## Songs: Spotify, lyrics and models
+
+- **Spotify:** create an app in the Spotify developer dashboard and put its
+  `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` in `.env`. Without them,
+  Find on Spotify says Spotify isn't set up.
+- **Models:** `python manage.py download_models` fetches the two ONNX
+  models (about 120 MB) into `ml_models/`
+  ([[0006-onnx-runtime-for-song-analysis]]). Check the free disk space
+  first; the command refuses to leave less than 200 MB. To run without
+  them, set `ML_ENGINE=keyword`.
+- **Lyrics and analysis:** `python manage.py process_songs` (add `-v 2` to
+  list each song) fetches lyrics from LRCLIB one at a time and analyses
+  new songs. Set `LRCLIB_USER_AGENT` to name the installation and a
+  contact page.
+
 ## Email
 
 Without email settings, emails such as password reset links print in the
@@ -60,5 +75,6 @@ which `chord_user` is allowed to create.
 2. Create the database: `createdb -U chord_user -E UTF8 chord_newver_db`.
 3. `py -3.14 -m venv .venv`, then `pip install -r requirements.txt`.
 4. Copy `.env.example` to `.env` and fill in `DJANGO_SECRET_KEY` and
-   `DB_PASSWORD`.
+   `DB_PASSWORD` (and the Spotify keys, when available).
 5. `python manage.py migrate`.
+6. `python manage.py download_models`.

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.church.apps.ChurchConfig",
     "apps.members.apps.MembersConfig",
     "apps.worship.apps.WorshipConfig",
+    "apps.songs.apps.SongsConfig",
 ]
 
 MIDDLEWARE = [
@@ -142,3 +143,21 @@ EMAIL_USE_TLS = env_bool("DJANGO_EMAIL_USE_TLS")
 DEFAULT_FROM_EMAIL = os.getenv("DJANGO_DEFAULT_FROM_EMAIL", "chord@localhost")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Tests run with the network blocked and the keyword ML engine
+# (apps/core/testing.py).
+TEST_RUNNER = "apps.core.testing.ChordTestRunner"
+
+# Song analysis (apps/songs/ml): "onnx" runs the downloaded models (fetch
+# them with `manage.py download_models`); "keyword" is the light stand-in.
+ML_ENGINE = os.getenv("ML_ENGINE", "onnx")
+ML_MODELS_DIR = Path(os.getenv("ML_MODELS_DIR", BASE_DIR / "ml_models"))
+
+# Spotify app credentials (Client Credentials flow, for track search).
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
+SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
+
+# LRCLIB asks every client to name itself: app, version and a homepage.
+LRCLIB_USER_AGENT = os.getenv(
+    "LRCLIB_USER_AGENT", "CHORD worship planner/0.4 (self-hosted)"
+)
