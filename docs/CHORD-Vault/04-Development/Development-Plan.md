@@ -289,8 +289,8 @@ From the first live smoke test ([[Design-Decisions]], Phase 5 follow-up):
 - [x] Versions of one song grouped, one kept; one title once per lineup.
 - [x] `seed_hymns`: 23 public-domain hymns, with Christmas carols, slow
   hymns and Easter hymns.
-- [ ] Theme tags: measured; the neutral-class fix can't apply to this model.
-  Waiting for a decision on another approach.
+- [x] Theme tags: measured; the neutral-class fix can't apply to this model,
+  and none of the other options beat today's rule, which stays.
 
 ## Phase 6: Lineups and reports
 
@@ -438,6 +438,15 @@ phase takes it on.
   rough tempo signal. It comes from LRCLIB, not Spotify, so it may be model
   input. To try: keep the synced lyrics' timing when fetching, compute
   words per minute, and compare it with feels people have set.
+- **Theme tags against each tag's average** (measured 2026-11-18;
+  [[Development-Log]]). Keep a tag only when it scores unusually high for
+  that tag, compared with its average over the pool, so a tag that fires
+  on almost every song (like Faith) must stand out. On the 23 seeded
+  hymns it gave 4.1 tags per song and Faith on 2 of 23 instead of most,
+  but it makes a song's tags depend on the rest of the pool (the relative
+  problem the fixed relevance scale removed) and gave the Easter hymn
+  "Birth of Jesus". Revisit when the pool is larger and its averages are
+  steadier.
 
 ## Decisions to make before their phase
 

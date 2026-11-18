@@ -2,6 +2,32 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-18: theme tags keep today's rule
+
+Tag options measured on the 23 seeded hymns with the ONNX models (in
+memory; nothing changed), aiming for 3 to 5 sensible tags per song:
+
+| Option | Tags per song | Songs with 3–5 tags | Faith given to |
+|---|---|---|---|
+| Today (0.5 or more, best four) | 3.7 | 21/23 | most hymns |
+| (a) stand out on the model's margin, stricter | 2.6 | 14/23 | most hymns |
+| (a) stand out on the model's margin, looser | 4.0 | 21/23 | 18/23 |
+| (a) against each tag's average over the pool | 4.1 | 18/23 | 2/23 |
+| (c) lyrics embedding against tag name and keywords | 2.3–3.4 | 8–16/23 | — |
+
+- **Kept today's rule.** "(a) against each tag's average" was the most
+  specific, but it makes a song's tags depend on the rest of the pool,
+  bringing back the relative-score problem the fixed relevance scale just
+  removed, and it gave Christ the Lord Is Risen Today "Birth of Jesus".
+  The margin variants were close to today's tags or too few; (c) missed
+  obvious tags (Silent Night without Birth of Jesus).
+- Recorded "(a) against each tag's average" in the [[Development-Plan]]'s
+  Future experiments, to revisit when the pool is larger. Updated
+  [[Design-Decisions]] (the decision), the plan's Phase 5 follow-up list,
+  [[Worship]] and [[00-Home]], which had it as open.
+- Checks: documentation only, no code changed, so `scripts/check.ps1` was
+  not run.
+
 ## 2026-11-18: unset feel costs half a step; theme-tag options measured
 
 - **Placement:** a song whose feel isn't known now costs half a step (0.075

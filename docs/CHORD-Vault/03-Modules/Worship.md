@@ -281,6 +281,6 @@ Default roles ([[Accounts]]):
   now left blank when unsure, and people set it in one click. Tempo from
   LRCLIB's timed lyrics is a future experiment ([[Development-Plan]]).
 - Theme tags are near-ties: most tags score above 0.9 on worship lyrics.
-  A neutral class can't help (the model has only two classes). Options
-  measured on the 23 hymns ([[Design-Decisions]], Phase 5 follow-up); a
-  choice awaits a decision.
+  A neutral class can't help (the model has only two classes), and the
+  options measured on the 23 hymns didn't beat today's rule, which stays
+  ([[Design-Decisions]], Phase 5 follow-up). People correct tags.

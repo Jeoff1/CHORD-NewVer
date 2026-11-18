@@ -27,9 +27,6 @@ development task.
   corrections, the church's worship check rules, and one version of each
   song.
 
-**Open:** a better way to choose theme tags (the measured neutral-class fix
-can't apply to this model), waiting for a decision.
-
 **Next:** Phase 6 (Lineups and reports) of the [[Development-Plan]], with
 the Phase 6 items in [[Design-Decisions]].
 

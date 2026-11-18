@@ -134,14 +134,14 @@ Tests: the pass mark decides; the stricter and review rules; off by default; rec
 
 Tests: versions grouped by lyrics and titles; different titles need nearly the same lyrics; the same title with other lyrics is another song; the preference order; a run keeps one version; one title once per lineup.
 
-### Theme tags (measured, not changed)
+### Theme tags (measured; today's rule kept)
 
 - Including a "neutral" class in the tag score can't help: the zero-shot model (deberta-v3-xsmall-zeroshot-v1.1-all-33) has only two classes, entailment and not entailment, so the score already uses all of them. Measured on the 23 seeded hymns and carols: identical tags, 12.5 tags over 0.5 per song either way.
 - Then measured (2026-11-18), aiming for 3 to 5 sensible tags per song:
   - (a) tags that stand out from the song's own scores: on probabilities, nearly today's tags; on the model's margins (entailment logit minus not-entailment logit), at mean + 1.0 sd almost today's tags (Faith on 18 of 23 hymns), at mean + 1.25 sd too few (Christ the Lord Is Risen Today keeps only Faith);
   - (a) against each tag's own average margin over the pool (so an always-on tag like Faith must stand out): at z ≥ 0.5, 4.1 tags per song, Faith on 2 of 23, and the first tags usually right (Abide with Me: Trust, Surrender, Comfort, Guidance; Christ the Lord Is Risen Today: Resurrection, Joy), but a noisy tail (Blessed Assurance still gets Birth of Jesus and Resurrection);
   - (c) embedding similarity between lyrics and each tag's name and keywords: 2.3 to 3.4 tags per song, and it misses obvious tags (Silent Night without Birth of Jesus, the Easter hymn without Resurrection).
-- Not applied. Waiting for the project owner's decision.
+- Decision (2026-11-18): keep today's rule (tags scoring 0.5 or more, best four). "(a) against each tag's average" makes a song's tags depend on the rest of the pool, which brings back the relative-score problem the fixed relevance scale just removed, and it wrongly gave Christ the Lord Is Risen Today "Birth of Jesus". It is a future experiment in the Development Plan, to revisit when the pool is larger.
 
 ---
 
