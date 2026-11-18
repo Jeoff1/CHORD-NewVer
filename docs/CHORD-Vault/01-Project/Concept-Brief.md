@@ -1,8 +1,10 @@
 # Concept Brief: Worship Planning System
 
-The brief that sets this project's scope, written 2026-11-16. This note
-records what it says; [[0005-worship-planning-scope]] records how CHORD
-follows it, and where CHORD departs from its suggestions.
+The brief that sets this project's scope, written 2026-11-16 and updated
+2026-11-18 with the decisions agreed since. This note records what it says;
+[[0005-worship-planning-scope]] records how CHORD follows it, and where
+CHORD departs from its suggestions. Phase-by-phase detail and tests for
+these decisions are in [[Design-Decisions]].
 
 ## Overview
 
@@ -21,32 +23,44 @@ the band.
 Around that core sits light church management: service scheduling, team
 rosters and song history. Heavy processes stay out.
 
+The vision is the same set of jobs as WorshipTools' Planning, Charts and
+Community, but centralized: one app, one login and one database for the
+whole team, with theme-based song suggestions as its core.
+
 ## Roles
 
 | Role                    | Owns                    | Can do                                                                                                   |
 | ----------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
 | Pastor (pastoral level) | The service and message | Create and schedule services; post the theme, scripture and notes; review, edit and confirm a lineup. The pastor's decision is final. |
-| Worship leader          | The song lineup         | Generate suggestions; swap, lock, reorder and re-key songs; confirm; manage the song library and chord sheets; assign musicians. |
-| Team member             | Their part on the day   | View confirmed lineups; play tracks; read chord sheets in the service key; transpose a personal view (capo); mark availability. |
-| Admin (optional)        | The church account      | Manage users and roles, church settings, and integrations such as the Spotify connection.                 |
+| Worship leader          | The song lineup         | Generate suggestions; swap, lock, reorder and re-key songs; confirm; manage the song library and chord sheets; approve pasted chord sheets; assign musicians. |
+| Team member             | Their part on the day   | View confirmed lineups; play tracks; read chord sheets in the service key; transpose a personal view (capo); paste a missing chord sheet for approval; mark availability. |
+| Admin                   | The church account      | Manage users and roles, church settings, and integrations such as the Spotify connection. The Administrator role can't be deleted. |
 
 A lineup is visible to the team only once it is confirmed. If the worship
 leader and the pastor disagree, the pastor's decision wins: the pastor
 edits the lineup directly or sends it back with notes.
 
+- If the worship leader confirms and the pastor edits afterwards, the
+  lineup stays confirmed, is marked "Edited by pastor", and the team is
+  notified.
+- Once the pastor has confirmed or edited a lineup, the worship leader
+  can't change it until the pastor reopens it.
+- "Pastor's decision is final" is a permission held by the pastoral role,
+  not a check on a role name.
+
 ## Core module: theme-based lineup suggestion
 
 There is no manual song upload. Every song the system checks is saved, so
 the song pool grows from Spotify with each theme. Spotify supplies the
-candidates and the playback; the model reads only lyrics and tags from
-outside Spotify.
+candidates and the playback; the model reads only LRCLIB lyrics, the
+church's theme text and tags.
 
 Stored for each song: Spotify track ID, title, artist, album and length
 (never model input); lyrics from LRCLIB (cached); the worship check result
 and theme tags (editable); feel (upbeat, mid or slow; guessed, then
 corrected once per song); a lyrics embedding; usage history and whether
-the team knows it; a ChordPro chord sheet, added only once the song is in a
-confirmed lineup.
+the team knows it; a ChordPro chord sheet, required once the song is in a
+confirmed lineup and allowed earlier.
 
 Pipeline stages:
 
@@ -55,22 +69,28 @@ Pipeline stages:
    Spotify search with a genre filter such as `genre:worship`; retried
    without the filter when it returns nothing.
 3. **Spotify search**: 10 songs per page, a few pages per phrase.
-4. **Cleanup**: drop repeats, live and acoustic duplicates, karaoke and
-   instrumental versions.
+4. **Cleanup**: drop repeats, karaoke, instrumental and backing tracks.
+   Drop a live or acoustic version only when the plain version was also
+   found; a song released only as a live recording is kept.
 5. **Lyrics**: from LRCLIB by title, artist, album and length, one request
    at a time, cached. Songs without lyrics are set aside.
 6. **Worship check and tagging**: a zero-shot classifier reads the lyrics,
    drops songs that aren't Christian worship songs, and suggests theme
-   tags. An optional list of trusted worship artists adds confidence.
-7. **Ranking**: theme and lyrics compared as embeddings, combined with
-   familiarity, season and recent use.
+   tags. An optional list of trusted worship artists adds a bonus, applied
+   as a church rule after the model: the model's raw score is stored
+   separately, and the artist name never reaches the model.
+7. **Ranking**: every accepted song in the pool, not only this run's
+   finds, is ranked. Theme and lyrics are compared as embeddings, combined
+   with familiarity, season and recent use.
 8. **Sequencing**: top songs placed in the service template's slots by
    feel.
 9. **Explanation**: each pick says why it was chosen.
 10. **Review**: swap, lock, reorder, regenerate; then confirm.
 11. **Learning**: every accept, swap and rejection is logged; once enough
     confirmed lineups exist, they train a learning-to-rank model that
-    replaces the hand-set weights.
+    replaces the hand-set weights. Training uses only lyrics-based scores,
+    the church's own data and feedback; never Spotify fields, the trusted
+    artist bonus, or any score that includes it.
 
 Starting score, with hand-tuned weights:
 
@@ -84,15 +104,22 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
   Spotify Premium account and play full tracks through the Web Playback
   SDK; anyone else gets the embedded player or an "Open in Spotify" link.
   On confirmation the lineup is saved as a Spotify playlist on the worship
-  leader's account.
-- **Chord sheets**: stored as ChordPro, shown with ChordSheetJS. The
-  worship leader types or pastes each sheet; text copied from Ultimate
-  Guitar is converted on paste. There is no automatic import.
+  leader's account. Users' Spotify tokens are stored encrypted, with the key
+  in `.env`.
+- **Chord sheets**: stored as ChordPro, shown with ChordSheetJS. Only the
+  original ChordPro text and key are stored; the page transposes on load.
+  A song without a sheet shows a "Find chords" action that opens a search
+  on free sources such as Worship Together and Ultimate Guitar. The worship
+  leader or pastor pastes the chart, and it is converted to ChordPro on
+  paste and approved at once. A team member's paste waits for approval by
+  the worship leader or pastor. Each lineup shows how many of its songs
+  have chord sheets. There is no automatic import.
 - **Keys**: each lineup entry has its own service key. The worship leader
   transposes by semitone or picks a key, and every musician's sheet
   follows. Helpers: a key from the lead singer's range, a capo position,
   and a Nashville-number view. Spotify audio can't be pitch-shifted, so the
-  recording plays in its original key.
+  recording plays in its original key; a practise-along toggle shows the
+  chords in the recording's original key so musicians can play with it.
 
 ## Supporting modules
 
@@ -104,10 +131,14 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
 | Song library                          | Yes      | Songs found on Spotify, lyrics, tags, chord sheets, usage     |
 | Announcements                         | Yes      | Notes to the whole team or one service team                   |
 | Song usage report                     | Yes      | What was sung and when; overused songs                        |
-| Member directory                      | Basic    | Names, contact details, ministry and role                     |
+| Member directory                      | Basic    | Names, contact details, households, team and role; CSV import |
 | Attendance                            | Basic    | Headcount per service                                         |
 | Leadership appointment and ordination | No       | Too complex for this system's purpose                         |
-| Finance, tithes, payroll              | No       | Better served by dedicated software                           |
+| Finance, giving, tithes, payroll      | No       | Better served by dedicated software                           |
+| Records, requested services           | No       | Outside worship planning                                      |
+| Ministries and events                 | No       | Outside worship planning                                      |
+| SMS, check-in and follow-up           | No       | Beyond a minimal management system                            |
+| Per-person attendance                 | No       | A headcount per service is enough                             |
 
 ## Platform constraints
 
@@ -116,7 +147,8 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
 | Spotify removed Recommendations, Audio Features and Audio Analysis for new apps (Nov 2024)   | Own recommendation pipeline; feel guessed and corrected; key stored per lineup song   |
 | Development Mode search returns at most 10 results per request                               | Several search phrases per theme, a few pages each                                    |
 | Search matches titles, artists and albums, not lyrics; `genre:` filters sometimes return nothing | Retry without the filter; a lyrics-based worship check drops other songs          |
-| Spotify's policy bans feeding Spotify content into ML models                                  | Spotify only decides which songs get checked; the model reads LRCLIB lyrics and tags  |
+| Spotify's policy bans feeding Spotify content into ML models                                  | Spotify only decides which songs get checked; the model reads LRCLIB lyrics, theme text and tags. A compliance assumption, not a ruling from Spotify |
+| Spotify rate-limits calls in a rolling 30-second window and sets a per-account quota; lockouts can last hours | Stop on the first 429, respect Retry-After across processes, never retry in a loop, pause on `QUOTA_EXCEEDED` and rank the existing pool instead, run one worker |
 | The Spotify Web API has no lyrics endpoint                                                   | Lyrics from LRCLIB                                                                    |
 | LRCLIB rate-limits clients and disallows parallel requests                                   | One lookup at a time, every result cached                                             |
 | Development Mode needs a Premium owner and allows 5 users (Feb 2026)                         | Stay in Development Mode; note the limit as a scaling constraint                      |
@@ -134,6 +166,9 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
 - **Tags**: a zero-shot classifier scores lyrics against a fixed list of
   about 30 worship themes; the worship leader can edit them.
 - **CCLI / SongSelect**: none.
+- **Disagreement on a lineup**: the pastor's decision is final.
+- **Audio**: Spotify only; no practice-track uploads.
+- **Attendance**: a headcount per service.
 - **Open**: must the proposal show a trained model, or is the
   embedding-and-rules pipeline, with learning-to-rank planned for later,
   enough?
