@@ -35,6 +35,7 @@ whole team, with theme-based song suggestions as its core.
 | Worship leader          | The song lineup         | Generate suggestions; swap, lock, reorder and re-key songs; confirm; manage the song library and chord sheets; approve pasted chord sheets; assign musicians. |
 | Team member             | Their part on the day   | View confirmed lineups; play tracks; read chord sheets in the service key; transpose a personal view (capo); paste a missing chord sheet for approval; mark availability. |
 | Admin                   | The church account      | Manage users and roles, church settings, and integrations such as the Spotify connection. The Administrator role can't be deleted. |
+| Office staff (optional) | The member directory    | Keep the member directory up to date: add and edit members and households, import and export them. |
 
 A lineup is visible to the team only once it is confirmed. If the worship
 leader and the pastor disagree, the pastor's decision wins: the pastor

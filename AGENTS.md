@@ -120,8 +120,9 @@ When sources disagree, follow them in this order:
 1. The rules in this file
 2. Numbered decision records in `02-Architecture/Decisions/`
 3. `04-Development/Design-Decisions.md`
-4. `workflow-spec.md`
-5. `04-Development/Development-Plan.md`
+4. `01-Project/Concept-Brief.md`
+5. `workflow-spec.md`
+6. `04-Development/Development-Plan.md`
 
 If a lower source contradicts a higher one, flag it and fix the lower one
 after I agree; never quietly follow the lower one.

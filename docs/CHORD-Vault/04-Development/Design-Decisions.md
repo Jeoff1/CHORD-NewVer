@@ -2,7 +2,7 @@
 
 **For Claude Code:** read this file before starting any development phase. Each section says which phase it applies to. When you start that phase, build what the section describes and add the listed tests. Don't build items for a later phase early.
 
-If this file disagrees with `docs/CHORD-Vault/workflow-spec.md` or `docs/CHORD-Vault/04-Development/Development-Plan.md`, this file wins. Update the spec or plan to match, and say so in your summary.
+Sources rank in this order (`AGENTS.md`): the rules in `AGENTS.md`, the numbered decision records, this file, `docs/CHORD-Vault/01-Project/Concept-Brief.md`, `docs/CHORD-Vault/workflow-spec.md`, then `docs/CHORD-Vault/04-Development/Development-Plan.md`. If this file disagrees with the Concept Brief, the spec or the plan, this file wins. Update the lower source to match, and say so in your summary.
 
 These decisions answer the open questions in `docs/workflow-review.md`, section 4.
 
@@ -72,7 +72,7 @@ Developers report lockouts of 13 to 48 hours in Development Mode, especially whe
 3. **Never retry in a loop.** After waiting, retry a request at most once. If it fails again, give up and mark the search run as failed.
 4. **Handle long waits.** If `Retry-After` is more than one hour, treat it like a quota lockout (rule 5).
 5. **Handle `QUOTA_EXCEEDED`.** Pause all Spotify calls and save the pause. Show the worship leader a clear message. Fall back to ranking only songs already in the pool (`use_spotify = False`), so suggestions still work.
-6. **Run one worker only.** Document this in `AGENTS.md` and in `run_worker.py`. This also keeps LRCLIB to one request at a time across processes. If more than one worker is ever needed, add a shared lock first.
+6. **Run one worker only.** Enforce it with a PostgreSQL advisory lock that the worker takes at startup: a second worker that can't take the lock refuses to start, with a clear message. Keep `claim_next_run` as it is. Document this in `AGENTS.md` and in `run_worker.py`. This also keeps LRCLIB to one request at a time across processes.
 7. **Cache everything.** Never fetch a track already stored in the pool.
 8. **No search-as-you-type.** On the "Find on Spotify" page, search only when the user submits the form.
 9. **Log usage.** Record the number of Spotify calls on each `SearchRun`, and record every 429 with its reason and `Retry-After` value.
@@ -83,6 +83,11 @@ Tests, with Spotify mocked:
 - A request is retried at most once.
 - `QUOTA_EXCEEDED` pauses Spotify, shows the message, and the run falls back to ranking the existing pool.
 - A `Retry-After` over one hour is treated like a quota lockout.
+- A second worker refuses to start while the first holds the advisory lock.
+
+### Notes to update with the Phase 5 code
+
+When the code above changes, update the [[Worship]] module note, [[0006-onnx-runtime-for-song-analysis]] and the [[Glossary]] (Worship Check, Trusted Artist) to match.
 
 ---
 
@@ -91,13 +96,13 @@ Tests, with Spotify mocked:
 ### The pastor's decision is final (question 9)
 
 - Either the worship leader or the pastor can confirm a lineup.
-- If the leader confirms and the pastor later edits it, the lineup stays confirmed. It is marked "Edited by pastor" with a timestamp, and the assigned team members are notified.
+- If the leader confirms and the pastor later edits it, the lineup stays confirmed. It is marked "Edited by pastor" with the time, and the mark is shown to everyone who can see the lineup. Phase 6 has no notification system; Phase 8 adds notifications (see below).
 - Once the pastor has confirmed or edited a lineup, the worship leader cannot change it. The pastor can reopen it, which lets the leader edit again.
 - Team members see a lineup only after it is confirmed.
 
 Tests, for every role:
 - The leader can confirm.
-- The pastor's edit keeps the lineup confirmed, marks it, and sends notifications.
+- The pastor's edit keeps the lineup confirmed and marks it with the time, and everyone who can see the lineup sees the mark.
 - The leader is blocked after the pastor confirms or edits.
 - Reopening by the pastor unblocks the leader.
 - A team member cannot see an unconfirmed lineup, by page or by URL.
@@ -126,6 +131,13 @@ Tests: a team member's paste is pending; the leader or pastor can approve it; ot
 
 Test: the stored token value in the database is not the plain token, and decrypts back to it.
 
+### Saving the lineup as a Spotify playlist
+
+- When a lineup is confirmed, it is saved automatically as a Spotify playlist on the worship leader's account.
+- If the worship leader has no Spotify connection, or Spotify returns a 429, the playlist is skipped and the lineup page shows a "Save to Spotify" button to try again later. Confirming the lineup never fails because of Spotify.
+
+Tests: confirming saves the playlist when the leader is connected; with no connection, or on a 429, the lineup is still confirmed, no playlist is made, and the "Save to Spotify" button shows.
+
 ### Spotify safeguards for playback and playlists
 
 - Apply all the Phase 5 Spotify rules to playback and playlist calls made from the server, such as creating the service playlist.
@@ -138,6 +150,12 @@ Test: the stored token value in the database is not the plain token, and decrypt
 ### Attendance (question 6)
 
 Decision: a headcount per service. The existing `WorshipService.attendance` field is enough; no per-person attendance.
+
+### Notifying the team of a pastor's edit
+
+- Once assignments exist, when the pastor edits a confirmed lineup, the team members assigned to that service are notified in the app. No email or SMS.
+
+Test: after the pastor edits a confirmed lineup, each assigned team member has an in-app notification, and nobody else does.
 
 ### Administrator role (question 7)
 

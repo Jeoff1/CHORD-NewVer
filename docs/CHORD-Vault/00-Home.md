@@ -19,11 +19,16 @@ development task.
   their analysis by ONNX models (worship check, theme tags, feel,
   embedding), with the song library to correct it.
 
-**Next:** Phase 5 (Song suggestions) of the [[Development-Plan]].
+**Next:** Phase 5 (Song suggestions) of the [[Development-Plan]]. It also
+builds the Phase 5 items in [[Design-Decisions]] (agreed 2026-11-18): the
+raw model score kept apart from the Trusted Artist bonus, the Spotify
+safeguards, one search worker enforced by an advisory lock, and
+suggestions hidden from team members.
 
 ## Project
 
 - [[Concept-Brief]]: what the system is for, in full
+- [[workflow-spec]]: the intended workflow, role by role and step by step
 - [[Project-Overview]]: goal, adviser constraint, scope
 - [[Glossary]]: the project's terms
 - [[Technology-Stack]]
@@ -55,9 +60,14 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | Announcements       | Not started |                  |
 
 Out of scope: Services ([[Services]] keeps the old design), Giving,
-Records, Ministries and Events.
+Records, Ministries, Events, leadership appointment and ordination, SMS
+messaging, check-in and follow-up, and per-person attendance.
 
 ## Development
 
 - [[Development-Plan]]: phased build order, with task checklists
+- [[Design-Decisions]]: agreed decisions and safeguards, by phase; they
+  win over the Concept Brief, the workflow spec and the plan
+- [[Review-Prompt]]: what a review of the code against the workflow spec
+  produces
 - [[Development-Log]]: dated record of what changed and how it was verified
