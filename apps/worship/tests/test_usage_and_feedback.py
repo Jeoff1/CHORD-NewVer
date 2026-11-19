@@ -86,9 +86,29 @@ class FeedbackTests(TestCase):
                 "Song B": Label.REMOVED,
                 "Song C": Label.KEPT,
                 "Song D": Label.KEPT,
-                "Song E": Label.KEPT,  # chosen in the swap
+                "Song E": Label.SWAPPED_IN,  # the alternative chosen in the swap
             },
         )
+
+    def test_a_swapped_in_song_can_still_be_swapped_or_removed(self):
+        lineups.swap(self.lineup, self.item("Song A"), self.songs[4], self.leader)
+        lineups.swap(self.lineup, self.item("Song E"), self.songs[5], self.leader)
+        lineups.swap(self.lineup, self.item("Song B"), self.songs[0], self.leader)
+        lineups.remove(self.lineup, self.item("Song A"), self.leader)
+        lineups.confirm(self.lineup, self.leader)
+        labels = self.labels()
+        self.assertEqual(labels["Song E"], Label.SWAPPED)  # swapped in, then out
+        self.assertEqual(labels["Song F"], Label.SWAPPED_IN)
+        self.assertEqual(labels["Song B"], Label.SWAPPED)
+        # Song A was swapped out, chosen back in, then removed: its outcome
+        # follows the last thing done to it.
+        self.assertEqual(labels["Song A"], Label.REMOVED)
+
+    def test_a_swapped_in_song_no_longer_in_the_lineup_counts_as_removed(self):
+        lineups.swap(self.lineup, self.item("Song A"), self.songs[4], self.leader)
+        self.item("Song E").delete()  # defensive: outcome left "swapped in"
+        lineups.confirm(self.lineup, self.leader)
+        self.assertEqual(self.labels()["Song E"], Label.REMOVED)
 
     def test_rows_hold_the_lyrics_scores_and_church_data(self):
         song = self.songs[2]

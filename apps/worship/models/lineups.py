@@ -181,7 +181,7 @@ class LineupItem(models.Model):
 
 class SuggestionFeedback(models.Model):
     """What a person did with one suggestion in a confirmed lineup: kept,
-    swapped or removed. Training data for learning to rank (Phase 9).
+    swapped in, swapped or removed. Training data for learning to rank (Phase 9).
 
     The features are only lyrics-based scores and the church's own data
     (Design-Decisions, Phase 9). Never stored here: Spotify fields (title,
@@ -193,6 +193,9 @@ class SuggestionFeedback(models.Model):
 
     class Label(models.TextChoices):
         KEPT = "kept", "Kept"
+        # An alternative the leader chose in a swap: a positive, like kept,
+        # but told apart from a top pick that stayed (decided 2026-11-19).
+        SWAPPED_IN = "swapped_in", "Swapped in"
         SWAPPED = "swapped", "Swapped"
         REMOVED = "removed", "Removed"
 

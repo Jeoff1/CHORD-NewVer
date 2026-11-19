@@ -190,16 +190,21 @@ _Avoid_: song key (that is the original key)
 
 **Suggestion Feedback**:
 What people did with each Suggestion placed in a Lineup, recorded when the
-Lineup is confirmed: kept, swapped or removed. The training data for
-learning to rank, holding only lyrics-based scores and the church's own
-data, never Spotify data.
+Lineup is confirmed: **kept** (a top pick that stayed), **swapped in** (an
+alternative the leader chose in a swap), **swapped** (replaced by a swap) or
+**removed**. Songs replaced by regenerating, and songs added from the pool,
+leave none; confirming again replaces it. The training data for learning to
+rank, holding only lyrics-based scores and the church's own data, never
+Spotify data.
 _Avoid_: rating, review (a song is Reviewed in the Song Pool)
 
 **Song Usage**:
-Which Songs were in the confirmed Lineups of Worship Services, and when.
-Computed when needed, never stored; ranking counts it as familiarity and
-recent use. A song sung again within the repeat window is highlighted in
-the song usage report.
+Which Songs were in the confirmed Lineups of Worship Services (not
+cancelled), and when. Computed when needed, never stored. Ranking counts
+every confirmed Lineup of an earlier Worship Service, as familiarity and
+recent use; the song usage report counts only Worship Services already
+held. A song sung again sooner than the repeat window is highlighted in the
+report.
 _Avoid_: play count, plays (nothing is counted from Spotify)
 
 **Final Say**:

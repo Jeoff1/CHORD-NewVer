@@ -4,7 +4,9 @@
 While a lineup is reviewed, ``Lineup.suggestion_outcomes`` follows every
 suggestion placed in it (``apps/worship/lineups.py``):
 
-- placed in the lineup (made, regenerated, or chosen in a swap): **kept**;
+- placed in the lineup by making or regenerating it: **kept**;
+- an alternative chosen in a swap: **swapped in** (a positive, like kept,
+  told apart from a top pick that stayed);
 - replaced by a swap: **swapped**;
 - taken out: **removed**.
 
@@ -20,6 +22,7 @@ from django.utils import timezone
 from .models import Suggestion, SuggestionFeedback
 
 KEPT = SuggestionFeedback.Label.KEPT
+SWAPPED_IN = SuggestionFeedback.Label.SWAPPED_IN
 SWAPPED = SuggestionFeedback.Label.SWAPPED
 REMOVED = SuggestionFeedback.Label.REMOVED
 
@@ -27,10 +30,15 @@ REMOVED = SuggestionFeedback.Label.REMOVED
 # --- Following outcomes during review ------------------------------------------
 
 
-def placed(lineup, suggestions):
-    """Suggestions put in the lineup: kept, unless a person changes that."""
+# The outcomes of a suggestion still in the lineup.
+IN_LINEUP = (KEPT, SWAPPED_IN)
+
+
+def placed(lineup, suggestions, outcome=KEPT):
+    """Suggestions put in the lineup: ``outcome`` (kept, or swapped in for
+    an alternative chosen in a swap), unless a person changes that."""
     for suggestion in suggestions:
-        lineup.suggestion_outcomes[str(suggestion.pk)] = KEPT
+        lineup.suggestion_outcomes[str(suggestion.pk)] = outcome
 
 
 def _key_for(lineup, song_id):
@@ -49,7 +57,7 @@ def _key_for(lineup, song_id):
 def turned_down(lineup, song_id, outcome):
     """A person swapped out or removed the song a suggestion placed."""
     key = _key_for(lineup, song_id)
-    if key is not None and lineup.suggestion_outcomes[key] == KEPT:
+    if key is not None and lineup.suggestion_outcomes[key] in IN_LINEUP:
         lineup.suggestion_outcomes[key] = outcome
 
 
@@ -74,7 +82,7 @@ def record(lineup):
         pk__in=[int(key) for key in outcomes]
     ).select_related("song", "slot")
     # The slot each song is in now; a song no longer in the lineup can't
-    # count as kept.
+    # count as kept or swapped in.
     slot_feels = {
         item.song_id: item.slot.feel if item.slot else ""
         for item in lineup.items.select_related("slot")
@@ -87,9 +95,9 @@ def record(lineup):
         seen.add(suggestion.song_id)
         song = suggestion.song
         label = outcomes[str(suggestion.pk)]
-        if label == KEPT and song.pk not in slot_feels:
+        if label in IN_LINEUP and song.pk not in slot_feels:
             label = REMOVED
-        if label == KEPT:
+        if label in IN_LINEUP:
             slot_feel = slot_feels[song.pk]
         else:
             slot_feel = suggestion.slot.feel if suggestion.slot else ""

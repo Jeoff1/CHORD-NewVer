@@ -292,7 +292,7 @@ def swap(lineup, item, song, user):
         if choice is None:
             raise LineupRefused(f"{song.title} isn't one of the ranked choices.")
         feedback.turned_down(lineup, item.song_id, feedback.SWAPPED)
-        feedback.placed(lineup, [choice])
+        feedback.placed(lineup, [choice], feedback.SWAPPED_IN)
         item.song = song
         item.reasons = _reasons(choice)
         item.key, item.notes = "", ""

@@ -290,16 +290,18 @@ Built in Phase 6, part B (2026-11-19), **feedback, usage and reports**:
 - **Suggestion Feedback** (`models/lineups.py`, `feedback.py`): what people
   did with each suggestion placed in a lineup. During review,
   `Lineup.suggestion_outcomes` follows each one:
-  - placed by making the lineup, by regenerating, or chosen in a swap:
-    **kept**;
+  - placed by making the lineup or by regenerating: **kept**;
+  - an alternative chosen in a swap: **swapped in** (a positive, told
+    apart from a top pick that stayed; migration `0009`);
   - replaced by a swap: **swapped**;
   - taken out: **removed**;
   - songs replaced by regenerating are forgotten; songs added from the
     pool were never suggested.
 
   Confirming saves one row per suggested song, replacing those of an
-  earlier confirmation; a "kept" song no longer in the lineup counts as
-  removed. Each row holds its label, the run and its rank, and only the
+  earlier confirmation; a song labelled kept or swapped in that is no
+  longer in the lineup counts as removed. Each row holds its label, the
+  run and its rank, and only the
   features Phase 9 may train on (`SuggestionFeedback.FEATURES`):
   - relevance, the raw match, and the model's worship score (lyrics);
   - familiarity, season, recency, "the team knows it", and the slot's

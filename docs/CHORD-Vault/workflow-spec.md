@@ -104,10 +104,15 @@ SONG SELECTION (core module)
     - Only the pastor can send a lineup back. It returns to draft with a note
       for the leader. It is not a separate state: sending back a confirmed
       lineup reopens it. Confirming again clears the note.
-11. Every keep/swap/remove is logged as feedback for future learning-to-rank.
-    Training uses only lyrics-based scores (embedding similarity, the raw model
-    worship score, tag scores), the church's own data (team knows it, usage,
-    season, slot) and feedback labels.
+11. Every keep/swap/remove is logged as feedback for future learning-to-rank,
+    when the lineup is confirmed. Each suggestion placed in the lineup is
+    labelled kept (a top pick that stayed), swapped in (an alternative the
+    leader chose in a swap), swapped (replaced by a swap) or removed. Songs
+    replaced by regenerating, and songs added from the pool, leave no
+    feedback; confirming again replaces it. Training uses only lyrics-based
+    scores (embedding similarity, the raw model worship score, tag scores),
+    the church's own data (team knows it, usage, season, slot) and feedback
+    labels.
 
 CHORDS AND PLAYBACK
 - Chord sheets are required for songs in a confirmed lineup, and allowed at any
@@ -170,9 +175,15 @@ Some are stored as fields rather than tables of their own, or not stored:
   Song.tag_scores (JSON).
 - Attendance: a headcount per service, stored as WorshipService.attendance.
   There is no per-person attendance.
-- Song usage: computed from confirmed lineups when needed, not stored. The
-  song usage report highlights songs used more often than the recent-use
-  window allows (the repeat window in Suggestion Settings); there is no
-  separate overused-songs report.
+- Song usage: computed from confirmed lineups when needed, not stored;
+  cancelled services never count. Ranking counts every confirmed lineup of a
+  service before the one being ranked, even one not held yet; the song
+  usage report counts only services already held. The report highlights
+  songs sung again sooner than the repeat window (Suggestion Settings), so
+  more often than the recent-use window allows; there is no separate
+  overused-songs report. The report needs the permission
+  worship.view_song_usage (Worship Leader and Pastoral Staff by default).
+- Attendance report: the headcount of each service held, for people who may
+  record headcounts; it doesn't exist until a headcount has been recorded.
 
 To review the code against this spec, use [[Review-Prompt]].

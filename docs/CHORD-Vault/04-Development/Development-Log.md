@@ -2,6 +2,33 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-19: Phase 6 part B approved; "swapped in" feedback label
+
+On branch `phase-6-lineups`; not merged yet.
+
+- **Approved and recorded** in [[Design-Decisions]] (Phase 6), the
+  [[workflow-spec]] (step 11, song usage, attendance report) and the
+  [[Glossary]] (Suggestion Feedback, Song Usage):
+  - **the feedback labels:** regenerated and pool songs leave none, and
+    confirming again replaces the feedback;
+  - **usage counting:** the report counts past services only; ranking
+    counts every confirmed lineup of an earlier service;
+  - **the overused highlight:** a song sung again sooner than the repeat
+    window;
+  - **the report permissions:** `worship.view_song_usage` for Worship
+    Leader and Pastoral Staff; attendance reuses `record_attendance`.
+- **Changed:** an alternative chosen in a swap now gets its own label,
+  **swapped in** (a positive, like kept), so Phase 9 can tell it from a
+  top pick that stayed. A swapped-in song that is later swapped out or
+  removed is labelled swapped or removed.
+- **Migration `worship/0009_feedback_swapped_in`:** the new label choice.
+  Nothing is backfilled: lineups reviewed earlier kept no record of which
+  "kept" songs came from a swap.
+- **Notes:** [[Worship]] (feedback labels).
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 564
+  tests passed (2 new), with 97% coverage (`feedback.py` 97%).
+
 ## 2026-11-19: Phase 6, part B: feedback, song usage and reports (Phase 6 done)
 
 On branch `phase-6-lineups`. The phase is not merged yet.

@@ -204,10 +204,34 @@ Tests, for every role:
 - The final say follows the permission, not the role: a user with `worship.finalize_lineup` but without the Pastoral Staff role has it; a Pastoral Staff user whose role lost the permission doesn't.
 - A team member cannot see an unconfirmed lineup, by page or by URL.
 
-### Song usage (review F8)
+### Song usage (review F8; approved after part B, 2026-11-19)
 
-- Fill in `ranking.song_usage()` from confirmed lineups, so the familiarity and recent-use parts of ranking start working. (Done in part B: the confirmed lineups of services, not cancelled, before the one being ranked.)
-- Song usage is computed from confirmed lineups when needed. It is not stored in a table of its own.
+- Fill in `ranking.song_usage()` from confirmed lineups, so the familiarity and recent-use parts of ranking start working.
+- Song usage is computed from confirmed lineups when needed. It is not stored in a table of its own. Lineups of cancelled services never count.
+- **Ranking** counts every confirmed lineup of a service that starts before the one being ranked, even one that hasn't taken place yet, so next week's songs are held back when the week after is planned.
+- **The song usage report** counts only services that have already taken place: what was actually sung.
+
+Tests: only confirmed lineups of earlier services count (not drafts, cancelled services or later services); ranking changes once a lineup is confirmed; the report matches the confirmed lineups of services held.
+
+### Suggestion Feedback (approved after part B, 2026-11-19)
+
+Every suggestion placed in a lineup gets one label, followed during review and recorded when the lineup is confirmed:
+
+- **kept**: placed when the lineup was made or regenerated, and still in it;
+- **swapped in**: an alternative the leader chose in a swap, still in the lineup. It is a positive, like kept, but told apart from a top pick that stayed, so Phase 9 can learn from both;
+- **swapped**: replaced by a swap;
+- **removed**: taken out. A song labelled kept or swapped in that is no longer in the lineup counts as removed.
+
+- Songs that regenerating replaces leave no feedback: no person turned them down. Songs added from the pool weren't suggested, so they leave none either.
+- Confirming again (after reopening or sending back) replaces the earlier feedback, so it always matches the lineup as last confirmed.
+- The rows hold only the features Phase 9 may train on (`SuggestionFeedback.FEATURES`): lyrics-based scores and the church's own data. Never a Spotify field, the Trusted Artist bonus or any score that includes it, which version of a song was kept, the reasons, or the genre-filter record.
+
+Tests: each label, including a swapped-in song later swapped out or removed; regenerate and pool songs leave none; confirming again replaces the rows; the stored fields and the feature list hold none of the forbidden fields.
+
+### Reports (approved after part B, 2026-11-19)
+
+- **Song usage** needs a new permission, `worship.view_song_usage`, held by Worship Leader and Pastoral Staff by default.
+- **Attendance** reuses `worship.record_attendance` (Pastoral Staff and Office Staff by default), so worship leaders don't see it by default.
 
 ### Feel reason wording (decided 2026-11-19, part B)
 
@@ -216,8 +240,9 @@ Tests, for every role:
 ### Song usage report: overused songs (review F2)
 
 - There is no separate overused-songs report. The song usage report highlights songs used more often than the recent-use window allows (the repeat window in Suggestion Settings).
+- "More often than the window allows" means sung again sooner than the repeat window (approved after part B). With the default of 4 weeks, a song sung 3 weeks apart is highlighted; one sung exactly 4 weeks apart isn't. A repeat window of 0 highlights nothing.
 
-Test: a song sung again within the repeat window is highlighted in the report; a song sung once is not.
+Test: a song sung again within the repeat window is highlighted in the report; a song sung once is not; exactly the window apart is not.
 
 ---
 
