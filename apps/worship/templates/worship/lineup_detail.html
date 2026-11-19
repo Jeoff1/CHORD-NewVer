@@ -70,8 +70,12 @@
             </div>
             {% if sees_lineup_drafts and item.check_warning %}<div class="small text-warning-emphasis">⚠ {{ item.check_warning }}</div>{% endif %}
             {% if item.notes %}<div class="small">{{ item.notes|linebreaksbr }}</div>{% endif %}
-            {% if sees_lineup_drafts and item.reasons %}
-              <ul class="small text-body-secondary mb-1 ps-3">{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+            {% if sees_lineup_drafts %}
+              {% with slot_reason=item.slot_reason %}
+                {% if item.reasons or slot_reason %}
+                  <ul class="small text-body-secondary mb-1 ps-3">{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}{% if slot_reason %}<li>{{ slot_reason }}</li>{% endif %}</ul>
+                {% endif %}
+              {% endwith %}
             {% endif %}
             {% if can_change_lineup %}
               <div class="d-flex flex-wrap gap-1 mt-1">
@@ -81,12 +85,12 @@
                   {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary py-0">{{ item.locked|yesno:"Unlock,Lock" }}</button>
                 </form>
                 {% if not item.locked %}
-                  {% if not forloop.first %}
+                  {% if item.can_move_up %}
                     <form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action='up' %}">
                       {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary py-0" aria-label="Move {{ item.song.title }} up">↑</button>
                     </form>
                   {% endif %}
-                  {% if not forloop.last %}
+                  {% if item.can_move_down %}
                     <form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action='down' %}">
                       {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary py-0" aria-label="Move {{ item.song.title }} down">↓</button>
                     </form>

@@ -2,6 +2,40 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-19: Phase 6, part A click-through: four display fixes
+
+On branch `phase-6-lineups`, from the user's click-through.
+
+- **Feel reasons follow the slot.** A lineup song now stores only its
+  theme reasons (match, tags, other versions). Its feel reason is worked
+  out for the slot it is in now (`LineupItem.slot_reason`, from the new
+  `sequencing.slot_reason`), so a song moved, swapped, added or
+  regenerated into a slot never shows another slot's feel.
+- **Full names.** A shared `display_name` (`apps/core/people.py`) and
+  `{{ user|person_name }}` filter give the full name, or the username when
+  there is none.
+  - The lineup page already used it for "Confirmed by", "Sent back by" and
+    the Mark: on the development database, "Pastor" is named "Church
+    Pastor".
+  - "About this search" ("Asked for … by") and the song page ("Reviewed
+    by") printed usernames; both now use it.
+- **No nested brackets.** "Other versions in the pool" now reads "Title,
+  Artist; Title, Artist". The lineup audit lists songs the same way.
+- **Arrows.** ↑ and ↓ show only where `lineups.allowed_moves` allows the
+  move. The server still refuses the same moves; moving into a locked
+  song's place now reads "<song> can't move into a locked song's place."
+- **Migration `worship/0007_lineup_reason_text`:**
+  - drops the feel reasons already stored on lineup songs;
+  - rewrites saved "Other versions" reasons, on lineup songs and on
+    suggestions, into the new form;
+  - updates the help text of `LineupItem.reasons`.
+- **Notes:**
+  - [[Worship]];
+  - [[Code-Conventions]] (naming people; no nested brackets).
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 539
+  tests passed (13 new), with 97% coverage.
+
 ## 2026-11-19: Phase 6, part A review: the Mark, and adding any pool song
 
 On branch `phase-6-lineups`, after the user reviewed part A.

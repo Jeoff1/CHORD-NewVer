@@ -49,15 +49,20 @@ def lineup_context(lineup, user):
         # No lineup, or a draft the user may not see and that was never
         # confirmed: for them there is no lineup yet.
         return {"lineup": None}
+    items = _with_warnings(
+        lineup.items.select_related("song", "slot").order_by("position", "pk")
+        if visible
+        else [],
+        song=lambda item: item.song,
+    )
+    # Arrows show only for moves the rules allow (``lineups.move``).
+    moves = lineups.allowed_moves(items)
+    for item in items:
+        item.can_move_up, item.can_move_down = moves[item.pk]
     return {
         "lineup": lineup,
         "lineup_visible": visible,
-        "lineup_items": _with_warnings(
-            lineup.items.select_related("song", "slot").order_by("position", "pk")
-            if visible
-            else [],
-            song=lambda item: item.song,
-        ),
+        "lineup_items": items,
         "lineup_revising": lineup.is_being_revised,
         "can_change_lineup": lineups.may_change(lineup, user),
         "can_confirm_lineup": lineups.may_confirm(lineup, user),

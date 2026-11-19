@@ -41,6 +41,15 @@ def feel_distance(song_feel, slot_feel):
     return abs(FEEL_STEPS[song_feel] - FEEL_STEPS[slot_feel])
 
 
+def slot_reason(song, slot):
+    """Why ``song`` is in ``slot`` when its feel needs explaining (unknown,
+    or not the slot's), or "". It depends on the slot, so a lineup works it
+    out for the slot a song is in now, never from where it was suggested."""
+    if slot is None:
+        return ""
+    return _reason(song, slot, feel_distance(song.feel, slot.feel))
+
+
 def _reason(song, slot, distance):
     if not slot.feel:
         return ""

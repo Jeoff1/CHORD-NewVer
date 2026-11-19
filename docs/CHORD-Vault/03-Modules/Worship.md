@@ -232,8 +232,12 @@ Phase 6; [[0008-final-say-permission]]):
   reopened, so the team knows it is being revised), the **pastor's lock**,
   the **Mark** (the latest edit while confirmed: who, when, and whether
   they had the final say), and the send-back note (who and when). **Lineup Item**: song, slot, order, **Service Key** (12 major and
-  12 minor keys, `apps/core/music.py`), notes, the reasons it was
-  suggested, and a lock on the song. One item per song per lineup.
+  12 minor keys, `apps/core/music.py`), notes, the theme reasons it was
+  suggested for (match, tags, other versions), and a lock on the song. One
+  item per song per lineup. The feel reason isn't stored: it depends on
+  the slot, so `LineupItem.slot_reason` works it out for the slot the song
+  is in now (`sequencing.slot_reason`), after any move, swap, add or
+  regenerate.
 - **The rules** (`lineups.py`):
   - "Save these songs as the lineup" in the suggestions panel copies the
     run's placed songs, in slot order, with their reasons. The lineup is
@@ -243,7 +247,9 @@ Phase 6; [[0008-final-say-permission]]):
     (the slot and place stay; the key and notes go); **lock** a song (it
     isn't swapped, moved, removed or regenerated until unlocked);
     **reorder** (two songs trade places and slots, so slots stay in service
-    order); **remove** (the slot is left empty); **add from the pool**
+    order; an arrow shows only where `lineups.allowed_moves` allows the
+    move, and the server refuses the same moves, such as "X can't move
+    into a locked song's place"); **remove** (the slot is left empty); **add from the pool**
     (any song except one a person marked "Not a worship song", into an
     empty slot or at the end; a song that failed the Worship Check or was
     never checked shows a warning to the people who plan); **key and

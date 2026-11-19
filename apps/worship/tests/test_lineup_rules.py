@@ -3,10 +3,11 @@ suggestions, each review action, and the pastor's final say
 (Design-Decisions, Phase 6; decision 0008; workflow review F4, F5, F7)."""
 
 import datetime
+import importlib
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import Role
@@ -83,13 +84,17 @@ class CreateTests(LineupTestCase):
         self.assertEqual(lineup.status, Lineup.Status.DRAFT)
         self.assertEqual(lineup.run, self.run)
 
-    def test_the_slot_reason_is_kept_with_the_reasons(self):
+    def test_only_the_theme_reasons_are_kept_the_feel_reason_follows_the_slot(
+        self,
+    ):
         suggestion = self.run.suggestions.get(rank=1)
-        suggestion.slot_reason = "Its feel isn't known yet."
+        suggestion.slot_reason = "Its feel isn't known yet; this slot asks for slow."
         suggestion.save()
         item = self.items(self.make_lineup())[0]
+        self.assertEqual(item.reasons, ["Reason for Song A."])
+        # Worked out for the slot it's in now: Opening, upbeat.
         self.assertEqual(
-            item.reasons, ["Reason for Song A.", "Its feel isn't known yet."]
+            item.slot_reason, "Its feel isn't known yet; this slot asks for upbeat."
         )
 
     def test_one_lineup_per_service(self):
@@ -232,8 +237,14 @@ class ReviewActionTests(LineupTestCase):
             lineups.swap(self.lineup, item, self.songs[4], self.leader)
         with self.assertRaisesMessage(LineupRefused, "is locked"):
             lineups.move(self.lineup, item, 1, self.leader)
-        with self.assertRaisesMessage(LineupRefused, "is locked"):
+        with self.assertRaisesMessage(
+            LineupRefused, "Song A can't move into a locked song's place."
+        ):
             lineups.move(self.lineup, self.item("Song A"), 1, self.leader)
+        with self.assertRaisesMessage(
+            LineupRefused, "Song C can't move into a locked song's place."
+        ):
+            lineups.move(self.lineup, self.item("Song C"), -1, self.leader)
         with self.assertRaisesMessage(LineupRefused, "is locked"):
             lineups.remove(self.lineup, item, self.leader)
         lineups.set_locked(self.lineup, item, False, self.leader)
@@ -248,6 +259,69 @@ class ReviewActionTests(LineupTestCase):
         self.assertEqual([i.slot for i in items[:2]], self.slots[:2])
         lineups.move(self.lineup, self.item("Song B"), 1, self.leader)
         self.assertEqual(self.titles(self.lineup)[:2], ["Song A", "Song B"])
+
+    def test_allowed_moves_match_what_move_refuses(self):
+        lineups.set_locked(self.lineup, self.item("Song B"), True, self.leader)
+        moves = lineups.allowed_moves(self.items(self.lineup))
+        by_title = {
+            self.lineup.items.get(pk=pk).song.title: allowed
+            for pk, allowed in moves.items()
+        }
+        self.assertEqual(
+            by_title,
+            {
+                "Song A": (False, False),  # first; below is locked
+                "Song B": (False, False),  # locked
+                "Song C": (False, True),  # above is locked
+                "Song D": (True, False),  # last
+            },
+        )
+
+    def test_a_moved_songs_feel_reason_names_its_new_slot(self):
+        # Opening (upbeat), Praise (mid-tempo), Worship (slow), Response (slow).
+        song = self.songs[0]
+        song.feel = "mid"
+        song.save()
+        self.assertEqual(
+            self.item("Song A").slot_reason,
+            "Its feel (mid-tempo) isn't the upbeat this slot asks for, but it "
+            "fit best.",
+        )
+        lineups.move(self.lineup, self.item("Song A"), 1, self.leader)
+        self.assertEqual(self.item("Song A").slot, self.slots[1])
+        self.assertEqual(self.item("Song A").slot_reason, "")  # mid in mid
+        lineups.move(self.lineup, self.item("Song A"), 1, self.leader)
+        moved = self.item("Song A")
+        self.assertEqual(moved.slot, self.slots[2])
+        self.assertEqual(
+            moved.slot_reason,
+            "Its feel (mid-tempo) isn't the slow this slot asks for, but it fit best.",
+        )
+        self.assertEqual(moved.reasons, ["Reason for Song A."])  # theme kept
+
+    def test_swapped_added_and_regenerated_songs_get_their_slots_reason(self):
+        # A swapped-in song brings its theme reasons, not the slot reason it
+        # had in the run.
+        choice = self.run.suggestions.get(song=self.songs[4])
+        choice.slot_reason = "Its feel isn't known yet; this slot asks for slow."
+        choice.save()
+        lineups.swap(self.lineup, self.item("Song A"), self.songs[4], self.leader)
+        swapped = self.item("Song E")
+        self.assertEqual(swapped.reasons, ["Reason for Song E."])
+        self.assertEqual(
+            swapped.slot_reason, "Its feel isn't known yet; this slot asks for upbeat."
+        )
+        # Added into a slot.
+        lineups.remove(self.lineup, self.item("Song C"), self.leader)
+        slow = accepted_song("Quiet Song", feel="slow")
+        lineups.add_from_pool(self.lineup, slow, self.slots[2], self.leader)
+        self.assertEqual(self.item("Quiet Song").slot_reason, "")
+        # Regenerated: every reason is for the slot the song is in.
+        lineups.regenerate(self.lineup, self.leader)
+        for item in self.items(self.lineup):
+            self.assertNotIn("Its feel", " ".join(item.reasons))
+            if item.slot.feel and not item.song.feel:
+                self.assertIn(item.slot.get_feel_display().lower(), item.slot_reason)
 
     def test_a_song_cant_move_past_either_end(self):
         with self.assertRaisesMessage(LineupRefused, "can't move further"):
@@ -617,3 +691,45 @@ class DefaultRoleTests(TestCase):
                     self.assertEqual(
                         self.holds(key, f"{action}_lineup"), action in actions
                     )
+
+
+class SavedReasonTextTests(SimpleTestCase):
+    """Migration 0007 tidies reasons saved before the click-through fixes."""
+
+    tidy = importlib.import_module("apps.worship.migrations.0007_lineup_reason_text")
+
+    def test_the_versions_reason_is_rewritten_without_nested_brackets(self):
+        old = (
+            "Other versions in the pool: Hark! the Herald Angels Sing (Charles "
+            "Wesley (1739)), Hark! (Live) (A Choir)."
+        )
+        self.assertEqual(
+            self.tidy.versions_reason(old),
+            "Other versions in the pool: Hark! the Herald Angels Sing, Charles "
+            "Wesley (1739); Hark! (Live), A Choir.",
+        )
+
+    def test_other_reasons_and_unreadable_ones_stay_as_they_are(self):
+        for reason in (
+            "Its lyrics match the theme closely.",
+            "Other versions in the pool: something unexpected.",
+            "Other versions in the pool: Hark!, A Choir.",  # already new
+        ):
+            self.assertEqual(self.tidy.versions_reason(reason), reason)
+
+    def test_stored_feel_reasons_leave_lineup_songs(self):
+        self.assertEqual(
+            self.tidy.lineup_reasons(
+                [
+                    "Its lyrics match the theme a little.",
+                    "Its feel (mid-tempo) isn't the upbeat this slot asks for, "
+                    "but it fit best.",
+                    "Its feel isn't known yet; this slot asks for slow.",
+                    "Other versions in the pool: Hymn (Choir (1900)).",
+                ]
+            ),
+            [
+                "Its lyrics match the theme a little.",
+                "Other versions in the pool: Hymn, Choir (1900).",
+            ],
+        )

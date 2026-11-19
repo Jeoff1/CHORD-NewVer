@@ -388,7 +388,30 @@ class VersionTests(TestCase):
         )
         self.assertEqual([s.artist for s in kept[0].versions], ["Carpenters"])
         self.assertIn(
-            "Other versions in the pool: Silent Night (Carpenters).", kept[0].reasons
+            "Other versions in the pool: Silent Night, Carpenters.", kept[0].reasons
+        )
+
+    def test_the_versions_reason_never_nests_brackets(self):
+        ranked = [
+            item("Hark! the Herald Angels Sing", score=0.9, embedding=unit(1)),
+            item(
+                "Hark! the Herald Angels Sing",
+                score=0.8,
+                artist="Charles Wesley (1739)",
+                embedding=unit(0.99),
+            ),
+            item(
+                "Hark! the Herald Angels Sing (Live)",
+                score=0.7,
+                artist="A Choir",
+                embedding=unit(0.98),
+            ),
+        ]
+        kept = self.group(ranked)
+        self.assertIn(
+            "Other versions in the pool: Hark! the Herald Angels Sing, Charles "
+            "Wesley (1739); Hark! the Herald Angels Sing (Live), A Choir.",
+            kept[0].reasons,
         )
 
     def test_different_titles_need_nearly_the_same_lyrics(self):

@@ -94,7 +94,9 @@ def group(ranked, trusted_artists=None):
         others = [ranked[i] for i in members if i != choice]
         if others:
             item.versions = [other.song for other in others]
-            listing = ", ".join(f"{s.title} ({s.artist})" for s in item.versions)
+            # "Title, Artist", separated by semicolons: an artist name may
+            # already hold brackets, such as "Charles Wesley (1739)".
+            listing = "; ".join(f"{s.title}, {s.artist}" for s in item.versions)
             item.reasons.append(f"Other versions in the pool: {listing}.")
             why = _why_chosen(item, ranked[members[0]])
             if why:

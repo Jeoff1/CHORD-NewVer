@@ -13,16 +13,10 @@ from django.db import models
 
 from apps.core.models import TimeStampedModel
 from apps.core.music import KEY_CHOICES
+from apps.core.people import display_name
 
 from .schedule import TemplateSlot, WorshipService
 from .suggestions import SearchRun
-
-
-def display_name(user):
-    """How a person is named in marks such as "Edited by Pastor (…)"."""
-    if user is None:
-        return "a former user"
-    return user.get_full_name() or user.get_username()
 
 
 class Lineup(TimeStampedModel):
@@ -145,7 +139,9 @@ class LineupItem(models.Model):
     reasons = models.JSONField(
         default=list,
         blank=True,
-        help_text="Why the song was suggested, copied when it joined the lineup.",
+        help_text="Why the song was suggested for the theme, copied when it "
+        "joined the lineup. The feel reason depends on the slot, so it is "
+        "worked out when shown (slot_reason).",
     )
     locked = models.BooleanField(
         default=False,
@@ -164,3 +160,12 @@ class LineupItem(models.Model):
 
     def __str__(self):
         return f"{self.position + 1}. {self.song}"
+
+    @property
+    def slot_reason(self):
+        """The feel reason for the slot the song is in now. Not stored:
+        ``reasons`` keeps only the theme reasons, which don't depend on the
+        slot, so a moved song never shows another slot's reason."""
+        from ..sequencing import slot_reason
+
+        return slot_reason(self.song, self.slot)

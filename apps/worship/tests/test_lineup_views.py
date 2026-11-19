@@ -614,3 +614,89 @@ class PlanningNotesTests(LineupViewTestCase):
                 self.assertContains(page, "The message in a few sentences.")
             else:
                 self.assertNotContains(page, "The message in a few sentences.")
+
+
+class ClickThroughFixTests(LineupViewTestCase):
+    """Display fixes from the Phase 6 part A click-through (2026-11-19)."""
+
+    def setUp(self):
+        super().setUp()
+        self.lineup = self.make_lineup()
+
+    def move(self, title, action, **kwargs):
+        item = self.item(self.lineup, title)
+        return self.client.post(
+            url(self.service, "lineup_item_action", pk=item.pk, action=action),
+            **kwargs,
+        )
+
+    def test_arrows_hide_where_a_move_would_be_refused(self):
+        lineups.set_locked(
+            self.lineup, self.item(self.lineup, "Song B"), True, self.leader
+        )
+        self.login(self.leader)
+        page = self.client.get(url(self.service, "lineup"))
+        for hidden in (
+            "Move Song A up",  # first
+            "Move Song A down",  # below is locked
+            "Move Song B up",  # locked
+            "Move Song B down",
+            "Move Song C up",  # above is locked
+            "Move Song D down",  # last
+        ):
+            self.assertNotContains(page, f'aria-label="{hidden}"')
+        for shown in ("Move Song C down", "Move Song D up"):
+            self.assertContains(page, f'aria-label="{shown}"')
+        # The server still refuses, worded for the song being moved.
+        response = self.move("Song A", "down", follow=True)
+        self.assertContains(
+            response, "Song A can&#x27;t move into a locked song&#x27;s place."
+        )
+        self.assertEqual(self.titles(self.lineup)[:2], ["Song A", "Song B"])
+
+    def test_after_a_move_the_reason_names_the_new_slots_feel(self):
+        song = Song.objects.get(title="Song A")
+        song.feel = "mid"
+        song.save()
+        self.login(self.leader)
+        page = self.client.get(url(self.service, "lineup"))
+        self.assertContains(page, "isn&#x27;t the upbeat this slot asks for")
+        self.move("Song A", "down")  # into Praise (mid-tempo)
+        self.move("Song A", "down")  # into Worship (slow)
+        page = self.client.get(url(self.service, "lineup"))
+        self.assertContains(
+            page, "Its feel (mid-tempo) isn&#x27;t the slow this slot asks for"
+        )
+        self.assertNotContains(page, "isn&#x27;t the upbeat this slot asks for")
+        self.assertContains(page, "Reason for Song A.")  # the theme reason stays
+
+    def test_people_are_named_by_full_name_or_username(self):
+        named = make_user(roles=["worship_leader"], first_name="Ben", last_name="Reyes")
+        lineups.confirm(self.lineup, named)
+        self.run.requested_by = named
+        self.run.save()
+        self.login(named)
+        self.assertContains(
+            self.client.get(url(self.service, "lineup")), "Confirmed by Ben Reyes"
+        )
+        panel = self.client.get(url(self.service, "service"))
+        self.assertContains(panel, "by Ben Reyes")
+        self.assertNotContains(panel, f"by {named.username}")
+        # Without a name, the username.
+        lineups.reopen(self.lineup, self.pastor)
+        lineups.confirm(self.lineup, self.leader)
+        self.assertContains(
+            self.client.get(url(self.service, "lineup")),
+            f"Confirmed by {self.leader.username}",
+        )
+
+    def test_the_song_page_names_the_reviewer(self):
+        reviewer = make_user(first_name="Ana", last_name="Lim")
+        song = Song.objects.get(title="Song A")
+        song.reviewed_at, song.reviewed_by = timezone.now(), reviewer
+        song.save()
+        self.login(self.leader)
+        page = self.client.get(
+            reverse("songs:detail", kwargs={"public_id": song.public_id})
+        )
+        self.assertContains(page, "Reviewed by Ana Lim")

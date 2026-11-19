@@ -160,12 +160,12 @@ def source_run(service):
     )
 
 
-def _reasons(suggestion, slot_reason=""):
-    reasons = list(suggestion.reasons)
-    extra = slot_reason or suggestion.slot_reason
-    if extra:
-        reasons.append(extra)
-    return reasons
+def _reasons(suggestion):
+    """The theme reasons a lineup song keeps: why it fits the theme (match,
+    tags, other versions). The suggestion's slot reason is left out: it was
+    about the slot in the run, and a lineup works out the reason for the
+    slot the song is in now (``LineupItem.slot_reason``)."""
+    return list(suggestion.reasons)
 
 
 def _ranked(run):
@@ -288,7 +288,7 @@ def swap(lineup, item, song, user):
         if choice is None:
             raise LineupRefused(f"{song.title} isn't one of the ranked choices.")
         item.song = song
-        item.reasons = _reasons(choice, slot_reason="")
+        item.reasons = _reasons(choice)
         item.key, item.notes = "", ""
         item.save()
         _edited(lineup, user)
@@ -319,13 +319,32 @@ def move(lineup, item, step, user):
             raise LineupRefused(f"{item.song.title} can't move further that way.")
         other = items[target]
         _check_unlocked(items[index], "move")
-        _check_unlocked(other, "move")
+        if other.locked:
+            raise LineupRefused(
+                f"{item.song.title} can't move into a locked song's place."
+            )
         mine, theirs = items[index], other
         mine.slot, theirs.slot = theirs.slot, mine.slot
         mine.position, theirs.position = theirs.position, mine.position
         mine.save(update_fields=["slot", "position"])
         theirs.save(update_fields=["slot", "position"])
         _edited(lineup, user)
+
+
+def allowed_moves(items):
+    """``{item pk: (up, down)}``: whether each song in ``items`` (in order)
+    may move up or down. ``move`` refuses the same moves: past either end,
+    a locked song, or into a locked song's place."""
+    moves = {}
+    for index, item in enumerate(items):
+        before = items[index - 1] if index > 0 else None
+        after = items[index + 1] if index + 1 < len(items) else None
+        free = not item.locked
+        moves[item.pk] = (
+            free and before is not None and not before.locked,
+            free and after is not None and not after.locked,
+        )
+    return moves
 
 
 def remove(lineup, item, user):
@@ -422,7 +441,7 @@ def regenerate(lineup, user):
                 lineup=lineup,
                 song=candidates[p.index].song,
                 slot=p.slot,
-                reasons=_reasons(candidates[p.index], slot_reason=p.reason),
+                reasons=_reasons(candidates[p.index]),
             )
             for p in placements
         ]
@@ -509,7 +528,7 @@ def _songs(lineup):
     return "; ".join(
         f"{item.position + 1}. "
         + (f"{item.slot.name}: " if item.slot else "")
-        + f"{item.song.title} ({item.song.artist})"
+        + f"{item.song.title}, {item.song.artist}"
         + (f", key {item.key}" if item.key else "")
         + (", locked" if item.locked else "")
         for item in _items(lineup)

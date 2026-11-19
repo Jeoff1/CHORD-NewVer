@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load people %}
 
 {% block title %}{{ song.title }}{% endblock %}
 
@@ -33,7 +34,7 @@
             {% if worship_percent is not None %}<span class="text-body-secondary small ms-1">Lyrics score {{ worship_percent }}%{% if bonus_percent %}, plus {{ bonus_percent }}% as a Trusted Artist{% endif %}</span>{% endif %}
           </p>
           {% if song.is_reviewed %}
-            <p class="small text-body-secondary mb-0">Reviewed by {{ song.reviewed_by|default:"a former user" }} on {{ song.reviewed_at|date:"M j, Y" }}.</p>
+            <p class="small text-body-secondary mb-0">Reviewed by {{ song.reviewed_by|person_name }} on {{ song.reviewed_at|date:"M j, Y" }}.</p>
           {% elif song.analysed_at and song.worship_check == "unchecked" %}
             <p class="small text-body-secondary mb-0">Waiting for a person's review: its artist isn't on the Trusted Artists list, so it isn't suggested until someone checks it.</p>
           {% elif song.analysed_at %}

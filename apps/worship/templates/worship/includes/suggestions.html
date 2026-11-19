@@ -1,4 +1,4 @@
-{% load church %}
+{% load church people %}
 {# Song suggestions for one service. Only for users with worship.suggest_songs; while a run is in progress it reloads itself every two seconds. #}
 {% label "lineup" as lineup_word %}{% label "worship_service" as service_word %}{% label "sermon" as sermon_word %}
 <div id="suggestions" class="card shadow-sm mb-3"{% if run.is_active %} hx-get="{% url 'worship:suggestions' public_id=service.public_id %}" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
@@ -82,7 +82,7 @@
       <details class="mt-3 small">
         <summary>About this search</summary>
         <dl class="row mt-2 mb-0">
-          <dt class="col-sm-4">Asked for</dt><dd class="col-sm-8">{{ run.created_at|date:"M j, g:i A" }}{% if run.requested_by %} by {{ run.requested_by }}{% endif %}{% if not run.use_spotify %} (song pool only){% endif %}</dd>
+          <dt class="col-sm-4">Asked for</dt><dd class="col-sm-8">{{ run.created_at|date:"M j, g:i A" }}{% if run.requested_by %} by {{ run.requested_by|person_name }}{% endif %}{% if not run.use_spotify %} (song pool only){% endif %}</dd>
           <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ run.get_status_display }}{% if run.run_time_display %}, {{ run.run_time_display }}{% endif %}{% if run.fell_back %}; Spotify was paused, so the pool was ranked instead{% endif %}</dd>
           {% if run.phrases %}<dt class="col-sm-4">Search phrases</dt><dd class="col-sm-8">{{ run.phrases|join:", " }}</dd>{% endif %}
           {% if run.use_spotify %}
