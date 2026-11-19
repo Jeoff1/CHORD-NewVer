@@ -316,6 +316,46 @@ class ReviewActionViewTests(LineupViewTestCase):
         )
         self.assertEqual(self.titles(self.lineup)[-1], "Pool Favourite")
 
+    def test_unchecked_and_failed_songs_are_added_with_a_warning(self):
+        make_song(title="Fresh Unchecked", lyrics_status=Song.LyricsStatus.MISSING)
+        make_song(title="Fresh Failed", worship_check=Song.WorshipCheck.REJECTED)
+        make_song(
+            title="Fresh Marked",
+            worship_check=Song.WorshipCheck.REJECTED,
+            reviewed_at=timezone.now(),
+        )
+        page = self.client.get(url(self.service, "lineup_add"), {"q": "fresh"})
+        self.assertContains(page, "Fresh Unchecked")
+        self.assertContains(page, "Fresh Failed")
+        self.assertNotContains(page, "Fresh Marked")
+        self.assertContains(page, "Not checked as a worship song yet.")
+        self.assertContains(page, "Didn&#x27;t pass the worship check.")
+        for title in ("Fresh Unchecked", "Fresh Failed"):
+            self.client.post(
+                url(self.service, "lineup_add"),
+                {"song": Song.objects.get(title=title).public_id, "slot": ""},
+            )
+        self.assertEqual(
+            self.titles(self.lineup)[-2:], ["Fresh Unchecked", "Fresh Failed"]
+        )
+        review = self.client.get(url(self.service, "lineup"))
+        self.assertContains(review, "Not checked as a worship song yet.")
+        self.assertContains(review, "Didn&#x27;t pass the worship check.")
+        # A song a person marked "Not a worship song" is refused.
+        response = self.client.post(
+            url(self.service, "lineup_add"),
+            {"song": Song.objects.get(title="Fresh Marked").public_id, "slot": ""},
+            follow=True,
+        )
+        self.assertContains(response, "marked as not a worship song")
+        self.assertNotIn("Fresh Marked", self.titles(self.lineup))
+        # The warning is for the review: the team doesn't see it.
+        lineups.confirm(self.lineup, self.leader)
+        self.login(self.team_member)
+        page = self.client.get(url(self.service, "lineup"))
+        self.assertContains(page, "Fresh Failed")
+        self.assertNotContains(page, "worship check")
+
     def test_key_and_notes(self):
         item = self.item(self.lineup, "Song A")
         page = self.client.get(url(self.service, "lineup_item", pk=item.pk))
@@ -407,15 +447,72 @@ class ConfirmationViewTests(LineupViewTestCase):
         lineup = self.reload()
         self.assertTrue(lineup.is_confirmed)
         self.assertTrue(lineup.pastor_locked)
-        with timezone.override(scheduling.church_time_zone()):
-            stamp = dateformat.format(
-                timezone.localtime(lineup.pastor_edited_at), "M j, g:i A"
-            )
+        stamp = self.stamp(lineup)
         for user in (self.leader, self.pastor, self.team_member):
             self.login(user)
             for address in (url(self.service, "lineup"), url(self.service, "service")):
                 page = self.client.get(address)
                 self.assertContains(page, f"Edited by Pastor (Ana Cruz), {stamp}")
+
+    def stamp(self, lineup):
+        """The mark's time as the pages show it, in the church's time zone."""
+        with timezone.override(scheduling.church_time_zone()):
+            return dateformat.format(timezone.localtime(lineup.edited_at), "M j, g:i A")
+
+    def test_the_leaders_edit_to_a_confirmed_lineup_shows_changed_by(self):
+        leader = make_user(
+            roles=["worship_leader"], first_name="Ben", last_name="Reyes"
+        )
+        lineups.confirm(self.lineup, leader)
+        self.login(leader)
+        item = self.item(self.lineup, "Song B")
+        self.client.post(
+            url(self.service, "lineup_item_action", pk=item.pk, action="up")
+        )
+        lineup = self.reload()
+        self.assertTrue(lineup.is_confirmed)
+        self.assertFalse(lineup.pastor_locked)
+        stamp = self.stamp(lineup)
+        for user in (leader, self.pastor, self.team_member):
+            self.login(user)
+            for address in (url(self.service, "lineup"), url(self.service, "service")):
+                page = self.client.get(address)
+                self.assertContains(page, f"Changed by Ben Reyes, {stamp}")
+                self.assertNotContains(page, "Edited by")
+        # The leader can still edit: no lock.
+        self.login(leader)
+        self.assertContains(self.client.get(url(self.service, "lineup")), "Swap")
+
+    def test_only_the_latest_mark_shows_and_reopening_clears_it(self):
+        leader = make_user(
+            roles=["worship_leader"], first_name="Ben", last_name="Reyes"
+        )
+        lineups.confirm(self.lineup, leader)
+        lineups.move(self.lineup, self.item(self.lineup, "Song A"), 1, leader)
+        lineups.move(self.lineup, self.item(self.lineup, "Song C"), 1, self.pastor)
+        self.login(self.team_member)
+        page = self.client.get(url(self.service, "lineup"))
+        self.assertContains(page, "Edited by Pastor (Ana Cruz)")
+        self.assertNotContains(page, "Changed by")
+        lineups.reopen(self.lineup, self.pastor)
+        lineups.confirm(self.lineup, leader)
+        for user in (self.team_member, leader):
+            self.login(user)
+            page = self.client.get(url(self.service, "lineup"))
+            self.assertNotContains(page, "Edited by")
+            self.assertNotContains(page, "Changed by")
+
+    def test_locking_a_song_leaves_no_mark(self):
+        lineups.confirm(self.lineup, self.leader)
+        self.login(self.leader)
+        item = self.item(self.lineup, "Song A")
+        self.client.post(
+            url(self.service, "lineup_item_action", pk=item.pk, action="lock")
+        )
+        self.login(self.team_member)
+        page = self.client.get(url(self.service, "lineup"))
+        self.assertNotContains(page, "Changed by")
+        self.assertIsNone(self.reload().edited_at)
 
     def test_the_mark_uses_the_church_label(self):
         complete_setup(labels={"pastor": {"singular": "Elder", "plural": "Elders"}})

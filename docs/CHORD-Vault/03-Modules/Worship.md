@@ -230,8 +230,8 @@ Phase 6; [[0008-final-say-permission]]):
 - **Lineup** (`models/lineups.py`, one per service): draft or confirmed,
   the Search Run it came from, who confirmed it and when (kept when it is
   reopened, so the team knows it is being revised), the **pastor's lock**,
-  the "Edited by" mark (who and when), and the send-back note (who and
-  when). **Lineup Item**: song, slot, order, **Service Key** (12 major and
+  the **Mark** (the latest edit while confirmed: who, when, and whether
+  they had the final say), and the send-back note (who and when). **Lineup Item**: song, slot, order, **Service Key** (12 major and
   12 minor keys, `apps/core/music.py`), notes, the reasons it was
   suggested, and a lock on the song. One item per song per lineup.
 - **The rules** (`lineups.py`):
@@ -244,16 +244,20 @@ Phase 6; [[0008-final-say-permission]]):
     isn't swapped, moved, removed or regenerated until unlocked);
     **reorder** (two songs trade places and slots, so slots stay in service
     order); **remove** (the slot is left empty); **add from the pool**
-    (songs that passed the Worship Check, into an empty slot or at the
-    end); **key and notes**; **regenerate** from the latest run around the
-    locked songs. A lineup never holds two songs with the same base title.
+    (any song except one a person marked "Not a worship song", into an
+    empty slot or at the end; a song that failed the Worship Check or was
+    never checked shows a warning to the people who plan); **key and
+    notes**; **regenerate** from the latest run around the locked songs. A
+    lineup never holds two songs with the same base title.
   - Confirmation: the worship leader (`change_lineup`) or anyone with the
     final say (`finalize_lineup`). The pastor's confirmation, or edit to a
     confirmed lineup, puts on the pastor's lock: people without the final
     say can't change it until it is reopened. The pastor's edits to a draft
-    don't lock anyone out. The pastor's edit to a confirmed lineup marks it
-    "Edited by <pastor Label> (<name>)" with the time, shown to everyone who
-    can see it. Locking a song isn't an edit.
+    don't lock anyone out. An edit to a confirmed lineup marks it with the
+    time, shown to everyone who can see it: "Edited by <pastor Label>
+    (<name>)" for the pastor, "Changed by <name>" for the leader (who may
+    edit only while there is no pastor's lock; no lock follows). Only the
+    latest mark shows. Locking or unlocking a song isn't an edit.
   - Reopening (final say only) makes the lineup a draft and lifts the lock
     and the mark. Sending back (final say only, a note required) is the
     same, with the note for the leader; confirming again clears the note.

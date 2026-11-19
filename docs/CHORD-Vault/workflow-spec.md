@@ -13,9 +13,9 @@ ROLES
   ([[0008-final-say-permission]]). Below, "the pastor" means anyone who
   holds it. The church's "pastor" Label (default "Pastor") names the role in
   the app.
-- Worship leader: generates the suggested lineup, swaps/locks/reorders/re-keys
-  songs, confirms the lineup, adds chord sheets, approves chord sheets pasted
-  by team members.
+- Worship leader: generates the suggested lineup and saves it as the lineup,
+  swaps/locks/reorders/re-keys songs, confirms the lineup, adds chord sheets,
+  approves chord sheets pasted by team members.
 - Team member: sees a lineup only after it is confirmed; plays songs, reads
   chord sheets; may paste a missing chord sheet for a song in a confirmed
   lineup, which waits for approval by the worship leader or the pastor.
@@ -24,7 +24,11 @@ ROLES
   each user connects their own Spotify account (for playback, and the
   worship leader's for saving playlists). The app's own Spotify credentials
   are set in .env when CHORD is installed.
-- Office staff (optional): keeps the member directory up to date.
+- Office staff (optional): keeps the member directory up to date. Doesn't
+  see lineups.
+
+People who can change lineups (the leader and the pastor) also see a theme's
+sermon notes; team members don't.
 
 SONG SELECTION (core module)
 1. Pastor posts a theme for a service.
@@ -64,6 +68,19 @@ SONG SELECTION (core module)
    without notes gets a hint to add them; notes are not required.
 10. Leader reviews; leader or pastor confirms; pastor's decision wins. A
     lineup is a draft or confirmed; there is no other state.
+    - The leader or the pastor saves the reviewed suggestions as the lineup:
+      its own copy, which later corrections to the suggestions never change.
+      Review swaps a song for another ranked suggestion, locks, reorders,
+      re-keys or removes songs, adds a song from the pool, or regenerates
+      around locked songs, from the service's latest finished search. A
+      locked song isn't swapped, moved or removed, and no song moves into its
+      place. Any pool song can be added unless a person marked it "Not a
+      worship song"; one that failed the worship check or was never checked
+      shows a small warning in the review. A lineup never holds two songs
+      with the same title.
+    - A cancelled or past service gets no suggestions and no new lineup. A
+      cancelled service's lineup can't be confirmed; a past service's lineup
+      can still be edited and confirmed.
     - The pastor's edits to a draft don't lock the leader out.
     - The pastor's lock starts when the pastor confirms a lineup, or edits one
       that is already confirmed. While it holds, the leader can't change the
@@ -73,12 +90,20 @@ SONG SELECTION (core module)
       with the time, shown to everyone who can see the lineup. Once team
       assignments exist, the assigned team members are also notified in the
       app.
+    - If the leader edits a confirmed lineup that isn't under the pastor's
+      lock, it stays confirmed and is marked "Changed by <person's name>" with
+      the time, shown to everyone who can see it. There is no lock.
+    - Only the latest mark shows: a later pastor's edit replaces "Changed by"
+      with "Edited by <pastor Label> (<name>)". Locking or unlocking a song
+      isn't an edit.
     - A reopened lineup counts as unconfirmed: it is a draft again, and the
-      pastor's lock is lifted. Team members can't see it; they see a note that
-      the lineup is being revised, until it is confirmed again.
+      pastor's lock and the mark are cleared. Team members can't see it; they
+      see a note that the lineup is being revised, until it is confirmed
+      again. A draft that was never confirmed doesn't exist for them (not
+      found).
     - Only the pastor can send a lineup back. It returns to draft with a note
       for the leader. It is not a separate state: sending back a confirmed
-      lineup reopens it.
+      lineup reopens it. Confirming again clears the note.
 11. Every keep/swap/remove is logged as feedback for future learning-to-rank.
     Training uses only lyrics-based scores (embedding similarity, the raw model
     worship score, tag scores), the church's own data (team knows it, usage,

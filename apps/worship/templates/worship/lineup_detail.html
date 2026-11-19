@@ -39,8 +39,8 @@
     {# A team member, and a lineup that was confirmed is a draft again. #}
     <div class="alert alert-info">This {{ lineup_word|lower }} is being revised. It shows here again once it is confirmed.</div>
   {% else %}
-    {% if lineup.pastor_edited_at %}
-      <p class="alert alert-warning py-2 small">Edited by {{ pastor_word }} ({{ lineup.pastor_edited_by_name }}), {{ lineup.pastor_edited_at|date:"M j, g:i A" }}</p>
+    {% if lineup.edited_at %}
+      <p class="alert alert-warning py-2 small">{% include "worship/includes/lineup_mark.html" %}</p>
     {% endif %}
     {% if lineup.is_confirmed %}
       <p class="small text-body-secondary">Confirmed by {{ lineup.confirmed_by_name }}, {{ lineup.confirmed_at|date:"M j, g:i A" }}.</p>
@@ -68,6 +68,7 @@
               {% if item.key %}<span class="badge text-bg-light border ms-1">Key {{ item.key }}</span>{% endif %}
               {% if item.locked and sees_lineup_drafts %}<span class="badge text-bg-secondary ms-1">Locked</span>{% endif %}
             </div>
+            {% if sees_lineup_drafts and item.check_warning %}<div class="small text-warning-emphasis">⚠ {{ item.check_warning }}</div>{% endif %}
             {% if item.notes %}<div class="small">{{ item.notes|linebreaksbr }}</div>{% endif %}
             {% if sees_lineup_drafts and item.reasons %}
               <ul class="small text-body-secondary mb-1 ps-3">{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>

@@ -200,8 +200,20 @@ _Avoid_: pastor override, veto
 What stops the worship leader from changing a Lineup, from the moment a
 holder of the Final Say confirms it or edits it after it was confirmed,
 until a holder reopens it. Reopening makes the Lineup a draft again.
-_Avoid_: lock (alone; a lock on a song keeps it in place when the Lineup is
-regenerated), freeze
+_Avoid_: lock (alone; that is a Locked Song), freeze
+
+**Locked Song**:
+A song in a Lineup kept where it is: it isn't swapped, moved, removed or
+regenerated, and no other song moves into its place, until it is unlocked.
+Locking or unlocking isn't an edit, so it leaves no Mark.
+_Avoid_: pinned, fixed
+
+**Mark**:
+The latest edit to a confirmed Lineup, with the time, shown to everyone
+who can see it: "Edited by <pastor Label> (<name>)" for a holder of the
+Final Say, "Changed by <name>" for anyone else. Only the latest shows;
+reopening or sending back clears it.
+_Avoid_: badge, edit history (only the latest edit shows)
 
 **Send Back**:
 Returning a Lineup to draft with a note for the worship leader. Only

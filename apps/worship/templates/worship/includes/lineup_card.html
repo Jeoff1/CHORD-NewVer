@@ -13,7 +13,7 @@
       {% if not lineup_visible %}
         <p class="text-body-secondary mb-0">This {{ lineup_word|lower }} is being revised. It shows here again once it is confirmed.</p>
       {% else %}
-        {% if lineup.pastor_edited_at %}<p class="small text-body-secondary mb-2">Edited by {{ pastor_word }} ({{ lineup.pastor_edited_by_name }}), {{ lineup.pastor_edited_at|date:"M j, g:i A" }}</p>{% endif %}
+        {% if lineup.edited_at %}<p class="small text-body-secondary mb-2">{% include "worship/includes/lineup_mark.html" %}</p>{% endif %}
         <ol class="mb-0 small">
           {% for item in lineup_items %}
             <li>{% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}{{ item.song.title }}{% if item.key %} ({{ item.key }}){% endif %}</li>

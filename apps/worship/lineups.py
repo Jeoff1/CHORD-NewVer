@@ -13,10 +13,17 @@ pastor's final say (Design-Decisions, Phase 6; decision 0008).
   one that is already confirmed; it stops everyone without the final say
   until the pastor reopens it. The pastor's edits to a draft don't lock
   anyone out.
-- The pastor's edit to a confirmed lineup keeps it confirmed and marks it
-  "Edited by <pastor Label> (<name>)" with the time.
-- Reopening makes the lineup a draft again and lifts the lock. Sending back
-  is the same with a note for the leader, and only the pastor may do it.
+- An edit to a confirmed lineup keeps it confirmed and marks it with the
+  time: "Edited by <pastor Label> (<name>)" for the pastor, "Changed by
+  <name>" for anyone else (who may edit only while there is no pastor's
+  lock). Only the latest mark shows. Locking or unlocking a song isn't an
+  edit.
+- Reopening makes the lineup a draft again and lifts the lock and the mark.
+  Sending back is the same with a note for the leader, and only the pastor
+  may do it. Confirming again clears the note.
+- Any pool song can be added except one a person marked "Not a worship
+  song"; a song that failed the Worship Check or was never checked gets a
+  warning in the review instead (the person's choice wins over the model).
 - A cancelled or past service gets no new lineup (F7).
 
 Every function raises ``LineupRefused`` with a message for people when the
@@ -97,13 +104,42 @@ def _check_final_say(user):
 
 
 def _edited(lineup, user):
-    """After a change to the songs: the pastor's edit to a confirmed lineup
-    keeps it confirmed, marks it, and puts on the pastor's lock."""
-    if lineup.is_confirmed and has_final_say(user):
-        lineup.pastor_edited_at = timezone.now()
-        lineup.pastor_edited_by = user
-        lineup.pastor_locked = True
+    """After a change to the songs. An edit to a confirmed lineup keeps it
+    confirmed and replaces its mark with this one; the pastor's edit also
+    puts on the pastor's lock. Edits to a draft leave no mark."""
+    if lineup.is_confirmed:
+        final_say = has_final_say(user)
+        lineup.edited_at, lineup.edited_by = timezone.now(), user
+        lineup.edited_with_final_say = final_say
+        if final_say:
+            lineup.pastor_locked = True
     lineup.save()
+
+
+def _clear_mark(lineup):
+    lineup.edited_at, lineup.edited_by = None, None
+    lineup.edited_with_final_say = False
+
+
+# --- The Worship Check, in the review ----------------------------------------
+
+
+def marked_not_worship(song):
+    """A person marked the song "Not a worship song": it can't be added."""
+    return song.is_reviewed and song.worship_check == Song.WorshipCheck.REJECTED
+
+
+def check_warning(song):
+    """The warning a song shows in the review when it hasn't passed the
+    Worship Check, or "" when it has. A person's choice wins over the
+    model, so these songs may still be added."""
+    if song.worship_check == Song.WorshipCheck.ACCEPTED:
+        return ""
+    if marked_not_worship(song):
+        return "Marked as not a worship song."
+    if song.worship_check == Song.WorshipCheck.REJECTED:
+        return "Didn't pass the worship check."
+    return "Not checked as a worship song yet."
 
 
 def _locked_lineup(lineup):
@@ -163,10 +199,13 @@ def alternatives(lineup, item=None):
 
 
 def addable_songs(lineup, query=""):
-    """Songs from the pool that could be added: passed the Worship Check,
-    not in the lineup, and not sharing a title with one of its songs."""
+    """Songs from the pool that could be added: not marked "Not a worship
+    song" by a person, not in the lineup, and not sharing a title with one
+    of its songs."""
     taken = _titles(_items(lineup))
-    songs = Song.objects.accepted().exclude(lineup_items__lineup=lineup)
+    songs = Song.objects.exclude(lineup_items__lineup=lineup).exclude(
+        worship_check=Song.WorshipCheck.REJECTED, reviewed_at__isnull=False
+    )
     if query:
         songs = songs.filter(Q(title__icontains=query) | Q(artist__icontains=query))
     return [song for song in songs if base_title(song.title) not in taken]
@@ -301,14 +340,16 @@ def remove(lineup, item, user):
 
 
 def add_from_pool(lineup, song, slot, user):
-    """Add a pool song that passed the Worship Check, into an empty slot of
-    the service's template or, with no slot, at the end."""
+    """Add a pool song into an empty slot of the service's template or,
+    with no slot, at the end. Any song may be added except one a person
+    marked "Not a worship song"; one that failed the Worship Check or was
+    never checked shows a warning in the review (``check_warning``)."""
     with transaction.atomic():
         lineup = _locked_lineup(lineup)
         check_change(lineup, user)
-        if song.worship_check != Song.WorshipCheck.ACCEPTED:
+        if marked_not_worship(song):
             raise LineupRefused(
-                f"{song.title} hasn't passed the worship check, so it can't be added."
+                f"{song.title} was marked as not a worship song, so it can't be added."
             )
         items = _items(lineup)
         if any(i.song_id == song.pk for i in items):
@@ -427,7 +468,7 @@ def confirm(lineup, user):
 def _back_to_draft(lineup):
     lineup.status = Lineup.Status.DRAFT
     lineup.pastor_locked = False
-    lineup.pastor_edited_at, lineup.pastor_edited_by = None, None
+    _clear_mark(lineup)
 
 
 def reopen(lineup, user):

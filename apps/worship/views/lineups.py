@@ -33,6 +33,15 @@ def lineup_url(service):
     return reverse("worship:lineup", kwargs={"public_id": service.public_id})
 
 
+def _with_warnings(objects, song=lambda obj: obj):
+    """``objects`` as a list, each with ``check_warning``: what its song's
+    Worship Check warns about in the review ("" when it passed)."""
+    objects = list(objects)
+    for obj in objects:
+        obj.check_warning = lineups.check_warning(song(obj))
+    return objects
+
+
 def lineup_context(lineup, user):
     """What the lineup page and the service page's lineup card show."""
     visible = lineup is not None and lineups.visible_to(lineup, user)
@@ -43,10 +52,11 @@ def lineup_context(lineup, user):
     return {
         "lineup": lineup,
         "lineup_visible": visible,
-        "lineup_items": (
+        "lineup_items": _with_warnings(
             lineup.items.select_related("song", "slot").order_by("position", "pk")
             if visible
-            else []
+            else [],
+            song=lambda item: item.song,
         ),
         "lineup_revising": lineup.is_being_revised,
         "can_change_lineup": lineups.may_change(lineup, user),
@@ -214,7 +224,11 @@ class AddSongView(LineupMixin, TemplateView):
         query = self.request.GET.get("q", "").strip()[:100]
         context.update(
             q=query,
-            songs=lineups.addable_songs(self.lineup, query)[:25] if query else None,
+            songs=(
+                _with_warnings(lineups.addable_songs(self.lineup, query)[:25])
+                if query
+                else None
+            ),
             open_slots=lineups.open_slots(self.lineup),
         )
         return context

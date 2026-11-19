@@ -67,16 +67,18 @@ class Lineup(TimeStampedModel):
         default=False,
         help_text="Only people with the final say may change the lineup.",
     )
-    # The "Edited by <pastor Label> (<name>)" mark: a final-say holder's
-    # latest edit to the lineup while it was confirmed.
-    pastor_edited_at = models.DateTimeField(null=True, blank=True)
-    pastor_edited_by = models.ForeignKey(
+    # The mark: the latest edit to the lineup while it was confirmed. Only
+    # the latest shows: "Edited by <pastor Label> (<name>)" when the editor
+    # had the final say, otherwise "Changed by <name>".
+    edited_at = models.DateTimeField(null=True, blank=True)
+    edited_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="+",
     )
+    edited_with_final_say = models.BooleanField(default=False)
     # Sending back returns the lineup to draft with a note for the leader.
     sent_back_note = models.TextField(blank=True)
     sent_back_at = models.DateTimeField(null=True, blank=True)
@@ -105,8 +107,8 @@ class Lineup(TimeStampedModel):
         return not self.is_confirmed and self.confirmed_at is not None
 
     @property
-    def pastor_edited_by_name(self):
-        return display_name(self.pastor_edited_by)
+    def edited_by_name(self):
+        return display_name(self.edited_by)
 
     @property
     def confirmed_by_name(self):

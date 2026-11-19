@@ -2,6 +2,46 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-19: Phase 6, part A review: the Mark, and adding any pool song
+
+On branch `phase-6-lineups`, after the user reviewed part A.
+
+- **Approved and recorded:** the user approved eight of part A's choices.
+  They are now in [[Design-Decisions]] (Phase 6, "Approved after part A"),
+  the [[workflow-spec]] and the [[Glossary]]:
+  - default permissions come from `DEFAULT_ROLE_PERMISSIONS`;
+  - both the leader and the pastor can save suggestions as the lineup;
+    Office Staff can't see lineups;
+  - locking isn't an edit, and a locked song stays put;
+  - reopening or sending back clears the mark; confirming again clears
+    the note;
+  - a cancelled service's lineup can't be confirmed; a past service's can;
+  - swap and regenerate use the latest finished run;
+  - a never-confirmed draft is a 404 for team members;
+  - leaders see theme notes.
+- **Changed: adding from the pool.** Any pool song can now be added,
+  except one a person marked "Not a worship song". Songs that failed the
+  Worship Check, or were never checked, can be added and show a warning in
+  the review and on the Add page. The team doesn't see the warning.
+- **Changed: the leader's edits are marked.** The leader's edit to a
+  confirmed lineup without the pastor's lock keeps it confirmed and marks
+  it "Changed by <name>", with the time; no lock follows. Only the latest
+  mark shows: the pastor's "Edited by" replaces it, and reopening or
+  sending back clears it.
+- **Model:** the mark is now general: `edited_at`, `edited_by` and
+  `edited_with_final_say` replace `pastor_edited_at` and
+  `pastor_edited_by`. Migration `0006_lineups` was regenerated in place,
+  because it was never applied or pushed.
+- **Notes:**
+  - [[Design-Decisions]];
+  - [[workflow-spec]] (roles, step 10);
+  - [[Glossary]] (Locked Song and Mark added; Pastor's Lock updated);
+  - [[Worship]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 526
+  tests passed (9 more than part A), with 97% coverage (`lineups.py` 99%,
+  the lineup views 97%).
+
 ## 2026-11-19: Phase 6, part A: lineups, review and the final say
 
 Branch `phase-6-lineups`. Built from [[Design-Decisions]] (Phase 6) and

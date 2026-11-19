@@ -1,0 +1,1 @@
+{% load church %}{# A confirmed lineup's latest edit, shown to everyone who can see the lineup. Only the latest mark shows. #}{% if lineup.edited_at %}{% if lineup.edited_with_final_say %}Edited by {% label "pastor" %} ({{ lineup.edited_by_name }}){% else %}Changed by {{ lineup.edited_by_name }}{% endif %}, {{ lineup.edited_at|date:"M j, g:i A" }}{% endif %}

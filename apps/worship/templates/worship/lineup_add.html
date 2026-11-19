@@ -7,7 +7,7 @@
   {% label "lineup" as lineup_word %}
   <a href="{% url 'worship:lineup' public_id=service.public_id %}" class="small text-decoration-none">← {{ lineup_word }}</a>
   <h1 class="h3 mb-1">Add a song from the pool</h1>
-  <p class="text-body-secondary">Songs that passed the worship check. Put it in an empty slot, or at the end.</p>
+  <p class="text-body-secondary">Any song in the pool except those marked as not a worship song. Put it in an empty slot, or at the end.</p>
 
   <form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
     <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 24rem" placeholder="Title or artist" aria-label="Title or artist" maxlength="100">
@@ -18,7 +18,7 @@
     <div class="list-group">
       {% for song in songs %}
         <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
-          <div><span class="fw-semibold">{{ song.title }}</span> <span class="text-body-secondary">· {{ song.artist }}{% if song.feel %} · {{ song.get_feel_display|lower }}{% endif %}</span></div>
+          <div><span class="fw-semibold">{{ song.title }}</span> <span class="text-body-secondary">· {{ song.artist }}{% if song.feel %} · {{ song.get_feel_display|lower }}{% endif %}</span>{% if song.check_warning %}<div class="small text-warning-emphasis">⚠ {{ song.check_warning }}</div>{% endif %}</div>
           <form method="post" class="d-flex gap-2 align-items-center">
             {% csrf_token %}
             <input type="hidden" name="song" value="{{ song.public_id }}">

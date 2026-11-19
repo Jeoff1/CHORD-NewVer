@@ -163,15 +163,41 @@ A lineup is either a **draft** or **confirmed**. There is no other state.
 - The pastor's edits to a draft don't lock the worship leader out.
 - The **pastor's lock** starts when the pastor confirms a lineup, or edits a lineup that is already confirmed. While it holds, the worship leader can't change the lineup. It lasts until the pastor reopens the lineup.
 - If the pastor edits a confirmed lineup, it stays confirmed. It is marked "Edited by <pastor Label> (<person's name>)" with the time, for example "Edited by Pastor (Ana Cruz), Nov 22, 3:15 PM". Everyone who can see the lineup sees the mark. Phase 6 has no notification system; Phase 8 adds notifications (see below).
-- **Reopening:** the pastor can reopen a lineup. A reopened lineup counts as unconfirmed: it is a draft again, and the pastor's lock is lifted. Team members can't see it. Instead they see a note that the lineup is being revised, until it is confirmed again.
-- **Sending back** (review F2) adds no state. Only the pastor can send a lineup back. It returns to draft, with a note for the worship leader. Sending back a confirmed lineup therefore reopens it, and the reopening rules apply.
-- Team members see a lineup only once it is confirmed.
+- If the worship leader edits a confirmed lineup that isn't under the pastor's lock (decided 2026-11-19, after part A), it stays confirmed and is marked "Changed by <person's name>" with the time, shown to everyone who can see the lineup. There is no lock.
+- **Only the latest mark shows.** A later pastor's edit replaces a "Changed by" mark with the "Edited by <pastor Label> (<name>)" mark. Edits to a draft leave no mark.
+- **Locking or unlocking a song isn't an edit:** it leaves no mark and puts on no lock.
+- **Reopening:** the pastor can reopen a lineup. A reopened lineup counts as unconfirmed: it is a draft again, and the pastor's lock and the mark are cleared. Team members can't see it. Instead they see a note that the lineup is being revised, until it is confirmed again.
+- **Sending back** (review F2) adds no state. Only the pastor can send a lineup back. It returns to draft, with a note for the worship leader. Sending back a confirmed lineup therefore reopens it, and the reopening rules apply. Confirming the lineup again clears the note.
+- Team members see a lineup only once it is confirmed. A team member who opens a draft that was never confirmed gets "not found" (404).
+
+### Approved after part A (2026-11-19)
+
+The project owner approved these choices made while building part A:
+
+- **Default permissions** come from `DEFAULT_ROLE_PERMISSIONS` in `apps/accounts/roles.py`, which the post_migrate sync grants on every `migrate`, not from a data migration. Permission rows don't exist while migrations run.
+- **Who has which lineup permission by default:**
+  - Worship Leader: view, save the suggestions as the lineup (`add_lineup`), and change;
+  - Pastoral Staff: the same, plus the final say;
+  - Team Member: view (confirmed lineups only);
+  - Office Staff: none, so they can't see lineups.
+- **Who sees theme notes:** people who can change lineups (`change_lineup`) or themes. Worship leaders therefore see the theme's notes; team members don't (review F5).
+- **A locked song** can't be swapped, moved or removed, and no other song can move into its place, until it is unlocked.
+- **Cancelled and past services:** a cancelled service's lineup can't be confirmed. A past service's lineup can still be edited and confirmed, for example to record what was actually sung.
+- **Swap and regenerate** use the service's latest finished Search Run, which may be newer than the one the lineup was made from.
+
+### Adding a song from the pool (decided 2026-11-19, after part A)
+
+- Any song in the pool can be added, unless a person marked it "Not a worship song". The person's choice wins over the model.
+- A song that failed the Worship Check, or was never checked (for example because LRCLIB had no lyrics), can be added. It shows a small warning in the review, for the people who plan; the team doesn't see the warning.
+
+Tests: an unchecked song and a failed song can be added and show the warning; a song a person marked "Not a worship song" can't be added.
 
 Tests, for every role:
 - The leader can confirm; so can the pastor.
 - The pastor's edits to a draft leave the leader free to edit it.
 - The pastor's confirmation puts on the pastor's lock, and so does the pastor's edit to a lineup the leader confirmed. That edit keeps the lineup confirmed and marks it "Edited by <pastor Label> (<person's name>)" with the time, and everyone who can see the lineup sees the mark.
 - The mark uses the church's `pastor` Label.
+- The leader's edit to a confirmed lineup without the pastor's lock keeps it confirmed and shows "Changed by <name>" with the time to everyone who can see it, team members included, with no lock. A later pastor's edit replaces that mark, and reopening or sending back clears it. Locking or unlocking a song leaves no mark.
 - The leader is blocked while the pastor's lock holds.
 - Reopening by the pastor lifts the lock and makes the lineup a draft: team members see the "being revised" note, not the songs.
 - Sending back returns the lineup to draft, and the leader sees the note. Someone without `worship.finalize_lineup` can't send a lineup back.

@@ -279,7 +279,7 @@ class ReviewActionTests(LineupTestCase):
         self.assertEqual(self.titles(self.lineup)[-1], "Extra")
         self.assertIsNone(self.items(self.lineup)[-1].slot)
 
-    def test_adding_refuses_a_filled_slot_a_same_title_and_a_non_worship_song(self):
+    def test_adding_refuses_a_filled_slot_and_a_same_title(self):
         with self.assertRaisesMessage(LineupRefused, "already has a song"):
             lineups.add_from_pool(
                 self.lineup, accepted_song("New"), self.slots[0], self.leader
@@ -290,16 +290,51 @@ class ReviewActionTests(LineupTestCase):
             )
         with self.assertRaisesMessage(LineupRefused, "already in it"):
             lineups.add_from_pool(self.lineup, self.songs[0], None, self.leader)
-        unchecked = make_song(title="Unchecked")
-        with self.assertRaisesMessage(LineupRefused, "hasn't passed"):
-            lineups.add_from_pool(self.lineup, unchecked, None, self.leader)
+
+    def test_unchecked_and_failed_songs_can_be_added_with_a_warning(self):
+        # The person's choice wins over the model: a song never checked (no
+        # lyrics from LRCLIB) or failed by the model may be added.
+        unchecked = make_song(
+            title="No Lyrics Found", lyrics_status=Song.LyricsStatus.MISSING
+        )
+        failed = make_song(
+            title="Failed By The Model", worship_check=Song.WorshipCheck.REJECTED
+        )
+        for song in (unchecked, failed):
+            lineups.add_from_pool(self.lineup, song, None, self.leader)
+        self.assertEqual(self.titles(self.lineup)[-2:], [unchecked.title, failed.title])
+        self.assertEqual(
+            lineups.check_warning(unchecked), "Not checked as a worship song yet."
+        )
+        self.assertEqual(
+            lineups.check_warning(failed), "Didn't pass the worship check."
+        )
+        self.assertEqual(lineups.check_warning(self.songs[0]), "")
+
+    def test_a_song_a_person_marked_not_worship_cant_be_added(self):
+        marked = make_song(
+            title="Marked By A Person",
+            worship_check=Song.WorshipCheck.REJECTED,
+            reviewed_at=timezone.now(),
+            reviewed_by=self.leader,
+        )
+        with self.assertRaisesMessage(LineupRefused, "marked as not a worship song"):
+            lineups.add_from_pool(self.lineup, marked, None, self.leader)
+        self.assertNotIn("Marked By A Person", self.titles(self.lineup))
+        self.assertEqual(lineups.check_warning(marked), "Marked as not a worship song.")
 
     def test_the_pool_search_offers_only_songs_that_could_be_added(self):
         accepted_song("Song A (Live)")
         accepted_song("Fresh Song")
         make_song(title="Fresh Unchecked")
-        found = [s.title for s in lineups.addable_songs(self.lineup, "fresh")]
-        self.assertEqual(found, ["Fresh Song"])
+        make_song(title="Fresh Failed", worship_check=Song.WorshipCheck.REJECTED)
+        make_song(
+            title="Fresh Marked",
+            worship_check=Song.WorshipCheck.REJECTED,
+            reviewed_at=timezone.now(),
+        )
+        found = sorted(s.title for s in lineups.addable_songs(self.lineup, "fresh"))
+        self.assertEqual(found, ["Fresh Failed", "Fresh Song", "Fresh Unchecked"])
         everything = [s.title for s in lineups.addable_songs(self.lineup)]
         self.assertNotIn("Song A (Live)", everything)
         self.assertNotIn("Song A", everything)
@@ -389,12 +424,45 @@ class FinalSayTests(LineupTestCase):
         self.assertTrue(lineup.is_confirmed)
         self.assertEqual(lineup.confirmed_by, self.leader)
         self.assertFalse(lineup.pastor_locked)
-        # The leader may still change a lineup they confirmed; it stays
-        # confirmed and gets no mark.
-        lineups.move(lineup, self.item("Song A"), 1, self.leader)
-        lineup = self.reload(lineup)
+        self.assertIsNone(lineup.edited_at)
+
+    def test_the_leaders_edit_to_a_confirmed_lineup_is_marked_without_a_lock(self):
+        lineups.confirm(self.lineup, self.leader)
+        before = timezone.now()
+        lineups.move(self.lineup, self.item("Song A"), 1, self.leader)
+        lineup = self.reload(self.lineup)
         self.assertTrue(lineup.is_confirmed)
-        self.assertIsNone(lineup.pastor_edited_at)
+        self.assertEqual(lineup.edited_by, self.leader)
+        self.assertGreaterEqual(lineup.edited_at, before)
+        self.assertFalse(lineup.edited_with_final_say)
+        self.assertFalse(lineup.pastor_locked)
+        # A later edit by the leader replaces the mark's time; still no lock.
+        lineups.set_details(lineup, self.item("Song B"), "D", "", self.leader)
+        self.assertTrue(lineups.may_change(self.reload(lineup), self.leader))
+
+    def test_the_pastors_edit_replaces_the_leaders_mark(self):
+        lineups.confirm(self.lineup, self.leader)
+        lineups.move(self.lineup, self.item("Song A"), 1, self.leader)
+        lineups.move(self.lineup, self.item("Song C"), 1, self.pastor)
+        lineup = self.reload(self.lineup)
+        self.assertEqual(lineup.edited_by, self.pastor)
+        self.assertTrue(lineup.edited_with_final_say)
+        self.assertTrue(lineup.pastor_locked)
+
+    def test_the_leaders_mark_is_cleared_by_reopening_or_sending_back(self):
+        for back_to_draft in (
+            lambda: lineups.reopen(self.lineup, self.pastor),
+            lambda: lineups.send_back(self.lineup, "Another opener", self.pastor),
+        ):
+            lineups.confirm(self.lineup, self.leader)
+            lineups.move(self.lineup, self.item("Song A"), 1, self.leader)
+            self.assertIsNotNone(self.reload(self.lineup).edited_at)
+            lineup = back_to_draft()
+            self.assertIsNone(lineup.edited_at)
+            self.assertIsNone(lineup.edited_by)
+            # Edits to the draft leave no mark.
+            lineups.move(lineup, self.item("Song A"), -1, self.leader)
+            self.assertIsNone(self.reload(lineup).edited_at)
 
     def test_the_pastor_can_confirm_and_that_locks_the_leader_out(self):
         lineup = lineups.confirm(self.lineup, self.pastor)
@@ -408,7 +476,7 @@ class FinalSayTests(LineupTestCase):
         lineups.swap(self.lineup, self.item("Song A"), self.songs[4], self.pastor)
         lineup = self.reload(self.lineup)
         self.assertFalse(lineup.pastor_locked)
-        self.assertIsNone(lineup.pastor_edited_at)
+        self.assertIsNone(lineup.edited_at)
         self.assertTrue(lineups.may_change(lineup, self.leader))
         lineups.move(lineup, self.item("Song E"), 1, self.leader)
 
@@ -420,17 +488,20 @@ class FinalSayTests(LineupTestCase):
         lineups.swap(self.lineup, self.item("Song D"), self.songs[5], self.pastor)
         lineup = self.reload(self.lineup)
         self.assertTrue(lineup.is_confirmed)
-        self.assertEqual(lineup.pastor_edited_by, self.pastor)
-        self.assertGreaterEqual(lineup.pastor_edited_at, before)
-        self.assertEqual(lineup.pastor_edited_by_name, "Ana Cruz")
+        self.assertEqual(lineup.edited_by, self.pastor)
+        self.assertGreaterEqual(lineup.edited_at, before)
+        self.assertEqual(lineup.edited_by_name, "Ana Cruz")
+        self.assertTrue(lineup.edited_with_final_say)
         self.assertTrue(lineup.pastor_locked)
         self.assert_leader_blocked()
 
     def test_locking_a_song_isnt_an_edit(self):
         lineups.confirm(self.lineup, self.leader)
-        lineups.set_locked(self.lineup, self.item("Song A"), True, self.pastor)
+        for user in (self.pastor, self.leader):
+            lineups.set_locked(self.lineup, self.item("Song A"), True, user)
+            lineups.set_locked(self.lineup, self.item("Song A"), False, user)
         lineup = self.reload(self.lineup)
-        self.assertIsNone(lineup.pastor_edited_at)
+        self.assertIsNone(lineup.edited_at)
         self.assertFalse(lineup.pastor_locked)
 
     def test_reopening_lifts_the_lock_and_makes_a_draft(self):
@@ -439,7 +510,7 @@ class FinalSayTests(LineupTestCase):
         lineup = lineups.reopen(self.lineup, self.pastor)
         self.assertEqual(lineup.status, Lineup.Status.DRAFT)
         self.assertFalse(lineup.pastor_locked)
-        self.assertIsNone(lineup.pastor_edited_at)
+        self.assertIsNone(lineup.edited_at)
         self.assertTrue(lineup.is_being_revised)
         self.assertFalse(lineups.visible_to(lineup, self.team_member))
         self.assertTrue(lineups.may_change(lineup, self.leader))
