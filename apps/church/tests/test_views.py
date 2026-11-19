@@ -49,6 +49,8 @@ def labels_data(**overrides):
         "sermon__plural": "Homilies",
         "lineup__singular": "Lineup",
         "lineup__plural": "Lineups",
+        "pastor__singular": "Pastor",
+        "pastor__plural": "Pastors",
     }
     data.update(overrides)
     return data

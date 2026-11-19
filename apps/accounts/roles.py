@@ -58,6 +58,12 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.suggest_songs",
         "worship.view_searchrun",
         "worship.view_season",
+        # Lineups (Phase 6): the final say is a permission, never a role
+        # name (decision 0008)
+        "worship.view_lineup",
+        "worship.add_lineup",
+        "worship.change_lineup",
+        "worship.finalize_lineup",
     ],
     "worship_leader": [
         "members.view_member",
@@ -86,10 +92,16 @@ DEFAULT_ROLE_PERMISSIONS = {
         # Phase 5 smoke-test fixes
         "songs.view_worshipchecksettings",
         "songs.change_worshipchecksettings",
+        # Lineups (Phase 6)
+        "worship.view_lineup",
+        "worship.add_lineup",
+        "worship.change_lineup",
     ],
     "team_member": [
         # Worship schedule (Phase 3)
         "worship.view_worshipservice",
+        # Lineups (Phase 6): confirmed lineups only
+        "worship.view_lineup",
     ],
 }
 

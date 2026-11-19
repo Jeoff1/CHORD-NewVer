@@ -29,7 +29,8 @@ of the core and can't be switched off. App: `apps/church`.
   - `ModuleRequiredMixin` returns 404 for a switched-off Module's pages.
   - The navigation and dashboard show only switched-on Modules. Data is
     never deleted when a Module is switched off.
-- **Labels** (`labels.py`): member, worship service, sermon and lineup.
+- **Labels** (`labels.py`): member, worship service, sermon, lineup and
+  pastor (the people with the final say on a lineup; added in Phase 6).
   - Each has a neutral default singular and plural, which the church can
     edit.
   - Use them in templates with `{% load church %}{% label "sermon" %}`

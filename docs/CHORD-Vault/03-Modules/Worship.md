@@ -224,6 +224,54 @@ Spotify safeguards in `apps/songs`):
   ranking, labels, versions, placement, seasons;
   `test_suggesting.py`, `test_suggestion_views.py`).
 
+Built in Phase 6, part A (2026-11-19), **lineups** ([[Design-Decisions]],
+Phase 6; [[0008-final-say-permission]]):
+
+- **Lineup** (`models/lineups.py`, one per service): draft or confirmed,
+  the Search Run it came from, who confirmed it and when (kept when it is
+  reopened, so the team knows it is being revised), the **pastor's lock**,
+  the "Edited by" mark (who and when), and the send-back note (who and
+  when). **Lineup Item**: song, slot, order, **Service Key** (12 major and
+  12 minor keys, `apps/core/music.py`), notes, the reasons it was
+  suggested, and a lock on the song. One item per song per lineup.
+- **The rules** (`lineups.py`):
+  - "Save these songs as the lineup" in the suggestions panel copies the
+    run's placed songs, in slot order, with their reasons. The lineup is
+    its own copy: one-click corrections, `place_again` and new Worship
+    Checks change the run, never the lineup (workflow review F4).
+  - Review: **swap** for a ranked alternative from the latest finished run
+    (the slot and place stay; the key and notes go); **lock** a song (it
+    isn't swapped, moved, removed or regenerated until unlocked);
+    **reorder** (two songs trade places and slots, so slots stay in service
+    order); **remove** (the slot is left empty); **add from the pool**
+    (songs that passed the Worship Check, into an empty slot or at the
+    end); **key and notes**; **regenerate** from the latest run around the
+    locked songs. A lineup never holds two songs with the same base title.
+  - Confirmation: the worship leader (`change_lineup`) or anyone with the
+    final say (`finalize_lineup`). The pastor's confirmation, or edit to a
+    confirmed lineup, puts on the pastor's lock: people without the final
+    say can't change it until it is reopened. The pastor's edits to a draft
+    don't lock anyone out. The pastor's edit to a confirmed lineup marks it
+    "Edited by <pastor Label> (<name>)" with the time, shown to everyone who
+    can see it. Locking a song isn't an edit.
+  - Reopening (final say only) makes the lineup a draft and lifts the lock
+    and the mark. Sending back (final say only, a note required) is the
+    same, with the note for the leader; confirming again clears the note.
+  - Visibility: people who plan (`change_lineup` or `finalize_lineup`) see
+    drafts; team members (`view_lineup`) see a lineup only once it is
+    confirmed, and a reopened one only as "being revised"; a draft that was
+    never confirmed doesn't exist for them (404).
+  - A cancelled or past service gets no suggestions and no new lineup, and
+    a cancelled service's lineup can't be confirmed (workflow review F7).
+- **Screens**: the lineup page (`/worship/services/<id>/lineup/`), the swap
+  page, Add a song (search the pool), Key and notes, and Send back; a
+  lineup card on the service page. Every change is in the audit trail
+  (status, songs with slots and keys, song notes, the lock, the note).
+- Tests: `test_lineup_rules.py` (each rule, F4, F7, the default roles) and
+  `test_lineup_views.py` (every role by page and by URL, each review
+  action, the mark and its Label, F4 through the one-click corrections, F5
+  theme notes, F7, audit, the Module switched off).
+
 ## Permissions
 
 | Permission                                   | Allows                                   |
@@ -243,15 +291,22 @@ Spotify safeguards in `apps/songs`):
 | `worship.change_suggestionsettings`          | Suggestion settings                      |
 | `songs.change_worshipchecksettings`          | Worship check settings                   |
 | `worship.suggest_songs` and `songs.change_song` | One-click corrections in the panel    |
+| `worship.view_lineup`                        | Seeing a confirmed lineup                |
+| `worship.add_lineup` and `worship.suggest_songs` | Saving the suggestions as the lineup |
+| `worship.change_lineup`                      | Seeing drafts; reviewing and confirming; seeing theme notes |
+| `worship.finalize_lineup`                    | The final say: the pastor's lock, reopening, sending back (decision 0008) |
 
 Default roles ([[Accounts]]):
 - **Pastoral Staff** schedule services, post themes, record headcounts and
-  manage templates and series; they see songs, theme tags and seasons, and
-  ask for song suggestions.
+  manage templates and series; they see songs, theme tags and seasons, ask
+  for song suggestions, review and confirm lineups, and hold the final say
+  (`finalize_lineup`).
 - **Worship Leader** sees the schedule, manages the song pool, theme tags,
   trusted artists, the worship check, seasons and suggestion settings, asks
-  for song suggestions and corrects them in one click.
-- **Team Member** sees the schedule, never suggestions.
+  for song suggestions and corrects them in one click, and makes, reviews
+  and confirms lineups.
+- **Team Member** sees the schedule and confirmed lineups, never
+  suggestions or drafts.
 - **Office Staff** see the schedule and record headcounts.
 
 ## Church settings this module depends on
@@ -265,7 +320,8 @@ Default roles ([[Accounts]]):
 - Suggestion Settings: search genres, phrases per theme, pages per
   phrase, market, ranking weights, feel mismatch weight, repeat window,
   ranked songs kept
-- The "worship service", "sermon" and "lineup" Labels
+- The "worship service", "sermon", "lineup" and "pastor" Labels
+- Who holds the final say: whichever Roles hold `worship.finalize_lineup`
 - The church's time zone (Church Profile)
 - Installation settings in `.env`: `SPOTIFY_CLIENT_ID`,
   `SPOTIFY_CLIENT_SECRET`, `ML_ENGINE`, `ML_MODELS_DIR`,

@@ -42,6 +42,8 @@
         </div>
       </div>
 
+      {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
+
       {% if can_suggest %}{% include "worship/includes/suggestions.html" %}{% endif %}
 
       {% if service.notes %}

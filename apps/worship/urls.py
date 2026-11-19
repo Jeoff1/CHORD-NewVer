@@ -4,7 +4,7 @@ from apps.core.setting_lists import SettingList, setting_list_urls
 
 from .forms import SeasonForm
 from .models import Season, SermonSeries
-from .views import schedule, suggestions
+from .views import lineups, schedule, suggestions
 from .views.base import settings_nav
 
 app_name = "worship"
@@ -108,6 +108,57 @@ urlpatterns = [
         "services/<uuid:public_id>/suggestions/<int:pk>/not-worship/",
         suggestions.NotWorshipView.as_view(),
         name="suggestion_not_worship",
+    ),
+    # The lineup
+    path(
+        "services/<uuid:public_id>/lineup/",
+        lineups.LineupView.as_view(),
+        name="lineup",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/new/",
+        lineups.LineupCreateView.as_view(),
+        name="lineup_create",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/add/",
+        lineups.AddSongView.as_view(),
+        name="lineup_add",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/regenerate/",
+        lineups.RegenerateView.as_view(),
+        name="lineup_regenerate",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/confirm/",
+        lineups.ConfirmView.as_view(),
+        name="lineup_confirm",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/reopen/",
+        lineups.ReopenView.as_view(),
+        name="lineup_reopen",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/send-back/",
+        lineups.SendBackView.as_view(),
+        name="lineup_send_back",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/songs/<int:pk>/swap/",
+        lineups.SwapView.as_view(),
+        name="lineup_swap",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/songs/<int:pk>/edit/",
+        lineups.ItemDetailsView.as_view(),
+        name="lineup_item",
+    ),
+    path(
+        "services/<uuid:public_id>/lineup/songs/<int:pk>/<slug:action>/",
+        lineups.ItemActionView.as_view(),
+        name="lineup_item_action",
     ),
     # Settings
     path(

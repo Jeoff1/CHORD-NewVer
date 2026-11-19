@@ -67,9 +67,27 @@ class RunFailed(Exception):
 # --- Queue -------------------------------------------------------------------
 
 
+def planning_closed(service):
+    """Why songs can't be planned for ``service`` any more, or "" when they
+    can: a cancelled or past service gets no suggestions and no new lineup
+    (workflow review F7)."""
+    from apps.church.models import ChurchProfile
+
+    if not (service.is_cancelled or service.has_started):
+        return ""
+    word = ChurchProfile.load().label_set.get("worship_service").lower()
+    if service.is_cancelled:
+        return f"This {word} is cancelled, so no songs are planned for it."
+    return f"This {word} has already taken place, so no songs are planned for it."
+
+
 def request_run(service, user, *, use_spotify=True):
-    """Queue a Search Run for ``service``. Refused without a theme, or while
-    another run for the service is waiting or running."""
+    """Queue a Search Run for ``service``. Refused for a cancelled or past
+    service, without a theme, or while another run for the service is
+    waiting or running."""
+    closed = planning_closed(service)
+    if closed:
+        raise RunRefused(closed)
     if service.posted_theme is None:
         raise RunRefused("Post the service's theme first: suggestions start from it.")
     with transaction.atomic():
@@ -339,7 +357,7 @@ def _rank(run, theme_vector, options, engine):
     placements = {
         p.index: p
         for p in sequencing.place(
-            kept, service.template.slots.all(), feel_weight=_feel_weight(run)
+            kept, service.template.slots.all(), feel_weight=feel_weight(run)
         )
     }
     rows = []
@@ -368,7 +386,7 @@ def _rank(run, theme_vector, options, engine):
     return kept
 
 
-def _feel_weight(run):
+def feel_weight(run):
     """The feel weight the run used (runs before it existed had none)."""
     return (run.weights or {}).get("feel", SuggestionSettings().weight_feel)
 
@@ -384,7 +402,7 @@ def place_again(run):
     placements = {
         p.index: p
         for p in sequencing.place(
-            candidates, run.service.template.slots.all(), feel_weight=_feel_weight(run)
+            candidates, run.service.template.slots.all(), feel_weight=feel_weight(run)
         )
     }
     for suggestion in suggestions:

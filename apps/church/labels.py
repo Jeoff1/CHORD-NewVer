@@ -41,6 +41,12 @@ LABEL_DEFINITIONS = (
         "Lineups",
         "The songs chosen for a worship service, e.g. Lineup, Set List, Song List.",
     ),
+    LabelDefinition(
+        "pastor",
+        "Pastor",
+        "Pastors",
+        "The people with the final say on a lineup, e.g. Pastor, Minister, Elder.",
+    ),
 )
 
 LABELS_BY_KEY = {label.key: label for label in LABEL_DEFINITIONS}

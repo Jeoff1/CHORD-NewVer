@@ -30,8 +30,9 @@ from ..forms import (
     TemplateForm,
     ThemeForm,
 )
-from ..models import ServiceTemplate, Theme, WorshipService
+from ..models import Lineup, ServiceTemplate, Theme, WorshipService
 from .base import ServiceMixin, WorshipMixin, can_plan, service_url, settings_nav
+from .lineups import lineup_context
 from .suggestions import can_suggest, panel_context
 
 # --- Services ----------------------------------------------------------------
@@ -120,6 +121,11 @@ class ServiceDetailView(ServiceMixin, DetailView):
         # songs get them, never team members.
         if context["can_suggest"]:
             context.update(panel_context(service, user))
+        # The lineup itself: team members get it only once it is confirmed.
+        if user.has_perm("worship.view_lineup"):
+            context.update(
+                lineup_context(Lineup.objects.filter(service=service).first(), user)
+            )
         return context
 
 

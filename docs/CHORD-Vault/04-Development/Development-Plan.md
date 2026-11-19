@@ -36,7 +36,7 @@ flowchart LR
 | 3     | Worship schedule and themes   | M    | 1          | Done (2026-11-17) |
 | 4     | Song pool                     | M    | 3          | Done (2026-11-17) |
 | 5     | Song suggestions              | L    | 4          | Done (2026-11-18) |
-| 6     | Lineups and reports           | L    | 5          | Next              |
+| 6     | Lineups and reports           | L    | 5          | In progress       |
 | 7     | Song pages: chords and playback | L  | 6          | Not started       |
 | 8     | Teams and announcements       | M    | 6          | Not started       |
 | 9     | Learning to rank              | S    | 6          | Not started       |
@@ -297,17 +297,17 @@ From the first live smoke test ([[Design-Decisions]], Phase 5 follow-up):
 Goal: review, confirmation and what follows from it (pipeline stage 10 and
 the data for stage 11).
 
-- [ ] **Lineup** and **Lineup Item**: slot, order, service key, notes, the
+- [x] **Lineup** and **Lineup Item**: slot, order, service key, notes, the
   reason it was suggested, and a lock on a song (kept in place when the
   lineup is regenerated). A lineup is a draft or confirmed; there is no
   other state.
-- [ ] Review: swap from ranked alternatives, lock, reorder, remove, add
+- [x] Review: swap from ranked alternatives, lock, reorder, remove, add
   from the pool, regenerate around locked songs.
-- [ ] **Final say** ([[0008-final-say-permission]]): the permission
+- [x] **Final say** ([[0008-final-say-permission]]): the permission
   `worship.finalize_lineup`, held by Pastoral Staff by default and by the
   Administrator, like every permission. Code checks the permission, never a
   role name. A new church Label, `pastor` (default "Pastor").
-- [ ] Confirmation: the worship leader or the pastor (a holder of
+- [x] Confirmation: the worship leader or the pastor (a holder of
   `worship.finalize_lineup`) confirms.
   - the pastor's edits to a draft don't lock the worship leader out;
   - the **pastor's lock** starts when the pastor confirms a lineup, or
@@ -321,9 +321,11 @@ the data for stage 11).
   - only the pastor can send a lineup back: it returns to draft with a note
     for the worship leader. It adds no state; sending back a confirmed
     lineup reopens it.
-- [ ] The team sees a lineup only once it is confirmed. While a lineup
+- [x] The team sees a lineup only once it is confirmed. While a lineup
   that was confirmed is a draft again, they see a note that it is being
   revised.
+- [x] No suggestions and no new lineup for a cancelled or past service
+  (workflow review F7).
 - [ ] **Suggestion Feedback**: every kept, swapped and removed suggestion.
 - [ ] Usage: `ranking.song_usage()` reads confirmed lineups, so
   familiarity and recency start counting. Usage is computed, not stored.

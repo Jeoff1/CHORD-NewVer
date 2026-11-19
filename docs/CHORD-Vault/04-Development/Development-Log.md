@@ -2,6 +2,61 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-19: Phase 6, part A: lineups, review and the final say
+
+Branch `phase-6-lineups`. Built from [[Design-Decisions]] (Phase 6) and
+[[0008-final-say-permission]], with findings F4, F5 and F7 of the
+[[2026-11-19-Workflow-Review]].
+
+- **Models** (migration `worship/0006_lineups`):
+  - Lineup: draft or confirmed, the source run, the latest confirmation,
+    the pastor's lock, the "Edited by" mark, and the send-back note;
+  - Lineup Item: song, slot, order, Service Key, notes, reasons and a lock;
+  - the permissions `view_lineup`, `add_lineup`, `change_lineup` and
+    `finalize_lineup`.
+- **Rules** (`apps/worship/lineups.py`):
+  - save the reviewed suggestions as the lineup (its own copy, F4);
+  - swap, lock, reorder, remove, add from the pool, key and notes, and
+    regenerate around locked songs; never two songs with the same title;
+  - confirm, the pastor's lock, the mark, reopen and send back, all
+    checked against `finalize_lineup`, never a role name.
+- **F7:** a cancelled or past service gets no suggestions
+  (`suggesting.planning_closed`) and no new lineup. A cancelled service's
+  lineup can't be confirmed.
+- **F5:** `can_plan`'s `change_lineup` now exists. The worship leader now
+  sees theme notes; team members still don't.
+- **Default roles:**
+  - Pastoral Staff: view, add, change and finalize;
+  - Worship Leader: view, add and change;
+  - Team Member: view.
+
+  Granted through `DEFAULT_ROLE_PERMISSIONS`, which the post_migrate sync
+  applies on every `migrate` (the project's way of granting new
+  permissions; see `accounts/migrations/0003`).
+- **Labels:** a new `pastor` Label (default "Pastor").
+- **Screens:**
+  - the lineup page, swap, Add a song, Key and notes, and Send back;
+  - a lineup card on the service page;
+  - in the suggestions panel, "Save these songs as the lineup". The
+    panel hides "Find songs" for cancelled or past services.
+- **Other changes:**
+  - `suggesting._feel_weight` became `feel_weight`, so regenerating uses
+    the run's feel weight;
+  - a new test builder, `make_search_run`;
+  - the church tests' Label data now includes the `pastor` Label.
+- **Notes:**
+  - [[Worship]] (lineups, permissions, roles, settings);
+  - [[Church-Setup]] (Labels);
+  - [[Accounts]];
+  - [[Glossary]] (Service Key);
+  - [[Code-Conventions]] (builder);
+  - [[Development-Plan]] (part A ticked; Phase 6 in progress; F7 added);
+  - [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 517
+  tests passed (73 new), with 97% coverage (`lineups.py` 99%, the lineup
+  views 96%).
+
 ## 2026-11-19: workflow review; Phase 6 lineup decisions
 
 - **Review:** [[2026-11-19-Workflow-Review]] reviewed the code on `master`

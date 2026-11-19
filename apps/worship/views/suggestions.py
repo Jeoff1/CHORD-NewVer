@@ -24,7 +24,7 @@ from apps.songs.spotify import block_message, current_block
 
 from .. import suggesting
 from ..forms import SuggestionSettingsForm
-from ..models import Suggestion, SuggestionSettings
+from ..models import Lineup, SearchRun, Suggestion, SuggestionSettings
 from .base import ServiceMixin, WorshipMixin, settings_nav
 
 SUGGEST = "worship.suggest_songs"
@@ -59,7 +59,21 @@ def panel_context(service, user):
     placed, others = suggesting.results(run) if run else ([], [])
     block = current_block()
     theme = service.posted_theme
+    closed = suggesting.planning_closed(service)
+    lineup = Lineup.objects.filter(service=service).first()
     return {
+        "planning_closed": closed,
+        "existing_lineup": lineup,
+        # The reviewed suggestions can become the lineup once (F7: not for a
+        # cancelled or past service).
+        "can_make_lineup": (
+            user.has_perm("worship.add_lineup")
+            and lineup is None
+            and not closed
+            and bool(placed)
+            and run is not None
+            and run.status == SearchRun.Status.DONE
+        ),
         "run": run,
         "placed": placed,
         "others": others,

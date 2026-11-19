@@ -140,6 +140,8 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
     seeded template
   - `make_theme(service=None, **fields)`
   - `make_song(tags=(), **fields)`: a song with a unique Spotify ID
+  - `make_search_run(service, songs, placed=None)`: a finished Search Run
+    that ranked `songs` in order, the first ones placed one per slot
   - `TEST_PASSWORD`
   - `close_file_response(response)`: closes a file download in a test
     without also closing the test database connection.

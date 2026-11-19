@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}{% label "lineup" %} · {{ service }}{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}{% label "pastor" as pastor_word %}{% label "pastor" plural=True as pastors_word %}
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+      <a href="{% url 'worship:service' public_id=service.public_id %}" class="small text-decoration-none">← {{ service }}</a>
+      <h1 class="h3 mb-1">{{ lineup_word }}</h1>
+      {% if lineup_visible %}
+        <span class="badge {% if lineup.is_confirmed %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ lineup.get_status_display }}</span>
+        {% if lineup.pastor_locked and sees_lineup_drafts %}<span class="badge text-bg-warning">Locked by the {{ pastor_word|lower }}</span>{% endif %}
+      {% endif %}
+    </div>
+    {% if lineup_visible %}
+      <div class="d-flex flex-wrap gap-2">
+        {% if can_confirm_lineup %}
+          <form method="post" action="{% url 'worship:lineup_confirm' public_id=service.public_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary">Confirm</button>
+          </form>
+        {% endif %}
+        {% if has_final_say and lineup.is_confirmed %}
+          <form method="post" action="{% url 'worship:lineup_reopen' public_id=service.public_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary">Reopen</button>
+          </form>
+        {% endif %}
+        {% if has_final_say %}
+          <a href="{% url 'worship:lineup_send_back' public_id=service.public_id %}" class="btn btn-outline-secondary">Send back</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not lineup_visible %}
+    {# A team member, and a lineup that was confirmed is a draft again. #}
+    <div class="alert alert-info">This {{ lineup_word|lower }} is being revised. It shows here again once it is confirmed.</div>
+  {% else %}
+    {% if lineup.pastor_edited_at %}
+      <p class="alert alert-warning py-2 small">Edited by {{ pastor_word }} ({{ lineup.pastor_edited_by_name }}), {{ lineup.pastor_edited_at|date:"M j, g:i A" }}</p>
+    {% endif %}
+    {% if lineup.is_confirmed %}
+      <p class="small text-body-secondary">Confirmed by {{ lineup.confirmed_by_name }}, {{ lineup.confirmed_at|date:"M j, g:i A" }}.</p>
+    {% elif lineup.is_being_revised %}
+      <p class="small text-body-secondary">Reopened: the team sees that it is being revised until it is confirmed again.</p>
+    {% endif %}
+    {% if lineup.sent_back_note and sees_lineup_drafts %}
+      <div class="alert alert-info small">
+        <div class="fw-semibold">Sent back by {{ lineup.sent_back_by_name }}, {{ lineup.sent_back_at|date:"M j, g:i A" }}</div>
+        {{ lineup.sent_back_note|linebreaksbr }}
+      </div>
+    {% endif %}
+    {% if lineup.pastor_locked and sees_lineup_drafts and not can_change_lineup %}
+      <p class="small text-body-secondary">The {{ pastor_word|lower }} has the final say on this {{ lineup_word|lower }}: only {{ pastors_word|lower }} can change it until it is reopened.</p>
+    {% endif %}
+
+    <ol class="list-group list-group-numbered mb-3">
+      {% for item in lineup_items %}
+        <li class="list-group-item d-flex gap-2">
+          <div class="ms-1 flex-grow-1">
+            {% if item.slot %}<div class="small text-body-secondary">{{ item.slot.name }}{% if item.slot.feel %} ({{ item.slot.get_feel_display|lower }}){% endif %}</div>{% endif %}
+            <div class="fw-semibold">
+              {% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=item.song.public_id %}">{{ item.song.title }}</a>{% else %}{{ item.song.title }}{% endif %}
+              <span class="fw-normal text-body-secondary">· {{ item.song.artist }}</span>
+              {% if item.key %}<span class="badge text-bg-light border ms-1">Key {{ item.key }}</span>{% endif %}
+              {% if item.locked and sees_lineup_drafts %}<span class="badge text-bg-secondary ms-1">Locked</span>{% endif %}
+            </div>
+            {% if item.notes %}<div class="small">{{ item.notes|linebreaksbr }}</div>{% endif %}
+            {% if sees_lineup_drafts and item.reasons %}
+              <ul class="small text-body-secondary mb-1 ps-3">{% for reason in item.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+            {% endif %}
+            {% if can_change_lineup %}
+              <div class="d-flex flex-wrap gap-1 mt-1">
+                {% if not item.locked %}<a href="{% url 'worship:lineup_swap' public_id=service.public_id pk=item.pk %}" class="btn btn-sm btn-outline-secondary py-0">Swap</a>{% endif %}
+                <a href="{% url 'worship:lineup_item' public_id=service.public_id pk=item.pk %}" class="btn btn-sm btn-outline-secondary py-0">Key and notes</a>
+                <form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action=item.locked|yesno:'unlock,lock' %}">
+                  {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary py-0">{{ item.locked|yesno:"Unlock,Lock" }}</button>
+                </form>
+                {% if not item.locked %}
+                  {% if not forloop.first %}
+                    <form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action='up' %}">
+                      {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary py-0" aria-label="Move {{ item.song.title }} up">↑</button>
+                    </form>
+                  {% endif %}
+                  {% if not forloop.last %}
+                    <form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action='down' %}">
+                      {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary py-0" aria-label="Move {{ item.song.title }} down">↓</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action='remove' %}" onsubmit="return confirm('Remove {{ item.song.title|escapejs }}?')">
+                    {% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger py-0">Remove</button>
+                  </form>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-body-secondary">No songs yet.</li>
+      {% endfor %}
+    </ol>
+
+    {% if can_change_lineup %}
+      {% if open_slots %}<p class="small text-body-secondary">Empty slots: {{ open_slots|join:", " }}.</p>{% endif %}
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'worship:lineup_add' public_id=service.public_id %}" class="btn btn-outline-primary">Add a song from the pool</a>
+        <form method="post" action="{% url 'worship:lineup_regenerate' public_id=service.public_id %}" onsubmit="return confirm('Choose the unlocked songs again from the latest suggestions?')">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-secondary">Regenerate around locked songs</button>
+        </form>
+      </div>
+    {% endif %}
+  {% endif %}
+{% endblock %}

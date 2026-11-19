@@ -7,6 +7,7 @@ from django.forms import inlineformset_factory
 from apps.songs.models import ThemeTag
 
 from .models import (
+    LineupItem,
     Season,
     SermonSeries,
     ServiceTemplate,
@@ -226,3 +227,22 @@ class SeasonForm(forms.ModelForm):
                 "run over the new year.",
             )
         return cleaned
+
+
+class LineupItemForm(forms.ModelForm):
+    """A lineup song's service key and notes."""
+
+    class Meta:
+        model = LineupItem
+        fields = ["key", "notes"]
+        widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
+        help_texts = {"notes": "For the team, e.g. who starts it or a repeat."}
+
+
+class SendBackForm(forms.Form):
+    note = forms.CharField(
+        label="Note for the worship leader",
+        widget=forms.Textarea(attrs={"rows": 3}),
+        max_length=2000,
+        help_text="What should change.",
+    )

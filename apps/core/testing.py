@@ -203,6 +203,40 @@ def make_song(*, tags=(), **fields):
     return song
 
 
+def make_search_run(service, songs, *, placed=None):
+    """A finished Search Run for ``service`` that ranked ``songs`` in order.
+    The first ``placed`` songs (default: one per slot) are placed in the
+    template's slots in order; the rest are other choices."""
+    from django.utils import timezone
+
+    from apps.worship.models import SearchRun, Suggestion
+
+    slots = list(service.template.slots.all())
+    placed = len(slots) if placed is None else placed
+    run = SearchRun.objects.create(
+        service=service,
+        status=SearchRun.Status.DONE,
+        message="Ranked songs from the pool.",
+        started_at=timezone.now(),
+        finished_at=timezone.now(),
+    )
+    for rank, song in enumerate(songs, 1):
+        slot = slots[rank - 1] if rank <= min(placed, len(slots)) else None
+        Suggestion.objects.create(
+            run=run,
+            song=song,
+            rank=rank,
+            score=round(1 - rank / 100, 4),
+            relevance=1.0,
+            familiarity=0,
+            season=0,
+            recency=0,
+            slot=slot,
+            reasons=[f"Reason for {song.title}."],
+        )
+    return run
+
+
 def close_file_response(response):
     """Close a FileResponse in a test without closing the test database.
 

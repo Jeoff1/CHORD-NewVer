@@ -5,7 +5,7 @@
   <div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
       <h2 class="h5 mb-0">Suggested {{ lineup_word|lower }}</h2>
-      {% if service.posted_theme and not run.is_active %}
+      {% if service.posted_theme and not run.is_active and not planning_closed %}
         <form method="post" action="{% url 'worship:suggest' public_id=service.public_id %}" class="d-flex flex-wrap gap-2">
           {% csrf_token %}
           {% if spotify_ready %}<button type="submit" name="source" value="spotify" class="btn btn-sm btn-primary">{% if run %}Find songs again{% else %}Find songs{% endif %}</button>{% endif %}
@@ -15,6 +15,7 @@
     </div>
     <p class="small text-body-secondary">Seen only by people who plan the {{ service_word|lower }}; the team sees the {{ lineup_word|lower }} once it is confirmed.</p>
 
+    {% if planning_closed %}<div class="alert alert-secondary small">{{ planning_closed }}</div>{% endif %}
     {% if block_message %}<div class="alert alert-warning small">{{ block_message }}</div>{% endif %}
     {% if not spotify_configured %}<p class="small text-body-secondary">Spotify isn't set up, so suggestions rank the songs already in the pool.</p>{% endif %}
     {% if theme_needs_notes %}
@@ -37,6 +38,15 @@
       <div class="alert alert-danger mb-0">{{ run.message }}</div>
     {% else %}
       <p class="small text-body-secondary">{{ run.message }}</p>
+      {% if can_make_lineup %}
+        <form method="post" action="{% url 'worship:lineup_create' public_id=service.public_id %}" class="mb-3">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-primary">Save these songs as the {{ lineup_word|lower }}</button>
+          <span class="small text-body-secondary ms-1">as a draft; you can still swap, reorder and add songs.</span>
+        </form>
+      {% elif existing_lineup %}
+        <p class="small mb-3">The {{ lineup_word|lower }} is saved; changes here don't alter it. <a href="{% url 'worship:lineup' public_id=service.public_id %}">Open the {{ lineup_word|lower }}</a>.</p>
+      {% endif %}
       {% if placed %}
         <ol class="list-group list-group-numbered mb-3">
           {% for suggestion in placed %}

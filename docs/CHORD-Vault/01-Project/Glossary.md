@@ -182,6 +182,12 @@ with the "lineup" Label (Set List, Song List). A Lineup is a draft or
 confirmed; the team sees it only once it is confirmed.
 _Avoid_: setlist, worship plan, playlist (a playlist is on Spotify)
 
+**Service Key**:
+The key a Lineup's song is sung in at that Worship Service, kept on the
+song's place in the Lineup. Chord sheets keep only the song's original key
+and are transposed to the Service Key when shown.
+_Avoid_: song key (that is the original key)
+
 **Final Say**:
 The permission `worship.finalize_lineup`, held by the Pastoral Staff role
 by default (and by the Administrator). Its holders, called "the pastor" in

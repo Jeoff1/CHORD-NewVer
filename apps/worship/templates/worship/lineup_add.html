@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Add a song{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}
+  <a href="{% url 'worship:lineup' public_id=service.public_id %}" class="small text-decoration-none">← {{ lineup_word }}</a>
+  <h1 class="h3 mb-1">Add a song from the pool</h1>
+  <p class="text-body-secondary">Songs that passed the worship check. Put it in an empty slot, or at the end.</p>
+
+  <form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
+    <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 24rem" placeholder="Title or artist" aria-label="Title or artist" maxlength="100">
+    <button type="submit" class="btn btn-primary">Search</button>
+  </form>
+
+  {% if songs is not None %}
+    <div class="list-group">
+      {% for song in songs %}
+        <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div><span class="fw-semibold">{{ song.title }}</span> <span class="text-body-secondary">· {{ song.artist }}{% if song.feel %} · {{ song.get_feel_display|lower }}{% endif %}</span></div>
+          <form method="post" class="d-flex gap-2 align-items-center">
+            {% csrf_token %}
+            <input type="hidden" name="song" value="{{ song.public_id }}">
+            <select name="slot" class="form-select form-select-sm" aria-label="Slot for {{ song.title }}">
+              {% for slot in open_slots %}<option value="{{ slot.pk }}">{{ slot }}</option>{% endfor %}
+              <option value="">At the end, without a slot</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
+          </form>
+        </div>
+      {% empty %}
+        <div class="list-group-item text-body-secondary">No song in the pool matches "{{ q }}".</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

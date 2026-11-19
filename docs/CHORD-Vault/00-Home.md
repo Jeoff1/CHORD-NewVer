@@ -25,10 +25,16 @@ development task.
   the people who plan the service. After the first smoke test (2026-11-18):
   fixed match labels, feel as a placement preference with one-click
   corrections, the church's worship check rules, and one version of each
-  song.
+  song;
+- [[Worship]]'s lineups (Phase 6, part A, 2026-11-19): a lineup saved from
+  the reviewed suggestions as its own copy; swap, lock, reorder, remove,
+  add from the pool and regenerate; confirmation by the worship leader or
+  the pastor, whose final say is the permission `worship.finalize_lineup`
+  ([[0008-final-say-permission]]); reopening and sending back. Team
+  members see a lineup only once it is confirmed.
 
-**Next:** Phase 6 (Lineups and reports) of the [[Development-Plan]], with
-the Phase 6 items in [[Design-Decisions]].
+**Next:** Phase 6, part B, of the [[Development-Plan]]: Suggestion
+Feedback, song usage from confirmed lineups, and the reports.
 
 ## Project
 

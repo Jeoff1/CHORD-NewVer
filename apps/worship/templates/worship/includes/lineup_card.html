@@ -1,0 +1,27 @@
+{% load church %}
+{# The service's lineup on the service page. Team members see it only once it is confirmed; a lineup that was confirmed and is a draft again shows them a note instead. #}
+{% label "lineup" as lineup_word %}{% label "pastor" as pastor_word %}
+{% if lineup and lineup_visible or lineup and lineup_revising %}
+  <div id="lineup" class="card shadow-sm mb-3">
+    <div class="card-body">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+        <h2 class="h5 mb-0">{{ lineup_word }}
+          {% if lineup_visible %}<span class="badge {% if lineup.is_confirmed %}text-bg-success{% else %}text-bg-secondary{% endif %} align-middle">{{ lineup.get_status_display }}</span>{% endif %}
+        </h2>
+        {% if lineup_visible %}<a href="{% url 'worship:lineup' public_id=service.public_id %}" class="btn btn-sm btn-outline-primary">Open</a>{% endif %}
+      </div>
+      {% if not lineup_visible %}
+        <p class="text-body-secondary mb-0">This {{ lineup_word|lower }} is being revised. It shows here again once it is confirmed.</p>
+      {% else %}
+        {% if lineup.pastor_edited_at %}<p class="small text-body-secondary mb-2">Edited by {{ pastor_word }} ({{ lineup.pastor_edited_by_name }}), {{ lineup.pastor_edited_at|date:"M j, g:i A" }}</p>{% endif %}
+        <ol class="mb-0 small">
+          {% for item in lineup_items %}
+            <li>{% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}{{ item.song.title }}{% if item.key %} ({{ item.key }}){% endif %}</li>
+          {% empty %}
+            <li class="text-body-secondary">No songs yet.</li>
+          {% endfor %}
+        </ol>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}

@@ -17,7 +17,8 @@ the core; it can't be switched off. App: `apps/accounts`.
   default roles are created by migrations:
   - Administrator
   - Office Staff
-  - Pastoral Staff (the [[Concept-Brief]]'s pastor)
+  - Pastoral Staff (the [[Concept-Brief]]'s pastor; holds the final say on
+    lineups, `worship.finalize_lineup`, by default: [[0008-final-say-permission]])
   - Worship Leader
   - Team Member
 

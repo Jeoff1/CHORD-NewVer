@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Swap {{ item.song.title }}{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}
+  <a href="{% url 'worship:lineup' public_id=service.public_id %}" class="small text-decoration-none">← {{ lineup_word }}</a>
+  <h1 class="h3 mb-1">Swap {{ item.song.title }}</h1>
+  <p class="text-body-secondary">{% if item.slot %}{{ item.slot.name }}{% if item.slot.feel %} ({{ item.slot.get_feel_display|lower }}){% endif %} · {% endif %}Choose another of the ranked songs. Songs already in the {{ lineup_word|lower }}, or with the same title as one, aren't offered.</p>
+
+  {% if alternatives %}
+    <div class="list-group">
+      {% for suggestion in alternatives %}
+        <div class="list-group-item d-flex justify-content-between align-items-start gap-2">
+          <div>
+            <div class="fw-semibold">{{ suggestion.rank }}. {{ suggestion.song.title }} <span class="fw-normal text-body-secondary">· {{ suggestion.song.artist }}{% if suggestion.song.feel %} · {{ suggestion.song.get_feel_display|lower }}{% endif %}</span></div>
+            <ul class="small text-body-secondary mb-0 ps-3">{% for reason in suggestion.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+          </div>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="song" value="{{ suggestion.song.public_id }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary">Use this</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-body-secondary">No other ranked songs are left. Find songs again on the {% label "worship_service" as service_word %}{{ service_word|lower }} page, or add a song from the pool.</p>
+  {% endif %}
+{% endblock %}
