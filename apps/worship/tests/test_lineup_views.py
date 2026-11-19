@@ -660,14 +660,16 @@ class ClickThroughFixTests(LineupViewTestCase):
         song.save()
         self.login(self.leader)
         page = self.client.get(url(self.service, "lineup"))
-        self.assertContains(page, "isn&#x27;t the upbeat this slot asks for")
+        self.assertContains(page, "which asks for upbeat, but it fit best")
         self.move("Song A", "down")  # into Praise (mid-tempo)
         self.move("Song A", "down")  # into Worship (slow)
         page = self.client.get(url(self.service, "lineup"))
         self.assertContains(
-            page, "Its feel (mid-tempo) isn&#x27;t the slow this slot asks for"
+            page,
+            "Its feel (mid-tempo) doesn&#x27;t match this slot, which asks for slow, "
+            "but it fit best.",
         )
-        self.assertNotContains(page, "isn&#x27;t the upbeat this slot asks for")
+        self.assertNotContains(page, "which asks for upbeat")
         self.assertContains(page, "Reason for Song A.")  # the theme reason stays
 
     def test_people_are_named_by_full_name_or_username(self):

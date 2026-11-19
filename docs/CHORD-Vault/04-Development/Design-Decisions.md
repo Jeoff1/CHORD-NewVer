@@ -145,7 +145,7 @@ Tests: versions grouped by lyrics and titles; different titles need nearly the s
 
 ---
 
-## Phase 6: lineups and confirmation (current)
+## Phase 6: lineups and confirmation (done 2026-11-19)
 
 The rules below were completed on 2026-11-19 from the [[2026-11-19-Workflow-Review]] (findings F1, F2, F6 and F8).
 
@@ -206,8 +206,12 @@ Tests, for every role:
 
 ### Song usage (review F8)
 
-- Fill in `ranking.song_usage()` from confirmed lineups, so the familiarity and recent-use parts of ranking start working.
+- Fill in `ranking.song_usage()` from confirmed lineups, so the familiarity and recent-use parts of ranking start working. (Done in part B: the confirmed lineups of services, not cancelled, before the one being ranked.)
 - Song usage is computed from confirmed lineups when needed. It is not stored in a table of its own.
+
+### Feel reason wording (decided 2026-11-19, part B)
+
+- A song placed in a slot of another feel reads "Its feel (upbeat) doesn't match this slot, which asks for slow, but it fit best.", so it reads naturally for every feel.
 
 ### Song usage report: overused songs (review F2)
 

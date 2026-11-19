@@ -1,4 +1,4 @@
-from .lineups import Lineup, LineupItem
+from .lineups import Lineup, LineupItem, SuggestionFeedback
 from .schedule import (
     SermonSeries,
     ServiceTemplate,
@@ -16,6 +16,7 @@ __all__ = [
     "SermonSeries",
     "ServiceTemplate",
     "Suggestion",
+    "SuggestionFeedback",
     "SuggestionSettings",
     "TemplateSlot",
     "Theme",

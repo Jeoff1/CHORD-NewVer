@@ -155,8 +155,9 @@ Spotify safeguards in `apps/songs`):
      0.50, "fairly well" from 0.40, "a little" from 0.30, and "doesn't match
      the theme well" below. Familiarity is 0.6 for "the team knows it" plus
      up to 0.4 for past use; recency falls from 1 on the service's day to 0
-     at the end of the repeat window. Past use comes from confirmed lineups
-     (Phase 6), so for now only "the team knows it" counts;
+     at the end of the repeat window. Past use comes from the confirmed
+     lineups of services, not cancelled, that start before this one
+     (`ranking.song_usage`, from `usage.py`; Phase 6);
   8. versions (`versions.py`): versions of one song (lyrics at least 0.90
      alike with titles that begin the same way, or 0.95 whatever the
      titles) count once. The kept version is the one the team knows, then
@@ -167,7 +168,9 @@ Spotify safeguards in `apps/songs`):
      weight per step (upbeat, mid-tempo, slow); an unknown feel costs half
      a step, so it never beats a known close match; a slot without a feel
      costs nothing. A lineup never holds two songs with the same title.
-     The slot's reason, when one is needed, is kept apart;
+     The slot's reason, when one is needed, is kept apart: "Its feel isn't
+     known yet; this slot asks for slow", or "Its feel (upbeat) doesn't
+     match this slot, which asks for slow, but it fit best";
   10. reasons, kept on each Suggestion.
 
   A "Rank the song pool only" run skips stages 2 to 5. A failed outside
@@ -282,6 +285,53 @@ Phase 6; [[0008-final-say-permission]]):
   action, the mark and its Label, F4 through the one-click corrections, F5
   theme notes, F7, audit, the Module switched off).
 
+Built in Phase 6, part B (2026-11-19), **feedback, usage and reports**:
+
+- **Suggestion Feedback** (`models/lineups.py`, `feedback.py`): what people
+  did with each suggestion placed in a lineup. During review,
+  `Lineup.suggestion_outcomes` follows each one:
+  - placed by making the lineup, by regenerating, or chosen in a swap:
+    **kept**;
+  - replaced by a swap: **swapped**;
+  - taken out: **removed**;
+  - songs replaced by regenerating are forgotten; songs added from the
+    pool were never suggested.
+
+  Confirming saves one row per suggested song, replacing those of an
+  earlier confirmation; a "kept" song no longer in the lineup counts as
+  removed. Each row holds its label, the run and its rank, and only the
+  features Phase 9 may train on (`SuggestionFeedback.FEATURES`):
+  - relevance, the raw match, and the model's worship score (lyrics);
+  - familiarity, season, recency, "the team knows it", and the slot's
+    feel (the church's data).
+
+  No Spotify field, no Trusted Artist bonus or score with it, no version
+  choice, no reasons, no genre-filter record. Migration `0008` starts
+  existing lineups with their placed suggestions as kept.
+- **Song usage** (`usage.py`): every song in the confirmed lineup of a
+  service that isn't cancelled, once per service, with its date in the
+  church's time zone. Computed, never stored.
+  - `ranking.song_usage(service)` counts the services before it, so
+    familiarity (up to 0.4 for five uses) and recent use (the repeat
+    window) now count (workflow review F3).
+  - The song usage report counts services already held.
+- **Reports** (`reports.py`, `/worship/reports/`, "Reports" in the Worship
+  section links):
+  - **Song usage**: songs from confirmed lineups of services held, most
+    used first, with times, last use and every date, for a period (From
+    and To). Songs sung again within the repeat window are highlighted:
+    used more often than the recent-use window allows. **Download CSV**:
+    song, artist, times, last used, dates, and whether sung again within
+    the window. No lyrics.
+  - **Attendance**: the headcount of each service held that has one, with
+    the average, for a period. It doesn't exist (no link, and 404) until a
+    headcount has been recorded.
+- Tests: `test_usage_and_feedback.py` (feedback labels, replacement,
+  regenerate and pool songs, training-data fields; usage and the ranking
+  change after confirmation; the usage report matching the confirmed
+  lineups, its page, filter, CSV and permissions; attendance shown and
+  hidden, and who may see it).
+
 ## Permissions
 
 | Permission                                   | Allows                                   |
@@ -305,6 +355,8 @@ Phase 6; [[0008-final-say-permission]]):
 | `worship.add_lineup` and `worship.suggest_songs` | Saving the suggestions as the lineup |
 | `worship.change_lineup`                      | Seeing drafts; reviewing and confirming; seeing theme notes |
 | `worship.finalize_lineup`                    | The final say: the pastor's lock, reopening, sending back (decision 0008) |
+| `worship.view_song_usage`                    | The song usage report and its CSV (Worship Leader, Pastoral Staff) |
+| `worship.record_attendance`                  | Also the attendance report, once a headcount exists |
 
 Default roles ([[Accounts]]):
 - **Pastoral Staff** schedule services, post themes, record headcounts and

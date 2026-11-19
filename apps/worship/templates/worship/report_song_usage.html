@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Song usage{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}{% label "lineup" plural=True as lineups_word %}{% label "worship_service" plural=True as services_word %}
+  {% include "worship/includes/report_header.html" with title="Song usage" %}
+  <p class="text-body-secondary">Songs in the confirmed {{ lineups_word|lower }} of {{ services_word|lower }} already held.{% if window_weeks %} Highlighted songs were sung again within {{ window_weeks }} week{{ window_weeks|pluralize }}, the repeat window: more often than the recent-use window allows.{% endif %}</p>
+  {% if rows %}
+    <p class="small">{{ rows|length }} song{{ rows|length|pluralize }}{% if sung_again %}, {{ sung_again }} sung again within the repeat window{% endif %}. <a href="?{% if query %}{{ query }}&amp;{% endif %}format=csv">Download CSV</a></p>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr><th scope="col">Song</th><th scope="col" class="text-end">Times</th><th scope="col">Last used</th><th scope="col">Dates</th></tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+              <tr{% if row.sung_again %} class="table-warning"{% endif %}>
+                <td><span class="fw-semibold">{% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=row.song.public_id %}">{{ row.song.title }}</a>{% else %}{{ row.song.title }}{% endif %}</span><div class="small text-body-secondary">{{ row.song.artist }}</div>{% if row.sung_again %}<div class="small">Sung again within the repeat window</div>{% endif %}</td>
+                <td class="text-end">{{ row.times }}</td>
+                <td>{{ row.last_used|date:"M j, Y" }}</td>
+                <td class="small">{% for day in row.days %}{{ day|date:"M j, Y" }}{% if not forloop.last %}; {% endif %}{% endfor %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">No song has been sung in a confirmed {{ lineup_word|lower }} yet{% if form.is_bound %} in this period{% endif %}.</p>
+  {% endif %}
+{% endblock %}

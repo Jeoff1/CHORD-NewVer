@@ -284,8 +284,8 @@ class ReviewActionTests(LineupTestCase):
         song.save()
         self.assertEqual(
             self.item("Song A").slot_reason,
-            "Its feel (mid-tempo) isn't the upbeat this slot asks for, but it "
-            "fit best.",
+            "Its feel (mid-tempo) doesn't match this slot, which asks for upbeat, "
+            "but it fit best.",
         )
         lineups.move(self.lineup, self.item("Song A"), 1, self.leader)
         self.assertEqual(self.item("Song A").slot, self.slots[1])
@@ -295,7 +295,8 @@ class ReviewActionTests(LineupTestCase):
         self.assertEqual(moved.slot, self.slots[2])
         self.assertEqual(
             moved.slot_reason,
-            "Its feel (mid-tempo) isn't the slow this slot asks for, but it fit best.",
+            "Its feel (mid-tempo) doesn't match this slot, which asks for slow, but "
+            "it fit best.",
         )
         self.assertEqual(moved.reasons, ["Reason for Song A."])  # theme kept
 

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Attendance{% endblock %}
+
+{% block content %}
+  {% label "worship_service" as service_word %}
+  {% include "worship/includes/report_header.html" with title="Attendance" %}
+  <p class="text-body-secondary">The headcount of each {{ service_word|lower }} held, where one was recorded.</p>
+  {% if services %}
+    <p class="small">{{ services|length }} {{ service_word|lower }}{{ services|length|pluralize }}; average {{ average }}.</p>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead><tr><th scope="col">Date</th><th scope="col">{{ service_word }}</th><th scope="col" class="text-end">Headcount</th></tr></thead>
+          <tbody>
+            {% for service in services %}
+              <tr><td>{{ service.starts_at|date:"D, M j, Y" }}</td><td><a href="{% url 'worship:service' public_id=service.public_id %}">{{ service.name }}</a></td><td class="text-end">{{ service.attendance }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <p class="text-body-secondary">No headcount in this period.</p>
+  {% endif %}
+{% endblock %}

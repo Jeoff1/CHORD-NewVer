@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.core.music import Feel
-from apps.core.testing import make_song
+from apps.core.testing import make_service, make_song
 from apps.songs.ml.keyword import KeywordEngine
 from apps.songs.models import Song, ThemeTag
 from apps.worship import ranking, sequencing, versions
@@ -219,7 +219,8 @@ class RankingTests(TestCase):
         self.assertEqual([r.song for r in ranked], [a, b])
 
     def test_usage_is_empty_until_lineups_exist(self):
-        self.assertEqual(ranking.song_usage(None), {})
+        # Usage from confirmed lineups: test_usage_and_feedback.py.
+        self.assertEqual(ranking.song_usage(make_service()), {})
 
     def test_listing(self):
         self.assertEqual(ranking._listing(["A"]), "A")
@@ -259,7 +260,9 @@ class SequencingTests(TestCase):
         placed = self.placed(ranked, slots=self.slots[:2])
         self.assertEqual(placed["Opening"], ("Blessed", ""))
         self.assertEqual(placed["Praise"][0], "Joyful")
-        self.assertIn("isn't the mid-tempo this slot asks for", placed["Praise"][1])
+        self.assertIn(
+            "doesn't match this slot, which asks for mid-tempo", placed["Praise"][1]
+        )
 
     def test_each_step_between_feels_costs_the_weight(self):
         worship = self.slots[2:3]  # slow

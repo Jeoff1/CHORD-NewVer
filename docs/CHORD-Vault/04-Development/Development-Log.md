@@ -2,6 +2,42 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-19: Phase 6, part B: feedback, song usage and reports (Phase 6 done)
+
+On branch `phase-6-lineups`. The phase is not merged yet.
+
+- **Suggestion Feedback** (migration `worship/0008`; `feedback.py`):
+  - while a lineup is reviewed, `Lineup.suggestion_outcomes` follows each
+    suggestion placed in it: kept, swapped or removed. Regenerating
+    forgets the songs it replaces, and pool songs leave none;
+  - confirming saves the rows, replacing an earlier confirmation's;
+  - the features are only the lyrics-based scores and the church's own
+    data (`SuggestionFeedback.FEATURES`). No Spotify field, no Trusted
+    Artist bonus, no version choice, no genre-filter record;
+  - existing lineups start with their placed suggestions as kept.
+- **Song usage** (`usage.py`, review F3): `ranking.song_usage()` reads the
+  confirmed lineups of services, not cancelled, before the one being
+  ranked. Familiarity and recent use now count.
+- **Reports** (`reports.py`, `/worship/reports/`):
+  - song usage, with a period filter and CSV export, highlighting songs
+    sung again within the repeat window;
+  - attendance, the headcount per service held, which doesn't exist until
+    a headcount is recorded;
+  - a new permission, `worship.view_song_usage`, for Worship Leader and
+    Pastoral Staff. The attendance report uses `record_attendance`.
+- **Wording:** the feel-mismatch reason now reads "Its feel (upbeat)
+  doesn't match this slot, which asks for slow, but it fit best."
+- **Notes:**
+  - [[Worship]];
+  - [[Design-Decisions]] (song usage done; the wording);
+  - [[Glossary]] (Suggestion Feedback, Song Usage);
+  - [[Development-Plan]] (Phase 6 done);
+  - [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 562
+  tests passed (23 new), with 97% coverage (`feedback.py` 96%,
+  `reports.py` 95%, `lineups.py` 99%).
+
 ## 2026-11-19: Phase 6, part A click-through: four display fixes
 
 On branch `phase-6-lineups`, from the user's click-through.

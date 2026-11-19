@@ -188,6 +188,20 @@ song's place in the Lineup. Chord sheets keep only the song's original key
 and are transposed to the Service Key when shown.
 _Avoid_: song key (that is the original key)
 
+**Suggestion Feedback**:
+What people did with each Suggestion placed in a Lineup, recorded when the
+Lineup is confirmed: kept, swapped or removed. The training data for
+learning to rank, holding only lyrics-based scores and the church's own
+data, never Spotify data.
+_Avoid_: rating, review (a song is Reviewed in the Song Pool)
+
+**Song Usage**:
+Which Songs were in the confirmed Lineups of Worship Services, and when.
+Computed when needed, never stored; ranking counts it as familiarity and
+recent use. A song sung again within the repeat window is highlighted in
+the song usage report.
+_Avoid_: play count, plays (nothing is counted from Spotify)
+
 **Final Say**:
 The permission `worship.finalize_lineup`, held by the Pastoral Staff role
 by default (and by the Administrator). Its holders, called "the pastor" in

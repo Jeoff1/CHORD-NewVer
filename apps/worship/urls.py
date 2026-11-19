@@ -4,7 +4,7 @@ from apps.core.setting_lists import SettingList, setting_list_urls
 
 from .forms import SeasonForm
 from .models import Season, SermonSeries
-from .views import lineups, schedule, suggestions
+from .views import lineups, reports, schedule, suggestions
 from .views.base import settings_nav
 
 app_name = "worship"
@@ -159,6 +159,18 @@ urlpatterns = [
         "services/<uuid:public_id>/lineup/songs/<int:pk>/<slug:action>/",
         lineups.ItemActionView.as_view(),
         name="lineup_item_action",
+    ),
+    # Reports
+    path("reports/", reports.ReportsView.as_view(), name="reports"),
+    path(
+        "reports/song-usage/",
+        reports.SongUsageReportView.as_view(),
+        name="report_song_usage",
+    ),
+    path(
+        "reports/attendance/",
+        reports.AttendanceReportView.as_view(),
+        name="report_attendance",
     ),
     # Settings
     path(

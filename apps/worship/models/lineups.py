@@ -84,9 +84,17 @@ class Lineup(TimeStampedModel):
         related_name="+",
     )
 
+    # What became of each suggestion placed in the lineup during review:
+    # {suggestion pk: "kept" | "swapped" | "removed"}. Confirming turns it
+    # into Suggestion Feedback (``apps/worship/feedback.py``).
+    suggestion_outcomes = models.JSONField(default=dict, blank=True)
+
     class Meta:
         default_permissions = ("add", "change", "view")
-        permissions = [("finalize_lineup", "Can have the final say on lineups")]
+        permissions = [
+            ("finalize_lineup", "Can have the final say on lineups"),
+            ("view_song_usage", "Can see the song usage report"),
+        ]
 
     def __str__(self):
         return f"Lineup for {self.service}"
@@ -169,3 +177,71 @@ class LineupItem(models.Model):
         from ..sequencing import slot_reason
 
         return slot_reason(self.song, self.slot)
+
+
+class SuggestionFeedback(models.Model):
+    """What a person did with one suggestion in a confirmed lineup: kept,
+    swapped or removed. Training data for learning to rank (Phase 9).
+
+    The features are only lyrics-based scores and the church's own data
+    (Design-Decisions, Phase 9). Never stored here: Spotify fields (title,
+    artist, album, track ID, length), the Trusted Artist bonus or any score
+    that includes it (``Song.worship_score``), which version of a song was
+    kept, or the genre-filter record of a Search Run. ``song`` and ``run``
+    identify the row; they are never features.
+    """
+
+    class Label(models.TextChoices):
+        KEPT = "kept", "Kept"
+        SWAPPED = "swapped", "Swapped"
+        REMOVED = "removed", "Removed"
+
+    # The only columns training may use as features.
+    FEATURES = (
+        "relevance",
+        "match",
+        "familiarity",
+        "season",
+        "recency",
+        "worship_model_score",
+        "team_knows",
+        "slot_feel",
+    )
+
+    lineup = models.ForeignKey(
+        Lineup, on_delete=models.CASCADE, related_name="feedback"
+    )
+    run = models.ForeignKey(SearchRun, on_delete=models.CASCADE, related_name="+")
+    song = models.ForeignKey("songs.Song", on_delete=models.CASCADE, related_name="+")
+    label = models.CharField(max_length=10, choices=Label.choices)
+    recorded_at = models.DateTimeField()
+    rank = models.PositiveSmallIntegerField(help_text="Its rank in the run.")
+
+    # Features: lyrics-based scores (from the suggestion) ...
+    relevance = models.FloatField()
+    match = models.FloatField(null=True, blank=True)
+    worship_model_score = models.FloatField(
+        null=True, blank=True, help_text="The model's score, from the lyrics alone."
+    )
+    # ... and the church's own data.
+    familiarity = models.FloatField()
+    season = models.FloatField()
+    recency = models.FloatField()
+    team_knows = models.BooleanField()
+    slot_feel = models.CharField(
+        max_length=10, blank=True, help_text="The feel of the slot it was placed in."
+    )
+
+    class Meta:
+        ordering = ["lineup", "rank"]
+        default_permissions = ()
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lineup", "song"], name="one_feedback_per_song_per_lineup"
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.get_label_display()}: suggestion {self.rank} of run {self.run_id}"
+        )

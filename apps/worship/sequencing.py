@@ -58,8 +58,8 @@ def _reason(song, slot, distance):
         return f"Its feel isn't known yet; this slot asks for {wanted}."
     if distance:
         return (
-            f"Its feel ({song.get_feel_display().lower()}) isn't the {wanted} "
-            "this slot asks for, but it fit best."
+            f"Its feel ({song.get_feel_display().lower()}) doesn't match this "
+            f"slot, which asks for {wanted}, but it fit best."
         )
     return ""
 

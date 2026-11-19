@@ -64,6 +64,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.add_lineup",
         "worship.change_lineup",
         "worship.finalize_lineup",
+        # Reports (Phase 6)
+        "worship.view_song_usage",
     ],
     "worship_leader": [
         "members.view_member",
@@ -96,6 +98,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.view_lineup",
         "worship.add_lineup",
         "worship.change_lineup",
+        # Reports (Phase 6)
+        "worship.view_song_usage",
     ],
     "team_member": [
         # Worship schedule (Phase 3)

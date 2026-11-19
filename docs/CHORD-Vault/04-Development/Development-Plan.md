@@ -36,7 +36,7 @@ flowchart LR
 | 3     | Worship schedule and themes   | M    | 1          | Done (2026-11-17) |
 | 4     | Song pool                     | M    | 3          | Done (2026-11-17) |
 | 5     | Song suggestions              | L    | 4          | Done (2026-11-18) |
-| 6     | Lineups and reports           | L    | 5          | In progress       |
+| 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
 | 7     | Song pages: chords and playback | L  | 6          | Not started       |
 | 8     | Teams and announcements       | M    | 6          | Not started       |
 | 9     | Learning to rank              | S    | 6          | Not started       |
@@ -294,6 +294,9 @@ From the first live smoke test ([[Design-Decisions]], Phase 5 follow-up):
 
 ## Phase 6: Lineups and reports
 
+**Status: done (2026-11-19).** See [[Worship]] and
+[[0008-final-say-permission]].
+
 Goal: review, confirmation and what follows from it (pipeline stage 10 and
 the data for stage 11).
 
@@ -326,10 +329,10 @@ the data for stage 11).
   revised.
 - [x] No suggestions and no new lineup for a cancelled or past service
   (workflow review F7).
-- [ ] **Suggestion Feedback**: every kept, swapped and removed suggestion.
-- [ ] Usage: `ranking.song_usage()` reads confirmed lineups, so
+- [x] **Suggestion Feedback**: every kept, swapped and removed suggestion.
+- [x] Usage: `ranking.song_usage()` reads confirmed lineups, so
   familiarity and recency start counting. Usage is computed, not stored.
-- [ ] Reports: song usage with CSV export, highlighting songs used more
+- [x] Reports: song usage with CSV export, highlighting songs used more
   often than the recent-use window allows (the repeat window); no separate
   overused-songs report. Attendance (a headcount per service).
 

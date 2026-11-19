@@ -25,6 +25,8 @@ pastor's final say (Design-Decisions, Phase 6; decision 0008).
   song"; a song that failed the Worship Check or was never checked gets a
   warning in the review instead (the person's choice wins over the model).
 - A cancelled or past service gets no new lineup (F7).
+- Review follows what became of each suggestion (kept, swapped, removed);
+  confirming records it as Suggestion Feedback (``feedback.py``).
 
 Every function raises ``LineupRefused`` with a message for people when the
 action isn't allowed. Views record the audit trail.
@@ -38,7 +40,7 @@ from apps.church.models import ChurchProfile
 from apps.songs.cleanup import base_title
 from apps.songs.models import Song
 
-from . import sequencing, suggesting
+from . import feedback, sequencing, suggesting
 from .models import Lineup, LineupItem, SearchRun
 
 CHANGE = "worship.change_lineup"
@@ -251,6 +253,8 @@ def create_from_run(service, user, run=None):
             )
             for position, suggestion in enumerate(placed)
         )
+        feedback.placed(lineup, placed)
+        lineup.save(update_fields=["suggestion_outcomes"])
     return lineup
 
 
@@ -287,6 +291,8 @@ def swap(lineup, item, song, user):
         choice = next((s for s in alternatives(lineup, item) if s.song == song), None)
         if choice is None:
             raise LineupRefused(f"{song.title} isn't one of the ranked choices.")
+        feedback.turned_down(lineup, item.song_id, feedback.SWAPPED)
+        feedback.placed(lineup, [choice])
         item.song = song
         item.reasons = _reasons(choice)
         item.key, item.notes = "", ""
@@ -353,6 +359,7 @@ def remove(lineup, item, user):
         lineup = _locked_lineup(lineup)
         check_change(lineup, user)
         _check_unlocked(item, "remove")
+        feedback.turned_down(lineup, item.song_id, feedback.REMOVED)
         item.delete()
         _renumber(_items(lineup))
         _edited(lineup, user)
@@ -435,7 +442,10 @@ def regenerate(lineup, user):
         placements = sequencing.place(
             candidates, slots, feel_weight=suggesting.feel_weight(run)
         )
-        lineup.items.filter(locked=False).delete()
+        replaced = lineup.items.filter(locked=False)
+        feedback.forget(lineup, [item.song_id for item in replaced])
+        replaced.delete()
+        feedback.placed(lineup, [candidates[p.index] for p in placements])
         new = [
             LineupItem.objects.create(
                 lineup=lineup,
@@ -481,6 +491,7 @@ def confirm(lineup, user):
         lineup.pastor_locked = has_final_say(user)
         lineup.sent_back_note, lineup.sent_back_at, lineup.sent_back_by = "", None, None
         lineup.save()
+        feedback.record(lineup)
     return lineup
 
 

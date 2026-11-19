@@ -26,15 +26,18 @@ development task.
   fixed match labels, feel as a placement preference with one-click
   corrections, the church's worship check rules, and one version of each
   song;
-- [[Worship]]'s lineups (Phase 6, part A, 2026-11-19): a lineup saved from
+- [[Worship]]'s lineups (Phase 6, done 2026-11-19): a lineup saved from
   the reviewed suggestions as its own copy; swap, lock, reorder, remove,
   add from the pool and regenerate; confirmation by the worship leader or
   the pastor, whose final say is the permission `worship.finalize_lineup`
   ([[0008-final-say-permission]]); reopening and sending back. Team
-  members see a lineup only once it is confirmed.
+  members see a lineup only once it is confirmed. Confirming records
+  Suggestion Feedback; song usage from confirmed lineups now counts in
+  ranking; reports for song usage (with CSV) and attendance.
 
-**Next:** Phase 6, part B, of the [[Development-Plan]]: Suggestion
-Feedback, song usage from confirmed lineups, and the reports.
+**Next:** Phases 7 (song pages: chords and playback), 8 (teams and
+announcements) and 9 (learning to rank) of the [[Development-Plan]], in
+any order.
 
 ## Project
 

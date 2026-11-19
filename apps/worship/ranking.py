@@ -54,12 +54,15 @@ class Ranked:
 
 
 def song_usage(service):
-    """How often, and when last, each song was used before ``service``.
+    """How often, and when last, each song was used before ``service``:
+    ``{song_id: Usage}`` from the confirmed lineups of services, not
+    cancelled, that start before it (``usage.py``; workflow review F3)."""
+    from .usage import by_song, uses
 
-    Usage comes from confirmed lineups, which Phase 6 adds; until then no
-    song has been used.
-    """
-    return {}
+    return {
+        song_id: Usage(times=found.times, last_used=found.last_used)
+        for song_id, found in by_song(uses(before=service.starts_at)).items()
+    }
 
 
 def cosine(a, b):
