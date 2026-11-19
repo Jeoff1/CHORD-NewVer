@@ -2,6 +2,55 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-19: workflow review; Phase 6 lineup decisions
+
+- **Review:** [[2026-11-19-Workflow-Review]] reviewed the code on `master`
+  (`239d167`) against the [[workflow-spec]], following [[Review-Prompt]].
+  Verdict: mostly follows the flow, and no hard rule is broken. It made 14
+  findings (F1 to F14), each sorted as must fix before Phase 6, fix during
+  Phase 6, or later. Read-only: Ruff lint and format check passed,
+  `manage.py check` was clean, there were no missing migrations, and 444
+  tests passed (coverage not run).
+- **Decisions approved by the user (F1, F2, F6):**
+  - the final say is the permission `worship.finalize_lineup`, held by
+    Pastoral Staff by default and by the Administrator. Code checks the
+    permission, never a role name. There is a new church Label, `pastor`
+    (default "Pastor");
+  - the pastor's edits to a draft don't lock the worship leader out. The
+    pastor's lock starts when the pastor confirms a lineup, or edits a
+    confirmed one, and lasts until the pastor reopens it;
+  - a reopened lineup counts as unconfirmed: team members see a "being
+    revised" note instead;
+  - the mark reads "Edited by <pastor Label> (<person's name>)", with the
+    time;
+  - sending back returns a lineup to draft with a note; it adds no state;
+  - overused songs are highlighted in the song usage report, not given a
+    report of their own.
+- **Also aligned:**
+  - F14: the spec now has one Spotify connection per user, as in
+    Design-Decisions;
+  - F8: song usage is computed from confirmed lineups, not stored.
+- **Notes:**
+  - [[0008-final-say-permission]] (new);
+  - [[Design-Decisions]] (Phase 6, and the Phase 8 notification);
+  - [[workflow-spec]] (roles, step 10, hard rules, tables);
+  - [[Development-Plan]] (Phase 6 items and "done when");
+  - [[Glossary]] (Final Say, Pastor's Lock and Send Back added; Lineup
+    updated);
+  - [[00-Home]] (links).
+- **Readings approved by the user:**
+  - "the pastor's lock" is the name, kept apart from the lock on a song;
+  - only holders of the final say can send a lineup back, and sending back
+    a confirmed lineup reopens it;
+  - "overused" means sung again within the church's repeat window.
+- **[[Concept-Brief]] updated to match, with the user's agreement:**
+  - the pastor's lock starts only when the pastor confirms a lineup, or
+    edits a confirmed one;
+  - the mark reads "Edited by <pastor Label> (<name>)", with the time;
+  - Spotify has one connection per user (the Admin row).
+- Checks: documentation only, no code changed, so `scripts/check.ps1` was
+  not run.
+
 ## 2026-11-18: theme tags keep today's rule
 
 Tag options measured on the 23 seeded hymns with the ONNX models (in

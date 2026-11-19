@@ -34,7 +34,7 @@ whole team, with theme-based song suggestions as its core.
 | Pastor (pastoral level) | The service and message | Create and schedule services; post the theme, scripture and notes; review, edit and confirm a lineup. The pastor's decision is final. |
 | Worship leader          | The song lineup         | Generate suggestions; swap, lock, reorder and re-key songs; confirm; manage the song library and chord sheets; approve pasted chord sheets; assign musicians. |
 | Team member             | Their part on the day   | View confirmed lineups; play tracks; read chord sheets in the service key; transpose a personal view (capo); paste a missing chord sheet for approval; mark availability. |
-| Admin                   | The church account      | Manage users and roles, church settings, and integrations such as the Spotify connection. The Administrator role can't be deleted. |
+| Admin                   | The church account      | Manage users and roles, and church settings. The Administrator role can't be deleted. Spotify has one connection per user: each user connects their own account. |
 | Office staff (optional) | The member directory    | Keep the member directory up to date: add and edit members and households, import and export them. |
 
 A lineup is visible to the team only once it is confirmed. If the worship
@@ -42,10 +42,12 @@ leader and the pastor disagree, the pastor's decision wins: the pastor
 edits the lineup directly or sends it back with notes.
 
 - If the worship leader confirms and the pastor edits afterwards, the
-  lineup stays confirmed, is marked "Edited by pastor", and the team is
-  notified.
-- Once the pastor has confirmed or edited a lineup, the worship leader
-  can't change it until the pastor reopens it.
+  lineup stays confirmed, is marked "Edited by <pastor Label> (<name>)"
+  with the time, and the team is notified.
+- The pastor's edits to a draft don't lock the worship leader out. The
+  pastor's lock starts only when the pastor confirms a lineup, or edits one
+  that is already confirmed. The worship leader can't change the lineup
+  until the pastor reopens it.
 - "Pastor's decision is final" is a permission held by the pastoral role,
   not a check on a role name.
 

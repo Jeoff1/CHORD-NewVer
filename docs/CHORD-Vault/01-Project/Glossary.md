@@ -178,9 +178,30 @@ _Avoid_: verified, approved
 
 **Lineup**:
 The songs chosen for a Worship Service, in order. Churches may rename it
-with the "lineup" Label (Set List, Song List). The team sees it only once
-it is confirmed.
+with the "lineup" Label (Set List, Song List). A Lineup is a draft or
+confirmed; the team sees it only once it is confirmed.
 _Avoid_: setlist, worship plan, playlist (a playlist is on Spotify)
+
+**Final Say**:
+The permission `worship.finalize_lineup`, held by the Pastoral Staff role
+by default (and by the Administrator). Its holders, called "the pastor" in
+the rules and named in the app by the church's "pastor" Label, can put on
+the Pastor's Lock, reopen a Lineup and send it back. See
+[[0008-final-say-permission]].
+_Avoid_: pastor override, veto
+
+**Pastor's Lock**:
+What stops the worship leader from changing a Lineup, from the moment a
+holder of the Final Say confirms it or edits it after it was confirmed,
+until a holder reopens it. Reopening makes the Lineup a draft again.
+_Avoid_: lock (alone; a lock on a song keeps it in place when the Lineup is
+regenerated), freeze
+
+**Send Back**:
+Returning a Lineup to draft with a note for the worship leader. Only
+holders of the Final Say can do it. It is not a state of its own: sending
+back a confirmed Lineup reopens it.
+_Avoid_: reject, decline
 
 ### Song suggestions
 

@@ -1,21 +1,29 @@
 === INTENDED WORKFLOW ===
 
-Updated 2026-11-18 with the decisions in [[Design-Decisions]]. Where this
+Updated 2026-11-19 with the decisions in [[Design-Decisions]]. Where this
 spec and Design-Decisions.md disagree, Design-Decisions.md wins (AGENTS.md
 sets the order).
 
 ROLES
 - Pastor: schedules services, posts the theme (title, scripture, sermon notes),
-  can review, edit and confirm a lineup. The pastor's decision is final; this
-  is a permission held by the pastoral role, never a check on a role name.
+  can review, edit, confirm, reopen and send back a lineup. The pastor's
+  decision is final. That is the permission worship.finalize_lineup, held by
+  the pastoral role by default (and by the Administrator, like every
+  permission), never a check on a role name
+  ([[0008-final-say-permission]]). Below, "the pastor" means anyone who
+  holds it. The church's "pastor" Label (default "Pastor") names the role in
+  the app.
 - Worship leader: generates the suggested lineup, swaps/locks/reorders/re-keys
   songs, confirms the lineup, adds chord sheets, approves chord sheets pasted
   by team members.
 - Team member: sees a lineup only after it is confirmed; plays songs, reads
   chord sheets; may paste a missing chord sheet for a song in a confirmed
   lineup, which waits for approval by the worship leader or the pastor.
-- Admin: users, roles, settings, Spotify connection. The Administrator role
-  can't be deleted and always holds every permission.
+- Admin: users, roles and settings. The Administrator role can't be deleted
+  and always holds every permission. Spotify has one connection per user:
+  each user connects their own Spotify account (for playback, and the
+  worship leader's for saving playlists). The app's own Spotify credentials
+  are set in .env when CHORD is installed.
 - Office staff (optional): keeps the member directory up to date.
 
 SONG SELECTION (core module)
@@ -54,13 +62,23 @@ SONG SELECTION (core module)
    default), never to team members. From the suggestions, the leader can set
    a song's feel or mark it "not a worship song" in one click. A theme
    without notes gets a hint to add them; notes are not required.
-10. Leader reviews; leader or pastor confirms; pastor's decision wins:
+10. Leader reviews; leader or pastor confirms; pastor's decision wins. A
+    lineup is a draft or confirmed; there is no other state.
+    - The pastor's edits to a draft don't lock the leader out.
+    - The pastor's lock starts when the pastor confirms a lineup, or edits one
+      that is already confirmed. While it holds, the leader can't change the
+      lineup. It lasts until the pastor reopens the lineup.
     - If the leader confirms and the pastor edits afterwards, the lineup stays
-      confirmed and is marked "Edited by pastor" with the time, shown to
-      everyone who can see the lineup. Once team assignments exist, the
-      assigned team members are also notified in the app.
-    - Once the pastor has confirmed or edited a lineup, the leader can't change
-      it until the pastor reopens it.
+      confirmed and is marked "Edited by <pastor Label> (<person's name>)"
+      with the time, shown to everyone who can see the lineup. Once team
+      assignments exist, the assigned team members are also notified in the
+      app.
+    - A reopened lineup counts as unconfirmed: it is a draft again, and the
+      pastor's lock is lifted. Team members can't see it; they see a note that
+      the lineup is being revised, until it is confirmed again.
+    - Only the pastor can send a lineup back. It returns to draft with a note
+      for the leader. It is not a separate state: sending back a confirmed
+      lineup reopens it.
 11. Every keep/swap/remove is logged as feedback for future learning-to-rank.
     Training uses only lyrics-based scores (embedding similarity, the raw model
     worship score, tag scores), the church's own data (team knows it, usage,
@@ -112,19 +130,24 @@ HARD RULES (must not be violated)
 - Spotify data stored is limited to: track ID, title, artist, album, length.
 - Spotify access and refresh tokens are stored encrypted (Fernet, with the key
   in .env) and never shown or logged.
-- A lineup is not visible to team members before it is confirmed.
+- A lineup is not visible to team members before it is confirmed. A reopened
+  lineup counts as unconfirmed.
 
 EXPECTED DATABASE TABLES
-User, Spotify connection, Service, Theme, Assignment, Search run, Song,
-Song tag, Song embedding, Lineup, Lineup item, Suggestion feedback,
-Chord sheet, Song usage, Announcement, Attendance.
+User, Spotify connection (one per user), Service, Theme, Assignment,
+Search run, Song, Song tag, Song embedding, Lineup, Lineup item,
+Suggestion feedback, Chord sheet, Song usage, Announcement, Attendance.
 
-Some are stored as fields rather than tables of their own:
+Some are stored as fields rather than tables of their own, or not stored:
 - Song embedding: stored as Song.embedding (JSON), with Song.analysed_with
   naming the engine that made it.
 - Song tag: ThemeTag, linked by Song.tags; each tag's score is stored in
   Song.tag_scores (JSON).
 - Attendance: a headcount per service, stored as WorshipService.attendance.
   There is no per-person attendance.
+- Song usage: computed from confirmed lineups when needed, not stored. The
+  song usage report highlights songs used more often than the recent-use
+  window allows (the repeat window in Suggestion Settings); there is no
+  separate overused-songs report.
 
 To review the code against this spec, use [[Review-Prompt]].

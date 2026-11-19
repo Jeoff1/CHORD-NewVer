@@ -4,7 +4,7 @@
 
 Sources rank in this order (`AGENTS.md`): the rules in `AGENTS.md`, the numbered decision records, this file, `docs/CHORD-Vault/01-Project/Concept-Brief.md`, `docs/CHORD-Vault/workflow-spec.md`, then `docs/CHORD-Vault/04-Development/Development-Plan.md`. If this file disagrees with the Concept Brief, the spec or the plan, this file wins. Update the lower source to match, and say so in your summary.
 
-These decisions answer the open questions in `docs/workflow-review.md`, section 4.
+These decisions answer the open questions in `docs/workflow-review.md`, section 4, and the findings of the [[2026-11-19-Workflow-Review]] that needed a decision.
 
 ---
 
@@ -147,23 +147,47 @@ Tests: versions grouped by lyrics and titles; different titles need nearly the s
 
 ## Phase 6: lineups and confirmation (current)
 
-### The pastor's decision is final (question 9)
+The rules below were completed on 2026-11-19 from the [[2026-11-19-Workflow-Review]] (findings F1, F2, F6 and F8).
+
+### The final say is a permission (question 9; review F1c, F6)
+
+- A dedicated permission, `worship.finalize_lineup`, gives the final say on lineups. The Pastoral Staff role holds it by default. The Administrator also holds it, as it holds every permission. Code checks this permission, never a role name ([[0008-final-say-permission]]).
+- In these rules, **the pastor** means anyone who holds `worship.finalize_lineup`. The pastor's lock (below) stops only people without it; a holder is never locked out.
+- A new church Label, `pastor` (default "Pastor"), names the pastoral role in UI text.
+
+### Confirming, editing and the pastor's lock (review F1a, F1b)
+
+A lineup is either a **draft** or **confirmed**. There is no other state.
 
 - Either the worship leader or the pastor can confirm a lineup.
-- If the leader confirms and the pastor later edits it, the lineup stays confirmed. It is marked "Edited by pastor" with the time, and the mark is shown to everyone who can see the lineup. Phase 6 has no notification system; Phase 8 adds notifications (see below).
-- Once the pastor has confirmed or edited a lineup, the worship leader cannot change it. The pastor can reopen it, which lets the leader edit again.
-- Team members see a lineup only after it is confirmed.
+- The pastor's edits to a draft don't lock the worship leader out.
+- The **pastor's lock** starts when the pastor confirms a lineup, or edits a lineup that is already confirmed. While it holds, the worship leader can't change the lineup. It lasts until the pastor reopens the lineup.
+- If the pastor edits a confirmed lineup, it stays confirmed. It is marked "Edited by <pastor Label> (<person's name>)" with the time, for example "Edited by Pastor (Ana Cruz), Nov 22, 3:15 PM". Everyone who can see the lineup sees the mark. Phase 6 has no notification system; Phase 8 adds notifications (see below).
+- **Reopening:** the pastor can reopen a lineup. A reopened lineup counts as unconfirmed: it is a draft again, and the pastor's lock is lifted. Team members can't see it. Instead they see a note that the lineup is being revised, until it is confirmed again.
+- **Sending back** (review F2) adds no state. Only the pastor can send a lineup back. It returns to draft, with a note for the worship leader. Sending back a confirmed lineup therefore reopens it, and the reopening rules apply.
+- Team members see a lineup only once it is confirmed.
 
 Tests, for every role:
-- The leader can confirm.
-- The pastor's edit keeps the lineup confirmed and marks it with the time, and everyone who can see the lineup sees the mark.
-- The leader is blocked after the pastor confirms or edits.
-- Reopening by the pastor unblocks the leader.
+- The leader can confirm; so can the pastor.
+- The pastor's edits to a draft leave the leader free to edit it.
+- The pastor's confirmation puts on the pastor's lock, and so does the pastor's edit to a lineup the leader confirmed. That edit keeps the lineup confirmed and marks it "Edited by <pastor Label> (<person's name>)" with the time, and everyone who can see the lineup sees the mark.
+- The mark uses the church's `pastor` Label.
+- The leader is blocked while the pastor's lock holds.
+- Reopening by the pastor lifts the lock and makes the lineup a draft: team members see the "being revised" note, not the songs.
+- Sending back returns the lineup to draft, and the leader sees the note. Someone without `worship.finalize_lineup` can't send a lineup back.
+- The final say follows the permission, not the role: a user with `worship.finalize_lineup` but without the Pastoral Staff role has it; a Pastoral Staff user whose role lost the permission doesn't.
 - A team member cannot see an unconfirmed lineup, by page or by URL.
 
-### Song usage
+### Song usage (review F8)
 
 - Fill in `ranking.song_usage()` from confirmed lineups, so the familiarity and recent-use parts of ranking start working.
+- Song usage is computed from confirmed lineups when needed. It is not stored in a table of its own.
+
+### Song usage report: overused songs (review F2)
+
+- There is no separate overused-songs report. The song usage report highlights songs used more often than the recent-use window allows (the repeat window in Suggestion Settings).
+
+Test: a song sung again within the repeat window is highlighted in the report; a song sung once is not.
 
 ---
 
@@ -207,7 +231,7 @@ Decision: a headcount per service. The existing `WorshipService.attendance` fiel
 
 ### Notifying the team of a pastor's edit
 
-- Once assignments exist, when the pastor edits a confirmed lineup, the team members assigned to that service are notified in the app. No email or SMS.
+- Once assignments exist, when the pastor (a holder of `worship.finalize_lineup`) edits a confirmed lineup, the team members assigned to that service are notified in the app. No email or SMS.
 
 Test: after the pastor edits a confirmed lineup, each assigned team member has an in-app notification, and nobody else does.
 

@@ -298,29 +298,54 @@ Goal: review, confirmation and what follows from it (pipeline stage 10 and
 the data for stage 11).
 
 - [ ] **Lineup** and **Lineup Item**: slot, order, service key, notes, the
-  reason it was suggested, and a lock.
+  reason it was suggested, and a lock on a song (kept in place when the
+  lineup is regenerated). A lineup is a draft or confirmed; there is no
+  other state.
 - [ ] Review: swap from ranked alternatives, lock, reorder, remove, add
   from the pool, regenerate around locked songs.
-- [ ] Confirmation: the worship leader or pastoral staff confirm; sending
-  back with notes. The pastor's final say is a permission held by the
-  pastoral role, not a check on a role name:
-  - once the pastor has confirmed or edited a lineup, the worship leader
-    can't change it until the pastor reopens it;
-  - if the pastor edits a lineup the leader confirmed, it stays confirmed
-    and is marked "Edited by pastor" with the time, shown to everyone who
-    can see it. No notifications in this phase (they come in Phase 8).
-- [ ] The team sees a lineup only once it is confirmed.
+- [ ] **Final say** ([[0008-final-say-permission]]): the permission
+  `worship.finalize_lineup`, held by Pastoral Staff by default and by the
+  Administrator, like every permission. Code checks the permission, never a
+  role name. A new church Label, `pastor` (default "Pastor").
+- [ ] Confirmation: the worship leader or the pastor (a holder of
+  `worship.finalize_lineup`) confirms.
+  - the pastor's edits to a draft don't lock the worship leader out;
+  - the **pastor's lock** starts when the pastor confirms a lineup, or
+    edits one that is already confirmed, and lasts until the pastor
+    reopens it. It stops only people without the permission;
+  - if the pastor edits a confirmed lineup, it stays confirmed and is
+    marked "Edited by <pastor Label> (<person's name>)" with the time,
+    shown to everyone who can see it. No notifications in this phase (they
+    come in Phase 8);
+  - reopening makes the lineup a draft again and lifts the pastor's lock;
+  - only the pastor can send a lineup back: it returns to draft with a note
+    for the worship leader. It adds no state; sending back a confirmed
+    lineup reopens it.
+- [ ] The team sees a lineup only once it is confirmed. While a lineup
+  that was confirmed is a draft again, they see a note that it is being
+  revised.
 - [ ] **Suggestion Feedback**: every kept, swapped and removed suggestion.
 - [ ] Usage: `ranking.song_usage()` reads confirmed lineups, so
-  familiarity and recency start counting.
-- [ ] Reports: song usage with CSV export and overused songs; attendance
-  (a headcount per service).
+  familiarity and recency start counting. Usage is computed, not stored.
+- [ ] Reports: song usage with CSV export, highlighting songs used more
+  often than the recent-use window allows (the repeat window); no separate
+  overused-songs report. Attendance (a headcount per service).
 
-**Done when** the usage report matches the confirmed lineups, and these
-are tested for every role: the leader can confirm; the pastor's edit keeps
-the lineup confirmed and shows the mark with its time; the leader is
-blocked after the pastor confirms or edits; reopening unblocks the leader;
-a team member can't see an unconfirmed lineup, by page or by URL.
+**Done when** the usage report matches the confirmed lineups and
+highlights a song sung again within the repeat window, and these are tested
+for every role:
+- the leader can confirm, and so can the pastor;
+- the pastor's edits to a draft don't lock the leader out;
+- the pastor's confirmation, or edit to a confirmed lineup, locks the
+  leader out;
+- that edit keeps the lineup confirmed and shows "Edited by <pastor Label>
+  (<person's name>)" with its time;
+- reopening lifts the lock, and team members then see the "being revised"
+  note, not the songs;
+- sending back returns the lineup to draft with its note, and only the
+  pastor can do it;
+- the final say follows `worship.finalize_lineup`, not the role;
+- a team member can't see an unconfirmed lineup, by page or by URL.
 
 ## Phase 7: Song pages: chords and playback
 

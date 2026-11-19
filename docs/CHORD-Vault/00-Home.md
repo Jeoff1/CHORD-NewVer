@@ -50,6 +50,7 @@ the Phase 6 items in [[Design-Decisions]].
   - [[0005-worship-planning-scope|0005 Worship planning is the scope; church administration stays light]]
   - [[0006-onnx-runtime-for-song-analysis|0006 Song analysis runs ONNX models, with a keyword stand-in]]
   - [[0007-search-worker|0007 One search worker, a management command polling the database]]
+  - [[0008-final-say-permission|0008 The final say on lineups is its own permission]]
 
 ## Modules
 
@@ -75,5 +76,5 @@ messaging, check-in and follow-up, and per-person attendance.
 - [[Design-Decisions]]: agreed decisions and safeguards, by phase; they
   win over the Concept Brief, the workflow spec and the plan
 - [[Review-Prompt]]: what a review of the code against the workflow spec
-  produces
+  produces; the latest review is [[2026-11-19-Workflow-Review]]
 - [[Development-Log]]: dated record of what changed and how it was verified
