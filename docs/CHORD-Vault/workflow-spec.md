@@ -125,7 +125,9 @@ CHORDS AND PLAYBACK
   can be imported on the chord sheet form instead of pasting: its text goes in
   the box to check, and its {key:} or {k:} line fills the key. The file isn't
   stored, other directives stay in the text, and rhythm lines such as
-  |D//G|////| transpose. A person still brings in each chart; nothing is
+  |D//G|////| or Worship Together's [| D / / G | / / / / |] transpose (an
+  unreadable one becomes a comment, never a save error). Plain section lines
+  such as "Verse 1" or "Outro" show as section labels. A person still brings in each chart; nothing is
   fetched from any site.
 - A team member's paste (or import) is saved as pending. Other team members can't see it
   until the worship leader or the pastor approves it. A team member may paste

@@ -466,3 +466,48 @@ class ImportTests(SheetTestCase):
         sheet = ChordSheet.objects.get()
         self.assertEqual(sheet.status, Status.PENDING)
         self.assertEqual(sheets.pending_for(self.song, self.other_member), [])
+
+
+class WorshipTogetherStyleTests(SheetTestCase):
+    """A made-up file written the way Worship Together's ChordPro downloads
+    are: plain section lines and rhythm lines in one bracket."""
+
+    FILE = (
+        "{title: Made Up Song}\n"
+        "{key: D}\n"
+        "Intro\n"
+        "[| D / / G | / / / / | D / / G | / / / / |]\n"
+        "Verse 1\n"
+        "[D]Words nobody [G]wrote\n"
+        "Outro\n"
+        "[|| D / / G ||]\n"
+    )
+
+    def test_it_imports_saves_and_transposes(self):
+        self.client.force_login(self.leader)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        imported = self.client.post(
+            form_url(self.song),
+            {
+                "action": "import",
+                "key": "",
+                "chordpro": "",
+                "import_file": SimpleUploadedFile(
+                    "made-up.chordpro", self.FILE.encode()
+                ),
+            },
+        )
+        text = imported.context["form"].initial["chordpro"]
+        response = self.client.post(
+            form_url(self.song), {"key": "D", "chordpro": text, "action": "save"}
+        )
+        self.assertRedirects(response, detail_url(self.song))
+        sheet = ChordSheet.objects.get()
+        self.assertIn("| [D] / / [G] | / / / / |", sheet.chordpro)
+        self.assertIn("{comment: Verse 1}", sheet.chordpro)
+        page = self.client.get(detail_url(self.song), {"key": "E"})
+        self.assertContains(page, ">E<")
+        self.assertContains(page, ">A<")
+        self.assertContains(page, "Verse 1")
+        self.assertContains(page, "Outro")

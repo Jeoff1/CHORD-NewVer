@@ -345,3 +345,70 @@ class RhythmLineTests(SimpleTestCase):
 
     def test_the_short_key_directive(self):
         self.assertEqual(chords.key_directive("{k: E}\n[E]la\n"), "E")
+
+
+class BracketedRhythmTests(SimpleTestCase):
+    """Worship Together's ChordPro writes a rhythm line inside one bracket:
+    "[| D / / G | / / / / |]". Made-up content."""
+
+    SPACED = "[| D / / G | / / / / | D / / G | / / / / |]"
+
+    def test_with_spaces_it_transposes(self):
+        self.assertEqual(
+            chords.bracketed_rhythm(self.SPACED),
+            "| [D] / / [G] | / / / / | [D] / / [G] | / / / / |",
+        )
+        converted = chords.to_chordpro(f"{{key: D}}\n{self.SPACED}\n[D]Made up\n")
+        self.assertEqual(chords.check(converted), 5)
+        self.assertEqual(shown(converted, "D", "E"), ["E", "A", "E", "A", "E"])
+
+    def test_without_spaces(self):
+        self.assertEqual(chords.bracketed_rhythm("[|D//G|////|]"), "|[D]//[G]|////|")
+
+    def test_with_double_bar_lines(self):
+        self.assertEqual(
+            chords.bracketed_rhythm("[|| D / / G | / / / / ||]"),
+            "|| [D] / / [G] | / / / / ||",
+        )
+
+    def test_an_unreadable_one_becomes_a_comment_and_the_sheet_saves(self):
+        converted = chords.to_chordpro("{key: D}\n[| D / ? / G |]\n[D]Made up\n")
+        self.assertIn("{comment: | D / ? / G |}", converted)
+        self.assertEqual(chords.check(converted), 1)
+
+    def test_ordinary_chords_are_left_alone(self):
+        for line in ("[D/F#]Made up", "[G]Made [C]up", "Made up words"):
+            self.assertIsNone(chords.bracketed_rhythm(line))
+
+
+class SectionNameTests(SimpleTestCase):
+    def test_plain_section_lines_show_as_labels(self):
+        text = "{key: D}\nVerse 1\n[D]Made up words\nOutro\n[G]More made up\n"
+        converted = chords.to_chordpro(text)
+        self.assertIn("{comment: Verse 1}", converted)
+        self.assertIn("{comment: Outro}", converted)
+        rendered = chords.render(converted, Key.parse("D"))
+        labels = [
+            line.text
+            for b in rendered.blocks
+            for line in b.lines
+            if line.kind == "comment"
+        ]
+        self.assertEqual(labels, ["Verse 1", "Outro"])
+
+    def test_names_numbers_and_colons(self):
+        for line, label in (
+            ("Intro", "Intro"),
+            ("Chorus:", "Chorus"),
+            ("Bridge 2", "Bridge"),
+            ("tag", "tag"),
+        ):
+            self.assertIn(label, chords.section_line(line))
+        self.assertIsNone(chords.section_line("Verse one of a made-up song"))
+        self.assertIsNone(chords.section_line("[D]Chorus"))
+
+    def test_in_a_pasted_chart_too(self):
+        self.assertEqual(
+            chords.to_chordpro("Chorus\nD       G\nMade up words\n"),
+            "{comment: Chorus}\n[D]Made up [G]words\n",
+        )

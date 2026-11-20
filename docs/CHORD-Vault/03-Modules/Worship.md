@@ -367,8 +367,11 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
   .cho, .chopro, .chordpro, .pro or .txt file up to 200 KB in UTF-8
   (`sheets.read_import`). Its text goes into the box, and its `{key:}` or
   `{k:}` fills the key; the file isn't stored. Rhythm lines such as
-  `|D//G|////|` become transposable (`chords.rhythm_line`), or a comment
-  when unreadable.
+  `|D//G|////|` become transposable (`chords.rhythm_line`), and so do
+  Worship Together's bracketed ones, `[| D / / G |]`
+  (`chords.bracketed_rhythm`); either becomes a comment when unreadable.
+  Plain section lines such as "Verse 1" or "Outro" become section labels
+  (`chords.section_line`).
 - **Find chords**: links to searches on Ultimate Guitar, Worship Together
   and the web, opened in a new tab. Nothing is fetched.
 - **Screens**:

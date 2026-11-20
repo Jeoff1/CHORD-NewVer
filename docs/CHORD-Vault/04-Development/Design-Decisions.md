@@ -339,10 +339,12 @@ Tests: every key with the spelling above; Nashville numbers in minor keys, with 
 - The key comes from the file's `{key: …}` (or `{k: …}`) line and fills the Key field, which the person can change. With no key line and no key chosen, the form asks for one, as before.
 - Other directives, such as `{title}`, `{artist}`, `{tempo}` and `{comment}`, stay in the text as they are; they never change the song's own fields.
 - **Rhythm lines** such as `|D//G|////|D//G|////|` (Worship Together intros, optionally after a label such as "Intro:") get their chords in brackets, so they transpose. A rhythm line that can't be read becomes a comment. It is never a reason a sheet can't be saved.
+- Worship Together's ChordPro downloads write a rhythm line inside one bracket, such as `[| D / / G | / / / / |]` (fixed 2026-11-20 after the click-through). A bracket holding bar lines (`|` or `||`) or beat slashes is read as a rhythm line, with spaces or none: each chord gets its own bracket, giving `| [D] / / [G] | / / / / |`. One that can't be read becomes a comment.
+- Plain section lines in a ChordPro file (Intro, Verse, Pre-Chorus, Chorus, Bridge, Interlude, Instrumental, Outro, Ending or Tag, with an optional number and colon) show as section labels, like `[Verse]` in a pasted chart.
 - A team member's import follows the same rule as a paste: pending until approved.
 - A person still brings in each chart. Nothing is fetched from any site.
 
-Tests (made-up content only): the key read from `{key:}` and from `{k:}`; a file without a key; a wrong extension; a file over 200 KB; a file that isn't UTF-8; other directives kept and the song unchanged; a rhythm line that transposes, and one that becomes a comment; a team member's import staying pending.
+Tests (made-up content only): the key read from `{key:}` and from `{k:}`; a file without a key; a wrong extension; a file over 200 KB; a file that isn't UTF-8; other directives kept and the song unchanged; a rhythm line that transposes, and one that becomes a comment; a team member's import staying pending; a bracketed rhythm line with spaces (D to E gives E and A), with none and with `||` bars; an unreadable bracketed line becoming a comment while the sheet saves; "Verse 1" and "Outro" lines showing as section labels.
 
 ---
 

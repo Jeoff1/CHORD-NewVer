@@ -323,6 +323,32 @@ RHYTHM_CHORD = re.compile(rf"(?<![A-Za-z#])({NOTE}[^/|\s]*?(?:/{NOTE})?)(?=[/|\s
 RHYTHM_REST = re.compile(r"^[\s|/.\-%xX0-9()]*$")
 
 
+# Inside a bracket, bar lines or beat slashes mark a rhythm line, as in
+# Worship Together's ChordPro: "[| D / / G | / / / / |]".
+RHYTHM_MARKS = re.compile(r"\||(?:^|\s)/(?:\s|$)|//")
+# A plain line naming a section, as Worship Together's ChordPro writes them.
+SECTION_NAME = re.compile(
+    r"^\s*(?P<name>(?:intro|verse|pre-?chorus|chorus|bridge|interlude|"
+    r"instrumental|outro|ending|tag)(?:\s+\d+)?)\s*:?\s*$",
+    re.IGNORECASE,
+)
+
+
+def comment_line(text):
+    """``{comment: text}``, with braces that would break it softened."""
+    text = text.strip().replace("{", "(").replace("}", ")")
+    return f"{{comment: {text}}}"
+
+
+def _rhythm_bars(bars):
+    """``bars`` with each chord in brackets, or None when it can't be read
+    (no chord, or something that is neither a chord nor a beat or bar)."""
+    found = [c for c in RHYTHM_CHORD.findall(bars) if Chord.parse(c)]
+    if found and RHYTHM_REST.match(RHYTHM_CHORD.sub("", bars)):
+        return RHYTHM_CHORD.sub(lambda m: f"[{m.group(1)}]", bars)
+    return None
+
+
 def rhythm_line(line):
     """A rhythm line with each chord in brackets, so it transposes:
     "|D//G|////|" becomes "|[D]//[G]|////|". One that can't be read becomes
@@ -333,21 +359,53 @@ def rhythm_line(line):
     match = RHYTHM.match(line.rstrip())
     if not match:
         return None
-    bars = match["bars"]
-    chords_found = [c for c in RHYTHM_CHORD.findall(bars) if Chord.parse(c)]
-    if chords_found and RHYTHM_REST.match(RHYTHM_CHORD.sub("", bars)):
-        return (match["label"] or "") + RHYTHM_CHORD.sub(
-            lambda m: f"[{m.group(1)}]", bars
-        )
-    return f"{{comment: {line.strip()}}}"
+    bars = _rhythm_bars(match["bars"])
+    if bars is None:
+        return comment_line(line)
+    return (match["label"] or "") + bars
+
+
+def bracketed_rhythm(line):
+    """A rhythm line written inside one bracket, "[| D / / G | / / / / |]",
+    with each chord bracketed instead: "| [D] / / [G] | / / / / |". Spaces
+    or none, and | or || bar lines. One that can't be read becomes a
+    comment, never a save error. None when the line has no such bracket."""
+    if directive(line):
+        return None
+    rhythmic = [c for c in INLINE_CHORD.findall(line) if RHYTHM_MARKS.search(c)]
+    if not rhythmic:
+        return None
+    converted = line
+    for content in rhythmic:
+        bars = _rhythm_bars(content)
+        if bars is None:
+            return comment_line(INLINE_CHORD.sub(lambda m: m.group(1), line))
+        converted = converted.replace(f"[{content}]", bars, 1)
+    return converted.rstrip()
+
+
+def section_line(line):
+    """A plain line naming a section ("Verse 1", "Outro", "Chorus:") as a
+    comment, so it shows as a section label like "[Verse]" in a pasted
+    chart; None for any other line."""
+    if "[" in line or "{" in line:
+        return None
+    match = SECTION_NAME.match(line)
+    return comment_line(match["name"]) if match else None
+
+
+def _tidy(line):
+    """A line with its rhythm or section name made readable, or None."""
+    return bracketed_rhythm(line) or rhythm_line(line) or section_line(line)
 
 
 def to_chordpro(text):
     """ChordPro from a chords-over-words chart, such as one copied from
     Ultimate Guitar: each line of chords goes into the line of words under
-    it, section names such as "[Chorus]" become comments, and rhythm lines
-    such as "|D//G|////|" get their chords in brackets. Text that is
-    already ChordPro comes back unchanged, apart from its rhythm lines."""
+    it, section names such as "[Chorus]" or a plain "Verse 1" become
+    comments, and rhythm lines such as "|D//G|////|" or "[| D / / G |]" get
+    each chord in brackets. Text that is already ChordPro comes back
+    unchanged, apart from its rhythm lines and plain section names."""
     text = UG_TAGS.sub("", text.replace("\r\n", "\n")).expandtabs(4)
     if looks_like_chordpro(text):
         lines, in_tab = [], False
@@ -358,23 +416,24 @@ def to_chordpro(text):
             elif found and found[0] in SECTION_ENDS:
                 in_tab = False
             # Tablature is kept exactly as written.
-            lines.append(line if in_tab else (rhythm_line(line) or line))
+            lines.append(line if in_tab else (_tidy(line) or line))
         return "\n".join(lines).strip("\n") + "\n"
     lines, out, i = text.split("\n"), [], 0
     while i < len(lines):
         line = lines[i]
         header = SECTION_HEADER.match(line)
-        rhythm = rhythm_line(line)
-        if rhythm is not None:
-            out.append(rhythm)
+        tidy = _tidy(line)
+        if tidy is not None:
+            out.append(tidy)
         elif header and not is_chord_token(header["name"]):
-            out.append(f"{{comment: {header['name'].strip()}}}")
+            out.append(comment_line(header["name"]))
         elif is_chord_line(line):
             following = lines[i + 1] if i + 1 < len(lines) else ""
             if (
                 following.strip()
                 and not is_chord_line(following)
-                and not (SECTION_HEADER.match(following))
+                and not SECTION_HEADER.match(following)
+                and _tidy(following) is None
             ):
                 out.append(_merge(line, following))
                 i += 1

@@ -2,6 +2,34 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: Worship Together ChordPro: bracketed rhythm lines, section names
+
+On branch `phase-7-chords`; not merged yet. A bug from the click-through:
+Worship Together's ChordPro downloads write a rhythm line inside one
+bracket, `[| D / / G | / / / / |]`, and saving failed with "isn't a chord".
+
+- **Fixed:** a bracket holding bar lines (`|` or `||`) or beat slashes is
+  read as a rhythm line, with spaces or none. Each chord gets its own
+  bracket, `| [D] / / [G] | / / / / |`, so it transposes
+  (`chords.bracketed_rhythm`). One that can't be read becomes a comment.
+  A rhythm line never blocks saving.
+- **Added:** plain section lines in a ChordPro file show as section
+  labels, like `[Verse]` in a pasted chart (`chords.section_line`):
+  - Intro, Verse, Pre-Chorus, Chorus, Bridge, Interlude, Instrumental,
+    Outro, Ending and Tag;
+  - with an optional number and colon.
+- **Tests** (made-up content):
+  - a bracketed rhythm line with spaces (D to E gives E and A), with none,
+    and with `||` bars;
+  - an unreadable one becoming a comment while the sheet saves;
+  - "Verse 1" and "Outro" shown as labels;
+  - a whole Worship Together-style file imported, saved and transposed.
+- **Notes:** [[Design-Decisions]] (Phase 7, import), the [[workflow-spec]]
+  and [[Worship]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 658
+  tests passed (9 new), with 97% coverage (`chords.py` 96%).
+
 ## 2026-11-20: import a ChordPro file
 
 On branch `phase-7-chords`; not merged yet. An approved Phase 7 addition.
