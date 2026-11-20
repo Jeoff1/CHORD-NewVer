@@ -2,6 +2,23 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: ChordPro import and chart-mark choices approved
+
+- **Approved:** the user approved the ChordPro import choices and the
+  chart-mark display choices.
+- **Recorded** in [[Design-Decisions]] (Phase 7, importing a ChordPro
+  file):
+  - the separate Import button;
+  - the file's key wins over one already chosen;
+  - files over the 20,000-character sheet limit are refused at import;
+  - rhythm lines are converted in ChordPro files too.
+
+  The display choices were already there: a capo and Nashville numbers
+  count as a different key for the note, and N.C., x2 and footnote marks
+  stay plain.
+- Checks: documentation only, no code changed, so `scripts/check.ps1` was
+  not run.
+
 ## 2026-11-20: kept marks shown apart in the viewer
 
 On branch `phase-7-chords`; not merged yet.

@@ -338,6 +338,11 @@ Tests: every key with the spelling above; Nashville numbers in minor keys, with 
 - The file's text goes into the text box for the person to check; they then save as usual. The file itself is never stored: only the ChordPro text and its key are, as before.
 - The key comes from the file's `{key: …}` (or `{k: …}`) line and fills the Key field, which the person can change. With no key line and no key chosen, the form asks for one, as before.
 - Other directives, such as `{title}`, `{artist}`, `{tempo}` and `{comment}`, stay in the text as they are; they never change the song's own fields.
+- Choices approved after building it (2026-11-20):
+  - Importing is its own step: choose the file, then press **Import**, a separate button. The page works without JavaScript.
+  - **The file's key wins:** a `{key:}` or `{k:}` line replaces whatever key was chosen before importing. A key line that names no real key (such as `{key: H}`) is ignored.
+  - A file may be up to 200 KB, but a chord sheet holds at most 20,000 characters, so a longer file is **refused at import**, with that limit in the message.
+  - Rhythm lines are converted in files that are already ChordPro too, not only in pasted chords-over-words charts (tablature is left as written).
 - **Rhythm lines** such as `|D//G|////|D//G|////|` (Worship Together intros, optionally after a label such as "Intro:") get their chords in brackets, so they transpose. A rhythm line that can't be read becomes a comment. It is never a reason a sheet can't be saved.
 - Worship Together's ChordPro downloads write a rhythm line inside one bracket, such as `[| D / / G | / / / / |]` (fixed 2026-11-20 after the click-through). A bracket holding bar lines (`|` or `||`) or beat slashes is read as a rhythm line, with spaces or none: each chord gets its own bracket, giving `| [D] / / [G] | / / / / |`. One that can't be read becomes a comment.
 - Plain section lines in a ChordPro file (Intro, Verse, Pre-Chorus, Chorus, Bridge, Interlude, Instrumental, Outro, Ending or Tag, with an optional number and colon) show as section labels, like `[Verse]` in a pasted chart.
