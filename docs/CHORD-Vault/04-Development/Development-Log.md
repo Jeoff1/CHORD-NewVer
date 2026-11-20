@@ -2,6 +2,22 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: README
+
+- Added `README.md` at the project root, the first page someone opening
+  the repository sees. It says:
+  - what CHORD does, and what's built and what's next;
+  - the stack;
+  - quick-start commands, linking to [[Environment-Setup]] for the full
+    steps;
+  - how to run the website and the search worker, and how to try
+    suggestions without Spotify;
+  - the checks script, the folder layout, and where the docs start
+    ([[00-Home]]);
+  - the rules on secrets, Spotify data and lyrics.
+- Checks: documentation only, no code changed, so `scripts/check.ps1` was
+  not run.
+
 ## 2026-11-19: Phase 6 part B approved; "swapped in" feedback label
 
 On branch `phase-6-lineups`; not merged yet.
