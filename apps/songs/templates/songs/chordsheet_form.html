@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Chord sheet: {{ song.title }}{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <a href="{{ next }}" class="small text-decoration-none">← Back</a>
+      <h1 class="h3 mb-1">Chord sheet: {{ song.title }}</h1>
+      <p class="text-body-secondary">{{ song.artist }}</p>
+      <p>Type or paste the chords and words. ChordPro works as it is; a chart with the chords on the line above the words (as on Ultimate Guitar) is converted to ChordPro. <b>Convert</b> shows the result so you can check it before saving.{% if not approves %} Your sheet waits for approval by someone who plans the lineup; the team sees it once it is approved.{% endif %}</p>
+      {% if find_chords %}
+        <p class="small">Find chords: {% for label, url in find_chords %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>{% if not forloop.last %} · {% endif %}{% endfor %} <span class="text-body-secondary">(opens in a new tab; copy the chart, then paste it here)</span></p>
+      {% endif %}
+      {% if converted %}<div class="alert alert-info small">Converted to ChordPro. Check the chords sit over the right words, then save.</div>{% endif %}
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
+            {{ form }}
+            <div class="d-flex flex-wrap gap-2">
+              <button type="submit" name="action" value="save" class="btn btn-primary">{% if approves %}Save{% else %}Send for approval{% endif %}</button>
+              <button type="submit" name="action" value="convert" class="btn btn-outline-secondary">Convert</button>
+              <a href="{{ next }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -66,6 +66,11 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.finalize_lineup",
         # Reports (Phase 6)
         "worship.view_song_usage",
+        # Chord sheets and lyrics (Phase 7); approving is a permission
+        "songs.view_lyrics",
+        "songs.view_chordsheet",
+        "songs.add_chordsheet",
+        "songs.approve_chordsheet",
     ],
     "worship_leader": [
         "members.view_member",
@@ -100,12 +105,21 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.change_lineup",
         # Reports (Phase 6)
         "worship.view_song_usage",
+        # Chord sheets and lyrics (Phase 7); approving is a permission
+        "songs.view_lyrics",
+        "songs.view_chordsheet",
+        "songs.add_chordsheet",
+        "songs.approve_chordsheet",
     ],
     "team_member": [
         # Worship schedule (Phase 3)
         "worship.view_worshipservice",
         # Lineups (Phase 6): confirmed lineups only
         "worship.view_lineup",
+        # Chord sheets (Phase 7): their pastes wait for approval; the words
+        # come through the sheet, not the full lyrics
+        "songs.view_chordsheet",
+        "songs.add_chordsheet",
     ],
 }
 

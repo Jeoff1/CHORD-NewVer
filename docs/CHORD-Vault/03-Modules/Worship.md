@@ -334,6 +334,63 @@ Built in Phase 6, part B (2026-11-19), **feedback, usage and reports**:
   lineups, its page, filter, CSV and permissions; attendance shown and
   hidden, and who may see it).
 
+Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
+([[Design-Decisions]], Phase 7; [[0009-transposition-on-the-server]]):
+
+- **Chord Sheet** (`apps/songs/models.py`): a song's ChordPro text and the
+  key it is written in, and nothing else; pending or approved, who added it
+  and who approved it. A song has at most one approved sheet. **Song** gains
+  the **recording's key**, entered by a person (Spotify gives none).
+- **ChordPro** (`apps/songs/chords.py`), all on the server, in Python:
+  - `check()`: directives alone on their line, every `[chord]` closed and
+    a real chord, sections opened and closed in order, at least one chord;
+    the message names the line;
+  - `to_chordpro()`: a chords-over-words chart (as on Ultimate Guitar,
+    `[ch]` tags and section names such as `[Chorus]` included) becomes
+    ChordPro; ChordPro passes through. ChordSheetJS isn't used: it is
+    GPL-2.0-only;
+  - `render()`: the sheet in any key. Sharps or flats follow the key shown
+    (C and A minor use flats), a slash chord's bass moves with it, and the
+    chord's quality stays. A capo shows the shapes played; Nashville
+    numbers are in the key heard (in a minor key, 1 is the minor tonic).
+- **Rules** (`apps/songs/sheets.py`):
+  - people with `songs.approve_chordsheet` add or edit a sheet for any
+    pool song at any time, approved at once;
+  - people with only `songs.add_chordsheet` (team members) may paste one
+    for a song in a confirmed lineup that has none: it waits as pending,
+    and other team members don't see it;
+  - approve and discard need `approve_chordsheet`.
+
+  The audit trail records the song, status and key, never the text.
+- **Find chords**: links to searches on Ultimate Guitar, Worship Together
+  and the web, opened in a new tab. Nothing is fetched.
+- **Screens**:
+  - the song page's **Chord sheet** card (sheet, pending sheets with
+    Approve and Discard, add or edit, Find chords) and the sheet form
+    (Convert, then Save or Send for approval);
+  - a **lineup song page** (`/worship/services/<id>/lineup/songs/<n>/`)
+    with the sheet in the service key, opened from each song in the
+    lineup. Team members see it only once the lineup is confirmed.
+- **The viewer** (`apps/songs/viewer.py`): key (and ±1 semitone), capo
+  0–7 (easy shapes marked), Nashville numbers, and **Practise along** in
+  the recording's key (hidden when it isn't set). These are a personal view
+  in the query string. Each change re-renders only the sheet with htmx.
+- **Counts**: the lineup page and the service page's lineup card show how
+  many songs have an approved sheet. A confirmed lineup marks the songs
+  that still need one.
+- **Key history**: the Key and notes page lists the service keys the song
+  had in confirmed lineups of earlier services, most recent first
+  (`lineups.key_history`).
+- **Lyrics** (workflow review F13): the song page shows full lyrics only
+  with `songs.view_lyrics` (Worship Leader and Pastoral Staff); the team
+  sees the words in the chord sheet.
+- Tests: `apps/songs/tests/test_chords.py` (every key, sharps and flats,
+  slash chords, minor keys, capo, Nashville numbers, checking,
+  converting), `test_chordsheets.py` (rules, approval, the form, Find
+  chords, lyrics, default roles) and `apps/worship/tests/test_lineup_songs.py`
+  (the lineup song page, htmx, practise-along, pending sheets, counts, key
+  history).
+
 ## Permissions
 
 | Permission                                   | Allows                                   |
@@ -359,6 +416,10 @@ Built in Phase 6, part B (2026-11-19), **feedback, usage and reports**:
 | `worship.finalize_lineup`                    | The final say: the pastor's lock, reopening, sending back (decision 0008) |
 | `worship.view_song_usage`                    | The song usage report and its CSV (Worship Leader, Pastoral Staff) |
 | `worship.record_attendance`                  | Also the attendance report, once a headcount exists |
+| `songs.view_chordsheet`                      | Seeing approved chord sheets             |
+| `songs.add_chordsheet`                       | Pasting a sheet; pending without approve |
+| `songs.approve_chordsheet`                   | Adding and editing sheets approved at once; approving and discarding pending ones |
+| `songs.view_lyrics`                          | Full lyrics on the song page (review F13) |
 
 Default roles ([[Accounts]]):
 - **Pastoral Staff** schedule services, post themes, record headcounts and
@@ -369,8 +430,10 @@ Default roles ([[Accounts]]):
   trusted artists, the worship check, seasons and suggestion settings, asks
   for song suggestions and corrects them in one click, and makes, reviews
   and confirms lineups.
-- **Team Member** sees the schedule and confirmed lineups, never
-  suggestions or drafts.
+- **Team Member** sees the schedule, confirmed lineups and their chord
+  sheets, and pastes missing sheets for approval; never suggestions,
+  drafts or full lyrics. Worship Leader and Pastoral Staff also hold the
+  chord sheet permissions, including approving, and `view_lyrics`.
 - **Office Staff** see the schedule and record headcounts.
 
 ## Church settings this module depends on

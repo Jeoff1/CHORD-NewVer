@@ -1,0 +1,35 @@
+{# A song's chord sheet card. Expects `song` and the context from song_sheet_context() in apps/songs/views.py, plus `here` (this page's URL, to come back to). #}
+<div class="card shadow-sm mb-3" id="chords">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+      <h2 class="h5 mb-0">Chord sheet</h2>
+      {% if may_add_sheet %}
+        <a href="{% url 'songs:chordsheet' public_id=song.public_id %}?next={{ here|urlencode }}" class="btn btn-sm btn-outline-primary">{% if approved_sheet and may_approve_sheets %}Edit the chord sheet{% elif may_approve_sheets %}Add a chord sheet{% else %}Paste a chord sheet{% endif %}</a>
+      {% endif %}
+    </div>
+
+    {% for pending in pending_sheets %}
+      <div class="alert alert-warning small d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>{% if may_approve_sheets %}A chord sheet from {{ pending.added_by|default:"a former user" }} is waiting for approval (key {{ pending.key }}).{% else %}Your chord sheet is waiting for approval.{% endif %}</span>
+        {% if may_approve_sheets %}
+          <span class="d-flex gap-2">
+            <form method="post" action="{% url 'songs:chordsheet_approve' pk=pending.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}"><button type="submit" class="btn btn-sm btn-success">Approve</button></form>
+            <form method="post" action="{% url 'songs:chordsheet_discard' pk=pending.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}"><button type="submit" class="btn btn-sm btn-outline-danger">Discard</button></form>
+          </span>
+        {% endif %}
+      </div>
+      {% if may_approve_sheets %}<details class="small mb-3"><summary>Show the pending sheet</summary><pre class="border rounded p-2 bg-body-tertiary mt-2 mb-0" style="white-space: pre-wrap">{{ pending.chordpro }}</pre></details>{% endif %}
+    {% endfor %}
+
+    {% if rendered %}
+      {% include "songs/includes/chord_sheet.html" %}
+    {% elif approved_sheet %}
+      <p class="text-body-secondary mb-0">This song has a chord sheet.</p>
+    {% else %}
+      <p class="text-body-secondary mb-2">No chord sheet yet.</p>
+      {% if find_chords and may_add_sheet %}
+        <p class="small mb-0">Find chords: {% for label, url in find_chords %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>{% if not forloop.last %} · {% endif %}{% endfor %} <span class="text-body-secondary">(opens in a new tab; paste the chart here)</span></p>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>

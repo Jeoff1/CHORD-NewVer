@@ -133,7 +133,8 @@ class SongDetailTests(SongsTestCase):
         )
         song.tag_scores = {str(ThemeTag.objects.get(name="Joy").pk): 0.72}
         song.save()
-        self.client.force_login(make_user(perms=VIEWER))
+        # Full lyrics need view_lyrics (workflow review F13).
+        self.client.force_login(make_user(perms=[*VIEWER, "songs.view_lyrics"]))
         response = self.client.get(url(song))
         self.assertContains(response, "4:05")
         self.assertContains(response, "Lyrics score 81%</span>")

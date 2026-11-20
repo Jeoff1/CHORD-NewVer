@@ -237,6 +237,39 @@ def make_search_run(service, songs, *, placed=None):
     return run
 
 
+def make_lineup(service, songs, *, keys=(), confirmed=True):
+    """A lineup for ``service`` holding ``songs`` in order, stored directly
+    (the rules refuse past services). ``keys`` gives the service keys."""
+    from apps.worship.models import Lineup, LineupItem
+
+    lineup = Lineup.objects.create(
+        service=service,
+        status=Lineup.Status.CONFIRMED if confirmed else Lineup.Status.DRAFT,
+    )
+    keys = list(keys) + [""] * len(songs)
+    for position, (song, key) in enumerate(zip(songs, keys)):
+        LineupItem.objects.create(lineup=lineup, song=song, position=position, key=key)
+    return lineup
+
+
+# Public domain (Amazing Grace, John Newton, 1779), in G.
+HYMN_SHEET = (
+    "{title: Amazing Grace}\n"
+    "[G]Amazing [G/B]grace, how [C]sweet the [G]sound\n"
+    "That [G]saved a wretch like [D]me\n"
+)
+
+
+def make_chord_sheet(song, *, chordpro=HYMN_SHEET, key="G", approved=True, **fields):
+    """A chord sheet for ``song``, approved unless ``approved=False``."""
+    from apps.songs.models import ChordSheet
+
+    status = ChordSheet.Status.APPROVED if approved else ChordSheet.Status.PENDING
+    return ChordSheet.objects.create(
+        song=song, chordpro=chordpro, key=key, status=status, **fields
+    )
+
+
 def close_file_response(response):
     """Close a FileResponse in a test without closing the test database.
 

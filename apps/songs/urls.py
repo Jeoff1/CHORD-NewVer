@@ -47,6 +47,21 @@ urlpatterns = [
         name="check_again",
     ),
     path(
+        "<uuid:public_id>/chords/",
+        views.ChordSheetFormView.as_view(),
+        name="chordsheet",
+    ),
+    path(
+        "chords/<int:pk>/approve/",
+        views.SheetApproveView.as_view(),
+        name="chordsheet_approve",
+    ),
+    path(
+        "chords/<int:pk>/discard/",
+        views.SheetDiscardView.as_view(),
+        name="chordsheet_discard",
+    ),
+    path(
         "settings/worship-check/",
         views.WorshipCheckSettingsView.as_view(),
         name="check_settings",

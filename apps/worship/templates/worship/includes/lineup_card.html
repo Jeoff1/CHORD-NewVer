@@ -14,9 +14,10 @@
         <p class="text-body-secondary mb-0">This {{ lineup_word|lower }} is being revised. It shows here again once it is confirmed.</p>
       {% else %}
         {% if lineup.edited_at %}<p class="small text-body-secondary mb-2">{% include "worship/includes/lineup_mark.html" %}</p>{% endif %}
+        {% if lineup_items %}<p class="small text-body-secondary mb-1">{{ sheets_ready }} of {{ lineup_items|length }} song{{ lineup_items|length|pluralize }} {{ lineup_items|length|pluralize:"has,have" }} a chord sheet.</p>{% endif %}
         <ol class="mb-0 small">
           {% for item in lineup_items %}
-            <li>{% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}{{ item.song.title }}{% if item.key %} ({{ item.key }}){% endif %}</li>
+            <li>{% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}<a href="{% url 'worship:lineup_song' public_id=service.public_id pk=item.pk %}">{{ item.song.title }}</a>{% if item.key %} ({{ item.key }}){% endif %}{% if not item.has_sheet %} <span class="badge text-bg-warning">No chord sheet</span>{% endif %}</li>
           {% empty %}
             <li class="text-body-secondary">No songs yet.</li>
           {% endfor %}

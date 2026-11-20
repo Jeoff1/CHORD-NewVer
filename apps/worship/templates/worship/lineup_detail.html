@@ -57,16 +57,18 @@
       <p class="small text-body-secondary">The {{ pastor_word|lower }} has the final say on this {{ lineup_word|lower }}: only {{ pastors_word|lower }} can change it until it is reopened.</p>
     {% endif %}
 
+    {% if lineup_items %}<p class="small{% if lineup.is_confirmed and sheets_ready < lineup_items|length %} text-warning-emphasis{% else %} text-body-secondary{% endif %}">{{ sheets_ready }} of {{ lineup_items|length }} song{{ lineup_items|length|pluralize }} {{ lineup_items|length|pluralize:"has,have" }} a chord sheet.{% if lineup.is_confirmed and sheets_ready < lineup_items|length %} Every song needs one now that it is confirmed.{% endif %}</p>{% endif %}
     <ol class="list-group list-group-numbered mb-3">
       {% for item in lineup_items %}
         <li class="list-group-item d-flex gap-2">
           <div class="ms-1 flex-grow-1">
             {% if item.slot %}<div class="small text-body-secondary">{{ item.slot.name }}{% if item.slot.feel %} ({{ item.slot.get_feel_display|lower }}){% endif %}</div>{% endif %}
             <div class="fw-semibold">
-              {% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=item.song.public_id %}">{{ item.song.title }}</a>{% else %}{{ item.song.title }}{% endif %}
+              <a href="{% url 'worship:lineup_song' public_id=service.public_id pk=item.pk %}">{{ item.song.title }}</a>
               <span class="fw-normal text-body-secondary">· {{ item.song.artist }}</span>
               {% if item.key %}<span class="badge text-bg-light border ms-1">Key {{ item.key }}</span>{% endif %}
               {% if item.locked and sees_lineup_drafts %}<span class="badge text-bg-secondary ms-1">Locked</span>{% endif %}
+              {% if not item.has_sheet %}<span class="badge text-bg-warning ms-1">{% if lineup.is_confirmed %}Needs a chord sheet{% else %}No chord sheet{% endif %}</span>{% endif %}
             </div>
             {% if sees_lineup_drafts and item.check_warning %}<div class="small text-warning-emphasis">⚠ {{ item.check_warning }}</div>{% endif %}
             {% if item.notes %}<div class="small">{{ item.notes|linebreaksbr }}</div>{% endif %}

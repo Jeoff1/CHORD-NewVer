@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}{{ song.title }} · {{ service }}{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <a href="{% url 'worship:lineup' public_id=service.public_id %}" class="small text-decoration-none">← {{ lineup_word }}, {{ service }}</a>
+      <h1 class="h3 mb-1">{{ song.title }}</h1>
+      <p class="text-body-secondary mb-3">
+        {{ song.artist }}{% if item.slot %} · {{ item.slot.name }}{% endif %}
+        · {% if item.key %}Service key {{ item.key }}{% else %}No service key set{% if approved_sheet %}; shown in the sheet's key, {{ approved_sheet.key }}{% endif %}{% endif %}
+        {% if perms.songs.view_song %} · <a href="{% url 'songs:detail' public_id=song.public_id %}">Song details</a>{% endif %}
+      </p>
+      {% if item.notes %}<div class="alert alert-light border small">{{ item.notes|linebreaksbr }}</div>{% endif %}
+      {% include "songs/includes/sheet_card.html" %}
+    </div>
+  </div>
+{% endblock %}

@@ -112,8 +112,7 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
 - **Chord sheets**: stored as ChordPro. Only the original ChordPro text and
   key are stored; the server transposes the sheet for each view
   ([[0009-transposition-on-the-server]]), and changing the key re-renders it
-  with htmx. ChordSheetJS is used only in the browser, to convert a pasted
-  chart to ChordPro.
+  with htmx. A pasted chart is converted to ChordPro on the server too.
   A song without a sheet shows a "Find chords" action that opens a search
   on free sources such as Worship Together and Ultimate Guitar. The worship
   leader or pastor pastes the chart, and it is converted to ChordPro on

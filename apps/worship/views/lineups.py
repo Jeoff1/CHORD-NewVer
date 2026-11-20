@@ -9,8 +9,9 @@ draft again, they see only a note that it is being revised.
 
 from django.contrib import messages
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import formats
 from django.utils.functional import cached_property
 from django.views import View
 from django.views.generic import FormView, TemplateView, UpdateView
@@ -18,7 +19,8 @@ from django.views.generic import FormView, TemplateView, UpdateView
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.core.views import FormPageMixin
-from apps.songs.models import Song
+from apps.songs.models import ChordSheet, Song
+from apps.songs.views import song_sheet_context
 
 from .. import lineups
 from ..forms import LineupItemForm, SendBackForm
@@ -57,12 +59,20 @@ def lineup_context(lineup, user):
     )
     # Arrows show only for moves the rules allow (``lineups.move``).
     moves = lineups.allowed_moves(items)
+    # Which songs have an approved chord sheet: required once confirmed.
+    with_sheet = set(
+        ChordSheet.objects.approved()
+        .filter(song_id__in=[item.song_id for item in items])
+        .values_list("song_id", flat=True)
+    )
     for item in items:
         item.can_move_up, item.can_move_down = moves[item.pk]
+        item.has_sheet = item.song_id in with_sheet
     return {
         "lineup": lineup,
         "lineup_visible": visible,
         "lineup_items": items,
+        "sheets_ready": sum(1 for item in items if item.has_sheet),
         "lineup_revising": lineup.is_being_revised,
         "can_change_lineup": lineups.may_change(lineup, user),
         "can_confirm_lineup": lineups.may_confirm(lineup, user),
@@ -266,6 +276,18 @@ class ItemDetailsView(ItemMixin, FormPageMixin, UpdateView):
     def get_page_title(self):
         return f"{self.item.song.title}: key and notes"
 
+    @property
+    def intro(self):
+        """The keys the song was sung in before, most recent first."""
+        history = lineups.key_history(self.item)
+        if not history:
+            return "Not sung in a confirmed lineup before, so there is no key to go by."
+        sung = ", ".join(
+            f"{key} ({formats.date_format(service.local_date, 'M j, Y')})"
+            for key, service in history
+        )
+        return f"Sung before in: {sung}."
+
     def get_cancel_url(self):
         return self.lineup_url()
 
@@ -276,6 +298,50 @@ class ItemDetailsView(ItemMixin, FormPageMixin, UpdateView):
         if self.audited(lineups.set_details, self.item, key, notes):
             messages.success(self.request, f"{self.item.song.title} was saved.")
         return redirect(self.lineup_url())
+
+
+class LineupSongView(ItemMixin, TemplateView):
+    """One song of the lineup: its slot and key, and its chord sheet in the
+    service key, with the viewer (decision 0009). Team members open it only
+    once the lineup is confirmed."""
+
+    permission_required = "worship.view_lineup"
+    template_name = "worship/lineup_song.html"
+
+    def visible_item(self):
+        if not lineups.visible_to(self.lineup, self.request.user):
+            raise Http404("This lineup isn't confirmed yet.")
+        return self.item
+
+    def sheet_context(self):
+        item = self.visible_item()
+        return song_sheet_context(
+            item.song,
+            self.request,
+            base_key=item.key,
+            sheet_url=reverse(
+                "worship:lineup_song",
+                kwargs={"public_id": self.service.public_id, "pk": item.pk},
+            ),
+        )
+
+    def get(self, request, *args, **kwargs):
+        if request.headers.get("HX-Request"):
+            # The viewer re-renders only the chord sheet.
+            return render(
+                request, "songs/includes/chord_sheet.html", self.sheet_context()
+            )
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.sheet_context())
+        context.update(
+            item=self.item,
+            song=self.item.song,
+            here=self.request.get_full_path(),
+        )
+        return context
 
 
 class RegenerateView(LineupMixin, View):

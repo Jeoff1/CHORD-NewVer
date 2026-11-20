@@ -213,7 +213,7 @@ _Avoid_: play count, plays (nothing is counted from Spotify)
 A song's chords and words in ChordPro, in the song's original key. It is
 transposed on the server for each view: the Service Key, a personal
 transpose, a capo or Nashville numbers. A pasted chart is converted to
-ChordPro in the browser; a team member's paste waits for approval.
+ChordPro on the server; a team member's paste waits for approval.
 _Avoid_: chart (alone), tab
 
 **Recording Key**:

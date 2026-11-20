@@ -26,6 +26,8 @@
 
   <div class="row g-3">
     <div class="col-lg-7">
+      {% include "songs/includes/sheet_card.html" with here=request.get_full_path %}
+
       <div class="card shadow-sm mb-3">
         <div class="card-body">
           <h2 class="h5">Worship check</h2>
@@ -53,11 +55,15 @@
           {% endif %}
 
           <div class="row mt-4">
-            <div class="col-sm-6">
+            <div class="col-sm-4">
               <h2 class="h6 mb-1">Feel</h2>
               <p>{{ song.get_feel_display|default:"Not set" }}</p>
             </div>
-            <div class="col-sm-6">
+            <div class="col-sm-4">
+              <h2 class="h6 mb-1">Recording's key</h2>
+              <p>{{ song.recording_key|default:"Not set" }}</p>
+            </div>
+            <div class="col-sm-4">
               <h2 class="h6 mb-1">The team</h2>
               <p>{% if song.team_knows %}Knows this song{% else %}Hasn't learned it yet{% endif %}</p>
             </div>
@@ -78,7 +84,9 @@
       <div class="card shadow-sm">
         <div class="card-body">
           <h2 class="h5">Lyrics</h2>
-          {% if song.lyrics %}
+          {% if song.lyrics and not perms.songs.view_lyrics %}
+            <p class="text-body-secondary mb-0">Found. The full lyrics are shown to the people who plan; the team sees the words in the chord sheet.</p>
+          {% elif song.lyrics %}
             <div class="border rounded p-2 bg-body-tertiary small" style="max-height: 32rem; overflow-y: auto">{{ song.lyrics|linebreaksbr }}</div>
             <p class="small text-body-secondary mt-2 mb-0">From LRCLIB. Lyrics are copyrighted: keep them within the church's team.</p>
           {% elif song.lyrics_status == "pending" %}

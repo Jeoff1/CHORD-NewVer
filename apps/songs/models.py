@@ -9,7 +9,7 @@ from django.db import models
 from django.db.models import Q
 
 from apps.core.models import PublicIdModel, TimeStampedModel
-from apps.core.music import Feel
+from apps.core.music import KEY_CHOICES, Feel
 from apps.core.setting_lists import ChoiceItem
 
 
@@ -135,12 +135,23 @@ class Song(PublicIdModel, TimeStampedModel):
     )
 
     team_knows = models.BooleanField("The team knows it", default=False)
+    # Entered by a person: Spotify gives no key (Audio Features is never
+    # called). The practise-along view shows the chords in it.
+    recording_key = models.CharField(
+        "Recording's key",
+        max_length=4,
+        choices=KEY_CHOICES,
+        blank=True,
+        help_text="The key the Spotify recording is in, so musicians can play "
+        "along with it. Leave blank when you don't know it.",
+    )
 
     objects = SongQuerySet.as_manager()
 
     class Meta:
         ordering = ["title", "artist", "pk"]
         default_permissions = ("add", "change", "view")
+        permissions = [("view_lyrics", "Can see a song's full lyrics")]
         constraints = [
             models.UniqueConstraint(
                 fields=["spotify_id"],
@@ -256,3 +267,82 @@ class SpotifyLimit(models.Model):
         """A quota lockout or a wait so long it is treated like one: Spotify
         is paused and suggestions rank the pool instead."""
         return self.reason != self.Reason.RATE_LIMIT
+
+
+class ChordSheetQuerySet(models.QuerySet):
+    def approved(self):
+        return self.filter(status=ChordSheet.Status.APPROVED)
+
+    def pending(self):
+        return self.filter(status=ChordSheet.Status.PENDING)
+
+
+class ChordSheet(TimeStampedModel):
+    """A song's chords and words in ChordPro, in the song's original key.
+
+    Only the ChordPro text and its key are stored; every other key, a capo
+    and Nashville numbers are worked out when the sheet is shown
+    (``chords.py``, decision 0009). A song has at most one approved sheet.
+    A sheet from someone without ``approve_chordsheet`` waits as pending
+    until someone with it approves it (``sheets.py``). Chord sheets are
+    copyrighted: they stay in this installation and are never logged.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Waiting for approval"
+        APPROVED = "approved", "Approved"
+
+    song = models.ForeignKey(
+        Song, on_delete=models.CASCADE, related_name="chord_sheets"
+    )
+    chordpro = models.TextField("ChordPro")
+    key = models.CharField(
+        "Original key",
+        max_length=4,
+        choices=KEY_CHOICES,
+        help_text="The key the sheet is written in.",
+    )
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.PENDING
+    )
+    added_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    objects = ChordSheetQuerySet.as_manager()
+
+    class Meta:
+        ordering = ["song", "-status", "-updated_at"]
+        default_permissions = ("add", "view")
+        permissions = [
+            (
+                "approve_chordsheet",
+                "Can approve chord sheets; their own are approved at once",
+            )
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["song"],
+                condition=Q(status="approved"),
+                name="one_approved_sheet_per_song",
+            )
+        ]
+
+    def __str__(self):
+        return f"Chord sheet for {self.song.title} ({self.get_status_display()})"
+
+    @property
+    def is_approved(self):
+        return self.status == self.Status.APPROVED

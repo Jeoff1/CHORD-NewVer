@@ -2,6 +2,63 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: Phase 7, part A: chord sheets, the viewer and keys
+
+Branch `phase-7-chords`. Built from [[Design-Decisions]] (Phase 7) and
+[[0009-transposition-on-the-server]].
+
+- **Decision change:** ChordSheetJS turned out to be GPL-2.0-only. The
+  user chose a small converter in Python instead. Updated:
+  - [[0009-transposition-on-the-server]];
+  - [[Design-Decisions]];
+  - the [[workflow-spec]];
+  - the [[Development-Plan]];
+  - the [[Concept-Brief]];
+  - the [[Glossary]];
+  - [[Technology-Stack]].
+
+  Nothing from ChordSheetJS is vendored.
+- **Models** (migration `songs/0005_chord_sheets`):
+  - Chord Sheet: the ChordPro text and its key, pending or approved, at
+    most one approved per song;
+  - `Song.recording_key`;
+  - the permissions `view_lyrics`, `view_chordsheet`, `add_chordsheet`
+    and `approve_chordsheet`.
+- **`apps/songs/chords.py`:** checks ChordPro (each message names the
+  line); converts chords over words; renders any key, with sharps or flats
+  following the key, slash chords, a capo and Nashville numbers.
+- **`apps/songs/sheets.py`:**
+  - approvers add a sheet at any time, approved at once;
+  - team members paste one for a confirmed lineup song without a sheet,
+    and it stays pending until approved;
+  - approve and discard; Find chords links.
+- **`apps/songs/viewer.py`:** the key, ±1, capo, numbers and
+  practise-along, from the query string; htmx re-renders the sheet.
+- **Screens:**
+  - the song page's Chord sheet card and the sheet form (Convert, Save);
+  - the lineup song page;
+  - the chord sheet counts on the lineup page and card;
+  - the key history on the Key and notes page;
+  - the song page shows lyrics only with `view_lyrics` (review F13);
+  - the recording's key on the song form and page.
+- **Default roles:**
+  - Worship Leader and Pastoral Staff: `view_lyrics`, and view, add and
+    approve chord sheets;
+  - Team Member: view and add chord sheets.
+- **Tests:**
+  - `apps/songs/tests/test_chords.py` and `test_chordsheets.py`;
+  - `apps/worship/tests/test_lineup_songs.py`;
+  - one existing song page test now gives its user `view_lyrics`;
+  - new builders in [[Code-Conventions]]: `make_lineup`,
+    `make_chord_sheet` and `HYMN_SHEET`.
+- **Notes:** [[Worship]] (part A, permissions, roles); [[00-Home]] (status
+  was still "Phase 5 done"); [[Development-Plan]] (part A ticked, Phase 7
+  in progress).
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 632
+  tests passed (68 new), with 97% coverage (`chords.py` 95%, `sheets.py`
+  95%).
+
 ## 2026-11-20: Phase 7 decisions
 
 The user approved five Phase 7 design decisions. They are recorded in

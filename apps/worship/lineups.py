@@ -337,6 +337,24 @@ def move(lineup, item, step, user):
         _edited(lineup, user)
 
 
+def key_history(item, limit=8):
+    """``[(key, service)]``: the service keys ``item``'s song had in the
+    confirmed lineups of earlier services (not cancelled), most recent
+    first. Shown when choosing the song's key (Design-Decisions, Phase 7)."""
+    earlier = (
+        LineupItem.objects.filter(
+            song_id=item.song_id,
+            lineup__status=Lineup.Status.CONFIRMED,
+            lineup__service__is_cancelled=False,
+            lineup__service__starts_at__lt=item.lineup.service.starts_at,
+        )
+        .exclude(key="")
+        .select_related("lineup__service")
+        .order_by("-lineup__service__starts_at")
+    )
+    return [(other.key, other.lineup.service) for other in earlier[:limit]]
+
+
 def allowed_moves(items):
     """``{item pk: (up, down)}``: whether each song in ``items`` (in order)
     may move up or down. ``move`` refuses the same moves: past either end,

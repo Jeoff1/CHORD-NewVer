@@ -287,7 +287,7 @@ Tests: a web request that meets a 429 sends one request, never sleeps, and recor
 ### Transposition on the server (decided 2026-11-19; decision 0009)
 
 - All transposition runs on the server, in Python: the service key, a personal transpose, capo positions and Nashville numbers. Changing the key re-renders the sheet with htmx ([[0009-transposition-on-the-server]]).
-- ChordSheetJS is used only in the browser, to convert pasted Ultimate Guitar-style text to ChordPro before saving. It is vendored in `static/vendor/`. The server checks that the saved text is valid ChordPro and refuses it, with a message, when it isn't.
+- A pasted Ultimate Guitar-style chart (chords on the line above the words) is converted to ChordPro **on the server, in Python**, and the person sees the result before saving. The server checks that the saved text is valid ChordPro and refuses it, with a message naming the line, when it isn't. (Changed on 2026-11-20: ChordSheetJS was first chosen for the conversion, but it is GPL-2.0-only, so the user chose a Python converter.)
 - Transposing is covered by the normal test suite, so "the viewer's transposing is tested" is checked by `scripts/check.ps1`.
 
 Tests: transposing up and down by semitones and to a key, including sharps, flats and minor keys; capo positions; Nashville numbers; the htmx key change returns the re-rendered sheet; invalid ChordPro is refused.

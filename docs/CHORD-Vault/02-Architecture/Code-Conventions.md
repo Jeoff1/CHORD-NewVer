@@ -144,6 +144,10 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   - `make_song(tags=(), **fields)`: a song with a unique Spotify ID
   - `make_search_run(service, songs, placed=None)`: a finished Search Run
     that ranked `songs` in order, the first ones placed one per slot
+  - `make_lineup(service, songs, keys=(), confirmed=True)`: a lineup stored
+    directly, with service keys
+  - `make_chord_sheet(song, chordpro=HYMN_SHEET, key="G", approved=True)`:
+    a chord sheet; `HYMN_SHEET` is a public-domain hymn in ChordPro
   - `TEST_PASSWORD`
   - `close_file_response(response)`: closes a file download in a test
     without also closing the test database connection.

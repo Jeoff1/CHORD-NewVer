@@ -13,6 +13,7 @@
 | ML runtime       | ONNX Runtime, `tokenizers`, NumPy; models fetched with `huggingface-hub` ([[0006-onnx-runtime-for-song-analysis]]) |
 | ML models        | all-MiniLM-L6-v2 (embeddings, Apache-2.0); deberta-v3-xsmall-zeroshot-v1.1-all-33 (zero-shot, MIT) |
 | Outside services | Spotify Web API (search; later playback), LRCLIB (lyrics), through `apps/core/http.py` (standard library `urllib`) |
+| Chord sheets     | ChordPro read, checked, converted and transposed in Python (`apps/songs/chords.py`, [[0009-transposition-on-the-server]]); no ChordSheetJS (GPL-2.0-only) |
 | Documentation    | This Obsidian vault            |
 
 Exact package versions are pinned in `requirements.txt`.

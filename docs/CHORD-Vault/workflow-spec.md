@@ -118,9 +118,9 @@ CHORDS AND PLAYBACK
 - Chord sheets are required for songs in a confirmed lineup, and allowed at any
   time: the worship leader can add one to any song in the pool ahead of time.
 - A song with no sheet shows a "Find chords" action; the leader or pastor pastes
-  a chart (e.g. from Worship Together or Ultimate Guitar). ChordSheetJS, in the
-  browser only, converts it to ChordPro before saving; the server checks that
-  the saved text is valid ChordPro. It is saved for reuse and approved at once.
+  a chart (e.g. from Worship Together or Ultimate Guitar). The server converts
+  it to ChordPro (the person sees the result before saving) and checks that the
+  saved text is valid ChordPro. It is saved for reuse and approved at once.
 - A team member's paste is saved as pending. Other team members can't see it
   until the worship leader or the pastor approves it.
 - Only the original ChordPro text and original key are stored. The service key

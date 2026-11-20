@@ -146,6 +146,11 @@ urlpatterns = [
         name="lineup_send_back",
     ),
     path(
+        "services/<uuid:public_id>/lineup/songs/<int:pk>/",
+        lineups.LineupSongView.as_view(),
+        name="lineup_song",
+    ),
+    path(
         "services/<uuid:public_id>/lineup/songs/<int:pk>/swap/",
         lineups.SwapView.as_view(),
         name="lineup_swap",

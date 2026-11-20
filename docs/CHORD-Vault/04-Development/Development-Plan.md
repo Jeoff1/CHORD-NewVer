@@ -37,7 +37,7 @@ flowchart LR
 | 4     | Song pool                     | M    | 3          | Done (2026-11-17) |
 | 5     | Song suggestions              | L    | 4          | Done (2026-11-18) |
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
-| 7     | Song pages: chords and playback | L  | 6          | Not started       |
+| 7     | Song pages: chords and playback | L  | 6          | In progress       |
 | 8     | Teams and announcements       | M    | 6          | Not started       |
 | 9     | Learning to rank              | S    | 6          | Not started       |
 | 10    | Hardening and release         | M    | 7, 8, 9    | Not started       |
@@ -357,36 +357,36 @@ for every role:
 Goal: one page per lineup song with the track, the chords and the key.
 The rules and tests for this phase are in [[Design-Decisions]] (Phase 7).
 
-- [ ] **Chord Sheet** in ChordPro, typed or pasted; Ultimate Guitar-style
-  text is converted to ChordPro in the browser on paste (ChordSheetJS,
-  stored in `static/vendor/`, used for nothing else). The server checks
-  that the saved text is valid ChordPro. Only the original ChordPro text
-  and its key are stored.
-- [ ] **Find chords**: a song without a sheet shows an action that opens a
+- [x] **Chord Sheet** in ChordPro, typed or pasted; Ultimate Guitar-style
+  text (chords over words) is converted to ChordPro on the server, in
+  Python (not ChordSheetJS, which is GPL-2.0-only). The server checks that
+  the saved text is valid ChordPro. Only the original ChordPro text and its
+  key are stored.
+- [x] **Find chords**: a song without a sheet shows an action that opens a
   search on free sources such as Worship Together and Ultimate Guitar, in
   a new tab. Nothing is fetched or scraped; the chart is pasted by hand.
-- [ ] Each lineup shows how many of its songs have a chord sheet.
-- [ ] When sheets can be added: at any time, for any song in the pool, so
+- [x] Each lineup shows how many of its songs have a chord sheet.
+- [x] When sheets can be added: at any time, for any song in the pool, so
   the worship leader can add one ahead of time. A sheet is required only
   once the song is in a confirmed lineup.
-- [ ] Approval: a sheet added by the worship leader or the pastor is
+- [x] Approval: a sheet added by the worship leader or the pastor is
   approved at once. A team member may paste a sheet for a song in a
   confirmed lineup; it is saved as pending, other team members can't see
   it, and the worship leader or the pastor approves it. Approving is a
   permission the Worship Leader and Pastoral Staff roles hold, not a check
   on a role name.
-- [ ] The viewer, transposed **on the server** in Python
+- [x] The viewer, transposed **on the server** in Python
   ([[0009-transposition-on-the-server]]): the sheet in the service key, a
   personal transpose, a capo view and Nashville numbers. Changing the key
   re-renders the sheet with htmx.
-- [ ] A practise-along toggle that shows the chords in the recording's
+- [x] A practise-along toggle that shows the chords in the recording's
   key, since Spotify audio can't be pitch-shifted. The **recording's key**
   is entered by a person on the song (Spotify gives none); without it, the
   toggle is hidden.
-- [ ] Key tools: transpose by semitone or to a key, capo positions, and
+- [x] Key tools: transpose by semitone or to a key, capo positions, and
   **the keys the song was sung in**: its service keys in confirmed
   lineups, most recent first, shown when choosing a lineup song's key.
-- [ ] Lyrics on the song page only for people who plan, through a
+- [x] Lyrics on the song page only for people who plan, through a
   permission held by Worship Leader and Pastoral Staff (workflow review
   F13). Team members see the words through the chord sheet.
 - [ ] **Spotify connection** per user (Authorization Code flow), with

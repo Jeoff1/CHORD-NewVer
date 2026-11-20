@@ -8,7 +8,7 @@ development task.
 
 ## Current status
 
-**Phase 5 done (2026-11-18).** The project's scope is now the
+**Phase 6 done (2026-11-19); Phase 7 in progress.** The project's scope is now the
 [[Concept-Brief]] ([[0005-worship-planning-scope]]). Built so far:
 
 - church setup, users and Roles, and the audit trail;
@@ -35,9 +35,15 @@ development task.
   Suggestion Feedback; song usage from confirmed lineups now counts in
   ranking; reports for song usage (with CSV) and attendance.
 
-**Next:** Phases 7 (song pages: chords and playback), 8 (teams and
-announcements) and 9 (learning to rank) of the [[Development-Plan]], in
-any order.
+- [[Worship]]'s chord sheets (Phase 7, part A, 2026-11-20): ChordPro sheets
+  typed or pasted (chords over words converted on the server), approval of
+  team members' pastes, and a lineup song page with the sheet in the
+  service key. Transposing, capo, Nashville numbers and practise-along are
+  worked out on the server ([[0009-transposition-on-the-server]]). Also:
+  the keys a song was sung in, and full lyrics only for people who plan.
+
+**Next:** Phase 7, part B, of the [[Development-Plan]]: the Spotify
+connection, playback and the lineup playlist; then Phases 8 and 9.
 
 ## Project
 
