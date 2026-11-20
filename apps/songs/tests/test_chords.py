@@ -453,3 +453,33 @@ class ChartMarkTests(SimpleTestCase):
             chords.to_chordpro("E     (F#m7)\nMade up words\n"),
             "[E]Made u[(F#m7)]p words\n",
         )
+
+
+class KeptMarkDisplayTests(SimpleTestCase):
+    """Marks kept as written are flagged, so the viewer shows them apart and
+    notes that they weren't transposed (made-up content)."""
+
+    TEXT = "[D]Made up [*Zz9]words [G]here\n"
+
+    def render(self, target=None, **options):
+        return chords.render(
+            self.TEXT, Key.parse("D"), Key.parse(target) if target else None, **options
+        )
+
+    def test_kept_marks_are_flagged_and_chords_are_not(self):
+        segments = self.render("E").blocks[0].lines[0].segments
+        self.assertEqual(
+            [(s.chord, s.kept) for s in segments],
+            [("E", False), ("Zz9", True), ("A", False)],
+        )
+
+    def test_the_note_needs_kept_marks_and_a_change_from_the_sheets_key(self):
+        self.assertTrue(self.render("E").kept_not_moved)
+        self.assertFalse(self.render("D").kept_not_moved)
+        self.assertFalse(self.render().kept_not_moved)
+        self.assertTrue(self.render(capo=2).kept_not_moved)
+        self.assertTrue(self.render(numbers=True).kept_not_moved)
+        plain = chords.render(
+            "[D]Made up [N.C.]words\n", Key.parse("D"), Key.parse("E")
+        )
+        self.assertFalse(plain.kept_not_moved)

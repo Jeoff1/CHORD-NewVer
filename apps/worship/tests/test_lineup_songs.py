@@ -245,3 +245,28 @@ class KeyHistoryTests(LineupSongTestCase):
             )
         )
         self.assertContains(page, "Not sung in a confirmed lineup before")
+
+
+class KeptMarkNoteTests(LineupSongTestCase):
+    NOTE = "Some marks were kept as written and aren't transposed."
+
+    def setUp(self):
+        super().setUp()
+        self.hymn.chord_sheets.update(chordpro="[G]Made up [*Zz9]words [C]here\n")
+
+    def test_the_note_shows_when_the_key_differs_from_the_sheets(self):
+        page = self.get(self.member)  # service key A, sheet in G
+        self.assertContains(page, self.NOTE)
+        self.assertContains(page, 'class="chord kept"')
+        self.assertContains(page, ">Zz9<")
+
+    def test_no_note_in_the_sheets_own_key(self):
+        page = self.get(self.member, key="G")
+        self.assertNotContains(page, self.NOTE)
+        self.assertContains(page, 'class="chord kept"')  # still shown apart
+
+    def test_no_note_without_kept_marks(self):
+        self.hymn.chord_sheets.update(chordpro="[G]Made up [N.C.]words [C]here\n")
+        page = self.get(self.member)
+        self.assertNotContains(page, self.NOTE)
+        self.assertNotContains(page, 'class="chord kept"')

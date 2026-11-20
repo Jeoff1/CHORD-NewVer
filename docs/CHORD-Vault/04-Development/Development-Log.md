@@ -2,6 +2,28 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: kept marks shown apart in the viewer
+
+On branch `phase-7-chords`; not merged yet.
+
+- **Viewer:** marks kept as written (ChordPro annotations, `[*text]`) are
+  shown in grey italic, apart from chords. When the sheet has such marks
+  and is shown away from its own key (another key, a capo or Nashville
+  numbers), a note under the sheet says "Some marks were kept as written
+  and aren't transposed." (`Segment.kept`, `Rendered.kept_not_moved`).
+- **Not affected:** N.C., repeat and footnote marks are standard marks;
+  they get neither the style nor the note.
+- **Tests:**
+  - kept marks flagged, chords not;
+  - the note only with kept marks and away from the sheet's key (including
+    with a capo or numbers);
+  - on the lineup song page: the note with the service key, none in the
+    sheet's own key, and none without kept marks.
+- **Notes:** [[Design-Decisions]] (Phase 7, chart marks) and [[Worship]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 671
+  tests passed (5 new), with 97% coverage.
+
 ## 2026-11-20: optional chords and chart marks; unknown chords no longer block saving
 
 On branch `phase-7-chords`; not merged yet. From the click-through:

@@ -6,6 +6,7 @@
     .chord-sheet .seg { display: inline-flex; flex-direction: column; white-space: pre; }
     .chord-sheet .seg .chord { font-weight: 700; color: var(--bs-primary-text-emphasis); min-height: 1.25em; padding-right: .35em; font-family: var(--bs-font-monospace); font-size: .9em; }
     .chord-sheet .seg .lyric { min-height: 1.3em; }
+    .chord-sheet .seg .chord.kept { font-weight: 400; font-style: italic; color: var(--bs-secondary-color); }
     .chord-sheet .sheet-block { margin-bottom: 1rem; }
     .chord-sheet .sheet-block.chorus { border-left: 3px solid var(--bs-border-color); padding-left: .75rem; }
     .chord-sheet .sheet-label, .chord-sheet .sheet-comment { font-weight: 600; font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: var(--bs-secondary-color); margin-bottom: .25rem; }
@@ -60,7 +61,7 @@
         {% if block.label %}<div class="sheet-label">{{ block.label }}</div>{% endif %}
         {% for line in block.lines %}
           {% if line.kind == "lyrics" %}
-            <div class="sheet-line">{% for seg in line.segments %}<span class="seg"><span class="chord">{{ seg.chord }}</span><span class="lyric">{{ seg.text }}</span></span>{% endfor %}</div>
+            <div class="sheet-line">{% for seg in line.segments %}<span class="seg"><span class="chord{% if seg.kept %} kept{% endif %}"{% if seg.kept %} title="Kept as written; not transposed"{% endif %}>{{ seg.chord }}</span><span class="lyric">{{ seg.text }}</span></span>{% endfor %}</div>
           {% elif line.kind == "comment" %}
             <div class="sheet-comment">{{ line.text }}</div>
           {% elif line.kind == "tab" %}
@@ -72,4 +73,5 @@
       </div>
     {% endfor %}
   </div>
+  {% if rendered.kept_not_moved %}<p class="small text-body-secondary fst-italic mt-2 mb-0">Some marks were kept as written and aren't transposed.</p>{% endif %}
 </div>

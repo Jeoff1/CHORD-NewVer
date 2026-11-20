@@ -529,6 +529,9 @@ def to_chordpro(text):
 class Segment:
     chord: str  # "" when the words have no chord over them
     text: str
+    # A mark kept as written (a ChordPro annotation, [*text]): shown
+    # differently, and never transposed.
+    kept: bool = False
 
 
 @dataclass
@@ -554,6 +557,21 @@ class Rendered:
     shape_key: Key  # the key of the shapes played (differs with a capo)
     capo: int
     numbers: bool
+    # The chords were moved from the sheet's own key (another key, a capo
+    # or numbers), while marks kept as written stayed.
+    moved: bool = False
+    has_kept: bool = False
+
+    @property
+    def kept_not_moved(self):
+        """Whether to note that some marks weren't transposed."""
+        return self.moved and self.has_kept
+
+
+def is_annotation(text):
+    """A ChordPro annotation, ``[*text]``: kept as written."""
+    text = text.strip()
+    return text.startswith("*") and not FOOTNOTE.match(text)
 
 
 def _segments(line, show):
@@ -561,7 +579,10 @@ def _segments(line, show):
     # parts: text, chord, text, chord, text ...
     segments = [Segment("", parts[0])] if parts[0] else []
     for index in range(1, len(parts), 2):
-        segments.append(Segment(show(parts[index].strip()), parts[index + 1]))
+        content = parts[index].strip()
+        segments.append(
+            Segment(show(content), parts[index + 1], kept=is_annotation(content))
+        )
     return segments
 
 
@@ -587,7 +608,7 @@ def render(text, original, target=None, *, capo=0, numbers=False):
         chord's parentheses and a footnote mark), a mark as written, and an
         annotation ([*text]) without its star."""
         text = chord_text.strip()
-        if text.startswith("*") and not FOOTNOTE.match(text):
+        if is_annotation(text):
             return text[1:]
         if is_mark(text):
             return text
@@ -626,7 +647,16 @@ def render(text, original, target=None, *, capo=0, numbers=False):
         else:
             current.lines.append(Line("lyrics", segments=_segments(raw.rstrip(), show)))
     blocks = [block for block in blocks if block.lines or block.label]
-    return Rendered(title, subtitle, blocks, target, shape_key, capo, numbers)
+    has_kept = any(
+        segment.kept
+        for block in blocks
+        for line in block.lines
+        for segment in line.segments
+    )
+    moved = numbers or shape_key != original
+    return Rendered(
+        title, subtitle, blocks, target, shape_key, capo, numbers, moved, has_kept
+    )
 
 
 def capo_options(target):

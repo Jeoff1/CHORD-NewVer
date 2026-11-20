@@ -376,8 +376,10 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
   - an optional chord such as `(F#m7)` transposes inside its parentheses;
   - N.C., `x2`, `(x2)` and footnote marks stay as written;
   - anything else unreadable in brackets is kept as an annotation
-    (`[*text]`, shown without the star, never transposed), and the form
-    warns, listing the lines;
+    (`[*text]`, shown without the star in grey italic, never transposed),
+    and the form warns, listing the lines. When such a sheet is shown away
+    from its own key (another key, a capo or numbers), the viewer notes
+    "Some marks were kept as written and aren't transposed.";
   - only broken ChordPro stops a save.
 - **Find chords**: links to searches on Ultimate Guitar, Worship Together
   and the web, opened in a new tab. Nothing is fetched.
