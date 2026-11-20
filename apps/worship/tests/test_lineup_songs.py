@@ -89,6 +89,18 @@ class ViewerTests(LineupSongTestCase):
         self.assertContains(numbers, ">1/3<")
         self.assertContains(numbers, "Numbers are in A.")
 
+    def test_nashville_numbers_in_a_minor_key_say_where_they_count_from(self):
+        minor = make_song(title="Made Up Lament")
+        make_chord_sheet(minor, chordpro="[Am]La [Dm]la [E7]la\n", key="Am")
+        item = self.lineup.items.create(song=minor, position=5, key="Am")
+        page = self.get(self.member, item, numbers="1")
+        self.assertContains(page, "Numbers count from the minor key (1 = A minor).")
+        self.assertContains(page, ">1m<")
+        self.assertContains(page, ">4m<")
+        major = self.get(self.member, numbers="1")
+        self.assertNotContains(major, "Numbers count from the minor key")
+        self.assertContains(major, "Numbers are in A.")
+
     def test_the_practise_along_toggle_needs_the_recordings_key(self):
         page = self.get(self.member)
         self.assertNotContains(page, "Practise along")

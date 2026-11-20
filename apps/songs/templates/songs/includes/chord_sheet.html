@@ -49,7 +49,7 @@
     {% elif is_personal %}In {{ target.name }}, your own view; the key for everyone is {{ base_key.name }}. <a href="{{ sheet_url }}{{ reset_query }}" hx-get="{{ sheet_url }}{{ reset_query }}" hx-target="#chord-sheet" hx-swap="outerHTML">Back to {{ base_key.name }}</a>
     {% else %}In {{ target.name }}.{% endif %}
     {% if rendered.capo %}Capo {{ rendered.capo }}: play {{ rendered.shape_key.name }} shapes.{% endif %}
-    {% if rendered.numbers %}Numbers are in {{ target.name }}.{% endif %}
+    {% if rendered.numbers %}{% if target.minor %}Numbers count from the minor key (1 = {{ target.long_name }}).{% else %}Numbers are in {{ target.name }}.{% endif %}{% endif %}
   </p>
 
   <div class="sheet-body">

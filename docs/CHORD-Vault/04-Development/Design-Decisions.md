@@ -312,6 +312,26 @@ Tests: no recording key, no toggle; with one, the toggle shows the chords transp
 
 Tests: the leader and the pastor see the lyrics; a team member, and anyone without the permission, doesn't, but still sees the chord sheet.
 
+### Approved after part A (2026-11-20)
+
+The project owner approved these choices made while building part A.
+
+**Transposing** ([[0009-transposition-on-the-server]]):
+- C major and A minor spell their chords with flats (Bb, Eb, Ab): borrowed flat chords are far more common in worship songs than sharp ones. Every other key uses its own sharps or flats.
+- Nashville numbers in a minor key count from the minor tonic (1 = A minor in A minor, so Am is 1m). Numbers ignore a capo. In Nashville view on a minor-key song, a short note says so, such as "Numbers count from the minor key (1 = A minor)".
+- Capo positions 0 to 7 are offered, each with the shapes it gives; shapes in C, D, E, G, A, Am, Dm and Em are marked easy.
+- A personal transpose (another key, capo or numbers) lives only in the page address. It is never saved, so nobody else sees it.
+
+**Chord sheets:**
+- A song has at most one approved sheet. Saving by someone who may approve replaces it. Approving a pending sheet when the song already has an approved one is refused: discard the pending one or edit the approved one. Only pending sheets can be discarded.
+- Each team member has at most one pending sheet per song; pasting again replaces it. Only the person who pasted it, and people who may approve, see it.
+- "Required in a confirmed lineup" doesn't block confirming: sheets usually come after a lineup is confirmed. The lineup instead shows how many songs have an approved sheet and marks the ones that still need one.
+- Each lineup song has its own page, with the sheet in the service key, opened from the lineup and the service page. Team members open it only once the lineup is confirmed.
+- Find chords links to searches on Ultimate Guitar and the web, and to a web search limited to worshiptogether.com, which has no simple search address of its own.
+- The audit trail records a sheet's song, status and key, never its text.
+
+Tests: every key with the spelling above; Nashville numbers in minor keys, with the note; capo positions and easy shapes; one approved sheet per song and the approve and discard refusals; one pending sheet per member; the counts and marks on a confirmed lineup; the lineup song page for each role; the audit trail without the sheet text.
+
 ---
 
 ## Phase 8: team and community

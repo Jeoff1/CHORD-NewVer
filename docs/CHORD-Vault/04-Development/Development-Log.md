@@ -2,6 +2,34 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: Phase 7 part A approved; minor-key note on Nashville numbers
+
+On branch `phase-7-chords`; not merged yet.
+
+- **Approved and recorded** in [[Design-Decisions]] (Phase 7, "Approved
+  after part A"), the [[workflow-spec]] (chords and playback) and the
+  [[Glossary]]:
+  - flats for C major and A minor;
+  - Nashville numbers in a minor key count from the minor tonic and
+    ignore a capo;
+  - capo 0 to 7, with the easy shapes marked;
+  - a personal transpose only in the page address;
+  - one approved sheet per song, with the approve and discard rules;
+  - "required" doesn't block confirming: missing sheets are marked;
+  - one pending sheet per team member per song;
+  - the lineup song page;
+  - the Worship Together web-search link;
+  - the audit trail holds no sheet text.
+- **Added:** in Nashville view on a minor-key song, the viewer says
+  "Numbers count from the minor key (1 = A minor)". `Key.long_name` gives
+  "A minor" and "Bb major".
+- **Glossary:** Personal Transpose and Nashville Numbers added; Chord
+  Sheet notes one approved sheet per song.
+- **Notes:** [[Worship]] (the minor-key note).
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 634
+  tests passed (2 new), with 97% coverage.
+
 ## 2026-11-20: Phase 7, part A: chord sheets, the viewer and keys
 
 Branch `phase-7-chords`. Built from [[Design-Decisions]] (Phase 7) and

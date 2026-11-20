@@ -86,6 +86,11 @@ class KeyTests(SimpleTestCase):
             with self.assertRaises(ValueError):
                 Key.parse(bad)
 
+    def test_long_names(self):
+        self.assertEqual(Key.parse("Am").long_name, "A minor")
+        self.assertEqual(Key.parse("F#m").long_name, "F# minor")
+        self.assertEqual(Key.parse("Bb").long_name, "Bb major")
+
     def test_steps_between_keys(self):
         self.assertEqual(Key.parse("G").steps_to(Key.parse("A")), 2)
         self.assertEqual(Key.parse("A").steps_to(Key.parse("G")), 10)

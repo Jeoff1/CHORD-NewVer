@@ -122,12 +122,25 @@ CHORDS AND PLAYBACK
   it to ChordPro (the person sees the result before saving) and checks that the
   saved text is valid ChordPro. It is saved for reuse and approved at once.
 - A team member's paste is saved as pending. Other team members can't see it
-  until the worship leader or the pastor approves it.
+  until the worship leader or the pastor approves it. A team member may paste
+  only for a confirmed lineup song that has no sheet, and has at most one
+  pending sheet per song.
+- A song has at most one approved sheet. Approving a pending sheet when one is
+  already approved is refused; only pending sheets can be discarded. The audit
+  trail never holds a sheet's text.
+- A sheet being "required" doesn't block confirming: the lineup shows how many
+  songs have an approved sheet and marks the ones that still need one.
+- Each lineup song has its own page with the sheet in the service key; team
+  members open it once the lineup is confirmed.
 - Only the original ChordPro text and original key are stored. The service key
   is stored on the lineup item. All transposition runs on the server, in
   Python: the service key, a personal transpose, capo positions and Nashville
   numbers; changing the key re-renders the sheet with htmx
-  ([[0009-transposition-on-the-server]]).
+  ([[0009-transposition-on-the-server]]). C major and A minor use flats;
+  Nashville numbers in a minor key count from the minor tonic (shown with a
+  note) and ignore a capo; capo positions 0 to 7 are offered, with the easy
+  shapes marked. A personal transpose lives only in the page address and is
+  never saved.
 - When choosing a lineup song's service key, the keys that song was sung in
   (its service keys in confirmed lineups) are shown, most recent first.
 - A practise-along toggle shows the chords in the recording's key. Spotify

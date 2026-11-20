@@ -352,7 +352,8 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
   - `render()`: the sheet in any key. Sharps or flats follow the key shown
     (C and A minor use flats), a slash chord's bass moves with it, and the
     chord's quality stays. A capo shows the shapes played; Nashville
-    numbers are in the key heard (in a minor key, 1 is the minor tonic).
+    numbers are in the key heard (in a minor key, 1 is the minor tonic, and
+    the viewer notes "Numbers count from the minor key (1 = A minor)").
 - **Rules** (`apps/songs/sheets.py`):
   - people with `songs.approve_chordsheet` add or edit a sheet for any
     pool song at any time, approved at once;

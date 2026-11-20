@@ -213,8 +213,21 @@ _Avoid_: play count, plays (nothing is counted from Spotify)
 A song's chords and words in ChordPro, in the song's original key. It is
 transposed on the server for each view: the Service Key, a personal
 transpose, a capo or Nashville numbers. A pasted chart is converted to
-ChordPro on the server; a team member's paste waits for approval.
+ChordPro on the server; a team member's paste waits for approval. A Song
+has at most one approved Chord Sheet.
 _Avoid_: chart (alone), tab
+
+**Personal Transpose**:
+A musician's own view of a Chord Sheet: another key, a capo or Nashville
+Numbers. It lives only in the page address and is never saved; the Service
+Key stays the same for everyone.
+_Avoid_: my key, saved key
+
+**Nashville Numbers**:
+Chords written as numbers counted from the key's tonic: in G, Em7 is 6m7
+and D/F# is 5/7. In a minor key, 1 is the minor tonic (A minor's Am is 1m).
+A capo doesn't change them.
+_Avoid_: roman numerals, degrees (in UI text)
 
 **Recording Key**:
 The key of the Spotify recording, entered by a person on the Song (Spotify

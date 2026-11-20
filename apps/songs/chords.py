@@ -96,6 +96,12 @@ class Key:
         return (MINOR_KEYS if self.minor else MAJOR_KEYS)[self.tonic]
 
     @property
+    def long_name(self):
+        """The key in words: "A minor", "Bb major"."""
+        tonic = self.name[:-1] if self.minor else self.name
+        return f"{tonic} {'minor' if self.minor else 'major'}"
+
+    @property
     def flats(self):
         return self.name in FLAT_KEYS
 
