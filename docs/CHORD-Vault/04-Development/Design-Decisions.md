@@ -233,6 +233,15 @@ Tests: each label, including a swapped-in song later swapped out or removed; reg
 - **Song usage** needs a new permission, `worship.view_song_usage`, held by Worship Leader and Pastoral Staff by default.
 - **Attendance** reuses `worship.record_attendance` (Pastoral Staff and Office Staff by default), so worship leaders don't see it by default.
 
+### Click-through fixes (decided 2026-11-19, after part A)
+
+- **A lineup song's feel reason follows its slot.** A lineup song keeps only its theme reasons (match, tags, other versions); the feel reason is worked out for the slot it is in now, after any move, swap, add or regenerate, so it never names another slot's feel.
+- **People are named by their full name**, or their username when they have none, wherever text says who did something: "Confirmed by", the Mark, "Sent back by", "Asked for … by", "Reviewed by".
+- **No nested brackets in text.** Songs are listed as "Title, Artist", separated by semicolons, because artist names may hold brackets, such as "Charles Wesley (1739)".
+- **Move arrows show only where the move is allowed.** No ↑ or ↓ next to a locked song's place, or past either end. The server still refuses those moves, worded for the song being moved: "Hark! The Herald Angels Sing can't move into a locked song's place."
+
+Tests: a moved song's reason names its new slot's feel; full names with the username fallback; the versions reason without nested brackets; arrows hidden where refused, and the refused move still blocked on the server.
+
 ### Feel reason wording (decided 2026-11-19, part B)
 
 - A song placed in a slot of another feel reads "Its feel (upbeat) doesn't match this slot, which asks for slow, but it fit best.", so it reads naturally for every feel.

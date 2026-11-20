@@ -9,7 +9,9 @@ $steps = [ordered]@{
     "Ruff format"        = @("-m", "ruff", "format", "--check", ".")
     "Django checks"      = @("manage.py", "check")
     "Missing migrations" = @("manage.py", "makemigrations", "--check", "--dry-run")
-    "Tests"              = @("-m", "coverage", "run", "manage.py", "test")
+    # --noinput: a test database left by an interrupted run is replaced
+    # instead of stopping at Django's "delete it?" prompt.
+    "Tests"              = @("-m", "coverage", "run", "manage.py", "test", "--noinput")
     "Coverage report"    = @("-m", "coverage", "report")
 }
 

@@ -68,6 +68,9 @@ SONG SELECTION (core module)
    without notes gets a hint to add them; notes are not required.
 10. Leader reviews; leader or pastor confirms; pastor's decision wins. A
     lineup is a draft or confirmed; there is no other state.
+    - Each lineup song's feel reason is worked out for the slot it is in now.
+      Move arrows show only where a move is allowed. People are named by
+      their full name (or username) in marks and notes.
     - The leader or the pastor saves the reviewed suggestions as the lineup:
       its own copy, which later corrections to the suggestions never change.
       Review swaps a song for another ranked suggestion, locks, reorders,
@@ -130,7 +133,10 @@ CHORDS AND PLAYBACK
   such as "Verse 1" or "Outro" show as section labels. An optional chord in
   parentheses, such as (F#m7), transposes and keeps its parentheses; N.C.,
   repeat marks (x2) and footnote marks (*) stay as written. Anything else
-  unreadable in brackets is kept as written ([*text]) with a warning, and
+  unreadable in brackets is kept as written ([*text]) with a warning; the
+  viewer shows such marks in grey italic and notes that they weren't
+  transposed when the sheet is shown in another key. A stray ] that closes
+  nothing is removed and listed in the warning. The sheet is still
   saved: only broken ChordPro (an unclosed bracket or directive) stops a
   save. A person still brings in each chart; nothing is
   fetched from any site.

@@ -8,8 +8,39 @@ development task.
 
 ## Current status
 
-**Phase 6 done (2026-11-19); Phase 7 in progress.** The project's scope is now the
-[[Concept-Brief]] ([[0005-worship-planning-scope]]). Built so far:
+**Phase 6 done (2026-11-19); Phase 7 in progress (part A done, part B
+next).** Updated 2026-11-20 for the next session.
+
+**Pick up here:**
+- **Branch:** `phase-7-chords`, at the commit that adds this note. `master`
+  is at `bd5a543`: part A was fast-forwarded into it on 2026-11-20, at the
+  user's request.
+- **Don't merge `phase-7-chords` into `master` again until part B is
+  tested.**
+- **Progress Check 2 is on 25 Nov 2026.**
+- **Phase 7, part A, is done and passed the user's click-through:**
+  - ChordPro chord sheets, typed, pasted (chords over words converted on
+    the server) or imported from a file;
+  - Worship Together's rhythm lines, optional chords and chart marks;
+    unreadable marks are kept as written with a warning;
+  - approval of team members' sheets;
+  - Find chords;
+  - chord sheet counts on lineups;
+  - a lineup song page with the server-side viewer: service key, personal
+    transpose, capo, Nashville numbers and practise-along in the
+    recording's key ([[0009-transposition-on-the-server]]);
+  - the keys a song was sung in;
+  - full lyrics only for people who plan (review F13).
+- **Part B is next** ([[Development-Plan]], Phase 7; [[Design-Decisions]],
+  Phase 7):
+  - the Spotify connection per user, with encrypted tokens;
+  - playback;
+  - the playlist saved on confirmation, with "Save to Spotify";
+  - no web request waiting on a Spotify Retry-After (review F10).
+- **Checks:** `scripts/check.ps1` (it runs the tests with `--noinput`); on
+  2026-11-20, 678 tests passed with 97% coverage.
+
+Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 
 - church setup, users and Roles, and the audit trail;
 - [[Members]]: the people directory;
@@ -34,16 +65,9 @@ development task.
   members see a lineup only once it is confirmed. Confirming records
   Suggestion Feedback; song usage from confirmed lineups now counts in
   ranking; reports for song usage (with CSV) and attendance.
+- [[Worship]]'s chord sheets (Phase 7, part A, 2026-11-20), as above.
 
-- [[Worship]]'s chord sheets (Phase 7, part A, 2026-11-20): ChordPro sheets
-  typed or pasted (chords over words converted on the server), approval of
-  team members' pastes, and a lineup song page with the sheet in the
-  service key. Transposing, capo, Nashville numbers and practise-along are
-  worked out on the server ([[0009-transposition-on-the-server]]). Also:
-  the keys a song was sung in, and full lyrics only for people who plan.
-
-**Next:** Phase 7, part B, of the [[Development-Plan]]: the Spotify
-connection, playback and the lineup playlist; then Phases 8 and 9.
+**Next:** Phase 7, part B; then Phases 8 and 9, in any order.
 
 ## Project
 

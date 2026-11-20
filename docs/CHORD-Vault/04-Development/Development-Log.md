@@ -2,6 +2,34 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: hand-over: decisions checked, status for the next session, check.ps1 --noinput
+
+On branch `phase-7-chords`.
+
+- **Decisions checked:** every decision the user approved in this session
+  was checked against [[Design-Decisions]], the [[workflow-spec]] and the
+  [[Glossary]]. Missing ones were recorded:
+  - the Phase 6 click-through fixes: the feel reason follows the slot;
+    full names in marks and notes; no nested brackets; move arrows only
+    where allowed. Added to Design-Decisions (Phase 6) and spec step 10;
+  - the stray `]` removal and the viewer's style and note for kept marks,
+    added to the spec;
+  - Chart Mark and Rhythm Line, added to the Glossary.
+- **[[00-Home]] "Current status"** is rewritten for the next session:
+  - the branch and commit;
+  - what Phase 7 part A includes, and that it passed the user's
+    click-through;
+  - part B next (the Spotify connection, playback, the playlist on
+    confirmation, F10 fail-fast);
+  - `phase-7-chords` not to be merged again until part B is tested;
+  - Progress Check 2 on 25 Nov 2026.
+- **`scripts/check.ps1`** runs the tests with `--noinput`, so a test
+  database left by an interrupted run is replaced instead of stopping at
+  Django's prompt. [[Environment-Setup]] says so.
+- **Verified:** `scripts/check.ps1` passed with `--noinput`. Ruff lint and
+  format were clean, `manage.py check` was clean, and no migrations were
+  missing. 678 tests passed, with 97% coverage.
+
 ## 2026-11-20: a stray ] no longer blocks saving
 
 On branch `phase-7-chords`. From the click-through: Worship Together's

@@ -113,7 +113,9 @@ It runs, in order and stopping at the first failure:
 5. The coverage report.
 
 The tests create and remove a temporary database, `test_chord_newver_db`,
-which `chord_user` is allowed to create.
+which `chord_user` is allowed to create. They run with `--noinput`, so one
+left behind by an interrupted run (for example when the disk filled up) is
+replaced without a prompt.
 
 ## Setting up on a new machine
 

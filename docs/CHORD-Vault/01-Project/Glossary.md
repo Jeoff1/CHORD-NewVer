@@ -217,6 +217,20 @@ ChordPro on the server; a team member's paste waits for approval. A Song
 has at most one approved Chord Sheet.
 _Avoid_: chart (alone), tab
 
+**Chart Mark**:
+Something in a Chord Sheet's brackets that isn't a plain chord. An optional
+chord in parentheses, such as (F#m7), transposes and keeps its parentheses.
+N.C., repeat marks (x2) and footnote marks (*) stay as written. Anything
+else that can't be read is kept as written, a ChordPro annotation
+([*text]): shown in grey italic and never transposed.
+_Avoid_: bad chord, error (a kept mark never stops a save)
+
+**Rhythm Line**:
+A line of bars and beats, such as |D//G|////| or Worship Together's
+[| D / / G | / / / / |]. Each chord in it gets its own bracket, so it
+transposes; one that can't be read becomes a comment.
+_Avoid_: intro line, strum pattern
+
 **Personal Transpose**:
 A musician's own view of a Chord Sheet: another key, a capo or Nashville
 Numbers. It lives only in the page address and is never saved; the Service
