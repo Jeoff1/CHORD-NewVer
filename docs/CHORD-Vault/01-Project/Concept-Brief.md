@@ -109,8 +109,11 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
   On confirmation the lineup is saved as a Spotify playlist on the worship
   leader's account. Users' Spotify tokens are stored encrypted, with the key
   in `.env`.
-- **Chord sheets**: stored as ChordPro, shown with ChordSheetJS. Only the
-  original ChordPro text and key are stored; the page transposes on load.
+- **Chord sheets**: stored as ChordPro. Only the original ChordPro text and
+  key are stored; the server transposes the sheet for each view
+  ([[0009-transposition-on-the-server]]), and changing the key re-renders it
+  with htmx. ChordSheetJS is used only in the browser, to convert a pasted
+  chart to ChordPro.
   A song without a sheet shows a "Find chords" action that opens a search
   on free sources such as Worship Together and Ultimate Guitar. The worship
   leader or pastor pastes the chart, and it is converted to ChordPro on
@@ -119,10 +122,14 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
   have chord sheets. There is no automatic import.
 - **Keys**: each lineup entry has its own service key. The worship leader
   transposes by semitone or picks a key, and every musician's sheet
-  follows. Helpers: a key from the lead singer's range, a capo position,
-  and a Nashville-number view. Spotify audio can't be pitch-shifted, so the
-  recording plays in its original key; a practise-along toggle shows the
-  chords in the recording's original key so musicians can play with it.
+  follows. Helpers: the keys the song was sung in before (from confirmed
+  lineups, most recent first), a capo position, and a Nashville-number
+  view. Spotify audio can't be pitch-shifted, so the recording plays in its
+  own key; a practise-along toggle shows the chords in the recording's key
+  so musicians can play with it. Spotify gives no key, so a person enters
+  the recording's key on the song; without it, the toggle is hidden.
+- **Lyrics**: the full lyrics on a song page are for the people who plan;
+  team members see the words through the chord sheet.
 
 ## Supporting modules
 

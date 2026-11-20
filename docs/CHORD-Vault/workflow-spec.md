@@ -118,24 +118,38 @@ CHORDS AND PLAYBACK
 - Chord sheets are required for songs in a confirmed lineup, and allowed at any
   time: the worship leader can add one to any song in the pool ahead of time.
 - A song with no sheet shows a "Find chords" action; the leader or pastor pastes
-  a chart (e.g. from Worship Together or Ultimate Guitar), the app converts it
-  to ChordPro (e.g. with ChordSheetJS), and it is saved for reuse and approved
-  at once.
+  a chart (e.g. from Worship Together or Ultimate Guitar). ChordSheetJS, in the
+  browser only, converts it to ChordPro before saving; the server checks that
+  the saved text is valid ChordPro. It is saved for reuse and approved at once.
 - A team member's paste is saved as pending. Other team members can't see it
   until the worship leader or the pastor approves it.
 - Only the original ChordPro text and original key are stored. The service key
-  is stored on the lineup item; transposition happens when the page loads.
+  is stored on the lineup item. All transposition runs on the server, in
+  Python: the service key, a personal transpose, capo positions and Nashville
+  numbers; changing the key re-renders the sheet with htmx
+  ([[0009-transposition-on-the-server]]).
+- When choosing a lineup song's service key, the keys that song was sung in
+  (its service keys in confirmed lineups) are shown, most recent first.
+- A practise-along toggle shows the chords in the recording's key. Spotify
+  gives no key, so a person enters the recording's key on the song; without
+  it, the toggle is hidden.
+- Full lyrics on the song page are shown only to people who plan (Worship
+  Leader and Pastoral Staff by default), through a permission. Team members
+  see the words through the chord sheet.
 - Playback is Spotify only: Web Playback SDK for connected Premium users (max 5
   users in Development Mode), embed player otherwise. No audio is stored. If an
   SDK call gets a 429, the player shows a short message and falls back to the
   embed player or an "Open in Spotify" link, without retrying.
 - On confirmation, the lineup is saved automatically as a Spotify playlist on
   the worship leader's account. If the leader has no Spotify connection or
-  Spotify returns a 429, this is skipped and a "Save to Spotify" button lets
-  them try again later.
+  Spotify returns a 429, this is skipped at once, without waiting, and a "Save
+  to Spotify" button lets them try again later.
 
 SPOTIFY SAFEGUARDS (every server-side Spotify call: search, tracks, playlists)
 - Stop on the first 429: make no Spotify call until Retry-After has passed.
+- No web request waits on a Retry-After: a Spotify call made during a web
+  request fails fast on a 429 (for example, the playlist shows "Save to
+  Spotify" instead). Only the search worker may wait out a short one.
 - Save a "Spotify blocked until" time that every process (the worker and web
   requests) checks before each Spotify call.
 - After waiting, retry a request at most once; if it fails again, give up and

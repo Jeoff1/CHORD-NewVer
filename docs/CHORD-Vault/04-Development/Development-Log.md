@@ -2,6 +2,37 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: Phase 7 decisions
+
+The user approved five Phase 7 design decisions. They are recorded in
+[[Design-Decisions]] (Phase 7), the [[workflow-spec]] (chords and
+playback; Spotify safeguards), the [[Development-Plan]] (Phase 7 items
+and "done when"), the [[Concept-Brief]] (playback, chord sheets and keys)
+and the [[Glossary]].
+
+1. **Transposition on the server**
+   ([[0009-transposition-on-the-server]], new):
+   - Python handles the service key, a personal transpose, capo positions
+     and Nashville numbers; a key change re-renders with htmx;
+   - the normal test suite covers it;
+   - ChordSheetJS only converts pasted charts to ChordPro in the browser,
+     and the server checks the saved ChordPro.
+2. **The keys a song was sung in** replace "a key from a singer's range":
+   its service keys in confirmed lineups, most recent first.
+3. **Practise-along:** a person enters the recording's key on the song;
+   without it, the toggle is hidden.
+4. **Lyrics (review F13):** full lyrics on the song page only for people
+   who plan, through a permission. Team members see the words through the
+   chord sheet.
+5. **No web request waits on Spotify (review F10):** a 429 fails fast,
+   including saving the playlist and Find on Spotify, which today waits
+   up to 30 seconds. The worker keeps its single short wait.
+
+Also: [[Glossary]] gains Chord Sheet and Recording Key, and the Service
+Key entry mentions the key history; [[00-Home]] lists decision 0009.
+Checks: documentation only, no code changed, so `scripts/check.ps1` was not
+run.
+
 ## 2026-11-20: README
 
 - Added `README.md` at the project root, the first page someone opening

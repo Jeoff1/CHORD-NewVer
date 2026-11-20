@@ -276,6 +276,42 @@ Tests: confirming saves the playlist when the leader is connected; with no conne
 - Apply all the Phase 5 Spotify rules to playback and playlist calls made from the server, such as creating the service playlist.
 - Web Playback SDK calls happen in the user's browser. If one gets a 429, show a short message in the player and fall back to the embed player or the "Open in Spotify" link. Don't retry automatically.
 
+### No web request waits on Spotify (review F10; decided 2026-11-19)
+
+- No web request may wait out a Spotify Retry-After. Any Spotify call made during a web request fails fast on a 429: it records the limit (the shared block, as in Phase 5), doesn't wait, and doesn't retry.
+- Saving the playlist when a lineup is confirmed fails fast the same way, and the lineup page shows "Save to Spotify" instead. So does any other web request, including Find on Spotify; today that search waits up to 30 seconds and retries once, and this changes it.
+- The search worker keeps the Phase 5 rule: it may wait out a short Retry-After once.
+
+Tests: a web request that meets a 429 sends one request, never sleeps, and records the block; confirming during a block still confirms and shows "Save to Spotify"; the worker's single short wait still works.
+
+### Transposition on the server (decided 2026-11-19; decision 0009)
+
+- All transposition runs on the server, in Python: the service key, a personal transpose, capo positions and Nashville numbers. Changing the key re-renders the sheet with htmx ([[0009-transposition-on-the-server]]).
+- ChordSheetJS is used only in the browser, to convert pasted Ultimate Guitar-style text to ChordPro before saving. It is vendored in `static/vendor/`. The server checks that the saved text is valid ChordPro and refuses it, with a message, when it isn't.
+- Transposing is covered by the normal test suite, so "the viewer's transposing is tested" is checked by `scripts/check.ps1`.
+
+Tests: transposing up and down by semitones and to a key, including sharps, flats and minor keys; capo positions; Nashville numbers; the htmx key change returns the re-rendered sheet; invalid ChordPro is refused.
+
+### Keys a song was sung in (decided 2026-11-19)
+
+- "A key from a singer's range" is replaced by **remembering the keys each song was sung in**. When the worship leader chooses a lineup song's service key, the service keys that song had in confirmed lineups are shown, most recent first. No melody data is needed.
+
+Tests: the keys come only from confirmed lineups that set one, most recent first; a song never sung shows none.
+
+### Practise-along toggle (decided 2026-11-19)
+
+- The toggle shows the chords in the recording's key, because Spotify audio can't be pitch-shifted.
+- Spotify gives no key, and Audio Features is banned, so a person enters the **recording's key** on the song. When it isn't set, the toggle is hidden.
+
+Tests: no recording key, no toggle; with one, the toggle shows the chords transposed to it.
+
+### Lyrics on the song page (review F13; decided 2026-11-19)
+
+- Full lyrics on the song page are shown only to people who plan: Worship Leader and Pastoral Staff by default. This is a permission (for example `songs.view_lyrics`), never a role name.
+- Team members see the words through the chord sheet.
+
+Tests: the leader and the pastor see the lyrics; a team member, and anyone without the permission, doesn't, but still sees the chord sheet.
+
 ---
 
 ## Phase 8: team and community

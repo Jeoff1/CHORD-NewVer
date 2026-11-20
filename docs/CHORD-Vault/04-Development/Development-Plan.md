@@ -358,8 +358,10 @@ Goal: one page per lineup song with the track, the chords and the key.
 The rules and tests for this phase are in [[Design-Decisions]] (Phase 7).
 
 - [ ] **Chord Sheet** in ChordPro, typed or pasted; Ultimate Guitar-style
-  text is converted on paste (ChordSheetJS, stored in `static/vendor/`).
-  Only the original ChordPro text and its key are stored.
+  text is converted to ChordPro in the browser on paste (ChordSheetJS,
+  stored in `static/vendor/`, used for nothing else). The server checks
+  that the saved text is valid ChordPro. Only the original ChordPro text
+  and its key are stored.
 - [ ] **Find chords**: a song without a sheet shows an action that opens a
   search on free sources such as Worship Together and Ultimate Guitar, in
   a new tab. Nothing is fetched or scraped; the chart is pasted by hand.
@@ -373,12 +375,20 @@ The rules and tests for this phase are in [[Design-Decisions]] (Phase 7).
   it, and the worship leader or the pastor approves it. Approving is a
   permission the Worship Leader and Pastoral Staff roles hold, not a check
   on a role name.
-- [ ] The viewer: the sheet in the service key, a personal transpose, a
-  capo view and Nashville numbers.
+- [ ] The viewer, transposed **on the server** in Python
+  ([[0009-transposition-on-the-server]]): the sheet in the service key, a
+  personal transpose, a capo view and Nashville numbers. Changing the key
+  re-renders the sheet with htmx.
 - [ ] A practise-along toggle that shows the chords in the recording's
-  original key, since Spotify audio can't be pitch-shifted.
-- [ ] Key tools: transpose by semitone or to a key, capo positions, and a
-  key from a singer's range.
+  key, since Spotify audio can't be pitch-shifted. The **recording's key**
+  is entered by a person on the song (Spotify gives none); without it, the
+  toggle is hidden.
+- [ ] Key tools: transpose by semitone or to a key, capo positions, and
+  **the keys the song was sung in**: its service keys in confirmed
+  lineups, most recent first, shown when choosing a lineup song's key.
+- [ ] Lyrics on the song page only for people who plan, through a
+  permission held by Worship Leader and Pastoral Staff (workflow review
+  F13). Team members see the words through the chord sheet.
 - [ ] **Spotify connection** per user (Authorization Code flow), with
   tokens refreshed as needed. Access and refresh tokens are stored
   **encrypted** with Fernet from `cryptography`, with the key in `.env`
@@ -395,14 +405,22 @@ The rules and tests for this phase are in [[Design-Decisions]] (Phase 7).
   Spotify" button lets the leader try again later.
 - [ ] The Phase 5 Spotify safeguards cover every server-side Spotify call
   this phase adds, such as creating the playlist.
+- [ ] No web request waits on a Spotify Retry-After (workflow review F10):
+  saving the playlist, Find on Spotify and any other call made during a
+  web request fail fast on a 429. The playlist then shows "Save to
+  Spotify".
 
-**Done when** the viewer's transposing is tested, and playback falls back
-to the embedded player whenever the SDK can't be used. Also tested: a team
+**Done when** the viewer's transposing is tested in the normal test suite
+(so `scripts/check.ps1` checks it), and playback falls back to the embedded
+player whenever the SDK can't be used. Also tested: a team
 member's paste is pending; the worship leader or the pastor can approve
 it; other team members can't see a pending sheet; a stored token is not
 the plain token, and decrypts back to it; confirming saves the playlist
 for a connected leader, and without a connection or on a 429 the lineup
-is still confirmed and the "Save to Spotify" button shows.
+is still confirmed and the "Save to Spotify" button shows, without waiting;
+a song's keys are listed from confirmed lineups, most recent first; the
+practise-along toggle is hidden without a recording key; invalid ChordPro
+is refused; team members don't see full lyrics on the song page.
 
 ## Phase 8: Teams and announcements
 

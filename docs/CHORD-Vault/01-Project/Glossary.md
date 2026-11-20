@@ -185,7 +185,9 @@ _Avoid_: setlist, worship plan, playlist (a playlist is on Spotify)
 **Service Key**:
 The key a Lineup's song is sung in at that Worship Service, kept on the
 song's place in the Lineup. Chord sheets keep only the song's original key
-and are transposed to the Service Key when shown.
+and are transposed to the Service Key when shown. When choosing it, the
+keys the song was sung in before (from confirmed Lineups, most recent first)
+are shown.
 _Avoid_: song key (that is the original key)
 
 **Suggestion Feedback**:
@@ -206,6 +208,19 @@ recent use; the song usage report counts only Worship Services already
 held. A song sung again sooner than the repeat window is highlighted in the
 report.
 _Avoid_: play count, plays (nothing is counted from Spotify)
+
+**Chord Sheet**:
+A song's chords and words in ChordPro, in the song's original key. It is
+transposed on the server for each view: the Service Key, a personal
+transpose, a capo or Nashville numbers. A pasted chart is converted to
+ChordPro in the browser; a team member's paste waits for approval.
+_Avoid_: chart (alone), tab
+
+**Recording Key**:
+The key of the Spotify recording, entered by a person on the Song (Spotify
+gives none). The practise-along toggle shows the chords in it, and is
+hidden when it isn't set.
+_Avoid_: original key (that is the Chord Sheet's), track key
 
 **Final Say**:
 The permission `worship.finalize_lineup`, held by the Pastoral Staff role

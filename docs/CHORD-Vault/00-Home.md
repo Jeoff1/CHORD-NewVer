@@ -60,6 +60,7 @@ any order.
   - [[0006-onnx-runtime-for-song-analysis|0006 Song analysis runs ONNX models, with a keyword stand-in]]
   - [[0007-search-worker|0007 One search worker, a management command polling the database]]
   - [[0008-final-say-permission|0008 The final say on lineups is its own permission]]
+  - [[0009-transposition-on-the-server|0009 Chord sheets are transposed on the server, in Python]]
 
 ## Modules
 
