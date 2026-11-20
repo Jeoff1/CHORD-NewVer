@@ -15,6 +15,7 @@
       {% if converted %}<div class="alert alert-info small">Converted to ChordPro. Check the chords sit over the right words, then save.</div>{% endif %}
       {% if imported %}<div class="alert alert-info small">Imported {{ imported }}. Check the sheet and its key, then {% if approves %}save{% else %}send it for approval{% endif %}.</div>{% endif %}
       {% if import_error %}<div class="alert alert-danger small">{{ import_error }}</div>{% endif %}
+      {% if kept_warning %}<div class="alert alert-warning small">{{ kept_warning }} Saving keeps them.</div>{% endif %}
       <div class="card shadow-sm">
         <div class="card-body p-4">
           <form method="post" enctype="multipart/form-data" novalidate>

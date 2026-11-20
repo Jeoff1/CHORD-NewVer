@@ -139,8 +139,10 @@ class RuleTests(SheetTestCase):
             sheets.discard(approved, self.leader)
 
     def test_the_text_is_checked_converted_and_keyed(self):
-        with self.assertRaisesMessage(sheets.SheetRefused, "isn't a chord"):
-            sheets.save(self.song, self.leader, "[H]bad\n", "G")
+        with self.assertRaisesMessage(sheets.SheetRefused, "is never closed"):
+            sheets.save(self.song, self.leader, "[G]fine\n[G open\n", "G")
+        with self.assertRaisesMessage(sheets.SheetRefused, "There are no chords"):
+            sheets.save(self.song, self.leader, "[H]only an unknown mark\n", "G")
         sheet = sheets.save(self.song, self.leader, "G       C\nMade up words\n", "G")
         self.assertEqual(sheet.chordpro, "[G]Made up [C]words\n")
         sheet = sheets.save(self.song, self.leader, "{key: D}\n[D]La\n", "")
@@ -188,13 +190,46 @@ class SheetFormTests(SheetTestCase):
         self.assertContains(response, "[G]Made up [C]words")
         self.assertFalse(ChordSheet.objects.exists())
 
-    def test_invalid_chordpro_is_refused_with_a_message(self):
+    def test_broken_chordpro_is_refused_with_a_message(self):
+        # Only what breaks the ChordPro itself stops a save.
+        self.client.force_login(self.leader)
+        for text, message in (
+            ("[G]ok\n[G no\n", "Line 2: a chord&#x27;s [ is never closed."),
+            ("[G]ok {c: x}\n", "Line 1: a directive must be on its own line"),
+            ("{soc}\n[G]ok\n", "The chorus at the end is never closed."),
+        ):
+            response = self.client.post(
+                form_url(self.song), {"key": "G", "chordpro": text, "action": "save"}
+            )
+            self.assertContains(response, message)
+        self.assertFalse(ChordSheet.objects.exists())
+
+    def test_an_unreadable_mark_is_kept_as_written_with_a_warning(self):
+        self.client.force_login(self.leader)
+        text = "[G]Made up\n[Zz9]more made up [C]words\n"
+        response = self.client.post(
+            form_url(self.song),
+            {"key": "G", "chordpro": text, "action": "save"},
+            follow=True,
+        )
+        self.assertContains(
+            response,
+            "These marks were kept as written and won&#x27;t transpose: line 2 “Zz9”.",
+        )
+        sheet = ChordSheet.objects.get()
+        self.assertEqual(sheet.chordpro, "[G]Made up\n[*Zz9]more made up [C]words\n")
+        page = self.client.get(detail_url(self.song), {"key": "A"})
+        self.assertContains(page, ">Zz9<")  # as written, not transposed
+        self.assertContains(page, ">D<")
+
+    def test_convert_shows_the_warning_too(self):
         self.client.force_login(self.leader)
         response = self.client.post(
             form_url(self.song),
-            {"key": "G", "chordpro": "[G]ok\n[Zx]no\n", "action": "save"},
+            {"key": "G", "chordpro": "[G]Made up [Zz9]words\n", "action": "convert"},
         )
-        self.assertContains(response, "Line 2: “Zx” isn&#x27;t a chord.")
+        self.assertContains(response, "line 1 “Zz9”")
+        self.assertContains(response, "[*Zz9]")
         self.assertFalse(ChordSheet.objects.exists())
 
     def test_a_team_members_paste_waits_and_goes_back_to_next(self):

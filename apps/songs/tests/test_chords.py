@@ -136,8 +136,9 @@ class TranspositionTests(SimpleTestCase):
         )
 
     def test_markers_that_arent_chords_stay(self):
+        # An annotation ([*text]) shows its text without the star.
         self.assertEqual(
-            shown("[G]la [N.C.]la [*Rit.]la\n", "G", "A"), ["A", "N.C.", "*Rit."]
+            shown("[G]la [N.C.]la [*Rit.]la\n", "G", "A"), ["A", "N.C.", "Rit."]
         )
 
     def test_twelve_steps_up_is_the_same_key(self):
@@ -411,4 +412,44 @@ class SectionNameTests(SimpleTestCase):
         self.assertEqual(
             chords.to_chordpro("Chorus\nD       G\nMade up words\n"),
             "{comment: Chorus}\n[D]Made up [G]words\n",
+        )
+
+
+class ChartMarkTests(SimpleTestCase):
+    """Optional chords, chart marks and unknown marks (made-up content)."""
+
+    def test_an_optional_chord_transposes_and_keeps_its_parentheses(self):
+        self.assertEqual(shown("[E]la [(F#m7)]la\n", "E", "F#"), ["F#", "(G#m7)"])
+        self.assertEqual(shown("[(D/F#)]la\n", "D", "E"), ["(E/G#)"])
+        self.assertEqual(shown("[(F#m7)]la\n", "E", numbers=True), ["(2m7)"])
+        self.assertEqual(chords.check("[E]la [(F#m7)]la\n"), 2)
+
+    def test_no_chord_and_repeat_marks_stay_as_written(self):
+        text = "[D]la [N.C.]la [x2]la [(x2)]la [n.c.]la\n"
+        self.assertEqual(shown(text, "D", "E"), ["E", "N.C.", "x2", "(x2)", "n.c."])
+        self.assertEqual(chords.check(text), 1)  # only D is a chord
+
+    def test_a_footnote_mark_stays_and_the_chord_moves(self):
+        self.assertEqual(shown("[D*]la [*]la\n", "D", "E"), ["E*", "*"])
+
+    def test_unknown_marks_are_kept_as_annotations(self):
+        text, kept = chords.keep_unread(
+            "{key: D}\n[D]la\n[Zz9]la [G]la\n{sot}\n[??]\n{eot}\n"
+        )
+        self.assertEqual(kept, [(3, "Zz9")])
+        self.assertIn("[*Zz9]la [G]la", text)
+        self.assertIn("[??]", text)  # tablature is left as written
+        self.assertEqual(chords.check(text), 2)
+        self.assertEqual(shown(text, "D", "E"), ["E", "Zz9", "A"])
+
+    def test_structure_errors_still_stop_a_save(self):
+        text, kept = chords.keep_unread("[D]la\n[G open\n")
+        self.assertEqual(kept, [])
+        with self.assertRaisesMessage(ChordProError, "is never closed"):
+            chords.check(text)
+
+    def test_chords_over_words_with_optional_chords(self):
+        self.assertEqual(
+            chords.to_chordpro("E     (F#m7)\nMade up words\n"),
+            "[E]Made u[(F#m7)]p words\n",
         )

@@ -2,6 +2,45 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: optional chords and chart marks; unknown chords no longer block saving
+
+On branch `phase-7-chords`; not merged yet. From the click-through:
+Worship Together marks optional chords in parentheses (`[(F#m7)]`), and
+saving failed with "isn't a chord".
+
+- **Optional chords** in parentheses transpose and keep their parentheses
+  (`chords.chord_in`). `(F#m7)` in E is `(G#m7)` in F#; Nashville numbers
+  show `(2m7)`.
+- **Chart marks:** N.C., `x2`, `(x2)` and footnote marks (`*`, `†`) are
+  kept as written and never transposed (`chords.is_mark`). `D*` moves its
+  chord and keeps the mark.
+- **Unknown marks:** anything else unreadable in brackets is kept as a
+  ChordPro annotation, `[*Zz9]`, shown as written and never transposed
+  (`chords.keep_unread`). Convert and Save list them in a warning ("These
+  marks were kept as written and won't transpose: line 35 …"), and the
+  sheet still saves. An annotation shows without its star.
+- **Hard errors** stay only for broken ChordPro: an unclosed bracket, a
+  directive not alone on its line, a section never closed, or no chord at
+  all. A sheet whose only bracket is an unknown mark therefore says "no
+  chords".
+- **Tests** (made-up content):
+  - "(F#m7)" transposes with its parentheses;
+  - N.C. and x2 are kept and not transposed;
+  - "[Zz9]" saves as an annotation with the warning, on Save and on
+    Convert;
+  - an unclosed bracket and other broken ChordPro are still errors;
+  - tablature is left alone;
+  - optional chords work in pasted charts.
+
+  Two earlier tests changed: an unknown chord used to block a save, and an
+  annotation used to show its star.
+- **Notes:** [[Design-Decisions]] (Phase 7), the [[workflow-spec]] and
+  [[Worship]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 666
+  tests passed (8 new), with 97% coverage (`chords.py` 96%, `sheets.py`
+  95%).
+
 ## 2026-11-20: Worship Together ChordPro: bracketed rhythm lines, section names
 
 On branch `phase-7-chords`; not merged yet. A bug from the click-through:

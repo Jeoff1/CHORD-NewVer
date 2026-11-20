@@ -372,6 +372,13 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
   (`chords.bracketed_rhythm`); either becomes a comment when unreadable.
   Plain section lines such as "Verse 1" or "Outro" become section labels
   (`chords.section_line`).
+- **Chart marks** (`chords.chord_in`, `is_mark`, `keep_unread`):
+  - an optional chord such as `(F#m7)` transposes inside its parentheses;
+  - N.C., `x2`, `(x2)` and footnote marks stay as written;
+  - anything else unreadable in brackets is kept as an annotation
+    (`[*text]`, shown without the star, never transposed), and the form
+    warns, listing the lines;
+  - only broken ChordPro stops a save.
 - **Find chords**: links to searches on Ultimate Guitar, Worship Together
   and the web, opened in a new tab. Nothing is fetched.
 - **Screens**:

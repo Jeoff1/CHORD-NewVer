@@ -154,15 +154,59 @@ class Chord:
         return f"{self.root}{self.quality}" + (f"/{self.bass}" if self.bass else "")
 
 
-def is_chord_token(text):
+# Chart marks inside brackets, kept as written and never transposed: no
+# chord, repeat counts such as x2 or (x2), and footnote marks.
+REPEAT = re.compile(r"^\(?x\d+\)?$", re.IGNORECASE)
+FOOTNOTE = re.compile(r"^[*†‡]+$")
+# A chord followed by a footnote mark, such as "D*".
+MARKED = re.compile(r"^(?P<base>.+?)(?P<mark>[*†‡]+)$")
+
+
+def is_mark(text):
+    """A chart mark kept as written: N.C., x2, (x2), *, or an annotation
+    ([*text] in ChordPro)."""
     text = text.strip()
-    return text in NO_CHORD or text.startswith("*") or Chord.parse(text) is not None
+    return bool(
+        text.upper() in NO_CHORD
+        or REPEAT.match(text)
+        or FOOTNOTE.match(text)
+        or text.startswith("*")
+    )
+
+
+def chord_in(text, change):
+    """``change(Chord)`` applied to the chord a bracket holds, keeping an
+    optional chord's parentheses ("(F#m7)") and a trailing footnote mark
+    ("D*"); None when the bracket holds no chord."""
+    text = text.strip()
+    if text.startswith("(") and text.endswith(")") and len(text) > 2:
+        inner = chord_in(text[1:-1], change)
+        return None if inner is None else f"({inner})"
+    marked = MARKED.match(text)
+    if marked and not FOOTNOTE.match(text):
+        inner = chord_in(marked["base"], change)
+        return None if inner is None else inner + marked["mark"]
+    chord = Chord.parse(text)
+    return change(chord) if chord else None
+
+
+def holds_chord(text):
+    """Whether a bracket holds a chord: plain, optional or footnoted."""
+    return not is_mark(text) and chord_in(text, str) is not None
+
+
+def is_chord_token(text):
+    """Whether a bracket's text is something CHORD can read: a chord (plain,
+    optional or footnoted) or a chart mark."""
+    return is_mark(text) or chord_in(text, str) is not None
 
 
 def transpose_chord(text, steps, flats):
-    """A chord's text moved by ``steps``; markers such as N.C. stay."""
-    chord = Chord.parse(text)
-    return str(chord.transposed(steps, flats)) if chord else text
+    """A bracket's text moved by ``steps``; marks such as N.C. stay."""
+    if is_mark(text):
+        return text
+    moved = chord_in(text, lambda chord: str(chord.transposed(steps, flats)))
+    return text if moved is None else moved
 
 
 # --- Checking ChordPro ---------------------------------------------------------------
@@ -252,8 +296,39 @@ def _check_chords(line, number):
             raise ChordProError(f"Line {number}: [] holds no chord.")
         if not is_chord_token(chord):
             raise ChordProError(f"Line {number}: “{chord}” isn't a chord.")
-        count += 1
+        count += holds_chord(chord)
     return count
+
+
+def keep_unread(text):
+    """``(text, kept)``: every bracket CHORD can't read as a chord or a mark
+    becomes a ChordPro annotation, ``[*Zz9]``, shown as written and never
+    transposed, so an unknown chord never stops a sheet from saving.
+    ``kept`` lists ``(line number, text)`` for a warning. Directives,
+    tablature, comments and empty brackets are left for ``check()``."""
+    lines, kept, in_tab = [], [], False
+    for number, line in enumerate(text.split("\n"), 1):
+        found = directive(line)
+        if found:
+            if found[0] in SECTIONS:
+                in_tab = SECTIONS[found[0]] == "tab"
+            elif found[0] in SECTION_ENDS:
+                in_tab = False
+            lines.append(line)
+            continue
+        if in_tab or line.strip().startswith("#"):
+            lines.append(line)
+            continue
+
+        def annotate(match, number=number):
+            content = match.group(1).strip()
+            if not content or is_chord_token(content):
+                return match.group(0)
+            kept.append((number, content))
+            return f"[*{content}]"
+
+        lines.append(INLINE_CHORD.sub(annotate, line))
+    return "\n".join(lines), kept
 
 
 def key_directive(text):
@@ -292,7 +367,9 @@ def is_chord_line(line):
     if not tokens:
         return False
     chords = [t for t in tokens if not IGNORABLE.match(t)]
-    return bool(chords) and all(Chord.parse(t) or t in NO_CHORD for t in chords)
+    return any(holds_chord(t) for t in chords) and all(
+        holds_chord(t) or is_mark(t) for t in chords
+    )
 
 
 def _merge(chord_line, lyric):
@@ -498,15 +575,24 @@ def render(text, original, target=None, *, capo=0, numbers=False):
     shape_key = target.shifted(-capo)
     steps = original.steps_to(shape_key)
 
-    def show(chord_text):
-        chord = Chord.parse(chord_text)
-        if chord is None:
-            return chord_text
+    def change(chord):
         if numbers:
             return chord.transposed(original.steps_to(target), target.flats).nashville(
                 target
             )
         return str(chord.transposed(steps, shape_key.flats))
+
+    def show(chord_text):
+        """A bracket's text as shown: a chord moved (keeping an optional
+        chord's parentheses and a footnote mark), a mark as written, and an
+        annotation ([*text]) without its star."""
+        text = chord_text.strip()
+        if text.startswith("*") and not FOOTNOTE.match(text):
+            return text[1:]
+        if is_mark(text):
+            return text
+        shown = chord_in(text, change)
+        return text if shown is None else shown
 
     title = subtitle = ""
     blocks = [Block()]

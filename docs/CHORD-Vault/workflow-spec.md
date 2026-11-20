@@ -127,7 +127,12 @@ CHORDS AND PLAYBACK
   stored, other directives stay in the text, and rhythm lines such as
   |D//G|////| or Worship Together's [| D / / G | / / / / |] transpose (an
   unreadable one becomes a comment, never a save error). Plain section lines
-  such as "Verse 1" or "Outro" show as section labels. A person still brings in each chart; nothing is
+  such as "Verse 1" or "Outro" show as section labels. An optional chord in
+  parentheses, such as (F#m7), transposes and keeps its parentheses; N.C.,
+  repeat marks (x2) and footnote marks (*) stay as written. Anything else
+  unreadable in brackets is kept as written ([*text]) with a warning, and
+  saved: only broken ChordPro (an unclosed bracket or directive) stops a
+  save. A person still brings in each chart; nothing is
   fetched from any site.
 - A team member's paste (or import) is saved as pending. Other team members can't see it
   until the worship leader or the pastor approves it. A team member may paste

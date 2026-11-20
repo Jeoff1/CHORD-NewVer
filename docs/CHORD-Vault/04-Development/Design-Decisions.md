@@ -341,10 +341,15 @@ Tests: every key with the spelling above; Nashville numbers in minor keys, with 
 - **Rhythm lines** such as `|D//G|////|D//G|////|` (Worship Together intros, optionally after a label such as "Intro:") get their chords in brackets, so they transpose. A rhythm line that can't be read becomes a comment. It is never a reason a sheet can't be saved.
 - Worship Together's ChordPro downloads write a rhythm line inside one bracket, such as `[| D / / G | / / / / |]` (fixed 2026-11-20 after the click-through). A bracket holding bar lines (`|` or `||`) or beat slashes is read as a rhythm line, with spaces or none: each chord gets its own bracket, giving `| [D] / / [G] | / / / / |`. One that can't be read becomes a comment.
 - Plain section lines in a ChordPro file (Intro, Verse, Pre-Chorus, Chorus, Bridge, Interlude, Instrumental, Outro, Ending or Tag, with an optional number and colon) show as section labels, like `[Verse]` in a pasted chart.
+- **Chart marks** (approved 2026-11-20, after the click-through):
+  - An optional chord in parentheses, such as Worship Together's `[(F#m7)]`, transposes and keeps its parentheses: `(F#m7)` in E is `(G#m7)` in F#.
+  - N.C. (no chord), repeat marks such as `x2` or `(x2)`, and footnote marks such as `*` are kept as written and never transposed. A chord with a trailing mark, such as `D*`, moves its chord and keeps the mark.
+  - Anything else in brackets that still can't be read is **kept as a ChordPro annotation** (`[*Zz9]`), shown as written and never transposed. The form warns, listing those lines ("These marks were kept as written and won't transpose: line 35 …"), but saves.
+  - **Only what breaks the ChordPro text itself stops a save**: an unclosed bracket, a directive not alone on its line or not closed, a section opened but never closed, or no chord at all.
 - A team member's import follows the same rule as a paste: pending until approved.
 - A person still brings in each chart. Nothing is fetched from any site.
 
-Tests (made-up content only): the key read from `{key:}` and from `{k:}`; a file without a key; a wrong extension; a file over 200 KB; a file that isn't UTF-8; other directives kept and the song unchanged; a rhythm line that transposes, and one that becomes a comment; a team member's import staying pending; a bracketed rhythm line with spaces (D to E gives E and A), with none and with `||` bars; an unreadable bracketed line becoming a comment while the sheet saves; "Verse 1" and "Outro" lines showing as section labels.
+Tests (made-up content only): the key read from `{key:}` and from `{k:}`; a file without a key; a wrong extension; a file over 200 KB; a file that isn't UTF-8; other directives kept and the song unchanged; a rhythm line that transposes, and one that becomes a comment; a team member's import staying pending; a bracketed rhythm line with spaces (D to E gives E and A), with none and with `||` bars; an unreadable bracketed line becoming a comment while the sheet saves; "Verse 1" and "Outro" lines showing as section labels; "(F#m7)" transposing with its parentheses; N.C. and x2 kept and not transposed; an unreadable mark such as "[Zz9]" saved as an annotation with the warning; an unclosed bracket still an error.
 
 ---
 

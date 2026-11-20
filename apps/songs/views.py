@@ -16,7 +16,7 @@ from apps.core.music import Feel
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.worship.views.base import settings_nav
 
-from . import chords, pool, sheets
+from . import pool, sheets
 from .analysis import apply_check_rules
 from .forms import (
     ChordSheetForm,
@@ -379,7 +379,9 @@ class ChordSheetFormView(SongsMixin, View):
             return sheets.approved_sheet(self.song)
         return self.song.chord_sheets.pending().filter(added_by=user).first()
 
-    def render_form(self, form, converted=False, imported="", import_error=""):
+    def render_form(
+        self, form, converted=False, imported="", import_error="", kept_warning=""
+    ):
         return render(
             self.request,
             self.template_name,
@@ -389,6 +391,7 @@ class ChordSheetFormView(SongsMixin, View):
                 "converted": converted,
                 "imported": imported,
                 "import_error": import_error,
+                "kept_warning": kept_warning,
                 "next": self.back_url(),
                 "approves": sheets.may_approve(self.request.user),
                 "find_chords": sheets.find_chords_links(self.song),
@@ -431,8 +434,12 @@ class ChordSheetFormView(SongsMixin, View):
         text, key = form.cleaned_data["chordpro"], form.cleaned_data["key"]
         if request.POST.get("action") == "convert":
             data = request.POST.copy()
-            data["chordpro"] = chords.to_chordpro(text)
-            return self.render_form(ChordSheetForm(data), converted=True)
+            data["chordpro"], kept = sheets.convert(text)
+            return self.render_form(
+                ChordSheetForm(data),
+                converted=True,
+                kept_warning=sheets.kept_message(kept),
+            )
         earlier = self.starting_sheet()
         before = snapshot(earlier, sheets.SHEET_AUDIT_FIELDS) if earlier else {}
         try:
@@ -456,6 +463,8 @@ class ChordSheetFormView(SongsMixin, View):
                 f"Thanks: the chord sheet for {self.song.title} is waiting for "
                 "approval. The team sees it once it is approved.",
             )
+        if sheet.kept:
+            messages.warning(request, sheets.kept_message(sheet.kept))
         return redirect(self.back_url())
 
 

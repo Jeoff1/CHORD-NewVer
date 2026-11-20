@@ -73,11 +73,28 @@ def pending_for(song, user):
     return list(pending.filter(added_by=user)) if user.is_authenticated else []
 
 
+def convert(text):
+    """``(chordpro, kept)``: the text as ChordPro, with every bracket that
+    isn't a chord or a chart mark kept as written ([*text]); ``kept``
+    lists ``(line, text)`` for those."""
+    return chords.keep_unread(chords.to_chordpro(text or ""))
+
+
+def kept_message(kept):
+    """The warning for marks kept as written, or ""."""
+    if not kept:
+        return ""
+    listed = ", ".join(f"line {number} “{text}”" for number, text in kept)
+    return f"These marks were kept as written and won't transpose: {listed}."
+
+
 def prepare(text, key=""):
-    """``(chordpro, key name)`` from a pasted text and the chosen key:
-    converted to ChordPro when needed, then checked. The key comes from the
-    form, or else from the sheet's own {key: …}."""
-    chordpro = chords.to_chordpro(text or "")
+    """``(chordpro, key name, kept)`` from a pasted text and the chosen key:
+    converted to ChordPro when needed, unknown marks kept as written, then
+    checked. Only what breaks the ChordPro itself (an unclosed bracket or
+    directive) is refused. The key comes from the form, or else from the
+    sheet's own {key: …}."""
+    chordpro, kept = convert(text)
     try:
         chords.check(chordpro)
     except chords.ChordProError as error:
@@ -100,7 +117,7 @@ def prepare(text, key=""):
                 f"The sheet says it is in {written.name}, but {chosen.name} was "
                 "chosen. Choose the key it is written in."
             )
-    return chordpro, chosen.name
+    return chordpro, chosen.name, kept
 
 
 IMPORT_EXTENSIONS = (".cho", ".chopro", ".chordpro", ".pro", ".txt")
@@ -147,13 +164,14 @@ def read_import(uploaded):
 
 def save(song, user, text, key=""):
     """Add or replace ``song``'s sheet from ``user``. Returns the sheet:
-    approved at once for someone who may approve, pending otherwise."""
+    approved at once for someone who may approve, pending otherwise. Its
+    ``kept`` lists the marks kept as written (not stored)."""
     if not may_add(user, song):
         raise SheetRefused(
             "You can add a chord sheet only for a song in a confirmed lineup "
             "that doesn't have one yet."
         )
-    chordpro, key = prepare(text, key)
+    chordpro, key, kept = prepare(text, key)
     with transaction.atomic():
         if may_approve(user):
             sheet = approved_sheet(song) or ChordSheet(song=song, added_by=user)
@@ -164,6 +182,7 @@ def save(song, user, text, key=""):
             sheet = sheet or ChordSheet(song=song, added_by=user)
         sheet.chordpro, sheet.key = chordpro, key
         sheet.save()
+    sheet.kept = kept
     return sheet
 
 
