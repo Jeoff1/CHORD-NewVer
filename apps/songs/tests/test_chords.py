@@ -310,3 +310,38 @@ class ConvertTests(SimpleTestCase):
     def test_words_that_look_like_chords_are_left_alone_when_mixed(self):
         # "A" alone is a chord, but a line of words with it is words.
         self.assertEqual(chords.to_chordpro("A new song\n"), "A new song\n")
+
+
+class RhythmLineTests(SimpleTestCase):
+    """Rhythm lines as in Worship Together intros: each slash is a beat."""
+
+    def test_a_rhythm_line_gets_its_chords_in_brackets(self):
+        self.assertEqual(
+            chords.rhythm_line("|D//G|////|D//G|////|"), "|[D]//[G]|////|[D]//[G]|////|"
+        )
+        self.assertEqual(
+            chords.rhythm_line("Intro: |D//G|////|"), "Intro: |[D]//[G]|////|"
+        )
+        self.assertEqual(
+            chords.rhythm_line("|D/F#//G|Bm7///|"), "|[D/F#]//[G]|[Bm7]///|"
+        )
+
+    def test_it_transposes(self):
+        converted = chords.to_chordpro("Intro: |D//G|////|D//G|////|\n")
+        self.assertEqual(chords.check(converted), 4)
+        self.assertEqual(shown(converted, "D", "E"), ["E", "A", "E", "A"])
+
+    def test_an_unreadable_rhythm_line_becomes_a_comment_never_an_error(self):
+        for line in ("|D//G|//?//|", "|////|////|"):
+            converted = chords.to_chordpro(f"{{key: D}}\n[D]Made up\n{line}\n")
+            self.assertIn(f"{{comment: {line}}}", converted)
+            chords.check(converted)  # saves
+
+    def test_other_lines_and_tablature_are_left_alone(self):
+        for line in ("e|---3---|", "D  G  A", "I | you", "[D]Made up"):
+            self.assertIsNone(chords.rhythm_line(line))
+        tab = "{key: D}\n[D]Made up\n{sot}\n|---3---|\n{eot}\n"
+        self.assertEqual(chords.to_chordpro(tab), tab)
+
+    def test_the_short_key_directive(self):
+        self.assertEqual(chords.key_directive("{k: E}\n[E]la\n"), "E")

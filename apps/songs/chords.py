@@ -257,10 +257,11 @@ def _check_chords(line, number):
 
 
 def key_directive(text):
-    """The key a ChordPro text names with ``{key: …}``, or ""."""
+    """The key a ChordPro text names with ``{key: …}`` (or ``{k: …}``), or
+    ""."""
     for line in text.splitlines():
         found = directive(line)
-        if found and found[0] == "key":
+        if found and found[0] in ("key", "k"):
             return found[1]
     return ""
 
@@ -315,19 +316,58 @@ def _chords_only(chord_line):
     )
 
 
+# A rhythm line, as in Worship Together intros: "|D//G|////|", optionally
+# after a label such as "Intro:". Each slash is a beat.
+RHYTHM = re.compile(r"^(?P<label>\s*[A-Za-z][A-Za-z0-9 ]*:\s*)?(?P<bars>\s*\|.*)$")
+RHYTHM_CHORD = re.compile(rf"(?<![A-Za-z#])({NOTE}[^/|\s]*?(?:/{NOTE})?)(?=[/|\s]|$)")
+RHYTHM_REST = re.compile(r"^[\s|/.\-%xX0-9()]*$")
+
+
+def rhythm_line(line):
+    """A rhythm line with each chord in brackets, so it transposes:
+    "|D//G|////|" becomes "|[D]//[G]|////|". One that can't be read becomes
+    a comment, so it never stops a sheet from saving. None for any other
+    line."""
+    if "[" in line or "{" in line or "}" in line:
+        return None
+    match = RHYTHM.match(line.rstrip())
+    if not match:
+        return None
+    bars = match["bars"]
+    chords_found = [c for c in RHYTHM_CHORD.findall(bars) if Chord.parse(c)]
+    if chords_found and RHYTHM_REST.match(RHYTHM_CHORD.sub("", bars)):
+        return (match["label"] or "") + RHYTHM_CHORD.sub(
+            lambda m: f"[{m.group(1)}]", bars
+        )
+    return f"{{comment: {line.strip()}}}"
+
+
 def to_chordpro(text):
     """ChordPro from a chords-over-words chart, such as one copied from
     Ultimate Guitar: each line of chords goes into the line of words under
-    it, and section names such as "[Chorus]" become comments. Text that is
-    already ChordPro comes back unchanged."""
+    it, section names such as "[Chorus]" become comments, and rhythm lines
+    such as "|D//G|////|" get their chords in brackets. Text that is
+    already ChordPro comes back unchanged, apart from its rhythm lines."""
     text = UG_TAGS.sub("", text.replace("\r\n", "\n")).expandtabs(4)
     if looks_like_chordpro(text):
-        return text.strip("\n") + "\n"
+        lines, in_tab = [], False
+        for line in text.split("\n"):
+            found = directive(line)
+            if found and found[0] in SECTIONS:
+                in_tab = SECTIONS[found[0]] == "tab"
+            elif found and found[0] in SECTION_ENDS:
+                in_tab = False
+            # Tablature is kept exactly as written.
+            lines.append(line if in_tab else (rhythm_line(line) or line))
+        return "\n".join(lines).strip("\n") + "\n"
     lines, out, i = text.split("\n"), [], 0
     while i < len(lines):
         line = lines[i]
         header = SECTION_HEADER.match(line)
-        if header and not is_chord_token(header["name"]):
+        rhythm = rhythm_line(line)
+        if rhythm is not None:
+            out.append(rhythm)
+        elif header and not is_chord_token(header["name"]):
             out.append(f"{{comment: {header['name'].strip()}}}")
         elif is_chord_line(line):
             following = lines[i + 1] if i + 1 < len(lines) else ""

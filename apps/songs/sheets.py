@@ -103,6 +103,48 @@ def prepare(text, key=""):
     return chordpro, chosen.name
 
 
+IMPORT_EXTENSIONS = (".cho", ".chopro", ".chordpro", ".pro", ".txt")
+IMPORT_MAX_BYTES = 200 * 1024
+
+
+def read_import(uploaded):
+    """``(text, key name)`` from an uploaded ChordPro file, for the person
+    to check in the form before saving. The file itself is never stored.
+    The key comes from its {key: …} or {k: …} line, or is "" when it has
+    none (or names no real key). Other directives stay in the text."""
+    name = uploaded.name or ""
+    if not name.lower().endswith(IMPORT_EXTENSIONS):
+        raise SheetRefused(
+            "Choose a ChordPro file: .cho, .chopro, .chordpro, .pro or .txt."
+        )
+    if uploaded.size > IMPORT_MAX_BYTES:
+        raise SheetRefused(
+            f"The file is too large ({uploaded.size // 1024} KB; the most is "
+            f"{IMPORT_MAX_BYTES // 1024} KB)."
+        )
+    raw = uploaded.read(IMPORT_MAX_BYTES + 1)
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as error:
+        raise SheetRefused(
+            "The file isn't UTF-8 text. Save it as UTF-8 (in most editors: Save "
+            "as, then Encoding: UTF-8) and import it again."
+        ) from error
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    if not text.strip():
+        raise SheetRefused("The file is empty.")
+    if len(text) > chords.MAX_LENGTH:
+        raise SheetRefused(
+            f"The chord sheet in the file is too long ({len(text)} characters; "
+            f"the most is {chords.MAX_LENGTH})."
+        )
+    try:
+        key = chords.Key.parse(chords.key_directive(text)).name
+    except ValueError:
+        key = ""
+    return text, key
+
+
 def save(song, user, text, key=""):
     """Add or replace ``song``'s sheet from ``user``. Returns the sheet:
     approved at once for someone who may approve, pending otherwise."""

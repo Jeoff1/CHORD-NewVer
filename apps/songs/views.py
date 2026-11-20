@@ -379,7 +379,7 @@ class ChordSheetFormView(SongsMixin, View):
             return sheets.approved_sheet(self.song)
         return self.song.chord_sheets.pending().filter(added_by=user).first()
 
-    def render_form(self, form, converted=False):
+    def render_form(self, form, converted=False, imported="", import_error=""):
         return render(
             self.request,
             self.template_name,
@@ -387,6 +387,8 @@ class ChordSheetFormView(SongsMixin, View):
                 "song": self.song,
                 "form": form,
                 "converted": converted,
+                "imported": imported,
+                "import_error": import_error,
                 "next": self.back_url(),
                 "approves": sheets.may_approve(self.request.user),
                 "find_chords": sheets.find_chords_links(self.song),
@@ -398,7 +400,31 @@ class ChordSheetFormView(SongsMixin, View):
         initial = {"key": sheet.key, "chordpro": sheet.chordpro} if sheet else {}
         return self.render_form(ChordSheetForm(initial=initial))
 
+    def import_file(self, request):
+        """Put an uploaded ChordPro file's text, and the key it names, in
+        the form for the person to check. Nothing is saved, and the file
+        isn't kept."""
+        initial = {
+            "key": request.POST.get("key", ""),
+            "chordpro": request.POST.get("chordpro", ""),
+        }
+        uploaded = request.FILES.get("import_file")
+        if uploaded is None:
+            return self.render_form(
+                ChordSheetForm(initial=initial), import_error="Choose a file to import."
+            )
+        try:
+            text, key = sheets.read_import(uploaded)
+        except sheets.SheetRefused as refusal:
+            return self.render_form(
+                ChordSheetForm(initial=initial), import_error=str(refusal)
+            )
+        initial.update(chordpro=text, key=key or initial["key"])
+        return self.render_form(ChordSheetForm(initial=initial), imported=uploaded.name)
+
     def post(self, request, public_id):
+        if request.POST.get("action") == "import":
+            return self.import_file(request)
         form = ChordSheetForm(request.POST)
         if not form.is_valid():
             return self.render_form(form)

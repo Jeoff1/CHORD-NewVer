@@ -13,12 +13,19 @@
         <p class="small">Find chords: {% for label, url in find_chords %}<a href="{{ url }}" target="_blank" rel="noopener">{{ label }}</a>{% if not forloop.last %} · {% endif %}{% endfor %} <span class="text-body-secondary">(opens in a new tab; copy the chart, then paste it here)</span></p>
       {% endif %}
       {% if converted %}<div class="alert alert-info small">Converted to ChordPro. Check the chords sit over the right words, then save.</div>{% endif %}
+      {% if imported %}<div class="alert alert-info small">Imported {{ imported }}. Check the sheet and its key, then {% if approves %}save{% else %}send it for approval{% endif %}.</div>{% endif %}
+      {% if import_error %}<div class="alert alert-danger small">{{ import_error }}</div>{% endif %}
       <div class="card shadow-sm">
         <div class="card-body p-4">
-          <form method="post" novalidate>
+          <form method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
-            {{ form }}
+            {{ form.key.as_field_group }}
+            <div class="d-flex flex-wrap align-items-start gap-2">
+              <div class="flex-grow-1">{{ form.import_file.as_field_group }}</div>
+              <button type="submit" name="action" value="import" class="btn btn-outline-secondary mt-4">Import</button>
+            </div>
+            {{ form.chordpro.as_field_group }}
             <div class="d-flex flex-wrap gap-2">
               <button type="submit" name="action" value="save" class="btn btn-primary">{% if approves %}Save{% else %}Send for approval{% endif %}</button>
               <button type="submit" name="action" value="convert" class="btn btn-outline-secondary">Convert</button>

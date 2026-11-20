@@ -2,6 +2,33 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: import a ChordPro file
+
+On branch `phase-7-chords`; not merged yet. An approved Phase 7 addition.
+
+- **Import a ChordPro file** on the chord sheet form, beside the text box:
+  - accepts .cho, .chopro, .chordpro, .pro and .txt files up to 200 KB,
+    in UTF-8 (a byte order mark is fine);
+  - gives a clear message for a wrong type, a file too large, one not in
+    UTF-8, an empty file, or no file;
+  - puts the text in the box for the person to check, then they save as
+    usual. The file isn't stored (`sheets.read_import`);
+  - the key comes from `{key:}` or `{k:}` and fills the Key field, which
+    the person can change;
+  - other directives stay in the text and don't touch the song's fields.
+- **Rhythm lines** such as `|D//G|////|` (optionally after "Intro:") get
+  their chords in brackets, so they transpose (`chords.rhythm_line`). An
+  unreadable one becomes a comment, never a save error. Tablature is left
+  as written.
+- **Team members:** their imports stay pending, like pastes.
+- **Recorded** in [[Design-Decisions]] (Phase 7), the [[Development-Plan]]
+  and the [[workflow-spec]]: a person still brings in each chart, and
+  nothing is fetched from any site. [[Worship]] is updated too.
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 649
+  tests passed (15 new), with 97% coverage (`chords.py` 96%, `sheets.py`
+  94%).
+
 ## 2026-11-20: Phase 7 part A approved; minor-key note on Nashville numbers
 
 On branch `phase-7-chords`; not merged yet.

@@ -121,7 +121,13 @@ CHORDS AND PLAYBACK
   a chart (e.g. from Worship Together or Ultimate Guitar). The server converts
   it to ChordPro (the person sees the result before saving) and checks that the
   saved text is valid ChordPro. It is saved for reuse and approved at once.
-- A team member's paste is saved as pending. Other team members can't see it
+- A ChordPro file (.cho, .chopro, .chordpro, .pro or .txt, up to 200 KB, UTF-8)
+  can be imported on the chord sheet form instead of pasting: its text goes in
+  the box to check, and its {key:} or {k:} line fills the key. The file isn't
+  stored, other directives stay in the text, and rhythm lines such as
+  |D//G|////| transpose. A person still brings in each chart; nothing is
+  fetched from any site.
+- A team member's paste (or import) is saved as pending. Other team members can't see it
   until the worship leader or the pastor approves it. A team member may paste
   only for a confirmed lineup song that has no sheet, and has at most one
   pending sheet per song.

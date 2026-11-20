@@ -362,6 +362,11 @@ The rules and tests for this phase are in [[Design-Decisions]] (Phase 7).
   Python (not ChordSheetJS, which is GPL-2.0-only). The server checks that
   the saved text is valid ChordPro. Only the original ChordPro text and its
   key are stored.
+- [x] **Import a ChordPro file** on the chord sheet form (.cho, .chopro,
+  .chordpro, .pro or .txt, up to 200 KB, UTF-8): its text goes into the
+  box to check, and the key comes from its `{key:}` or `{k:}` line. The
+  file isn't stored. Rhythm lines such as `|D//G|////|` transpose. A
+  person still brings in each chart; nothing is fetched from any site.
 - [x] **Find chords**: a song without a sheet shows an action that opens a
   search on free sources such as Worship Together and Ultimate Guitar, in
   a new tab. Nothing is fetched or scraped; the chart is pasted by hand.

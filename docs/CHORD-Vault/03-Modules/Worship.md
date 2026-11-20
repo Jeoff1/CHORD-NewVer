@@ -363,6 +363,12 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
   - approve and discard need `approve_chordsheet`.
 
   The audit trail records the song, status and key, never the text.
+- **Import a ChordPro file** (added 2026-11-20): on the sheet form, a
+  .cho, .chopro, .chordpro, .pro or .txt file up to 200 KB in UTF-8
+  (`sheets.read_import`). Its text goes into the box, and its `{key:}` or
+  `{k:}` fills the key; the file isn't stored. Rhythm lines such as
+  `|D//G|////|` become transposable (`chords.rhythm_line`), or a comment
+  when unreadable.
 - **Find chords**: links to searches on Ultimate Guitar, Worship Together
   and the web, opened in a new tab. Nothing is fetched.
 - **Screens**:

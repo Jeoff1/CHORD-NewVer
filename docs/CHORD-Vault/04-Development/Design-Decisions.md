@@ -332,6 +332,18 @@ The project owner approved these choices made while building part A.
 
 Tests: every key with the spelling above; Nashville numbers in minor keys, with the note; capo positions and easy shapes; one approved sheet per song and the approve and discard refusals; one pending sheet per member; the counts and marks on a confirmed lineup; the lineup song page for each role; the audit trail without the sheet text.
 
+### Importing a ChordPro file (approved 2026-11-20)
+
+- The chord sheet form has **Import a ChordPro file** next to the text box. It accepts .cho, .chopro, .chordpro, .pro and .txt files up to 200 KB, in UTF-8; other files get a clear message (a wrong type, too large, not UTF-8, empty).
+- The file's text goes into the text box for the person to check; they then save as usual. The file itself is never stored: only the ChordPro text and its key are, as before.
+- The key comes from the file's `{key: …}` (or `{k: …}`) line and fills the Key field, which the person can change. With no key line and no key chosen, the form asks for one, as before.
+- Other directives, such as `{title}`, `{artist}`, `{tempo}` and `{comment}`, stay in the text as they are; they never change the song's own fields.
+- **Rhythm lines** such as `|D//G|////|D//G|////|` (Worship Together intros, optionally after a label such as "Intro:") get their chords in brackets, so they transpose. A rhythm line that can't be read becomes a comment. It is never a reason a sheet can't be saved.
+- A team member's import follows the same rule as a paste: pending until approved.
+- A person still brings in each chart. Nothing is fetched from any site.
+
+Tests (made-up content only): the key read from `{key:}` and from `{k:}`; a file without a key; a wrong extension; a file over 200 KB; a file that isn't UTF-8; other directives kept and the song unchanged; a rhythm line that transposes, and one that becomes a comment; a team member's import staying pending.
+
 ---
 
 ## Phase 8: team and community

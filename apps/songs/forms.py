@@ -78,6 +78,14 @@ class ChordSheetForm(forms.Form):
         choices=[("", "Take it from the sheet's {key: …} line")] + KEY_CHOICES,
         required=False,
     )
+    import_file = forms.FileField(
+        label="Import a ChordPro file",
+        required=False,
+        widget=forms.FileInput(attrs={"accept": ".cho,.chopro,.chordpro,.pro,.txt"}),
+        help_text="A .cho, .chopro, .chordpro, .pro or .txt file, up to 200 KB, "
+        "in UTF-8. Import puts its text in the box below for you to check; the "
+        "file itself isn't kept.",
+    )
     chordpro = forms.CharField(
         label="Chord sheet",
         max_length=MAX_LENGTH,

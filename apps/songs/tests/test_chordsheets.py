@@ -338,3 +338,131 @@ class DefaultRoleTests(TestCase):
             ):
                 with self.subTest(role=key, permission=codename):
                     self.assertEqual(self.holds(key, codename), codename in held)
+
+
+class ImportTests(SheetTestCase):
+    """Importing a ChordPro file on the chord sheet form. Its text goes in
+    the box for the person to check; nothing is saved until they save, and
+    the file isn't kept. Content here is made up."""
+
+    MADE_UP = (
+        "{title: Made Up Song}\n"
+        "{artist: Nobody Real}\n"
+        "{tempo: 72}\n"
+        "{key: Bb}\n"
+        "{comment: Verse}\n"
+        "[Bb]Words that [Eb]nobody [F]wrote\n"
+    )
+
+    def upload(self, name, content, **post):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        data = {"action": "import", "key": "", "chordpro": "", **post}
+        data["import_file"] = SimpleUploadedFile(name, content)
+        return self.client.post(form_url(self.song), data)
+
+    def test_the_key_comes_from_the_key_directive(self):
+        self.client.force_login(self.leader)
+        response = self.upload("made-up.cho", self.MADE_UP.encode())
+        self.assertContains(response, "Imported made-up.cho.")
+        form = response.context["form"]
+        self.assertEqual(form.initial["key"], "Bb")
+        self.assertEqual(form.initial["chordpro"], self.MADE_UP)
+        self.assertContains(response, '<option value="Bb" selected>')
+        self.assertFalse(ChordSheet.objects.exists())  # nothing saved yet
+
+    def test_the_short_k_directive_and_a_byte_order_mark(self):
+        self.client.force_login(self.leader)
+        content = "﻿{k: E}\r\n[E]Made up\r\n".encode("utf-8")
+        response = self.upload("made-up.chopro", content)
+        self.assertEqual(response.context["form"].initial["key"], "E")
+        self.assertEqual(
+            response.context["form"].initial["chordpro"], "{k: E}\n[E]Made up\n"
+        )
+
+    def test_a_file_without_a_key_keeps_the_chosen_one_or_asks(self):
+        self.client.force_login(self.leader)
+        response = self.upload("no-key.pro", b"[G]Made up words\n", key="G")
+        self.assertEqual(response.context["form"].initial["key"], "G")
+        response = self.upload("no-key.txt", b"[G]Made up words\n")
+        self.assertEqual(response.context["form"].initial["key"], "")
+        saved = self.client.post(
+            form_url(self.song),
+            {"key": "", "chordpro": "[G]Made up words\n", "action": "save"},
+        )
+        self.assertContains(saved, "Choose the key the sheet is written in.")
+
+    def test_other_directives_stay_and_the_song_is_unchanged(self):
+        self.client.force_login(self.leader)
+        self.client.post(
+            form_url(self.song),
+            {"key": "Bb", "chordpro": self.MADE_UP, "action": "save"},
+        )
+        sheet = ChordSheet.objects.get()
+        for line in (
+            "{title: Made Up Song}",
+            "{artist: Nobody Real}",
+            "{tempo: 72}",
+            "{comment: Verse}",
+        ):
+            self.assertIn(line, sheet.chordpro)
+        self.song.refresh_from_db()
+        self.assertEqual(
+            (self.song.title, self.song.artist), ("Amazing Grace", "Test Artist")
+        )
+        self.assertNotIn("file", {f.name for f in ChordSheet._meta.get_fields()})
+
+    def test_a_wrong_extension_is_refused(self):
+        self.client.force_login(self.leader)
+        response = self.upload("made-up.pdf", b"[G]Made up\n")
+        self.assertContains(response, "Choose a ChordPro file: .cho, .chopro")
+        self.assertEqual(response.context["form"].initial["chordpro"], "")
+
+    def test_a_file_over_200_kb_is_refused(self):
+        self.client.force_login(self.leader)
+        response = self.upload("big.cho", b"[G]la\n" * 40000)
+        self.assertContains(
+            response, "The file is too large (234 KB; the most is 200 KB)."
+        )
+
+    def test_a_file_that_isnt_utf8_is_refused_clearly(self):
+        self.client.force_login(self.leader)
+        response = self.upload("latin.cho", "[G]Café made up\n".encode("latin-1"))
+        self.assertContains(response, "The file isn&#x27;t UTF-8 text.")
+        self.assertFalse(ChordSheet.objects.exists())
+
+    def test_an_empty_or_missing_file(self):
+        self.client.force_login(self.leader)
+        self.assertContains(self.upload("empty.cho", b"  \n"), "The file is empty.")
+        response = self.client.post(form_url(self.song), {"action": "import"})
+        self.assertContains(response, "Choose a file to import.")
+
+    def test_a_rhythm_line_imports_and_saves_and_transposes(self):
+        self.client.force_login(self.leader)
+        text = "{key: D}\nIntro: |D//G|////|D//G|////|\n[D]Made up [G]words\n"
+        response = self.upload("intro.cho", text.encode())
+        self.client.post(
+            form_url(self.song),
+            {
+                "key": "D",
+                "chordpro": response.context["form"].initial["chordpro"],
+                "action": "save",
+            },
+        )
+        sheet = ChordSheet.objects.get()
+        self.assertIn("Intro: |[D]//[G]|////|[D]//[G]|////|", sheet.chordpro)
+        page = self.client.get(detail_url(self.song), {"key": "E"})
+        self.assertContains(page, ">A<")
+
+    def test_a_team_members_import_stays_pending(self):
+        self.confirm_in_lineup()
+        self.client.force_login(self.member)
+        response = self.upload("made-up.cho", self.MADE_UP.encode())
+        self.assertEqual(response.context["form"].initial["key"], "Bb")
+        self.client.post(
+            form_url(self.song),
+            {"key": "Bb", "chordpro": self.MADE_UP, "action": "save"},
+        )
+        sheet = ChordSheet.objects.get()
+        self.assertEqual(sheet.status, Status.PENDING)
+        self.assertEqual(sheets.pending_for(self.song, self.other_member), [])
