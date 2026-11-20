@@ -546,3 +546,37 @@ class WorshipTogetherStyleTests(SheetTestCase):
         self.assertContains(page, ">A<")
         self.assertContains(page, "Verse 1")
         self.assertContains(page, "Outro")
+
+
+class StrayBracketSaveTests(SheetTestCase):
+    def test_a_stray_bracket_saves_with_the_warning_and_still_transposes(self):
+        self.client.force_login(self.leader)
+        text = "{key: D}\n[D]Made up words\n[(Em7)]]King of [G]nothing real\n"
+        response = self.client.post(
+            form_url(self.song),
+            {"key": "", "chordpro": text, "action": "save"},
+            follow=True,
+        )
+        self.assertContains(response, "Removed a stray ] on line 3.")
+        sheet = ChordSheet.objects.get()
+        self.assertIn("[(Em7)]King of [G]nothing real", sheet.chordpro)
+        page = self.client.get(detail_url(self.song), {"key": "E"})
+        self.assertContains(page, ">(F#m7)<")
+        self.assertContains(page, ">A<")
+
+    def test_an_unclosed_bracket_is_still_an_error(self):
+        self.client.force_login(self.leader)
+        response = self.client.post(
+            form_url(self.song),
+            {"key": "D", "chordpro": "[D]Made up\n[G no close\n", "action": "save"},
+        )
+        self.assertContains(response, "Line 2: a chord&#x27;s [ is never closed.")
+        self.assertFalse(ChordSheet.objects.exists())
+
+    def test_convert_lists_the_stray_bracket(self):
+        self.client.force_login(self.leader)
+        response = self.client.post(
+            form_url(self.song),
+            {"key": "D", "chordpro": "[D]Made up]\n", "action": "convert"},
+        )
+        self.assertContains(response, "Removed a stray ] on line 1.")

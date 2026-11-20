@@ -350,7 +350,8 @@ Tests: every key with the spelling above; Nashville numbers in minor keys, with 
   - An optional chord in parentheses, such as Worship Together's `[(F#m7)]`, transposes and keeps its parentheses: `(F#m7)` in E is `(G#m7)` in F#.
   - N.C. (no chord), repeat marks such as `x2` or `(x2)`, and footnote marks such as `*` are kept as written and never transposed. A chord with a trailing mark, such as `D*`, moves its chord and keeps the mark.
   - Anything else in brackets that still can't be read is **kept as a ChordPro annotation** (`[*Zz9]`), shown as written and never transposed. The form warns, listing those lines ("These marks were kept as written and won't transpose: line 35 …"), but saves.
-  - **Only what breaks the ChordPro text itself stops a save**: an unclosed bracket, a directive not alone on its line or not closed, a section opened but never closed, or no chord at all.
+  - A **stray `]`** that closes nothing (a typo such as Worship Together's `[(Em7)]]King`) is removed, and the save warning lists it ("Removed a stray ] on line 53."). It doesn't block the save.
+  - **Only what breaks the ChordPro text itself stops a save**: an unclosed `[`, a directive not alone on its line or not closed, a section opened but never closed, or no chord at all.
   - In the viewer, marks kept as written are shown apart from chords (grey italic). When the sheet has such marks and is shown moved from its own key (another key, a capo or Nashville numbers), a short note under the sheet says "Some marks were kept as written and aren't transposed." N.C., repeat and footnote marks are standard chart marks, not kept-as-written ones: they get neither the style nor the note.
 - A team member's import follows the same rule as a paste: pending until approved.
 - A person still brings in each chart. Nothing is fetched from any site.

@@ -74,27 +74,32 @@ def pending_for(song, user):
 
 
 def convert(text):
-    """``(chordpro, kept)``: the text as ChordPro, with every bracket that
-    isn't a chord or a chart mark kept as written ([*text]); ``kept``
-    lists ``(line, text)`` for those."""
-    return chords.keep_unread(chords.to_chordpro(text or ""))
+    """``(chordpro, kept, stray)``: the text as ChordPro, with a stray ``]``
+    (one closing nothing) removed and every bracket that isn't a chord or a
+    chart mark kept as written ([*text]). ``kept`` lists ``(line, text)``
+    for those marks, and ``stray`` the lines a ``]`` was removed from."""
+    chordpro, stray = chords.drop_stray_brackets(chords.to_chordpro(text or ""))
+    chordpro, kept = chords.keep_unread(chordpro)
+    return chordpro, kept, stray
 
 
-def kept_message(kept):
-    """The warning for marks kept as written, or ""."""
-    if not kept:
-        return ""
-    listed = ", ".join(f"line {number} “{text}”" for number, text in kept)
-    return f"These marks were kept as written and won't transpose: {listed}."
+def kept_message(kept, stray=()):
+    """The warning for marks kept as written and stray brackets removed,
+    or ""."""
+    parts = [f"Removed a stray ] on line {number}." for number in stray]
+    if kept:
+        listed = ", ".join(f"line {number} “{text}”" for number, text in kept)
+        parts.append(f"These marks were kept as written and won't transpose: {listed}.")
+    return " ".join(parts)
 
 
 def prepare(text, key=""):
-    """``(chordpro, key name, kept)`` from a pasted text and the chosen key:
-    converted to ChordPro when needed, unknown marks kept as written, then
-    checked. Only what breaks the ChordPro itself (an unclosed bracket or
+    """``(chordpro, key name, kept, stray)`` from a pasted text and the
+    chosen key: converted to ChordPro when needed, stray ``]`` removed,
+    unknown marks kept as written, then checked. Only what breaks the ChordPro itself (an unclosed bracket or
     directive) is refused. The key comes from the form, or else from the
     sheet's own {key: …}."""
-    chordpro, kept = convert(text)
+    chordpro, kept, stray = convert(text)
     try:
         chords.check(chordpro)
     except chords.ChordProError as error:
@@ -117,7 +122,7 @@ def prepare(text, key=""):
                 f"The sheet says it is in {written.name}, but {chosen.name} was "
                 "chosen. Choose the key it is written in."
             )
-    return chordpro, chosen.name, kept
+    return chordpro, chosen.name, kept, stray
 
 
 IMPORT_EXTENSIONS = (".cho", ".chopro", ".chordpro", ".pro", ".txt")
@@ -171,7 +176,7 @@ def save(song, user, text, key=""):
             "You can add a chord sheet only for a song in a confirmed lineup "
             "that doesn't have one yet."
         )
-    chordpro, key, kept = prepare(text, key)
+    chordpro, key, kept, stray = prepare(text, key)
     with transaction.atomic():
         if may_approve(user):
             sheet = approved_sheet(song) or ChordSheet(song=song, added_by=user)
@@ -182,7 +187,7 @@ def save(song, user, text, key=""):
             sheet = sheet or ChordSheet(song=song, added_by=user)
         sheet.chordpro, sheet.key = chordpro, key
         sheet.save()
-    sheet.kept = kept
+    sheet.kept, sheet.stray = kept, stray
     return sheet
 
 

@@ -2,6 +2,34 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-20: a stray ] no longer blocks saving
+
+On branch `phase-7-chords`. From the click-through: Worship Together's
+Hark! file has `[(Em7)]]King`, and saving failed with "a ] closes a chord
+never opened".
+
+- **Fixed:** a `]` that closes nothing is removed before the ChordPro
+  check (`chords.drop_stray_brackets`), and the save and Convert warnings
+  list it ("Removed a stray ] on line 53."). An unclosed `[` is still an
+  error. Directives, tablature and comment lines are left alone.
+- **Confirmed:** a rhythm line of chords without slashes, `[| Am Bm7 Cmaj7
+  D |]`, becomes `| [Am] [Bm7] [Cmaj7] [D] |` and transposes.
+- **Tests** (made-up content):
+  - a stray `]` saves with the warning and the chords around it transpose;
+  - Convert lists it;
+  - an unclosed `[` is still an error;
+  - directives and tablature are left alone;
+  - the rhythm line transposes.
+- **Disk:** the first run stopped with drive C: full. After the user freed
+  space, the leftover `test_chord_newver_db` from the failed run was
+  removed by one small test run with `--noinput`, as `check.ps1` can't
+  answer Django's prompt.
+- **Notes:** [[Design-Decisions]] (Phase 7, chart marks) and [[Worship]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 678
+  tests passed (7 new), with 97% coverage (`chords.py` 97%, `sheets.py`
+  95%).
+
 ## 2026-11-20: ChordPro import and chart-mark choices approved
 
 - **Approved:** the user approved the ChordPro import choices and the

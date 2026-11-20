@@ -483,3 +483,33 @@ class KeptMarkDisplayTests(SimpleTestCase):
             "[D]Made up [N.C.]words\n", Key.parse("D"), Key.parse("E")
         )
         self.assertFalse(plain.kept_not_moved)
+
+
+class StrayBracketTests(SimpleTestCase):
+    """A stray ] (a typo such as "[(Em7)]]King") is removed, not an error;
+    an unclosed [ still is. Made-up content."""
+
+    def test_a_stray_closing_bracket_is_removed_and_listed(self):
+        text, lines = chords.drop_stray_brackets(
+            "[D]Made up\n[(Em7)]]King of [G]words]\n"
+        )
+        self.assertEqual(text, "[D]Made up\n[(Em7)]King of [G]words\n")
+        self.assertEqual(lines, [2, 2])
+        self.assertEqual(shown(text, "D", "E"), ["E", "(F#m7)", "A"])
+
+    def test_an_unclosed_bracket_is_left_for_the_check(self):
+        text, lines = chords.drop_stray_brackets("[D]Made up\n[G open\n")
+        self.assertEqual(lines, [])
+        with self.assertRaisesMessage(
+            ChordProError, "Line 2: a chord's [ is never closed"
+        ):
+            chords.check(text)
+
+    def test_directives_and_tablature_are_left_alone(self):
+        text = "{c: a ] mark}\n{sot}\n|--]--|\n{eot}\n[D]la\n"
+        self.assertEqual(chords.drop_stray_brackets(text), (text, []))
+
+    def test_a_rhythm_line_of_chords_without_slashes_transposes(self):
+        converted = chords.to_chordpro("{key: G}\n[| Am Bm7 Cmaj7 D |]\n[G]Made up\n")
+        self.assertIn("| [Am] [Bm7] [Cmaj7] [D] |", converted)
+        self.assertEqual(shown(converted, "G", "A"), ["Bm", "C#m7", "Dmaj7", "E", "A"])

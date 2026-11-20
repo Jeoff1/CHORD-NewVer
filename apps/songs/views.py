@@ -434,11 +434,11 @@ class ChordSheetFormView(SongsMixin, View):
         text, key = form.cleaned_data["chordpro"], form.cleaned_data["key"]
         if request.POST.get("action") == "convert":
             data = request.POST.copy()
-            data["chordpro"], kept = sheets.convert(text)
+            data["chordpro"], kept, stray = sheets.convert(text)
             return self.render_form(
                 ChordSheetForm(data),
                 converted=True,
-                kept_warning=sheets.kept_message(kept),
+                kept_warning=sheets.kept_message(kept, stray),
             )
         earlier = self.starting_sheet()
         before = snapshot(earlier, sheets.SHEET_AUDIT_FIELDS) if earlier else {}
@@ -463,8 +463,8 @@ class ChordSheetFormView(SongsMixin, View):
                 f"Thanks: the chord sheet for {self.song.title} is waiting for "
                 "approval. The team sees it once it is approved.",
             )
-        if sheet.kept:
-            messages.warning(request, sheets.kept_message(sheet.kept))
+        if sheet.kept or sheet.stray:
+            messages.warning(request, sheets.kept_message(sheet.kept, sheet.stray))
         return redirect(self.back_url())
 
 

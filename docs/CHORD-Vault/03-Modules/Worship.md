@@ -380,7 +380,9 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
     and the form warns, listing the lines. When such a sheet is shown away
     from its own key (another key, a capo or numbers), the viewer notes
     "Some marks were kept as written and aren't transposed.";
-  - only broken ChordPro stops a save.
+  - a stray `]` that closes nothing is removed and listed in the warning
+    (`chords.drop_stray_brackets`);
+  - only broken ChordPro, such as an unclosed `[`, stops a save.
 - **Find chords**: links to searches on Ultimate Guitar, Worship Together
   and the web, opened in a new tab. Nothing is fetched.
 - **Screens**:

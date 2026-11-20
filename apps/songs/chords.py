@@ -300,6 +300,36 @@ def _check_chords(line, number):
     return count
 
 
+def drop_stray_brackets(text):
+    """``(text, lines)``: every ``]`` that closes nothing (a typo such as
+    "[(Em7)]]King") removed, so it never stops a save; ``lines`` lists the
+    line numbers, for a warning. An unclosed ``[`` is left for ``check()``
+    to refuse. Directives, tablature and comments are left alone."""
+    lines, removed, in_tab = [], [], False
+    for number, line in enumerate(text.split("\n"), 1):
+        found = directive(line)
+        if found:
+            if found[0] in SECTIONS:
+                in_tab = SECTIONS[found[0]] == "tab"
+            elif found[0] in SECTION_ENDS:
+                in_tab = False
+        if found or in_tab or line.strip().startswith("#"):
+            lines.append(line)
+            continue
+        kept_chars, depth = [], 0
+        for char in line:
+            if char == "[":
+                depth += 1
+            elif char == "]":
+                if depth == 0:
+                    removed.append(number)
+                    continue
+                depth -= 1
+            kept_chars.append(char)
+        lines.append("".join(kept_chars))
+    return "\n".join(lines), removed
+
+
 def keep_unread(text):
     """``(text, kept)``: every bracket CHORD can't read as a chord or a mark
     becomes a ChordPro annotation, ``[*Zz9]``, shown as written and never
