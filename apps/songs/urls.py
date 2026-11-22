@@ -39,6 +39,26 @@ urlpatterns = [
     path("", views.SongListView.as_view(), name="list"),
     path("find/", views.SpotifySearchView.as_view(), name="spotify_search"),
     path("find/add/", views.SpotifyAddView.as_view(), name="spotify_add"),
+    # Each person's own Spotify account, and playback in their browser
+    path("spotify/", views.SpotifyAccountView.as_view(), name="spotify_account"),
+    path(
+        "spotify/connect/", views.SpotifyConnectView.as_view(), name="spotify_connect"
+    ),
+    path(
+        "spotify/callback/",
+        views.SpotifyCallbackView.as_view(),
+        name="spotify_callback",
+    ),
+    path(
+        "spotify/disconnect/",
+        views.SpotifyDisconnectView.as_view(),
+        name="spotify_disconnect",
+    ),
+    path(
+        "spotify/player-token/",
+        views.SpotifyPlayerTokenView.as_view(),
+        name="spotify_player_token",
+    ),
     path("<uuid:public_id>/", views.SongDetailView.as_view(), name="detail"),
     path("<uuid:public_id>/edit/", views.SongUpdateView.as_view(), name="update"),
     path(

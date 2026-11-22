@@ -1,4 +1,5 @@
-"""Spotify Web API client for finding songs (the app's own token).
+"""Spotify Web API client: finding songs with the app's own token, and a
+user's own account (Authorization Code flow) for playlists and playback.
 
 Spotify decides which songs get checked and plays them; nothing it returns
 is ever model input (see AGENTS.md). Credentials come from ``.env``.
@@ -15,18 +16,24 @@ when they keep calling after a 429, so:
    the database so the worker and web requests all respect it.
 2. A 429 is saved as a ``SpotifyLimit`` with its reason and Retry-After,
    and logged. Nothing calls Spotify again until it has passed.
-3. A short wait (up to ``MAX_WAIT_SECONDS``) is waited out and the request
-   tried once more; a second 429, or a longer wait, raises
-   ``SpotifyRateLimited``.
+3. No web request waits (workflow review F10): by default a 429 raises
+   ``SpotifyRateLimited`` at once, after recording the block. Only the
+   search worker passes ``may_wait=True``: a short wait (up to
+   ``MAX_WAIT_SECONDS``) is waited out and the request tried once more; a
+   second 429, or a longer wait, raises ``SpotifyRateLimited``.
 4. ``QUOTA_EXCEEDED``, or a Retry-After over ``LONG_WAIT_SECONDS``, pauses
    Spotify (``SpotifyPaused``): until Retry-After when Spotify gives one,
    otherwise for ``QUOTA_PAUSE``.
+
+A user's tokens pass through this client but are never stored or logged
+here; ``apps/songs/connections.py`` keeps them, encrypted.
 """
 
 import base64
 import datetime
 import logging
 import time
+import urllib.parse
 from dataclasses import dataclass, field
 
 from django.conf import settings
@@ -40,6 +47,9 @@ logger = logging.getLogger(__name__)
 
 API = "https://api.spotify.com/v1"
 TOKEN_URL = "https://accounts.spotify.com/api/token"
+AUTHORIZE_URL = "https://accounts.spotify.com/authorize"
+# Spotify accepts at most this many items in one playlist request.
+PLAYLIST_LIMIT = 100
 PAGE_SIZE = 10
 MAX_OFFSET = 1000
 # The longest Retry-After the client waits out (once) before giving up.
@@ -73,6 +83,36 @@ class SpotifyRateLimited(SpotifyError):
 class SpotifyPaused(SpotifyRateLimited):
     """A quota lockout (or a very long wait): Spotify is paused until
     ``until``, and suggestions rank the songs already in the pool."""
+
+
+class SpotifyUnauthorized(SpotifyError):
+    """Spotify refused a user's access token (401); a refreshed one may work."""
+
+
+class SpotifyConnectionLost(SpotifyError):
+    """Spotify no longer accepts a user's connection (a revoked or unknown
+    refresh token, or a refused sign-in code): they must connect again."""
+
+
+@dataclass(frozen=True)
+class UserTokens:
+    """Tokens for a user's own account, as Spotify gave them. ``repr``
+    leaves the tokens out, so they never reach a log or an error page."""
+
+    access_token: str = field(repr=False)
+    refresh_token: str = field(repr=False)
+    expires_in: int = 3600
+    scope: str = ""
+
+    @classmethod
+    def from_api(cls, data, *, refresh_token=""):
+        # A refresh may not send a new refresh token; the old one stays good.
+        return cls(
+            access_token=data["access_token"],
+            refresh_token=data.get("refresh_token") or refresh_token,
+            expires_in=int(data.get("expires_in", 3600)),
+            scope=data.get("scope", ""),
+        )
 
 
 @dataclass(frozen=True)
@@ -205,7 +245,13 @@ class SpotifyClient:
     requests sent and ``limits`` keeps every 429 met, for the Search Run."""
 
     def __init__(
-        self, client_id, client_secret, *, sleep=time.sleep, clock=timezone.now
+        self,
+        client_id,
+        client_secret,
+        *,
+        may_wait=False,
+        sleep=None,
+        clock=timezone.now,
     ):
         if not (client_id and client_secret):
             raise SpotifyNotConfigured(
@@ -213,7 +259,9 @@ class SpotifyClient:
                 "SPOTIFY_CLIENT_SECRET to .env."
             )
         self._credentials = (client_id, client_secret)
-        self._sleep = sleep
+        # Only the search worker may wait out a short Retry-After (F10).
+        self._may_wait = may_wait
+        self._sleep = sleep or time.sleep
         self._clock = clock
         self._token = None
         self._token_expires = 0.0
@@ -296,21 +344,26 @@ class SpotifyClient:
                 return reply
             limit = record_limit(reply, self._clock())
             self.limits.append(limit)
-            if limit.is_pause or retried or limit.retry_after is None:
+            if not self._may_wait or limit.is_pause or retried:
+                raise blocked_error(limit)
+            if limit.retry_after is None:
                 raise blocked_error(limit)
             if limit.retry_after > MAX_WAIT_SECONDS:
                 raise blocked_error(limit)
             self._sleep(limit.retry_after)
             retried = True
 
+    def _basic_auth(self):
+        basic = base64.b64encode(":".join(self._credentials).encode()).decode()
+        return {"Authorization": f"Basic {basic}"}
+
     def _access_token(self):
         if self._token and time.monotonic() < self._token_expires:
             return self._token
-        basic = base64.b64encode(":".join(self._credentials).encode()).decode()
         reply = self._call(
             "POST",
             TOKEN_URL,
-            headers=lambda: {"Authorization": f"Basic {basic}"},
+            headers=self._basic_auth,
             form={"grant_type": "client_credentials"},
         )
         if not reply.ok or not isinstance(reply.data, dict):
@@ -324,6 +377,85 @@ class SpotifyClient:
         self._token_expires = time.monotonic() + max(lifetime - 60, 0)
         return self._token
 
+    # --- A user's own account (Authorization Code flow) -------------------
+
+    def authorize_url(self, redirect_uri, state, scopes):
+        """Where to send a person to connect their account (no request)."""
+        query = urllib.parse.urlencode(
+            {
+                "client_id": self._credentials[0],
+                "response_type": "code",
+                "redirect_uri": redirect_uri,
+                "scope": " ".join(scopes),
+                "state": state,
+            }
+        )
+        return f"{AUTHORIZE_URL}?{query}"
+
+    def exchange_code(self, code, redirect_uri):
+        """The tokens for the code Spotify sent back after a person agreed."""
+        return self._user_tokens(
+            {
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri,
+            }
+        )
+
+    def refresh_user_token(self, refresh_token):
+        """A new access token for a connected account."""
+        return self._user_tokens(
+            {"grant_type": "refresh_token", "refresh_token": refresh_token},
+            refresh_token=refresh_token,
+        )
+
+    def create_playlist(self, access_token, name, description=""):
+        """A new private playlist on the user's account; returns its ID."""
+        data = self._user_api(
+            "POST",
+            "/me/playlists",
+            access_token,
+            {"name": name, "description": description, "public": False},
+        )
+        if not data.get("id"):
+            raise SpotifyError("Spotify didn't say which playlist it made.")
+        return data["id"]
+
+    def replace_playlist_items(self, access_token, playlist_id, track_ids):
+        """Make the playlist hold exactly these tracks, in order."""
+        uris = [f"spotify:track:{track_id}" for track_id in track_ids]
+        self._user_api(
+            "PUT",
+            f"/playlists/{playlist_id}/items",
+            access_token,
+            {"uris": uris[:PLAYLIST_LIMIT]},
+        )
+
+    def _user_tokens(self, form, *, refresh_token=""):
+        reply = self._call("POST", TOKEN_URL, headers=self._basic_auth, form=form)
+        if reply.status in (400, 401) and _token_error(reply) == "invalid_grant":
+            raise SpotifyConnectionLost(
+                "Spotify no longer accepts this connection. Connect Spotify again."
+            )
+        if not reply.ok or not isinstance(reply.data, dict):
+            raise SpotifyError(_problem(reply))
+        if not reply.data.get("access_token"):
+            raise SpotifyError("Spotify sent no access token.")
+        return UserTokens.from_api(reply.data, refresh_token=refresh_token)
+
+    def _user_api(self, method, path, access_token, json_body=None):
+        reply = self._call(
+            method,
+            f"{API}{path}",
+            headers=lambda: {"Authorization": f"Bearer {access_token}"},
+            json_body=json_body,
+        )
+        if reply.status == 401:
+            raise SpotifyUnauthorized("Spotify refused the access token.")
+        if not reply.ok:
+            raise SpotifyError(_problem(reply))
+        return reply.data if isinstance(reply.data, dict) else {}
+
 
 def _problem(reply):
     message = ""
@@ -331,3 +463,10 @@ def _problem(reply):
         error = reply.data.get("error")
         message = error.get("message", "") if isinstance(error, dict) else ""
     return f"Spotify answered {reply.status}" + (f": {message}" if message else ".")
+
+
+def _token_error(reply):
+    """The ``error`` code of a token endpoint reply, such as invalid_grant."""
+    if isinstance(reply.data, dict) and isinstance(reply.data.get("error"), str):
+        return reply.data["error"]
+    return ""

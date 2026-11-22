@@ -8,37 +8,37 @@ development task.
 
 ## Current status
 
-**Phase 6 done (2026-11-19); Phase 7 in progress (part A done, part B
-next).** Updated 2026-11-20 for the next session.
+**Phase 7 done (2026-11-22): part A and part B.** Phases 8 and 9 are
+next, in any order. Updated 2026-11-22.
 
 **Pick up here:**
-- **Branch:** `phase-7-chords`, at the commit that adds this note. `master`
-  is at `bd5a543`: part A was fast-forwarded into it on 2026-11-20, at the
-  user's request.
-- **Don't merge `phase-7-chords` into `master` again until part B is
-  tested.**
+- **Branch:** `phase-7-chords`, pushed. `master` is still at `bd5a543`
+  (part A). **Don't merge `phase-7-chords` into `master` until the user
+  has tested part B** with a real Spotify account.
 - **Progress Check 2 is on 25 Nov 2026.**
-- **Phase 7, part A, is done and passed the user's click-through:**
-  - ChordPro chord sheets, typed, pasted (chords over words converted on
-    the server) or imported from a file;
-  - Worship Together's rhythm lines, optional chords and chart marks;
-    unreadable marks are kept as written with a warning;
-  - approval of team members' sheets;
-  - Find chords;
-  - chord sheet counts on lineups;
-  - a lineup song page with the server-side viewer: service key, personal
-    transpose, capo, Nashville numbers and practise-along in the
-    recording's key ([[0009-transposition-on-the-server]]);
-  - the keys a song was sung in;
-  - full lyrics only for people who plan (review F13).
-- **Part B is next** ([[Development-Plan]], Phase 7; [[Design-Decisions]],
-  Phase 7):
-  - the Spotify connection per user, with encrypted tokens;
-  - playback;
-  - the playlist saved on confirmation, with "Save to Spotify";
-  - no web request waiting on a Spotify Retry-After (review F10).
-- **Checks:** `scripts/check.ps1` (it runs the tests with `--noinput`); on
-  2026-11-20, 678 tests passed with 97% coverage.
+- **Phase 7, part A** (passed the user's click-through): ChordPro chord
+  sheets, typed, pasted or imported; chart marks; approval of team
+  members' sheets; Find chords; chord sheet counts; the lineup song page
+  with the server-side viewer ([[0009-transposition-on-the-server]]); the
+  keys a song was sung in; full lyrics only for people who plan.
+- **Phase 7, part B** (built 2026-11-22, checks pass; not yet tried
+  against real Spotify):
+  - each user's **Spotify Connection** (Authorization Code flow), tokens
+    encrypted with Fernet and refreshed as needed;
+  - **playback** on the lineup song page: the Web Playback SDK for a
+    connected account, falling back to the embedded player whenever the
+    SDK can't be used; "Open in Spotify" always;
+  - the **Lineup Playlist** saved on confirmation, with "Save to Spotify"
+    when it couldn't be;
+  - no web request waits on a Spotify Retry-After (review F10).
+- **To try part B:** `SPOTIFY_TOKEN_KEY` in `.env`, the Redirect URI in
+  the Spotify dashboard and the testers under User Management
+  ([[Environment-Setup]]).
+- **Choices awaiting the user's approval** are listed in [[Worship]]
+  (Open questions); [[Design-Decisions]] and the [[workflow-spec]] are
+  updated once approved.
+- **Checks:** `scripts/check.ps1`; on 2026-11-22, 727 tests passed with
+  97% coverage.
 
 Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 
@@ -66,8 +66,10 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
   Suggestion Feedback; song usage from confirmed lineups now counts in
   ranking; reports for song usage (with CSV) and attendance.
 - [[Worship]]'s chord sheets (Phase 7, part A, 2026-11-20), as above.
+- [[Worship]]'s Spotify Connection, playback and Lineup Playlist (Phase 7,
+  part B, 2026-11-22), as above.
 
-**Next:** Phase 7, part B; then Phases 8 and 9, in any order.
+**Next:** Phases 8 and 9, in any order.
 
 ## Project
 

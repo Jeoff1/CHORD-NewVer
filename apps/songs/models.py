@@ -346,3 +346,30 @@ class ChordSheet(TimeStampedModel):
     @property
     def is_approved(self):
         return self.status == self.Status.APPROVED
+
+
+class SpotifyConnection(TimeStampedModel):
+    """A user's own Spotify account, connected with the Authorization Code
+    flow, for playback and for saving lineups as playlists.
+
+    Both tokens are stored **encrypted** with Fernet (the key is
+    ``SPOTIFY_TOKEN_KEY`` in ``.env``); ``apps/songs/connections.py`` reads
+    and writes them. They are never shown, logged or put in the audit trail,
+    and nothing else from the account is stored.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="spotify_connection",
+    )
+    access_token_encrypted = models.TextField(editable=False)
+    refresh_token_encrypted = models.TextField(editable=False)
+    expires_at = models.DateTimeField(help_text="When the access token runs out.")
+    scope = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        default_permissions = ()
+
+    def __str__(self):
+        return f"Spotify connection {self.pk}"

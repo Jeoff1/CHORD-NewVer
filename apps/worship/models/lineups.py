@@ -89,6 +89,21 @@ class Lineup(TimeStampedModel):
     # into Suggestion Feedback (``apps/worship/feedback.py``).
     suggestion_outcomes = models.JSONField(default=dict, blank=True)
 
+    # The Spotify playlist the lineup was saved as (Design-Decisions, Phase
+    # 7): on the account of the person who saved it, holding the track IDs
+    # as they were then. Saving again updates the same playlist when the
+    # same person saves it.
+    spotify_playlist_id = models.CharField(max_length=64, blank=True)
+    spotify_playlist_owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    spotify_playlist_tracks = models.JSONField(default=list, blank=True)
+    spotify_playlist_saved_at = models.DateTimeField(null=True, blank=True)
+
     class Meta:
         default_permissions = ("add", "change", "view")
         permissions = [
@@ -119,6 +134,16 @@ class Lineup(TimeStampedModel):
     @property
     def sent_back_by_name(self):
         return display_name(self.sent_back_by)
+
+    @property
+    def spotify_playlist_owner_name(self):
+        return display_name(self.spotify_playlist_owner)
+
+    @property
+    def spotify_playlist_url(self):
+        if self.spotify_playlist_id:
+            return f"https://open.spotify.com/playlist/{self.spotify_playlist_id}"
+        return ""
 
 
 class LineupItem(models.Model):

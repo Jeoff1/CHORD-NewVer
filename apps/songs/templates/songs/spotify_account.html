@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Spotify account{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+      <h1 class="h3 mb-3">Spotify account</h1>
+      <p class="text-body-secondary">Connect your own Spotify account to play songs in full on their pages (Spotify Premium is needed for that) and to save confirmed {{ lineup_word|lower }}s as playlists on your account. Without it, songs play in Spotify's preview player.</p>
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          {% if not configured %}
+            <p class="mb-0">Spotify isn't set up on this installation, so accounts can't be connected. An administrator adds the Spotify settings to the server's <code>.env</code> file.</p>
+          {% elif connection %}
+            <p>Your Spotify account is connected{% if connection.created_at %} (since {{ connection.created_at|date:"M j, Y" }}){% endif %}.</p>
+            <form method="post" action="{% url 'songs:spotify_disconnect' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger">Disconnect Spotify</button>
+            </form>
+          {% else %}
+            <p>Your Spotify account isn't connected. Spotify asks you to agree, then sends you back here.</p>
+            <form method="post" action="{% url 'songs:spotify_connect' %}">
+              {% csrf_token %}
+              {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+              <button type="submit" class="btn btn-success">Connect Spotify</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -13,16 +13,18 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import formats
 from django.utils.functional import cached_property
+from django.utils.http import urlencode
 from django.views import View
 from django.views.generic import FormView, TemplateView, UpdateView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.core.views import FormPageMixin
+from apps.songs import connections
 from apps.songs.models import ChordSheet, Song
-from apps.songs.views import song_sheet_context
+from apps.songs.views import playback_context, song_sheet_context
 
-from .. import lineups
+from .. import lineups, playlists
 from ..forms import LineupItemForm, SendBackForm
 from ..models import Lineup, LineupItem
 from .base import ServiceMixin
@@ -68,7 +70,9 @@ def lineup_context(lineup, user):
     for item in items:
         item.can_move_up, item.can_move_down = moves[item.pk]
         item.has_sheet = item.song_id in with_sheet
+    tracks = [item.song.spotify_id for item in items if item.song.spotify_id]
     return {
+        **(playlist_context(lineup, user, tracks) if visible else {}),
         "lineup": lineup,
         "lineup_visible": visible,
         "lineup_items": items,
@@ -78,6 +82,23 @@ def lineup_context(lineup, user):
         "can_confirm_lineup": lineups.may_confirm(lineup, user),
         "has_final_say": lineups.has_final_say(user),
         "sees_lineup_drafts": lineups.sees_drafts(user),
+    }
+
+
+def playlist_context(lineup, user, tracks):
+    """The lineup's Spotify playlist, and whether to offer "Save to
+    Spotify": to people who confirm lineups, once it is confirmed, while no
+    playlist holds its current songs (Design-Decisions, Phase 7)."""
+    configured = connections.is_configured()
+    may_save = playlists.may_save(user)
+    return {
+        "may_save_playlist": may_save,
+        "offer_spotify_save": configured
+        and may_save
+        and playlists.needs_saving(lineup, tracks),
+        "spotify_connected": configured and connections.is_connected(user),
+        "spotify_playlist_is_mine": bool(lineup.spotify_playlist_id)
+        and lineup.spotify_playlist_owner_id == user.pk,
     }
 
 
@@ -336,6 +357,7 @@ class LineupSongView(ItemMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.sheet_context())
+        context.update(playback_context(self.item.song, self.request.user))
         context.update(
             item=self.item,
             song=self.item.song,
@@ -370,6 +392,40 @@ class ConfirmView(LineupMixin, View):
     def post(self, request, public_id):
         if self.audited(lineups.confirm):
             messages.success(request, "Confirmed: the team can see it now.")
+            # Saving to Spotify never undoes or delays the confirmation: it
+            # fails fast and the page offers "Save to Spotify" instead.
+            lineup = Lineup.objects.get(pk=self.lineup.pk)
+            _report_playlist(request, playlists.save(lineup, request.user))
+        return redirect(self.lineup_url())
+
+
+def _report_playlist(request, outcome):
+    if outcome.saved:
+        messages.success(request, outcome.message)
+    elif outcome.message:
+        messages.warning(request, outcome.message)
+
+
+class SavePlaylistView(LineupMixin, View):
+    """Save to Spotify: the confirmed lineup as a playlist on the account
+    of the person pressing it."""
+
+    def has_permission(self):
+        return playlists.may_save(self.request.user)
+
+    def post(self, request, public_id):
+        lineup = self.lineup
+        if not lineup.is_confirmed:
+            word = request.church.label_set.get("lineup").lower()
+            messages.error(request, f"Confirm the {word} before saving it to Spotify.")
+        elif not connections.is_connected(request.user):
+            messages.info(
+                request, "Connect your Spotify account first, then save again."
+            )
+            query = urlencode({"next": self.lineup_url()})
+            return redirect(f"{reverse('songs:spotify_account')}?{query}")
+        else:
+            _report_playlist(request, playlists.save(lineup, request.user))
         return redirect(self.lineup_url())
 
 

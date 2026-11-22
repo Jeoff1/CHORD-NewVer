@@ -182,8 +182,10 @@ Spotify safeguards in `apps/songs`):
     **Spotify Limit** row still in force, in the database, so the worker
     and web requests all respect it;
   - a 429 is saved as a Spotify Limit with its reason and Retry-After, and
-    logged. A wait of up to 30 s is waited out and the request tried once
-    more; a second 429 or a longer wait stops the run;
+    logged. Only the search worker waits (`may_wait=True`): a wait of up to
+    30 s is waited out and the request tried once more; a second 429 or a
+    longer wait stops the run. Every web request fails fast instead: one
+    request, no wait, no retry (workflow review F10, Phase 7);
   - `QUOTA_EXCEEDED`, or a Retry-After over an hour, **pauses** Spotify
     until Retry-After, or for 24 hours when Spotify gives none. A run that
     meets a pause ranks the pool instead, and the service page and Find on
@@ -412,6 +414,75 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
   (the lineup song page, htmx, practise-along, pending sheets, counts, key
   history).
 
+Built in Phase 7, part B (2026-11-22), **the Spotify Connection,
+playback and the Lineup Playlist** ([[Design-Decisions]], Phase 7):
+
+- **Spotify Connection** (`apps/songs/models.py`, rules in
+  `apps/songs/connections.py`): one per user, made with the Authorization
+  Code flow from **Spotify account** in the user menu
+  (`/worship/songs/spotify/`). Anyone signed in may connect their own.
+  - The `state` sent to Spotify is kept in the session and checked once on
+    the way back; a state the session never sent connects nothing.
+  - Scopes: `streaming`, `user-read-email`, `user-read-private`,
+    `user-modify-playback-state`, `playlist-modify-private`.
+  - The access and refresh tokens are stored encrypted with Fernet
+    (`SPOTIFY_TOKEN_KEY`); nothing else from the account is stored. They
+    never appear in pages, logs or the audit trail (which records only
+    "Spotify account: Connected / Not connected"), and `UserTokens` leaves
+    them out of its `repr`.
+  - An access token is refreshed when under a minute is left, or once when
+    Spotify refuses it (`call_with_token`). A refresh Spotify no longer
+    accepts, or tokens the key can't read, remove the connection, and the
+    person connects again. Disconnecting deletes it.
+- **`SpotifyClient`** gains the user calls, all under the same
+  safeguards: `authorize_url`, `exchange_code`, `refresh_user_token`,
+  `create_playlist` (`POST /me/playlists`, private) and
+  `replace_playlist_items` (`PUT /playlists/{id}/items`, up to 100), the
+  endpoints of Spotify's February 2026 Web API.
+- **Playback** on the lineup song page (`songs/includes/player.html`,
+  `playback_context`):
+  - a connected account gets the **Web Playback SDK** (`static/songs/player.js`):
+    a Play button that plays the track in the browser. The script asks
+    `/worship/songs/spotify/player-token/` (POST, never cached) for the
+    person's own access token, which stays in its memory; the refresh token
+    never leaves the server;
+  - whenever the SDK can't be used (no Premium, an unsupported browser, a
+    refused or missing token, a 429 from Spotify or from the token page, or
+    no "ready" within 15 s), it shows a short message and falls back to
+    Spotify's **embedded player**, with no automatic retry;
+  - without a connection the embedded player shows at once, with a link to
+    connect. **Open in Spotify** always shows. A song without a Spotify
+    track ID has no player.
+- **Lineup Playlist** (`apps/worship/playlists.py`; `Lineup` gains the
+  playlist ID, its owner, the track IDs saved and when):
+  - confirming saves the lineup at once as a private playlist on the
+    Spotify account of the person who confirmed it (the worship leader, or
+    the pastor when the pastor confirms), named after the service and its
+    date. Songs not on Spotify are left out, and the message says how many;
+  - saving never stops the confirmation. With no connection, during a
+    block, or on a 429, nothing waits: the lineup stays confirmed and the
+    lineup page shows **Save to Spotify** (a link to connect first when
+    the person has no connection);
+  - Save to Spotify (`worship.change_lineup` or `finalize_lineup`) saves
+    on the pressing person's account. The same person saving again
+    updates their playlist; anyone else gets their own. The playlist ID is
+    kept as soon as it exists, so a 429 on the next call doesn't make a
+    second playlist on the next try;
+  - after a change to a confirmed lineup's songs, the page says "the songs
+    have changed since" and offers Save to Spotify again. Only people who
+    may save see the playlist line; the "Open the playlist" link shows only
+    to its owner (it is private).
+- **Find on Spotify** now fails fast on a 429 (F10).
+- Tests: `apps/songs/tests/test_spotify_connection.py` (encryption,
+  connecting, the state check, refusals, 429 while connecting, refresh,
+  revoked and unreadable tokens, the player's token, access, no tokens in
+  logs), `apps/worship/tests/test_spotify_playlists.py` (saving on
+  confirmation, the pastor's account, no connection, 429, a block, a
+  playlist kept across a 429, songs left out, Save to Spotify, updating,
+  someone else's playlist, refusals, playback and its fallbacks) and
+  `apps/songs/tests/test_spotify_limits.py` (web requests fail fast; the
+  worker's single wait).
+
 ## Permissions
 
 | Permission                                   | Allows                                   |
@@ -441,6 +512,8 @@ Built in Phase 7, part A (2026-11-20), **chord sheets and keys**
 | `songs.add_chordsheet`                       | Pasting a sheet; pending without approve |
 | `songs.approve_chordsheet`                   | Adding and editing sheets approved at once; approving and discarding pending ones |
 | `songs.view_lyrics`                          | Full lyrics on the song page (review F13) |
+| `worship.change_lineup` or `worship.finalize_lineup` | Save to Spotify; seeing the lineup's playlist line |
+| (signed in)                                  | Connecting one's own Spotify account; playback |
 
 Default roles ([[Accounts]]):
 - **Pastoral Staff** schedule services, post themes, record headcounts and
@@ -472,10 +545,17 @@ Default roles ([[Accounts]]):
 - Who holds the final say: whichever Roles hold `worship.finalize_lineup`
 - The church's time zone (Church Profile)
 - Installation settings in `.env`: `SPOTIFY_CLIENT_ID`,
-  `SPOTIFY_CLIENT_SECRET`, `ML_ENGINE`, `ML_MODELS_DIR`,
-  `LRCLIB_USER_AGENT`
+  `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_TOKEN_KEY` (encrypts users' Spotify
+  tokens; without it nobody can connect), `SPOTIFY_REDIRECT_URI`
+  (optional), `ML_ENGINE`, `ML_MODELS_DIR`, `LRCLIB_USER_AGENT`
 
 ## Open questions
+
+- Choices made in Phase 7 part B, to confirm: the playlist is saved on the
+  account of whoever confirms (the pastor's, when the pastor confirms);
+  it is private; the player's script receives the person's own access
+  token (the SDK needs it in the browser); the lineup keeps the playlist
+  ID and the track IDs saved, so it can update the same playlist.
 
 - The Trusted Artist bonus (0.25) is still a constant in `analysis.py`.
 - A quota lockout without a Retry-After pauses Spotify for 24 hours, and

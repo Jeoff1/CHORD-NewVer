@@ -45,11 +45,25 @@ class ChordTestRunner(DiscoverRunner):
         settings.ML_ENGINE = "keyword"
         settings.SPOTIFY_CLIENT_ID = ""
         settings.SPOTIFY_CLIENT_SECRET = ""
+        settings.SPOTIFY_TOKEN_KEY = ""
+        settings.SPOTIFY_REDIRECT_URI = ""
         self._real_transport = http.set_transport(_no_network)
 
     def teardown_test_environment(self, **kwargs):
         http.set_transport(self._real_transport)
         super().teardown_test_environment(**kwargs)
+
+
+# A made-up Fernet key for tests; real keys live only in .env.
+TEST_TOKEN_KEY = "dGVzdC1vbmx5LWtleS1kby1ub3QtdXNlLTAxMjM0NTY="
+# Use with override_settings(**SPOTIFY_TEST_SETTINGS): Spotify set up, with
+# made-up credentials, so connecting and playlists are available.
+SPOTIFY_TEST_SETTINGS = {
+    "SPOTIFY_CLIENT_ID": "test-client",
+    "SPOTIFY_CLIENT_SECRET": "test-secret",
+    "SPOTIFY_TOKEN_KEY": TEST_TOKEN_KEY,
+    "SPOTIFY_REDIRECT_URI": "",
+}
 
 
 class FakeHttp:
@@ -267,6 +281,26 @@ def make_chord_sheet(song, *, chordpro=HYMN_SHEET, key="G", approved=True, **fie
     status = ChordSheet.Status.APPROVED if approved else ChordSheet.Status.PENDING
     return ChordSheet.objects.create(
         song=song, chordpro=chordpro, key=key, status=status, **fields
+    )
+
+
+def make_spotify_connection(
+    user, *, access="test-access-token", refresh="test-refresh-token", expires_in=3600
+):
+    """A Spotify connection for ``user`` with made-up tokens, stored
+    encrypted. Needs ``override_settings(**SPOTIFY_TEST_SETTINGS)``."""
+    import datetime
+
+    from django.utils import timezone
+
+    from apps.songs.connections import encrypt
+    from apps.songs.models import SpotifyConnection
+
+    return SpotifyConnection.objects.create(
+        user=user,
+        access_token_encrypted=encrypt(access),
+        refresh_token_encrypted=encrypt(refresh),
+        expires_at=timezone.now() + datetime.timedelta(seconds=expires_in),
     )
 
 

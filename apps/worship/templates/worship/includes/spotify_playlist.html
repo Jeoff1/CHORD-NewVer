@@ -1,0 +1,22 @@
+{# The confirmed lineup's Spotify playlist, and "Save to Spotify" (Design-Decisions, Phase 7). Expects playlist_context() from apps/worship/views/lineups.py. #}
+{% if may_save_playlist %}{% if lineup.spotify_playlist_id or offer_spotify_save %}
+  <div class="d-flex flex-wrap align-items-center gap-2 mb-3 small" id="spotify-playlist">
+    {% if lineup.spotify_playlist_id %}
+      <span class="text-body-secondary">
+        {% if spotify_playlist_is_mine %}Saved to your Spotify{% else %}Saved to the Spotify account of {{ lineup.spotify_playlist_owner_name }}{% endif %}, {{ lineup.spotify_playlist_saved_at|date:"M j, g:i A" }}{% if offer_spotify_save %}; the songs have changed since{% endif %}.
+      </span>
+      {% if spotify_playlist_is_mine %}<a href="{{ lineup.spotify_playlist_url }}" target="_blank" rel="noopener">Open the playlist</a>{% endif %}
+    {% endif %}
+    {% if offer_spotify_save %}
+      {% if spotify_connected %}
+        <form method="post" action="{% url 'worship:lineup_save_playlist' public_id=service.public_id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-success">Save to Spotify</button>
+        </form>
+      {% else %}
+        <a href="{% url 'songs:spotify_account' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-sm btn-success">Save to Spotify</a>
+        <span class="text-body-secondary">Connect your Spotify account first.</span>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endif %}{% endif %}

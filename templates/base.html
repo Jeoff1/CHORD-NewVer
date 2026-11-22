@@ -49,6 +49,7 @@
                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My profile</a></li>
                 {% if "members" in enabled_modules and user.member %}<li><a class="dropdown-item" href="{% url 'members:me' %}">My {{ labels.member|lower }} record</a></li>{% endif %}
                 <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Change password</a></li>
+                {% if "worship" in enabled_modules %}<li><a class="dropdown-item" href="{% url 'songs:spotify_account' %}">Spotify account</a></li>{% endif %}
                 <li><hr class="dropdown-divider"></li>
                 <li>
                   <form method="post" action="{% url 'accounts:logout' %}">

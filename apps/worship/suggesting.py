@@ -199,7 +199,8 @@ def _execute(run, spotify, lyrics_client, engine):
 
     note = ""
     if run.use_spotify:
-        spotify = spotify or SpotifyClient.from_settings()
+        # The worker may wait out one short Retry-After; web requests never do.
+        spotify = spotify or SpotifyClient.from_settings(may_wait=True)
         try:
             new_songs = _find_on_spotify(run, theme, options, spotify, engine, progress)
         except SpotifyPaused as pause:

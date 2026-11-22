@@ -249,6 +249,21 @@ gives none). The practise-along toggle shows the chords in it, and is
 hidden when it isn't set.
 _Avoid_: original key (that is the Chord Sheet's), track key
 
+**Spotify Connection**:
+A user's own Spotify account, connected from "Spotify account" in their
+menu with Spotify's Authorization Code flow. Its tokens are stored
+encrypted and are never shown or logged. It plays songs in full in the
+browser (with Premium) and holds the Lineup Playlists that user saves.
+One per user; it is not the app's own Spotify credentials.
+_Avoid_: Spotify login, linked account
+
+**Lineup Playlist**:
+The private Spotify playlist a confirmed Lineup is saved as, on the
+Spotify account of the person who confirmed it or pressed "Save to
+Spotify". It holds the Lineup's songs that are on Spotify, in order;
+saving again updates the same playlist when the same person saves it.
+_Avoid_: setlist, service playlist (in UI text, "Spotify playlist")
+
 **Final Say**:
 The permission `worship.finalize_lineup`, held by the Pastoral Staff role
 by default (and by the Administrator). Its holders, called "the pastor" in

@@ -1,0 +1,29 @@
+{% load static %}
+{# Playing a song (Design-Decisions, Phase 7). Expects `playback` from playback_context() in apps/songs/views.py, and `here` (this page's URL). #}
+{% if playback %}
+  <div class="card shadow-sm mb-3" id="listen">
+    <div class="card-body">
+      <h2 class="h5">Listen</h2>
+      {% if playback.use_sdk %}
+        {# Full playback in this browser with the Web Playback SDK. player.js falls back to the embedded player whenever the SDK can't be used, with a short message and no automatic retry. #}
+        <div data-spotify-player data-track="{{ playback.track_uri }}" data-token-url="{% url 'songs:spotify_player_token' %}" class="d-flex flex-wrap align-items-center gap-2 mb-2">
+          <button type="button" class="btn btn-success btn-sm" data-player-toggle disabled>Play</button>
+          <span class="small text-body-secondary" data-player-status role="status">Connecting to Spotify…</span>
+        </div>
+        <div data-player-fallback hidden>
+          <iframe data-src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" style="border: 0; border-radius: 12px"></iframe>
+        </div>
+        <noscript><iframe src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" style="border: 0; border-radius: 12px"></iframe></noscript>
+        <script src="{% static 'songs/player.js' %}" defer></script>
+      {% else %}
+        <div data-player-embed>
+          <iframe src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" style="border: 0; border-radius: 12px"></iframe>
+        </div>
+      {% endif %}
+      <p class="small mb-0 mt-1">
+        <a href="{{ playback.open_url }}" target="_blank" rel="noopener">Open in Spotify</a>
+        {% if not playback.use_sdk and playback.may_connect %} · <a href="{% url 'songs:spotify_account' %}?next={{ here|urlencode }}">Connect your Spotify account</a> <span class="text-body-secondary">to play songs in full here (Premium).</span>{% endif %}
+      </p>
+    </div>
+  </div>
+{% endif %}

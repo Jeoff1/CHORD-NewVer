@@ -37,6 +37,20 @@ administrators are users given the Administrator role under
 - **Spotify:** create an app in the Spotify developer dashboard and put its
   `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` in `.env`. Without them,
   Find on Spotify says Spotify isn't set up.
+- **Each user's Spotify account** (playback and playlists):
+  - make a token key and put it in `.env` as `SPOTIFY_TOKEN_KEY`:
+    `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+    It encrypts users' tokens. Keep it out of Git; changing it disconnects
+    everyone. Without it, "Spotify account" says Spotify isn't set up;
+  - in the Spotify dashboard, add the Redirect URI
+    `http://127.0.0.1:8000/worship/songs/spotify/callback/` (Spotify allows
+    plain http only for 127.0.0.1, not `localhost`, so open CHORD at
+    `http://127.0.0.1:8000/`). A server with another address sets
+    `SPOTIFY_REDIRECT_URI` to its own HTTPS callback;
+  - in Development Mode, Spotify lets only the users added under the
+    app's **User Management** connect (up to 5), and the app's owner needs
+    Premium. Full playback in the browser needs Premium too; everyone else
+    gets the embedded player.
 - **Models:** `python manage.py download_models` fetches the two ONNX
   models (about 120 MB) into `ml_models/`
   ([[0006-onnx-runtime-for-song-analysis]]). Check the free disk space

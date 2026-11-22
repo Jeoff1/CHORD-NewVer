@@ -37,7 +37,7 @@ flowchart LR
 | 4     | Song pool                     | M    | 3          | Done (2026-11-17) |
 | 5     | Song suggestions              | L    | 4          | Done (2026-11-18) |
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
-| 7     | Song pages: chords and playback | L  | 6          | In progress       |
+| 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
 | 8     | Teams and announcements       | M    | 6          | Not started       |
 | 9     | Learning to rank              | S    | 6          | Not started       |
 | 10    | Hardening and release         | M    | 7, 8, 9    | Not started       |
@@ -394,23 +394,23 @@ The rules and tests for this phase are in [[Design-Decisions]] (Phase 7).
 - [x] Lyrics on the song page only for people who plan, through a
   permission held by Worship Leader and Pastoral Staff (workflow review
   F13). Team members see the words through the chord sheet.
-- [ ] **Spotify connection** per user (Authorization Code flow), with
+- [x] **Spotify connection** per user (Authorization Code flow), with
   tokens refreshed as needed. Access and refresh tokens are stored
   **encrypted** with Fernet from `cryptography`, with the key in `.env`
   (`SPOTIFY_TOKEN_KEY`); add `cryptography` to `requirements.txt` and the
   key to `.env.example`. Tokens are never shown or logged, encrypted or
   not.
-- [ ] Playback: the Web Playback SDK for connected Premium accounts, the
+- [x] Playback: the Web Playback SDK for connected Premium accounts, the
   embedded player or an "Open in Spotify" link otherwise. An SDK call that
   gets a 429 shows a short message and falls back to the embedded player
   or the link, with no automatic retry.
-- [ ] On confirmation, the lineup is saved automatically as a Spotify
+- [x] On confirmation, the lineup is saved automatically as a Spotify
   playlist on the worship leader's account. With no Spotify connection, or
   on a 429, it is skipped, the lineup stays confirmed, and a "Save to
   Spotify" button lets the leader try again later.
-- [ ] The Phase 5 Spotify safeguards cover every server-side Spotify call
+- [x] The Phase 5 Spotify safeguards cover every server-side Spotify call
   this phase adds, such as creating the playlist.
-- [ ] No web request waits on a Spotify Retry-After (workflow review F10):
+- [x] No web request waits on a Spotify Retry-After (workflow review F10):
   saving the playlist, Find on Spotify and any other call made during a
   web request fail fast on a 429. The playlist then shows "Save to
   Spotify".

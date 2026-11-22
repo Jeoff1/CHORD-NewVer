@@ -153,9 +153,15 @@ TEST_RUNNER = "apps.core.testing.ChordTestRunner"
 ML_ENGINE = os.getenv("ML_ENGINE", "onnx")
 ML_MODELS_DIR = Path(os.getenv("ML_MODELS_DIR", BASE_DIR / "ml_models"))
 
-# Spotify app credentials (Client Credentials flow, for track search).
+# Spotify app credentials: the Client Credentials flow for track search, and
+# the Authorization Code flow for each user's own account.
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")
 SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET", "")
+# The Fernet key that encrypts users' Spotify tokens (apps/songs/connections.py).
+SPOTIFY_TOKEN_KEY = os.getenv("SPOTIFY_TOKEN_KEY", "")
+# Where Spotify returns people after connecting; blank means the page's own
+# address.
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "")
 
 # LRCLIB asks every client to name itself: app, version and a homepage.
 LRCLIB_USER_AGENT = os.getenv(

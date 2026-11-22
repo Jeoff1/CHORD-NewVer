@@ -15,6 +15,7 @@
         {% if perms.songs.view_song %} · <a href="{% url 'songs:detail' public_id=song.public_id %}">Song details</a>{% endif %}
       </p>
       {% if item.notes %}<div class="alert alert-light border small">{{ item.notes|linebreaksbr }}</div>{% endif %}
+      {% include "songs/includes/player.html" %}
       {% include "songs/includes/sheet_card.html" %}
     </div>
   </div>

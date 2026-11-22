@@ -44,6 +44,7 @@
     {% endif %}
     {% if lineup.is_confirmed %}
       <p class="small text-body-secondary">Confirmed by {{ lineup.confirmed_by_name }}, {{ lineup.confirmed_at|date:"M j, g:i A" }}.</p>
+      {% include "worship/includes/spotify_playlist.html" %}
     {% elif lineup.is_being_revised %}
       <p class="small text-body-secondary">Reopened: the team sees that it is being revised until it is confirmed again.</p>
     {% endif %}

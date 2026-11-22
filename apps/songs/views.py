@@ -2,11 +2,14 @@
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
+from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, TemplateView, UpdateView
 
 from apps.audit.models import AuditEvent
@@ -16,7 +19,7 @@ from apps.core.music import Feel
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.worship.views.base import settings_nav
 
-from . import pool, sheets
+from . import connections, pool, sheets
 from .analysis import apply_check_rules
 from .forms import (
     ChordSheetForm,
@@ -25,7 +28,13 @@ from .forms import (
     WorshipCheckSettingsForm,
 )
 from .models import ChordSheet, Song, ThemeTag, WorshipCheckSettings
-from .spotify import SpotifyClient, SpotifyError, block_message, current_block
+from .spotify import (
+    SpotifyClient,
+    SpotifyError,
+    SpotifyRateLimited,
+    block_message,
+    current_block,
+)
 from .viewer import sheet_view
 
 CHECK_SETTINGS_AUDIT_FIELDS = {
@@ -512,3 +521,137 @@ class SheetDiscardView(_SheetDecisionView):
             self.request.user, sheet, AuditEvent.Action.DELETED, diff(before, {})
         )
         messages.success(self.request, "The pending chord sheet was discarded.")
+
+
+# --- Playback and each user's Spotify account ------------------------------------
+
+
+def playback_context(song, user):
+    """How a song plays on its page (Design-Decisions, Phase 7). A
+    connected account plays it in the browser with the Web Playback SDK,
+    which needs Premium; the page's script falls back to Spotify's embedded
+    player whenever the SDK can't be used. Without a connection the
+    embedded player shows at once. "Open in Spotify" always shows."""
+    if not song.spotify_id:
+        return {"playback": None}
+    return {
+        "playback": {
+            "track_uri": f"spotify:track:{song.spotify_id}",
+            "embed_url": f"https://open.spotify.com/embed/track/{song.spotify_id}",
+            "open_url": song.spotify_url,
+            "use_sdk": connections.is_connected(user),
+            "may_connect": connections.is_configured(),
+        }
+    }
+
+
+class SpotifyAccountMixin(ModuleRequiredMixin, LoginRequiredMixin):
+    """A person's own Spotify account: anyone signed in may connect theirs."""
+
+    module = "worship"
+
+
+def spotify_account_url():
+    return reverse("songs:spotify_account")
+
+
+class SpotifyAccountView(SpotifyAccountMixin, TemplateView):
+    template_name = "songs/spotify_account.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            configured=connections.is_configured(),
+            connection=connections.connection_for(self.request.user),
+            next=safe_next(self.request, ""),
+        )
+        return context
+
+
+class SpotifyConnectView(SpotifyAccountMixin, View):
+    """Send the person to Spotify to agree; Spotify returns them to the
+    callback below."""
+
+    def post(self, request):
+        if not connections.is_configured():
+            messages.error(request, "Spotify isn't set up on this installation.")
+            return redirect(spotify_account_url())
+        target = connections.start(
+            request,
+            SpotifyClient.from_settings(),
+            safe_next(request, spotify_account_url()),
+        )
+        return redirect(target)
+
+
+class SpotifyCallbackView(SpotifyAccountMixin, View):
+    def get(self, request):
+        next_url = connections.take_pending(request, request.GET.get("state", ""))
+        if next_url is None:
+            messages.error(
+                request,
+                "That Spotify sign-in didn't come from this page. Connect again.",
+            )
+            return redirect(spotify_account_url())
+        code = request.GET.get("code", "")
+        if request.GET.get("error") or not code:
+            messages.info(request, "Spotify wasn't connected.")
+            return redirect(next_url or spotify_account_url())
+        had_connection = connections.connection_for(request.user) is not None
+        try:
+            connections.finish(
+                request.user,
+                code,
+                connections.redirect_uri(request),
+                SpotifyClient.from_settings(),
+            )
+        except SpotifyError as error:
+            messages.error(request, f"Spotify wasn't connected: {error}")
+            return redirect(spotify_account_url())
+        if not had_connection:
+            record_change(
+                request.user,
+                request.user,
+                AuditEvent.Action.CHANGED,
+                {"Spotify account": ["Not connected", "Connected"]},
+            )
+        messages.success(request, "Your Spotify account is connected.")
+        return redirect(next_url or spotify_account_url())
+
+
+class SpotifyDisconnectView(SpotifyAccountMixin, View):
+    def post(self, request):
+        if connections.disconnect(request.user):
+            record_change(
+                request.user,
+                request.user,
+                AuditEvent.Action.CHANGED,
+                {"Spotify account": ["Connected", "Not connected"]},
+            )
+            messages.success(
+                request,
+                "Your Spotify account was disconnected. You can also remove "
+                "CHORD from the apps on your Spotify account page.",
+            )
+        return redirect(spotify_account_url())
+
+
+@method_decorator(never_cache, name="dispatch")
+class SpotifyPlayerTokenView(SpotifyAccountMixin, View):
+    """The signed-in person's own access token, for the Web Playback SDK
+    in their browser. Only the page's script reads it; it is never shown or
+    logged, and the refresh token never leaves the server. A 429 or a block
+    fails fast, so the player falls back at once."""
+
+    def post(self, request):
+        connection = connections.connection_for(request.user)
+        if connection is None or not connections.is_configured():
+            return JsonResponse({"error": "Spotify isn't connected."}, status=404)
+        try:
+            token = connections.access_token(connection, SpotifyClient.from_settings())
+        except SpotifyRateLimited as limit:
+            return JsonResponse({"error": str(limit)}, status=429)
+        except SpotifyError as error:
+            return JsonResponse({"error": str(error)}, status=502)
+        seconds = (connection.expires_at - timezone.now()).total_seconds()
+        return JsonResponse({"access_token": token, "expires_in": max(int(seconds), 0)})

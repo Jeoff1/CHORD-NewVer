@@ -2,6 +2,53 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-22: Phase 7 part B: Spotify Connection, playback, Lineup Playlist, F10
+
+On branch `phase-7-chords`. Phase 7 is done.
+
+- **Spotify Connection** (`apps/songs/connections.py`, model
+  `SpotifyConnection`): each user connects their own account with the
+  Authorization Code flow from "Spotify account" in their menu. The state
+  is checked once against the session. Access and refresh tokens are
+  stored encrypted with Fernet (`SPOTIFY_TOKEN_KEY`), refreshed when under
+  a minute is left or once after a 401, and removed when Spotify revokes
+  them or the key can't read them. The audit trail records only
+  connected/not connected.
+- **`SpotifyClient`** (`apps/songs/spotify.py`): fails fast on a 429 by
+  default (one request, no wait, block recorded); only the search worker
+  passes `may_wait=True`. New user calls under the same safeguards:
+  authorize URL, code exchange, refresh, `POST /me/playlists`,
+  `PUT /playlists/{id}/items` (Spotify's February 2026 endpoints).
+  `UserTokens` keeps tokens out of its `repr`.
+- **Playback** on the lineup song page (`songs/includes/player.html`,
+  `static/songs/player.js`): the Web Playback SDK for a connected account,
+  with the person's own access token from a POST-only, never-cached
+  endpoint. No Premium, an unsupported browser, a refused token, a 429 or
+  no "ready" in 15 s fall back to Spotify's embedded player with a short
+  message, never retrying. Without a connection the embedded player shows
+  at once; "Open in Spotify" always.
+- **Lineup Playlist** (`apps/worship/playlists.py`; four new `Lineup`
+  fields): confirming saves a private playlist on the confirming person's
+  account. No connection, a block or a 429 leave the lineup confirmed and
+  show "Save to Spotify". The same person saving again updates their
+  playlist; a playlist made before a 429 is kept for the next try.
+- **Dependencies:** `cryptography` 50.0.2 (with `cffi`, `pycparser`) in
+  `requirements.txt`; `SPOTIFY_TOKEN_KEY` and `SPOTIFY_REDIRECT_URI` in
+  `.env.example` and settings. The test runner clears both.
+- **Tests:** `test_spotify_connection.py`, `test_spotify_playlists.py`,
+  and fail-fast tests in `test_spotify_limits.py`. The worker's wait tests
+  now use a worker client. The SDK fallback itself runs only in a browser;
+  a test checks `player.js` keeps its fallbacks.
+- **Notes:** [[Worship]] (part B, permissions, settings, choices to
+  confirm), [[Glossary]] (Spotify Connection, Lineup Playlist),
+  [[Code-Conventions]], [[Environment-Setup]], [[Development-Plan]]
+  (tasks ticked, Phase 7 Done), [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 727
+  tests passed (49 new), with 97% coverage (`connections.py` 96%,
+  `playlists.py` 96%, `spotify.py` 94%). Not yet tried against real
+  Spotify.
+
 ## 2026-11-20: hand-over: decisions checked, status for the next session, check.ps1 --noinput
 
 On branch `phase-7-chords`.

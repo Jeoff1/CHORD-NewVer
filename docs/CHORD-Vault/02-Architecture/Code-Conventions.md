@@ -21,6 +21,7 @@ yet.
 | Naming people  | Text that names who did something uses the full name, or the username when there is none: `display_name(user)` (`apps/core/people.py`), or `{{ user\|person_name }}` with `{% load people %}`. Never print a user object directly. |
 | Brackets       | Don't nest brackets in text: list songs as "Title, Artist" separated by semicolons, since artist names may hold brackets, such as "Charles Wesley (1739)". |
 | HTMX requests  | `base.html` sends the CSRF token in every HTMX request header.                                                                   |
+| Page scripts   | A page's own script lives in `apps/<app>/static/<app>/` and is loaded with `defer` from its include (e.g. `songs/player.js`). It reads the CSRF token from the body's `hx-headers`. |
 | Deleting       | Users are deactivated and members archived, never deleted. Church-edited list items and Custom Fields are switched off. Worship services are cancelled, not deleted. |
 | Dates and times | Stored in UTC and shown in the church's time zone, which the middleware activates for each request. Code that runs outside a request (rules, the worker) asks `scheduling.church_time_zone()`. |
 | Files          | Only the church logo is public (`media/church/`). Personal files use private storage (see below). |
@@ -112,10 +113,18 @@ Personal files (member photos, uploaded documents) use
 - Spotify calls go through `SpotifyClient` only, which applies the
   safeguards ([[Design-Decisions]], Phase 5): it checks the shared block
   (`spotify.current_block()`, a `SpotifyLimit` row) before every request,
-  saves and logs every 429, retries at most once, and raises
-  `SpotifyRateLimited` or `SpotifyPaused`. Catch `SpotifyPaused` where a
+  saves and logs every 429, and raises `SpotifyRateLimited` or
+  `SpotifyPaused`. By default it fails fast on a 429, as every web request
+  must (review F10); only the search worker builds it with
+  `may_wait=True`, which waits out one short Retry-After and retries once. Catch `SpotifyPaused` where a
   feature can carry on without Spotify; show `block_message()` to people.
   The client counts `calls` and keeps `limits` for the caller to record.
+- A user's own Spotify account goes through `apps/songs/connections.py`:
+  `connection_for(user)`, `access_token(connection, client)` (refreshed
+  and saved as needed) and `call_with_token(connection, client, call)`
+  (refreshes once when Spotify refuses the token). Tokens are encrypted
+  with `connections.encrypt`; never log, print or audit them. Functions
+  that hold them use `sensitive_variables`.
 - Work that calls Spotify or LRCLIB outside a web request runs in the
   search worker ([[0007-search-worker]]). A command that does such work
   takes `advisory_lock(SEARCH_WORKER)` (`apps/core/locks.py`) and refuses
@@ -149,6 +158,10 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   - `make_chord_sheet(song, chordpro=HYMN_SHEET, key="G", approved=True)`:
     a chord sheet; `HYMN_SHEET` is a public-domain hymn in ChordPro
   - `TEST_PASSWORD`
+  - `SPOTIFY_TEST_SETTINGS`: use with `override_settings(**...)` for
+    Spotify set up with made-up credentials and token key.
+  - `make_spotify_connection(user, access=..., refresh=..., expires_in=3600)`:
+    a connection with made-up tokens, stored encrypted.
   - `close_file_response(response)`: closes a file download in a test
     without also closing the test database connection.
   - `quiet_logger(test, name="apps.songs.spotify")`: silences a logger

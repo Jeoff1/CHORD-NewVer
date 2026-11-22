@@ -136,6 +136,11 @@ urlpatterns = [
         name="lineup_confirm",
     ),
     path(
+        "services/<uuid:public_id>/lineup/save-to-spotify/",
+        lineups.SavePlaylistView.as_view(),
+        name="lineup_save_playlist",
+    ),
+    path(
         "services/<uuid:public_id>/lineup/reopen/",
         lineups.ReopenView.as_view(),
         name="lineup_reopen",

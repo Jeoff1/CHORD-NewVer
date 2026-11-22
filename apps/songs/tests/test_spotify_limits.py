@@ -1,15 +1,18 @@
 """The Spotify safeguards (Design-Decisions, Phase 5), with Spotify mocked.
 
 A fake clock stands in for time: waiting moves it forward, so no test
-really waits.
+really waits. Only the search worker waits out a Retry-After; web requests
+fail fast (workflow review F10).
 """
 
 import datetime
 import logging
+from unittest import mock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
+from django.urls import reverse
 
-from apps.core.testing import FakeHttp, quiet_logger
+from apps.core.testing import FakeHttp, complete_setup, make_user, quiet_logger
 from apps.songs import spotify
 from apps.songs.models import SpotifyLimit
 from apps.songs.spotify import (
@@ -65,9 +68,15 @@ class SafeguardTests(TestCase):
         self.clock = Clock()
         quiet_logger(self)  # test_every_429_is_logged... checks the log
 
-    def new_client(self):
-        """A new client: another request or process, sharing the database."""
-        return SpotifyClient("id", "secret", sleep=self.clock.sleep, clock=self.clock)
+    def new_client(self, *, may_wait=False):
+        """A new client: another request or process, sharing the database.
+        Web requests never wait; the search worker passes ``may_wait``."""
+        return SpotifyClient(
+            "id", "secret", may_wait=may_wait, sleep=self.clock.sleep, clock=self.clock
+        )
+
+    def worker_client(self):
+        return self.new_client(may_wait=True)
 
     # Rule 1: stop on the first 429.
 
@@ -116,7 +125,7 @@ class SafeguardTests(TestCase):
         self.assertEqual(current_block(START), long)
         self.assertIsNone(current_block(START + datetime.timedelta(seconds=600)))
 
-    # Rule 3: after waiting, retry at most once.
+    # Rule 3: after waiting, retry at most once (the search worker only).
 
     def test_a_short_wait_is_waited_out_and_the_request_retried(self):
         answers = iter([(429, {}), (200, EMPTY)])
@@ -124,7 +133,7 @@ class SafeguardTests(TestCase):
             web.reply(
                 "GET", SEARCH, lambda call: next(answers), headers={"retry-after": "3"}
             )
-            self.new_client().search_tracks("grace")
+            self.worker_client().search_tracks("grace")
         self.assertEqual(self.clock.waits, [3])
         self.assertEqual(len(searches(web)), 2)
         self.assertEqual(SpotifyLimit.objects.count(), 1)
@@ -133,7 +142,7 @@ class SafeguardTests(TestCase):
         with spotify_web() as web:
             web.reply("GET", SEARCH, {}, status=429, headers={"retry-after": "2"})
             with self.assertRaises(SpotifyRateLimited):
-                self.new_client().search_tracks("grace")
+                self.worker_client().search_tracks("grace")
         self.assertEqual(self.clock.waits, [2])
         self.assertEqual(len(searches(web)), 2)
         self.assertEqual(SpotifyLimit.objects.count(), 2)
@@ -143,7 +152,7 @@ class SafeguardTests(TestCase):
         with spotify_web() as web:
             web.reply("GET", SEARCH, {}, status=429, headers={"retry-after": str(wait)})
             with self.assertRaises(SpotifyRateLimited):
-                self.new_client().search_tracks("grace")
+                self.worker_client().search_tracks("grace")
         self.assertEqual(self.clock.waits, [])
         self.assertEqual(len(searches(web)), 1)
 
@@ -204,7 +213,7 @@ class SafeguardTests(TestCase):
 
     def test_calls_and_limits_are_counted(self):
         answers = iter([(429, {}), (200, EMPTY)])
-        spotify_client = self.new_client()
+        spotify_client = self.worker_client()
         with spotify_web() as web:
             web.reply(
                 "GET", SEARCH, lambda call: next(answers), headers={"retry-after": "1"}
@@ -232,3 +241,51 @@ class SafeguardTests(TestCase):
                 self.new_client().search_tracks("grace")
         self.assertEqual(len(web.calls), 1)
         self.assertEqual(SpotifyLimit.objects.get().retry_after, 90)
+
+
+class WebRequestFailFastTests(TestCase):
+    """No web request waits on a Spotify Retry-After (workflow review F10)."""
+
+    def setUp(self):
+        quiet_logger(self)
+        complete_setup()
+        # Any real sleep in this class is a failure.
+        patcher = mock.patch(
+            "apps.songs.spotify.time.sleep",
+            side_effect=AssertionError("A web request waited on Spotify."),
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_a_web_client_sends_one_request_never_sleeps_and_records_the_block(self):
+        clock = Clock()
+        with spotify_web() as web:
+            web.reply("GET", SEARCH, {}, status=429, headers={"retry-after": "3"})
+            with self.assertRaises(SpotifyRateLimited):
+                SpotifyClient("id", "secret", clock=clock).search_tracks("grace")
+        self.assertEqual(len(searches(web)), 1)
+        self.assertEqual(clock.waits, [])
+        self.assertEqual(SpotifyLimit.objects.get().retry_after, 3)
+
+    @override_settings(SPOTIFY_CLIENT_ID="id", SPOTIFY_CLIENT_SECRET="secret")
+    def test_find_on_spotify_fails_fast_on_a_429(self):
+        self.client.force_login(make_user(perms=["songs.view_song", "songs.add_song"]))
+        with spotify_web() as web:
+            web.reply("GET", SEARCH, {}, status=429, headers={"retry-after": "3"})
+            response = self.client.get(reverse("songs:spotify_search"), {"q": "grace"})
+        self.assertEqual(len(searches(web)), 1)
+        self.assertContains(response, "Spotify asked CHORD to wait until")
+        self.assertIsNotNone(current_block())
+
+    def test_the_worker_still_waits_out_one_short_retry_after(self):
+        clock = Clock()
+        answers = iter([(429, {}), (200, EMPTY)])
+        with spotify_web() as web:
+            web.reply(
+                "GET", SEARCH, lambda call: next(answers), headers={"retry-after": "2"}
+            )
+            SpotifyClient(
+                "id", "secret", may_wait=True, sleep=clock.sleep, clock=clock
+            ).search_tracks("grace")
+        self.assertEqual(clock.waits, [2])
+        self.assertEqual(len(searches(web)), 2)
