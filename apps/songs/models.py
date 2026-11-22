@@ -348,28 +348,57 @@ class ChordSheet(TimeStampedModel):
         return self.status == self.Status.APPROVED
 
 
-class SpotifyConnection(TimeStampedModel):
-    """A user's own Spotify account, connected with the Authorization Code
-    flow, for playback and for saving lineups as playlists.
+class SpotifyTokens(TimeStampedModel):
+    """A Spotify account's tokens, stored **encrypted** with Fernet (the key
+    is ``SPOTIFY_TOKEN_KEY`` in ``.env``); ``apps/songs/connections.py``
+    reads and writes them. They are never shown, logged or put in the audit
+    trail, and nothing else from the account is stored."""
 
-    Both tokens are stored **encrypted** with Fernet (the key is
-    ``SPOTIFY_TOKEN_KEY`` in ``.env``); ``apps/songs/connections.py`` reads
-    and writes them. They are never shown, logged or put in the audit trail,
-    and nothing else from the account is stored.
-    """
-
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="spotify_connection",
-    )
     access_token_encrypted = models.TextField(editable=False)
     refresh_token_encrypted = models.TextField(editable=False)
     expires_at = models.DateTimeField(help_text="When the access token runs out.")
     scope = models.CharField(max_length=500, blank=True)
 
     class Meta:
+        abstract = True
+
+
+class SpotifyConnection(SpotifyTokens):
+    """A user's own Spotify account, connected with the Authorization Code
+    flow, for playback and (without a Church Spotify Account) for saving
+    lineups as playlists."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="spotify_connection",
+    )
+
+    class Meta:
         default_permissions = ()
 
     def __str__(self):
         return f"Spotify connection {self.pk}"
+
+
+class ChurchSpotifyAccount(SpotifyTokens):
+    """The church's own Spotify account, an optional church setting
+    (decision 0011). When it is connected, every Lineup Playlist is made
+    and updated on it, as a public playlist. It holds only the playlist
+    scopes and is never used for playback. There is at most one row."""
+
+    SINGLETON_PK = 1
+
+    connected_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        default_permissions = ()
+
+    def __str__(self):
+        return "Church Spotify account"

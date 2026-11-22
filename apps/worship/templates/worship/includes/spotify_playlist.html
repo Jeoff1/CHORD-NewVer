@@ -1,14 +1,17 @@
-{# The confirmed lineup's Spotify playlist, and "Save to Spotify" (Design-Decisions, Phase 7). Expects playlist_context() from apps/worship/views/lineups.py. #}
-{% if may_save_playlist %}{% if lineup.spotify_playlist_id or offer_spotify_save %}
+{# The confirmed lineup's Lineup Playlist, and "Save to Spotify" (Design-Decisions, Phase 7; decision 0011). Expects playlist_context() from apps/worship/views/lineups.py. A playlist on the Church Spotify Account is public: everyone who sees the confirmed lineup gets its link. A personal one is private: only people who may save see the line, and only its owner gets the link. #}
+{% if church_playlist or may_save_playlist and lineup.spotify_playlist_id or offer_spotify_save %}
   <div class="d-flex flex-wrap align-items-center gap-2 mb-3 small" id="spotify-playlist">
-    {% if lineup.spotify_playlist_id %}
+    {% if church_playlist %}
+      <span class="text-body-secondary">Spotify playlist{% if may_save_playlist %}, saved {{ lineup.spotify_playlist_saved_at|date:"M j, g:i A" }} on the church's account{% if offer_spotify_save %}; the songs have changed since{% endif %}{% endif %}:</span>
+      <a href="{{ lineup.spotify_playlist_url }}" target="_blank" rel="noopener">Open the playlist</a>
+    {% elif may_save_playlist and lineup.spotify_playlist_id %}
       <span class="text-body-secondary">
         {% if spotify_playlist_is_mine %}Saved to your Spotify{% else %}Saved to the Spotify account of {{ lineup.spotify_playlist_owner_name }}{% endif %}, {{ lineup.spotify_playlist_saved_at|date:"M j, g:i A" }}{% if offer_spotify_save %}; the songs have changed since{% endif %}.
       </span>
       {% if spotify_playlist_is_mine %}<a href="{{ lineup.spotify_playlist_url }}" target="_blank" rel="noopener">Open the playlist</a>{% endif %}
     {% endif %}
     {% if offer_spotify_save %}
-      {% if spotify_connected %}
+      {% if spotify_save_ready %}
         <form method="post" action="{% url 'worship:lineup_save_playlist' public_id=service.public_id %}">
           {% csrf_token %}
           <button type="submit" class="btn btn-sm btn-success">Save to Spotify</button>
@@ -19,4 +22,4 @@
       {% endif %}
     {% endif %}
   </div>
-{% endif %}{% endif %}
+{% endif %}

@@ -1,0 +1,15 @@
+{# The church settings tabs. Expects `sections` (key, title) and `section`, the active one. The Spotify tab (the Church Spotify Account) belongs to the Worship module. #}
+<ul class="nav nav-tabs mb-4">
+  {% for key, title in sections %}
+    <li class="nav-item">
+      <a class="nav-link{% if key == section %} active" aria-current="page{% endif %}"
+         href="{% url 'church:settings' section=key %}">{{ title }}</a>
+    </li>
+  {% endfor %}
+  {% if "worship" in enabled_modules %}
+    <li class="nav-item">
+      <a class="nav-link{% if section == 'spotify' %} active" aria-current="page{% endif %}"
+         href="{% url 'songs:church_spotify' %}">Spotify</a>
+    </li>
+  {% endif %}
+</ul>

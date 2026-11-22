@@ -89,11 +89,13 @@ class Lineup(TimeStampedModel):
     # into Suggestion Feedback (``apps/worship/feedback.py``).
     suggestion_outcomes = models.JSONField(default=dict, blank=True)
 
-    # The Spotify playlist the lineup was saved as (Design-Decisions, Phase
-    # 7): on the account of the person who saved it, holding the track IDs
-    # as they were then. Saving again updates the same playlist when the
-    # same person saves it.
+    # The Lineup Playlist (Design-Decisions, Phase 7; decisions 0010 and
+    # 0011): the ID of the playlist CHORD made, used only to find and update
+    # it; on the Church Spotify Account (public) or on the account of the
+    # person who saved it (private); and the track IDs it holds. Never model
+    # input or a training feature.
     spotify_playlist_id = models.CharField(max_length=64, blank=True)
+    spotify_playlist_on_church_account = models.BooleanField(default=False)
     spotify_playlist_owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,

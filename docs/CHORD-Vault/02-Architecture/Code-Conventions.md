@@ -122,7 +122,9 @@ Personal files (member photos, uploaded documents) use
 - A user's own Spotify account goes through `apps/songs/connections.py`:
   `connection_for(user)`, `access_token(connection, client)` (refreshed
   and saved as needed) and `call_with_token(connection, client, call)`
-  (refreshes once when Spotify refuses the token). Tokens are encrypted
+  (refreshes once when Spotify refuses the token); the same functions
+  work on `church_account()`, the Church Spotify Account, which only
+  playlists use. Tokens are encrypted
   with `connections.encrypt`; never log, print or audit them. Functions
   that hold them use `sensitive_variables`.
 - Work that calls Spotify or LRCLIB outside a web request runs in the

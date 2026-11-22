@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load church people %}
+
+{% block title %}Church settings{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}
+  <div class="row justify-content-center">
+    <div class="col-lg-9 col-xl-8">
+      <h1 class="h3 mb-3">Church settings</h1>
+      {% include "church/includes/settings_tabs.html" %}
+      <p class="text-body-secondary">Optional. Connect a Spotify account the church owns, and every confirmed {{ lineup_word|lower }} is saved on it as a public playlist that the whole team can open, whoever confirms it. Without it, each {{ lineup_word|lower }}'s playlist goes privately to the account of the person who saves it. This account is only for playlists: nobody plays music through it.</p>
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          {% if not configured %}
+            <p class="mb-0">Spotify isn't set up on this installation, so the church's account can't be connected. An administrator adds the Spotify settings to the server's <code>.env</code> file.</p>
+          {% elif account %}
+            <p>The church's Spotify account is connected{% if account.connected_by %} by {{ account.connected_by|person_name }}{% endif %}, since {{ account.created_at|date:"M j, Y" }}. {{ lineup_word }} playlists are saved on it, as public playlists.</p>
+            <form method="post" action="{% url 'songs:church_spotify_disconnect' %}" onsubmit="return confirm('Disconnect the church\'s Spotify account? Playlists already saved stay on it.')">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger">Disconnect the church's account</button>
+            </form>
+          {% else %}
+            <p>Not connected. Sign in to Spotify as the church's account when Spotify asks: CHORD asks only to create and change playlists on it. It doesn't need Premium.</p>
+            <form method="post" action="{% url 'songs:church_spotify_connect' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-success">Connect the church's Spotify account</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

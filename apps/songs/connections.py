@@ -1,4 +1,5 @@
-"""Each user's own Spotify account (Design-Decisions, Phase 7).
+"""Spotify accounts: each user's own, and the optional Church Spotify
+Account (Design-Decisions, Phase 7; decision 0011).
 
 - People connect with Spotify's Authorization Code flow. The ``state``
   sent to Spotify is kept in the session and checked when Spotify sends
@@ -12,6 +13,9 @@
   Spotify refuses it once. A refresh Spotify no longer accepts, or a key
   that can't read the stored tokens, removes the connection: the person
   connects again.
+- The Church Spotify Account is connected the same way, from church
+  settings, by people who may change them. It asks only for the playlist
+  scopes and is never used for playback.
 - Every call goes through ``SpotifyClient``, so its safeguards apply, and
   in a web request a 429 fails fast (workflow review F10).
 """
@@ -25,7 +29,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_variables
 
-from .models import SpotifyConnection
+from .models import ChurchSpotifyAccount, SpotifyConnection
 from .spotify import SpotifyConnectionLost, SpotifyError, SpotifyUnauthorized
 
 # What CHORD asks for: playback in the browser (the Web Playback SDK needs
@@ -37,6 +41,9 @@ SCOPES = (
     "user-modify-playback-state",
     "playlist-modify-private",
 )
+# The Church Spotify Account only makes and updates Lineup Playlists.
+CHURCH_SCOPES = ("playlist-modify-public", "playlist-modify-private")
+PERSONAL, CHURCH = "personal", "church"
 SESSION_KEY = "spotify_connect"
 # Refresh an access token this long before it runs out.
 REFRESH_MARGIN = datetime.timedelta(seconds=60)
@@ -92,23 +99,32 @@ def redirect_uri(request):
     )
 
 
-def start(request, client, next_url):
-    """Remember a new ``state`` (and where to go afterwards) in the session,
-    and return the Spotify page where the person agrees."""
+def start(request, client, next_url, *, purpose=PERSONAL):
+    """Remember a new ``state``, what is being connected (the person's own
+    account or the church's) and where to go afterwards in the session, and
+    return the Spotify page where the person agrees."""
     state = secrets.token_urlsafe(32)
-    request.session[SESSION_KEY] = {"state": state, "next": next_url}
-    return client.authorize_url(redirect_uri(request), state, SCOPES)
+    request.session[SESSION_KEY] = {
+        "state": state,
+        "next": next_url,
+        "purpose": purpose,
+    }
+    scopes = CHURCH_SCOPES if purpose == CHURCH else SCOPES
+    return client.authorize_url(redirect_uri(request), state, scopes)
 
 
 def take_pending(request, state):
-    """Where to go after connecting, if ``state`` is the one this session
-    sent to Spotify; None when it isn't (or nothing was sent). Either way
-    the state can't be used again."""
+    """``{"next": ..., "purpose": ...}`` if ``state`` is the one this
+    session sent to Spotify; None when it isn't (or nothing was sent).
+    Either way the state can't be used again."""
     pending = request.session.pop(SESSION_KEY, None) or {}
     expected = pending.get("state") or ""
     if not (state and expected and secrets.compare_digest(state, expected)):
         return None
-    return pending.get("next") or ""
+    return {
+        "next": pending.get("next") or "",
+        "purpose": CHURCH if pending.get("purpose") == CHURCH else PERSONAL,
+    }
 
 
 @sensitive_variables("tokens")
@@ -139,13 +155,48 @@ def disconnect(user):
     return bool(deleted)
 
 
+# --- The Church Spotify Account ---------------------------------------------------
+
+
+def church_account():
+    """The Church Spotify Account, or None when it isn't connected (or
+    connecting isn't set up)."""
+    if not is_configured():
+        return None
+    return ChurchSpotifyAccount.objects.filter(
+        pk=ChurchSpotifyAccount.SINGLETON_PK
+    ).first()
+
+
+@sensitive_variables("tokens", "code")
+def finish_church(user, code, uri, client):
+    """Save the tokens, encrypted, as the Church Spotify Account (replacing
+    any earlier one); ``user`` connected it."""
+    tokens = client.exchange_code(code, uri)
+    if not tokens.refresh_token:
+        raise SpotifyError("Spotify sent no refresh token; try connecting again.")
+    account = ChurchSpotifyAccount.objects.filter(
+        pk=ChurchSpotifyAccount.SINGLETON_PK
+    ).first() or ChurchSpotifyAccount(pk=ChurchSpotifyAccount.SINGLETON_PK)
+    _store(account, tokens, timezone.now())
+    account.connected_by = user
+    account.save()
+    return account
+
+
+def disconnect_church():
+    """Forget the Church Spotify Account; True when there was one."""
+    deleted, _ = ChurchSpotifyAccount.objects.all().delete()
+    return bool(deleted)
+
+
 # --- Using the connection --------------------------------------------------------
 
 
 @sensitive_variables("tokens")
 def access_token(connection, client, *, force_refresh=False):
-    """A usable access token, refreshed (and saved) when it is about to run
-    out. Raises ``SpotifyNotConnected`` when the connection can't be used
+    """A usable access token for a user's connection or the Church Spotify
+    Account, refreshed (and saved) when it is about to run out. Raises ``SpotifyNotConnected`` when the connection can't be used
     any more (it is then removed)."""
     try:
         if (

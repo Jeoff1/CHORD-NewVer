@@ -54,7 +54,9 @@ of the core and can't be switched off. App: `apps/church`.
 ## Church settings this module depends on
 
 This module *is* the church's settings: Church Profile details, switched-off
-Modules and Labels.
+Modules and Labels. While the Worship module is on, the settings tabs also
+show **Spotify**, the optional Church Spotify Account, which the Worship
+module keeps ([[Worship]], [[0011-church-spotify-account]]).
 
 ## Open questions
 

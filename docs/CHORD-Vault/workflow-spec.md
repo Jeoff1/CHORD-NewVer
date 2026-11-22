@@ -21,8 +21,10 @@ ROLES
   lineup, which waits for approval by the worship leader or the pastor.
 - Admin: users, roles and settings. The Administrator role can't be deleted
   and always holds every permission. Spotify has one connection per user:
-  each user connects their own Spotify account (for playback, and the
-  worship leader's for saving playlists). The app's own Spotify credentials
+  each user connects their own Spotify account (for playback, and for
+  saving playlists when the church has no Church Spotify Account). The
+  church may also connect one Church Spotify Account in church settings,
+  used only for playlists. The app's own Spotify credentials
   are set in .env when CHORD is installed.
 - Office staff (optional): keeps the member directory up to date. Doesn't
   see lineups.
@@ -168,14 +170,26 @@ CHORDS AND PLAYBACK
 - Full lyrics on the song page are shown only to people who plan (Worship
   Leader and Pastoral Staff by default), through a permission. Team members
   see the words through the chord sheet.
-- Playback is Spotify only: Web Playback SDK for connected Premium users (max 5
-  users in Development Mode), embed player otherwise. No audio is stored. If an
-  SDK call gets a 429, the player shows a short message and falls back to the
-  embed player or an "Open in Spotify" link, without retrying.
-- On confirmation, the lineup is saved automatically as a Spotify playlist on
-  the worship leader's account. If the leader has no Spotify connection or
-  Spotify returns a 429, this is skipped at once, without waiting, and a "Save
-  to Spotify" button lets them try again later.
+- Playback is Spotify only, on the lineup song page: Web Playback SDK for
+  connected Premium users (max 5 users in Development Mode), embed player
+  otherwise. No audio is stored. Whenever the SDK can't be used, including a
+  429, the player shows a short message and falls back to the embed player or
+  an "Open in Spotify" link, without retrying. The player gets the person's
+  own short-lived access token from a POST-only, never-cached page and keeps
+  it only in memory; the refresh token never leaves the server.
+- On confirmation, the lineup is saved automatically as its own Spotify
+  playlist, named with the service name and date:
+  - with a Church Spotify Account connected, on that account, as a public
+    playlist, whoever confirms; everyone who can see the confirmed lineup
+    gets an "Open the playlist" link;
+  - without one, on the confirmer's own account, as a private playlist; only
+    the owner gets the link.
+  Songs not on Spotify are left out. If there is no usable account or
+  Spotify returns a 429, this is skipped at once, without waiting, and a
+  "Save to Spotify" button lets people who may save try again later.
+  Confirming the same lineup again, or "Save to Spotify", updates that
+  lineup's own playlist; other services' playlists are never changed. The
+  Church Spotify Account is never used for playback.
 
 SPOTIFY SAFEGUARDS (every server-side Spotify call: search, tracks, playlists)
 - Stop on the first 429: make no Spotify call until Retry-After has passed.
@@ -203,14 +217,18 @@ HARD RULES (must not be violated)
 - Lyrics never come from Spotify or unofficial Spotify lyric endpoints.
 - No scraping of Ultimate Guitar or use of its private/mobile API.
 - No Spotify Recommendations, Audio Features or Audio Analysis endpoints.
-- Spotify data stored is limited to: track ID, title, artist, album, length.
-- Spotify access and refresh tokens are stored encrypted (Fernet, with the key
+- Spotify data stored is limited to: track ID, title, artist, album, length,
+  and the ID of a playlist CHORD itself created (only to find and update it;
+  never model input or training data).
+- Spotify access and refresh tokens (personal ones and the Church Spotify
+  Account's) are stored encrypted (Fernet, with the key
   in .env) and never shown or logged.
 - A lineup is not visible to team members before it is confirmed. A reopened
   lineup counts as unconfirmed.
 
 EXPECTED DATABASE TABLES
-User, Spotify connection (one per user), Service, Theme, Assignment,
+User, Spotify connection (one per user), Church Spotify account (at most
+one), Service, Theme, Assignment,
 Search run, Song, Song tag, Song embedding, Lineup, Lineup item,
 Suggestion feedback, Chord sheet, Song usage, Announcement, Attendance.
 

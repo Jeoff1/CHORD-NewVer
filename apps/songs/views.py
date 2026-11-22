@@ -2,6 +2,7 @@
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -14,6 +15,7 @@ from django.views.generic import DetailView, TemplateView, UpdateView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.church.models import ChurchProfile
 from apps.church.modules import ModuleRequiredMixin
 from apps.core.music import Feel
 from apps.core.views import FilteredListView, FormPageMixin
@@ -585,18 +587,28 @@ class SpotifyConnectView(SpotifyAccountMixin, View):
 
 
 class SpotifyCallbackView(SpotifyAccountMixin, View):
+    """Where Spotify sends people back, for their own account or for the
+    Church Spotify Account (one Redirect URI for both)."""
+
     def get(self, request):
-        next_url = connections.take_pending(request, request.GET.get("state", ""))
-        if next_url is None:
+        pending = connections.take_pending(request, request.GET.get("state", ""))
+        if pending is None:
             messages.error(
                 request,
                 "That Spotify sign-in didn't come from this page. Connect again.",
             )
             return redirect(spotify_account_url())
+        church = pending["purpose"] == connections.CHURCH
+        home = church_spotify_url() if church else spotify_account_url()
+        next_url = pending["next"] or home
+        if church and not request.user.has_perm(CHURCH_SETTINGS):
+            raise PermissionDenied
         code = request.GET.get("code", "")
         if request.GET.get("error") or not code:
             messages.info(request, "Spotify wasn't connected.")
-            return redirect(next_url or spotify_account_url())
+            return redirect(next_url)
+        if church:
+            return self.finish_church(request, code, next_url)
         had_connection = connections.connection_for(request.user) is not None
         try:
             connections.finish(
@@ -607,7 +619,7 @@ class SpotifyCallbackView(SpotifyAccountMixin, View):
             )
         except SpotifyError as error:
             messages.error(request, f"Spotify wasn't connected: {error}")
-            return redirect(spotify_account_url())
+            return redirect(home)
         if not had_connection:
             record_change(
                 request.user,
@@ -616,7 +628,40 @@ class SpotifyCallbackView(SpotifyAccountMixin, View):
                 {"Spotify account": ["Not connected", "Connected"]},
             )
         messages.success(request, "Your Spotify account is connected.")
-        return redirect(next_url or spotify_account_url())
+        return redirect(next_url)
+
+    def finish_church(self, request, code, next_url):
+        had_account = connections.church_account() is not None
+        try:
+            connections.finish_church(
+                request.user,
+                code,
+                connections.redirect_uri(request),
+                SpotifyClient.from_settings(),
+            )
+        except SpotifyError as error:
+            messages.error(request, f"Spotify wasn't connected: {error}")
+            return redirect(church_spotify_url())
+        _audit_church_account(request.user, connected=True, before=had_account)
+        messages.success(
+            request,
+            "The church's Spotify account is connected. Lineup playlists are "
+            "saved on it from now on.",
+        )
+        return redirect(next_url)
+
+
+def _audit_church_account(user, *, connected, before):
+    """The audit trail records only whether it is connected, never tokens."""
+    if before == connected:
+        return
+    states = ["Not connected", "Connected"]
+    record_change(
+        user,
+        ChurchProfile.load(),
+        AuditEvent.Action.CHANGED,
+        {"Church Spotify account": [states[before], states[connected]]},
+    )
 
 
 class SpotifyDisconnectView(SpotifyAccountMixin, View):
@@ -655,3 +700,64 @@ class SpotifyPlayerTokenView(SpotifyAccountMixin, View):
             return JsonResponse({"error": str(error)}, status=502)
         seconds = (connection.expires_at - timezone.now()).total_seconds()
         return JsonResponse({"access_token": token, "expires_in": max(int(seconds), 0)})
+
+
+# --- The Church Spotify Account (a church setting; decision 0011) ----------------
+
+CHURCH_SETTINGS = "church.change_churchprofile"
+
+
+def church_spotify_url():
+    return reverse("songs:church_spotify")
+
+
+class ChurchSpotifyMixin(
+    ModuleRequiredMixin, LoginRequiredMixin, PermissionRequiredMixin
+):
+    """Only people who may change church settings (the Administrator by
+    default) connect or disconnect the church's account."""
+
+    module = "worship"
+    permission_required = CHURCH_SETTINGS
+
+
+class ChurchSpotifyView(ChurchSpotifyMixin, TemplateView):
+    template_name = "songs/church_spotify.html"
+
+    def get_context_data(self, **kwargs):
+        from apps.church.forms import SECTION_ORDER, SECTIONS
+
+        context = super().get_context_data(**kwargs)
+        context.update(
+            configured=connections.is_configured(),
+            account=connections.church_account(),
+            sections=[(key, SECTIONS[key][0]) for key in SECTION_ORDER],
+            section="spotify",
+        )
+        return context
+
+
+class ChurchSpotifyConnectView(ChurchSpotifyMixin, View):
+    def post(self, request):
+        if not connections.is_configured():
+            messages.error(request, "Spotify isn't set up on this installation.")
+            return redirect(church_spotify_url())
+        target = connections.start(
+            request,
+            SpotifyClient.from_settings(),
+            church_spotify_url(),
+            purpose=connections.CHURCH,
+        )
+        return redirect(target)
+
+
+class ChurchSpotifyDisconnectView(ChurchSpotifyMixin, View):
+    def post(self, request):
+        if connections.disconnect_church():
+            _audit_church_account(request.user, connected=False, before=True)
+            messages.success(
+                request,
+                "The church's Spotify account was disconnected. Lineup "
+                "playlists go to the account of whoever saves them again.",
+            )
+        return redirect(church_spotify_url())

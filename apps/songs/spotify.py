@@ -65,7 +65,12 @@ Reason = SpotifyLimit.Reason
 
 
 class SpotifyError(Exception):
-    """Spotify couldn't be reached or refused the request."""
+    """Spotify couldn't be reached or refused the request. ``status`` is
+    Spotify's HTTP status when it answered with an error."""
+
+    def __init__(self, message="", status=None):
+        super().__init__(message)
+        self.status = status
 
 
 class SpotifyNotConfigured(SpotifyError):
@@ -409,13 +414,14 @@ class SpotifyClient:
             refresh_token=refresh_token,
         )
 
-    def create_playlist(self, access_token, name, description=""):
-        """A new private playlist on the user's account; returns its ID."""
+    def create_playlist(self, access_token, name, description="", *, public=False):
+        """A new playlist on the account the token belongs to (private
+        unless ``public``); returns its ID."""
         data = self._user_api(
             "POST",
             "/me/playlists",
             access_token,
-            {"name": name, "description": description, "public": False},
+            {"name": name, "description": description, "public": public},
         )
         if not data.get("id"):
             raise SpotifyError("Spotify didn't say which playlist it made.")
@@ -451,9 +457,9 @@ class SpotifyClient:
             json_body=json_body,
         )
         if reply.status == 401:
-            raise SpotifyUnauthorized("Spotify refused the access token.")
+            raise SpotifyUnauthorized("Spotify refused the access token.", status=401)
         if not reply.ok:
-            raise SpotifyError(_problem(reply))
+            raise SpotifyError(_problem(reply), status=reply.status)
         return reply.data if isinstance(reply.data, dict) else {}
 
 

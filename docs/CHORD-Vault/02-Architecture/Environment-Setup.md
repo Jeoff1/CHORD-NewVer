@@ -51,6 +51,10 @@ administrators are users given the Administrator role under
     app's **User Management** connect (up to 5), and the app's owner needs
     Premium. Full playback in the browser needs Premium too; everyone else
     gets the embedded player.
+- **The Church Spotify Account** (optional; church settings, Spotify tab):
+  it takes one of the User Management slots in Development Mode, like a
+  person does, and doesn't need Premium (it only holds playlists). It uses
+  the same Redirect URI.
 - **Models:** `python manage.py download_models` fetches the two ONNX
   models (about 120 MB) into `ml_models/`
   ([[0006-onnx-runtime-for-song-analysis]]). Check the free disk space

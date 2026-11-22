@@ -14,14 +14,7 @@
         </div>
       {% else %}
         <h1 class="h3 mb-3">Church settings</h1>
-        <ul class="nav nav-tabs mb-4">
-          {% for key, title in sections %}
-            <li class="nav-item">
-              <a class="nav-link{% if key == section %} active" aria-current="page{% endif %}"
-                 href="{% url 'church:settings' section=key %}">{{ title }}</a>
-            </li>
-          {% endfor %}
-        </ul>
+        {% include "church/includes/settings_tabs.html" %}
       {% endif %}
 
       <p class="text-body-secondary">

@@ -275,8 +275,10 @@ Test: the stored token value in the database is not the plain token, and decrypt
 
 ### Saving the lineup as a Spotify playlist
 
-- When a lineup is confirmed, it is saved automatically as a Spotify playlist on the worship leader's account.
-- If the worship leader has no Spotify connection, or Spotify returns a 429, the playlist is skipped and the lineup page shows a "Save to Spotify" button to try again later. Confirming the lineup never fails because of Spotify.
+(Changed on 2026-11-22: first "on the worship leader's account"; now as below, with the Church Spotify Account.)
+
+- When a lineup is confirmed, it is saved automatically as its **Lineup Playlist**: on the Church Spotify Account when one is connected (below), otherwise on the Spotify account of the person who confirmed it (the worship leader, or the pastor when the pastor confirms).
+- If there is no usable account (no connection, a refusal), or Spotify returns a 429, the playlist is skipped and the lineup page shows a "Save to Spotify" button to people who may save, to try again later. Confirming the lineup never fails because of Spotify.
 
 Tests: confirming saves the playlist when the leader is connected; with no connection, or on a 429, the lineup is still confirmed, no playlist is made, and the "Save to Spotify" button shows.
 
@@ -340,6 +342,39 @@ The project owner approved these choices made while building part A.
 - The audit trail records a sheet's song, status and key, never its text.
 
 Tests: every key with the spelling above; Nashville numbers in minor keys, with the note; capo positions and easy shapes; one approved sheet per song and the approve and discard refusals; one pending sheet per member; the counts and marks on a confirmed lineup; the lineup song page for each role; the audit trail without the sheet text.
+
+### Approved after part B (2026-11-22)
+
+The project owner approved these, and the Church Spotify Account below.
+
+**The playlist ID** ([[0010-store-own-playlist-id]]; changes a hard rule in AGENTS.md):
+- Besides track ID, title, artist, album and length, CHORD may store the ID of a playlist it created itself, used only to find and update that playlist, never as model input or a training feature. Without it, each "Save to Spotify" would make a duplicate playlist.
+- The lineup may also store which account owns the playlist (the church's, or a user's) and the track IDs saved.
+
+**The browser player's token:**
+- The Web Playback SDK needs an access token in the browser. The player receives the person's own short-lived access token from a POST-only, never-cached page, keeps it only in script memory, and never writes it to the page or logs it. The refresh token never leaves the server. The page gives each person only their own token.
+
+**Smaller choices:**
+- The player is on the lineup song page only.
+- Songs not on Spotify are left out of the playlist, and the message says how many.
+- The playlist line shows only to people who may save, except a playlist on the Church Spotify Account: it is public, so everyone who can see the confirmed lineup gets its link.
+- Anyone signed in may connect their own Spotify account.
+- Find on Spotify fails fast on a 429 (review F10).
+
+Tests: the token page refuses GET, never hands out another person's token, and sends no-store headers; a stored token isn't the plain token and decrypts back; songs not on Spotify are left out with the count; team members see no personal playlist link.
+
+### Church Spotify Account (approved 2026-11-22; decision 0011)
+
+An optional church setting ([[0011-church-spotify-account]], following [[0001-configure-behavior-not-identity]]):
+
+- Whoever holds the permission that changes church settings (`church.change_churchprofile`, the Administrator by default; never a role name) can connect one Spotify account as the church's account, in church settings (the Spotify tab), and disconnect it. Its tokens are stored encrypted like personal ones and are never shown or logged. It asks only for the scopes playlists need: `playlist-modify-public` and `playlist-modify-private`.
+- **When it is connected**, every Lineup Playlist (on confirmation and from "Save to Spotify") is made and updated on the church account, as a public playlist, whoever confirms or presses the button. Everyone who can see the confirmed lineup, team members included, gets an "Open the playlist" link.
+- **When it isn't**, the playlist goes to the account of whoever confirms, as a private playlist, and "Save to Spotify" saves to the account of the person who presses it; only the owner gets the link.
+- The church account is never used for playback; each person plays through their own connection or the embedded player.
+- With the church account set but unusable (refused, revoked or a 429), the lineup still confirms and "Save to Spotify" shows for people who may save.
+- **One playlist per lineup.** Each service's lineup has its own playlist, named with the service name and date (for example "Sunday Church – Nov 29"). Confirming a new service's lineup makes a new playlist; reopening and confirming the same lineup again, or "Save to Spotify", updates that lineup's own playlist; other services' playlists are never changed.
+
+Tests: with the church account, confirming makes a public playlist on it and a team member sees the link; saving again updates the same playlist; confirming two services makes two playlists, and editing one leaves the other unchanged; without it, the playlist goes privately to the confirmer's account; only holders of the church-settings permission can connect or disconnect it; its tokens are encrypted; it's never used for playback; a 429 or a refusal leaves the lineup confirmed with "Save to Spotify".
 
 ### Importing a ChordPro file (approved 2026-11-20)
 

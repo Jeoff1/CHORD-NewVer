@@ -54,6 +54,17 @@ urlpatterns = [
         views.SpotifyDisconnectView.as_view(),
         name="spotify_disconnect",
     ),
+    path("spotify/church/", views.ChurchSpotifyView.as_view(), name="church_spotify"),
+    path(
+        "spotify/church/connect/",
+        views.ChurchSpotifyConnectView.as_view(),
+        name="church_spotify_connect",
+    ),
+    path(
+        "spotify/church/disconnect/",
+        views.ChurchSpotifyDisconnectView.as_view(),
+        name="church_spotify_disconnect",
+    ),
     path(
         "spotify/player-token/",
         views.SpotifyPlayerTokenView.as_view(),

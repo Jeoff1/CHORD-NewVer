@@ -86,18 +86,29 @@ def lineup_context(lineup, user):
 
 
 def playlist_context(lineup, user, tracks):
-    """The lineup's Spotify playlist, and whether to offer "Save to
-    Spotify": to people who confirm lineups, once it is confirmed, while no
-    playlist holds its current songs (Design-Decisions, Phase 7)."""
+    """The Lineup Playlist, and whether to offer "Save to Spotify" (to
+    people who confirm lineups, once it is confirmed, while no playlist
+    holds its current songs). A playlist on the Church Spotify Account is
+    public, so everyone who sees the confirmed lineup gets its link; a
+    personal one is private, so only its owner does (Design-Decisions,
+    Phase 7; decision 0011)."""
     configured = connections.is_configured()
+    church = configured and connections.church_account() is not None
     may_save = playlists.may_save(user)
+    on_church = bool(lineup.spotify_playlist_id) and (
+        lineup.spotify_playlist_on_church_account
+    )
     return {
         "may_save_playlist": may_save,
         "offer_spotify_save": configured
         and may_save
-        and playlists.needs_saving(lineup, tracks),
-        "spotify_connected": configured and connections.is_connected(user),
+        and playlists.needs_saving(lineup, tracks, church=church),
+        # Saving works without a personal connection when the church's
+        # account is connected.
+        "spotify_save_ready": church or (configured and connections.is_connected(user)),
+        "church_playlist": on_church,
         "spotify_playlist_is_mine": bool(lineup.spotify_playlist_id)
+        and not on_church
         and lineup.spotify_playlist_owner_id == user.pk,
     }
 
@@ -407,8 +418,9 @@ def _report_playlist(request, outcome):
 
 
 class SavePlaylistView(LineupMixin, View):
-    """Save to Spotify: the confirmed lineup as a playlist on the account
-    of the person pressing it."""
+    """Save to Spotify: the confirmed lineup as its playlist, on the Church
+    Spotify Account when it is connected, otherwise on the account of the
+    person pressing it."""
 
     def has_permission(self):
         return playlists.may_save(self.request.user)
@@ -418,7 +430,9 @@ class SavePlaylistView(LineupMixin, View):
         if not lineup.is_confirmed:
             word = request.church.label_set.get("lineup").lower()
             messages.error(request, f"Confirm the {word} before saving it to Spotify.")
-        elif not connections.is_connected(request.user):
+        elif connections.church_account() is None and not connections.is_connected(
+            request.user
+        ):
             messages.info(
                 request, "Connect your Spotify account first, then save again."
             )

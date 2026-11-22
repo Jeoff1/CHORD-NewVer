@@ -21,8 +21,9 @@ next, in any order. Updated 2026-11-22.
   members' sheets; Find chords; chord sheet counts; the lineup song page
   with the server-side viewer ([[0009-transposition-on-the-server]]); the
   keys a song was sung in; full lyrics only for people who plan.
-- **Phase 7, part B** (built 2026-11-22, checks pass; not yet tried
-  against real Spotify):
+- **Phase 7, part B** (built 2026-11-22; approved after review on
+  2026-11-22): it **has passed the automated tests but not yet a test
+  with a real Spotify account**.
   - each user's **Spotify Connection** (Authorization Code flow), tokens
     encrypted with Fernet and refreshed as needed;
   - **playback** on the lineup song page: the Web Playback SDK for a
@@ -30,14 +31,15 @@ next, in any order. Updated 2026-11-22.
     SDK can't be used; "Open in Spotify" always;
   - the **Lineup Playlist** saved on confirmation, with "Save to Spotify"
     when it couldn't be;
-  - no web request waits on a Spotify Retry-After (review F10).
+  - no web request waits on a Spotify Retry-After (review F10);
+  - the playlist ID kept to update the same playlist
+    ([[0010-store-own-playlist-id]]);
+  - the optional **Church Spotify Account** for public playlists the
+    team can open ([[0011-church-spotify-account]]).
 - **To try part B:** `SPOTIFY_TOKEN_KEY` in `.env`, the Redirect URI in
   the Spotify dashboard and the testers under User Management
   ([[Environment-Setup]]).
-- **Choices awaiting the user's approval** are listed in [[Worship]]
-  (Open questions); [[Design-Decisions]] and the [[workflow-spec]] are
-  updated once approved.
-- **Checks:** `scripts/check.ps1`; on 2026-11-22, 727 tests passed with
+- **Checks:** `scripts/check.ps1`; on 2026-11-22, 749 tests passed with
   97% coverage.
 
 Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
@@ -93,6 +95,8 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
   - [[0007-search-worker|0007 One search worker, a management command polling the database]]
   - [[0008-final-say-permission|0008 The final say on lineups is its own permission]]
   - [[0009-transposition-on-the-server|0009 Chord sheets are transposed on the server, in Python]]
+  - [[0010-store-own-playlist-id|0010 CHORD stores the ID of a playlist it created itself]]
+  - [[0011-church-spotify-account|0011 An optional Church Spotify Account holds the Lineup Playlists]]
 
 ## Modules
 

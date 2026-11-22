@@ -278,6 +278,12 @@ class PlayerTokenTests(SpotifyTestCase):
         self.assertIn("no-store", response["Cache-Control"])
         self.assertEqual(web.calls, [])
 
+    def test_another_persons_connection_is_never_handed_out(self):
+        make_spotify_connection(make_user(), access="someone-elses-token")
+        response = self.client.post(PLAYER_TOKEN)
+        self.assertEqual(response.status_code, 404)
+        self.assertNotIn("someone-elses-token", response.content.decode())
+
     def test_without_a_connection_there_is_no_token(self):
         response = self.client.post(PLAYER_TOKEN)
         self.assertEqual(response.status_code, 404)

@@ -2,6 +2,57 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-22: part B review: playlist ID, Church Spotify Account, approved choices
+
+On branch `phase-7-chords`. The user reviewed part B and approved it, with
+the changes below.
+
+- **Recorded:**
+  - **Playlist ID** (changes a hard rule): AGENTS.md now allows the ID of a
+    playlist CHORD itself created, only to find and update it, never as
+    model input or a training feature; the lineup may also store the
+    owning account and the track IDs saved. Decision
+    [[0010-store-own-playlist-id]], [[Design-Decisions]] (Phase 7) and the
+    [[workflow-spec]].
+  - **Church Spotify Account**: decision [[0011-church-spotify-account]],
+    Design-Decisions (Phase 7), the spec, the [[Glossary]],
+    [[Environment-Setup]] (a User Management slot, no Premium),
+    [[Church-Setup]] and [[Worship]].
+  - The browser player's token and the smaller choices, under "Approved
+    after part B" in Design-Decisions. The open question in [[Worship]] is
+    removed.
+- **Built:**
+  - `ChurchSpotifyAccount` (one row; tokens encrypted through a shared
+    abstract `SpotifyTokens` with `SpotifyConnection`), connected and
+    disconnected by holders of `church.change_churchprofile` on a new
+    **Spotify** tab in church settings (shown while Worship is on), through
+    the same callback, with only `playlist-modify-public` and
+    `playlist-modify-private`. The audit trail records only connected or
+    not, on the Church Profile.
+  - Lineup Playlists go to the church account as public playlists when it
+    is connected, whoever confirms or saves; everyone who sees the confirmed
+    lineup gets "Open the playlist". Without it, unchanged: private, on the
+    saver's account. New `Lineup.spotify_playlist_on_church_account`.
+  - Playlist names are now "<service name> – <Mon D>". A stored playlist
+    Spotify no longer has (403 or 404) is made again. Once a church account
+    is connected, a lineup with a personal playlist is offered Save to
+    Spotify again. `SpotifyError` carries Spotify's status.
+- **Tests:** `apps/worship/tests/test_church_spotify.py` (22 tests with the
+  one below): public playlist on the church account and the team's link;
+  saving again and reopening update the same playlist; two services make
+  two playlists and editing one leaves the other; a gone playlist is made
+  again; 429, refusal and revoked account leave the lineup confirmed with
+  Save to Spotify; without it, private on the confirmer's account; only the
+  church-settings permission manages it; scopes, encryption and audit; the
+  settings tab; never used for playback. In `test_spotify_connection.py`,
+  the token page never hands out another person's token (GET refusal and
+  no-store were already covered).
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 749
+  tests passed (22 new), with 97% coverage (`connections.py` 93%,
+  `playlists.py` 95%). Part B has passed the automated tests but not yet a
+  test with a real Spotify account.
+
 ## 2026-11-22: Phase 7 part B: Spotify Connection, playback, Lineup Playlist, F10
 
 On branch `phase-7-chords`. Phase 7 is done.

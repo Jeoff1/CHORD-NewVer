@@ -258,11 +258,22 @@ One per user; it is not the app's own Spotify credentials.
 _Avoid_: Spotify login, linked account
 
 **Lineup Playlist**:
-The private Spotify playlist a confirmed Lineup is saved as, on the
-Spotify account of the person who confirmed it or pressed "Save to
-Spotify". It holds the Lineup's songs that are on Spotify, in order;
-saving again updates the same playlist when the same person saves it.
+The Spotify playlist a confirmed Lineup is saved as, named with the
+service name and date. It goes to the Church Spotify Account, as a public
+playlist, when one is connected; otherwise to the account of the person who
+confirmed or pressed "Save to Spotify", as a private one. Each Lineup has
+its own; saving again updates it on the same account. It holds the
+Lineup's songs that are on Spotify, in order. See
+[[0010-store-own-playlist-id]].
 _Avoid_: setlist, service playlist (in UI text, "Spotify playlist")
+
+**Church Spotify Account**:
+An optional church setting: one Spotify account the church owns, connected
+in church settings (the Spotify tab) by people who may change them. While
+connected, every Lineup Playlist is kept on it as a public playlist that
+everyone who sees the confirmed Lineup can open. It holds only playlist
+scopes and is never used for playback. See [[0011-church-spotify-account]].
+_Avoid_: shared account, team account
 
 **Final Say**:
 The permission `worship.finalize_lineup`, held by the Pastoral Staff role

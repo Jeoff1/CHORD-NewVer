@@ -66,7 +66,9 @@ condition against this rule.
   track ID and length, and any score adjusted by them (such as the Trusted
   Artist bonus), never reach a model or a training set.
 - **Store only these Spotify fields:** track ID, title, artist, album and
-  length. Never store audio.
+  length, plus the ID of a playlist CHORD itself created, used only to find
+  and update that playlist, never as model input or a training feature
+  (decision 0010). Never store audio.
 - **Lyrics come only from LRCLIB,** never from Spotify or an unofficial
   Spotify lyrics endpoint.
 - **Never call Spotify Recommendations, Audio Features or Audio Analysis.**
