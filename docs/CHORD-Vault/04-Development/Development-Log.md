@@ -2,6 +2,18 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-22: part B passed the real Spotify test; merged into master
+
+- **Tested by the user** with a real Spotify account: connecting, playback,
+  playlists on confirmation and Save to Spotify, and the Church Spotify
+  Account. The faked rate limit (a 2-minute block) was skipped; the
+  automated tests cover it.
+- **Merged:** `phase-7-chords` fast-forwarded into `master`.
+- **[[00-Home]]** "Current status" updated: Phase 7 fully done and on
+  `master`; Phases 8 and 9 next.
+- Checks: documentation only, no code changed since `scripts/check.ps1`
+  last passed (749 tests, 97% coverage), so it was not run again.
+
 ## 2026-11-22: part B review: playlist ID, Church Spotify Account, approved choices
 
 On branch `phase-7-chords`. The user reviewed part B and approved it, with

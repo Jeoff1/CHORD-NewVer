@@ -12,18 +12,18 @@ development task.
 next, in any order. Updated 2026-11-22.
 
 **Pick up here:**
-- **Branch:** `phase-7-chords`, pushed. `master` is still at `bd5a543`
-  (part A). **Don't merge `phase-7-chords` into `master` until the user
-  has tested part B** with a real Spotify account.
+- **Branch:** `master` holds all of Phase 7: `phase-7-chords` was
+  fast-forwarded into it on 2026-11-22, after the user's test with a real
+  Spotify account. Start Phase 8 or 9 on a new branch from `master`.
 - **Progress Check 2 is on 25 Nov 2026.**
 - **Phase 7, part A** (passed the user's click-through): ChordPro chord
   sheets, typed, pasted or imported; chart marks; approval of team
   members' sheets; Find chords; chord sheet counts; the lineup song page
   with the server-side viewer ([[0009-transposition-on-the-server]]); the
   keys a song was sung in; full lyrics only for people who plan.
-- **Phase 7, part B** (built 2026-11-22; approved after review on
-  2026-11-22): it **has passed the automated tests but not yet a test
-  with a real Spotify account**.
+- **Phase 7, part B** (built and approved 2026-11-22): it passed the
+  automated tests and the user's test with a real Spotify account,
+  including the Church Spotify Account.
   - each user's **Spotify Connection** (Authorization Code flow), tokens
     encrypted with Fernet and refreshed as needed;
   - **playback** on the lineup song page: the Web Playback SDK for a
