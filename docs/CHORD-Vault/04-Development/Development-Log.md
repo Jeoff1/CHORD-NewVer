@@ -2,6 +2,15 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-23: Phase 8 merged into master
+
+- **Merged:** `phase-8-teams` fast-forwarded into `master`, at the user's
+  request; the user hasn't clicked through Phase 8 yet.
+- **[[00-Home]]** "Current status" updated: Phase 8 is on `master`;
+  Phase 9 next.
+- Checks: documentation only, no code changed since `scripts/check.ps1`
+  last passed (858 tests, 97% coverage), so it was not run again.
+
 ## 2026-11-23: Phase 8 part B: Swap Requests, Notifications, Announcements; the team is a permission
 
 On branch `phase-8-teams`. Phase 8 is done.

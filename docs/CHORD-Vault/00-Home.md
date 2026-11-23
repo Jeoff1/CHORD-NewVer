@@ -12,8 +12,9 @@ development task.
 2026-11-23.
 
 **Pick up here:**
-- **Branch:** `phase-8-teams` (pushed, not merged; waiting for the
-  user's click-through). `master` holds Phases 0 to 7.
+- **Branch:** `master` holds Phases 0 to 8: `phase-8-teams` was
+  fast-forwarded into it on 2026-11-23, at the user's request, before a
+  click-through. Start Phase 9 on a new branch from `master`.
 - **Progress Check 2 is on 25 Nov 2026.**
 - **Phase 8, part A:** [[Teams]]: Team Parts, Team Profiles (parts only),
   Assignments with replies, Blackout Dates, My schedule, the Team card on
