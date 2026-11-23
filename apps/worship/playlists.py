@@ -12,6 +12,10 @@ Phase 7; decisions 0010 and 0011).
   is on the same account: the church's, or the same person's. Other
   services' playlists are never touched. The playlist ID is kept only to
   find and update the playlist (decision 0010).
+- **Made again only when it's gone for this account** (Design-Decisions,
+  Phase 8): on a 404, or on a 403 when the connected account doesn't own
+  the stored playlist. Only then, CHORD asks Spotify for both account IDs,
+  compares them and stores neither. Any other 403 is a refusal.
 - **Never in the way.** Saving never stops a confirmation. With no
   connection, an unusable church account, a Spotify block or a 429, nothing
   waits (workflow review F10): the lineup stays confirmed and the page
@@ -32,9 +36,8 @@ from .models import Lineup
 
 FAILED = "The Spotify playlist wasn't saved"
 CHURCH_LOST = "The church's Spotify account needs connecting again in church settings."
-# Spotify's answers meaning the stored playlist can't be updated any more
-# (it was deleted, or the account changed): a new one is made instead.
-GONE = (403, 404)
+NOT_FOUND = 404
+FORBIDDEN = 403
 
 
 @dataclass(frozen=True)
@@ -145,8 +148,10 @@ def _write(lineup, user, tracks, token, client, on_church):
     if _is_own_playlist(lineup, user, on_church):
         try:
             client.replace_playlist_items(token, lineup.spotify_playlist_id, tracks)
+        except SpotifyRateLimited:
+            raise
         except SpotifyError as error:
-            if error.status not in GONE:
+            if not _is_gone(error, client, token, lineup.spotify_playlist_id):
                 raise
         else:
             _record(lineup, tracks=tracks)
@@ -165,6 +170,27 @@ def _write(lineup, user, tracks, token, client, on_church):
     )
     client.replace_playlist_items(token, playlist_id, tracks)
     _record(lineup, tracks=tracks)
+
+
+def _is_gone(error, client, token, playlist_id):
+    """Whether Spotify's refusal to update the stored playlist means it is
+    gone for this account, so a new one should be made: a 404, or a 403 on
+    a playlist the connected account doesn't own. Any other answer is a
+    refusal. A 429 on a lookup raises ``SpotifyRateLimited`` (fail fast)."""
+    if error.status == NOT_FOUND:
+        return True
+    if error.status != FORBIDDEN:
+        return False
+    # Both IDs are only compared here, never stored (decision 0010).
+    try:
+        owner = client.playlist_owner_id(token, playlist_id)
+        if not owner:
+            return False
+        return owner != client.current_user_id(token)
+    except SpotifyRateLimited:
+        raise
+    except SpotifyError as lookup:
+        return lookup.status == NOT_FOUND
 
 
 def _record(lineup, **fields):

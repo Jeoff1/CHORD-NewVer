@@ -1,0 +1,2 @@
+{# An assignment's reply as a badge; expects `assignment`. #}
+<span class="badge {% if assignment.reply == 'accepted' %}text-bg-success{% elif assignment.reply == 'declined' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ assignment.get_reply_display }}</span>

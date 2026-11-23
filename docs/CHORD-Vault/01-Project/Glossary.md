@@ -344,3 +344,50 @@ A 429 answer from Spotify, kept with its reason and Retry-After. While one
 is in force, CHORD doesn't call Spotify. A quota lockout, or a wait over an
 hour, **pauses** Spotify: suggestions then rank the Song Pool instead.
 _Avoid_: ban, block (alone)
+
+### Teams
+
+**Team Part**:
+A voice or instrument someone can take at a Worship Service, such as
+Vocals or Bass. A Church-edited List with neutral defaults.
+_Avoid_: position, instrument (alone), ministry role
+
+**Team Profile**:
+The Team Parts a person can take. It belongs to their user account, not to
+a Member record, and holds nothing else (no vocal range).
+_Avoid_: musician profile, skills
+
+**Assignment**:
+One person taking one Team Part at one Worship Service, with their
+**Reply**: Pending, Accepted or Declined. Only people whose Team Profile
+has the part can be assigned, never on a Blackout Date, and never to a
+cancelled or past service.
+_Avoid_: booking, slot (that is a Song Slot), schedule entry
+
+**Blackout Date**:
+A range of whole days, in the church's time zone, on which a person can't
+serve. It can't cover a day they already have a Pending or Accepted
+Assignment.
+_Avoid_: unavailability, time off, leave
+
+**My Schedule**:
+A person's own page in Teams: their Assignments with reply buttons, their
+Team Profile and their Blackout Dates.
+_Avoid_: my roster, calendar (that is the service calendar)
+
+**Swap Request**:
+A person asking to be replaced in an Assignment. The first person who has
+the part, isn't blacked out that day and isn't already on that service
+takes it, with no approval.
+_Avoid_: substitution, trade
+
+**Notification**:
+A note in the app for one person, about a change that concerns them, such
+as a confirmed Lineup for a service they serve at. Never sent by email or
+SMS.
+_Avoid_: alert, message (alone)
+
+**Announcement**:
+A note posted to everyone signed in, or to one Worship Service's assigned
+team. Archived by its author; it has no expiry.
+_Avoid_: post, bulletin, news

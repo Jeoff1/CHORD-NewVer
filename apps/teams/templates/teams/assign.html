@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load church people %}
+
+{% block title %}Assign: {{ service }}{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+      <a href="{% url 'worship:service' public_id=service.public_id %}" class="small text-decoration-none">← {{ service }}</a>
+      <h1 class="h3 mb-3">Assign the team</h1>
+
+      {% if closed %}
+        <div class="alert alert-secondary">{{ closed }}</div>
+      {% elif not parts %}
+        <p class="text-body-secondary">There are no team parts yet.{% if perms.teams.add_teampart %} <a href="{% url 'teams:parts_list' %}">Add team parts</a>.{% endif %}</p>
+      {% else %}
+        <p class="text-body-secondary mb-2">Choose a part:</p>
+        <ul class="nav nav-pills mb-3">
+          {% for item in parts %}
+            <li class="nav-item"><a class="nav-link{% if item == part %} active{% endif %}" href="?part={{ item.pk }}">{{ item }}</a></li>
+          {% endfor %}
+        </ul>
+
+        {% if part %}
+          <div class="card shadow-sm">
+            <div class="card-body p-4">
+              <h2 class="h5">{{ part }}</h2>
+              {% if form.fields.person.choices %}
+                <form method="post" novalidate>
+                  {% csrf_token %}
+                  <input type="hidden" name="part" value="{{ part.pk }}">
+                  {{ form }}
+                  <button type="submit" class="btn btn-primary">Assign</button>
+                </form>
+              {% else %}
+                {% label "worship_service" as service_word %}
+                <p class="text-body-secondary">Nobody else can take {{ part }} at this {{ service_word|lower }}. Only people whose Team Profile has it can be assigned.</p>
+              {% endif %}
+              {% if unavailable %}
+                <h3 class="h6 mt-3">Can't be assigned</h3>
+                <ul class="small text-body-secondary mb-0">
+                  {% for person, reason in unavailable %}<li>{{ person|person_name }}: {{ reason }}</li>{% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -71,6 +71,10 @@ DEFAULT_ROLE_PERMISSIONS = {
         "songs.view_chordsheet",
         "songs.add_chordsheet",
         "songs.approve_chordsheet",
+        # Teams (Phase 8): sees the roster and each service's team
+        "teams.view_teampart",
+        "teams.view_teamprofile",
+        "teams.view_assignment",
     ],
     "worship_leader": [
         "members.view_member",
@@ -110,6 +114,15 @@ DEFAULT_ROLE_PERMISSIONS = {
         "songs.view_chordsheet",
         "songs.add_chordsheet",
         "songs.approve_chordsheet",
+        # Teams (Phase 8): the leader keeps the team parts and assigns people
+        "teams.view_teampart",
+        "teams.add_teampart",
+        "teams.change_teampart",
+        "teams.view_teamprofile",
+        "teams.change_teamprofile",
+        "teams.view_assignment",
+        "teams.add_assignment",
+        "teams.delete_assignment",
     ],
     "team_member": [
         # Worship schedule (Phase 3)
@@ -120,6 +133,9 @@ DEFAULT_ROLE_PERMISSIONS = {
         # come through the sheet, not the full lyrics
         "songs.view_chordsheet",
         "songs.add_chordsheet",
+        # Teams (Phase 8): sees each service's team; replies, Team Profile
+        # and Blackout Dates are their own and need no permission
+        "teams.view_assignment",
     ],
 }
 

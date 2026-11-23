@@ -284,6 +284,35 @@ def make_chord_sheet(song, *, chordpro=HYMN_SHEET, key="G", approved=True, **fie
     )
 
 
+def make_team_part(name=None, **fields):
+    """A Team Part with a unique name (the seeded ones also exist)."""
+    from apps.teams.models import TeamPart
+
+    return TeamPart.objects.create(name=name or f"Part {next(_sequence)}", **fields)
+
+
+def make_team_profile(user, parts=()):
+    """Give ``user`` a Team Profile with ``parts``."""
+    from apps.teams.models import TeamProfile
+
+    profile, _ = TeamProfile.objects.get_or_create(user=user)
+    profile.parts.set(parts)
+    return profile
+
+
+def make_assignment(service, person, part=None, *, reply="pending"):
+    """An Assignment stored directly (the rules refuse past services); the
+    person gets the part in their Team Profile."""
+    from apps.teams.models import Assignment, TeamProfile
+
+    part = part or make_team_part()
+    profile, _ = TeamProfile.objects.get_or_create(user=person)
+    profile.parts.add(part)
+    return Assignment.objects.create(
+        service=service, part=part, person=person, reply=reply
+    )
+
+
 def make_spotify_connection(
     user, *, access="test-access-token", refresh="test-refresh-token", expires_in=3600
 ):

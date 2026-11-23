@@ -48,6 +48,7 @@ MODULES = (
         "Teams",
         "Who serves at each worship service, and when people are available.",
         ("teams",),
+        url_name="teams:my_schedule",
         requires=("worship",),
     ),
     Module(

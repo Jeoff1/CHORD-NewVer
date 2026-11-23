@@ -38,7 +38,7 @@ flowchart LR
 | 5     | Song suggestions              | L    | 4          | Done (2026-11-18) |
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
 | 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
-| 8     | Teams and announcements       | M    | 6          | Not started       |
+| 8     | Teams and announcements       | M    | 6          | In progress       |
 | 9     | Learning to rank              | S    | 6          | Not started       |
 | 10    | Hardening and release         | M    | 7, 8, 9    | Not started       |
 
@@ -429,22 +429,34 @@ is refused; team members don't see full lyrics on the song page.
 
 ## Phase 8: Teams and announcements
 
-Goal: who serves when, and notes to them.
+Goal: who serves when, and notes to them. Decisions: [[Design-Decisions]],
+Phase 8 (2026-11-23).
 
-- [ ] **Team Part**: a church-edited list (voice or instrument).
-- [ ] **Team Profile**: a user's parts and vocal range.
-- [ ] **Assignment**: who does which part at a service, with the person's
-  reply.
-- [ ] **Blackout Dates**, and "My schedule".
-- [ ] **Swap Request**: ask to be replaced; another person takes it.
+Part A: roster and availability (built 2026-11-23).
+
+- [x] **Team Part**: a church-edited list (voice or instrument).
+- [x] **Team Profile**: a user's parts (no vocal range).
+- [x] **Assignment**: who does which part at a service, with the person's
+  reply (Pending, Accepted, Declined).
+- [x] **Blackout Dates**, and "My schedule".
+- [x] Updating a stored Lineup Playlist: a new one only on a 404, or a 403
+  from a playlist the connected account doesn't own.
+
+Part B: swaps, announcements and notifications.
+
+- [ ] **Swap Request**: ask to be replaced; the first eligible person takes
+  it.
 - [ ] **Announcements** to everyone or to one service's team.
-- [ ] In-app notifications: when the pastor edits a confirmed lineup, the
-  team members assigned to that service are notified in the app (no email
-  or SMS).
+- [ ] In-app notifications (no email or SMS) to a service's Pending and
+  Accepted assigned people, never the person who caused them: the pastor
+  edits a confirmed lineup, anyone else edits a confirmed lineup, the
+  lineup is confirmed; and to a person when they are assigned.
 
-**Done when** nobody can be assigned on a blackout date, a swap moves the
-assignment, and a pastor's edit to a confirmed lineup notifies its
-assigned team members and nobody else.
+**Done when** nobody can be assigned on a blackout date or without the
+part, a swap moves the assignment, and each of the pastor's edit, another
+person's edit and the confirmation of a lineup notifies that service's
+Pending and Accepted assigned people and nobody else (not Declined ones,
+not the person who caused it), and a newly assigned person is notified.
 
 ## Phase 9: Learning to rank
 

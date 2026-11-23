@@ -2,6 +2,45 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-23: Phase 8 part A: Team Parts, Team Profiles, Assignments, Blackout Dates; playlist 403 fix
+
+On branch `phase-8-teams`. Part A of Phase 8 is built; part B (swaps,
+announcements, notifications) is next.
+
+- **Recorded first:** the project owner's Phase 8 decisions in
+  [[Design-Decisions]] (Phase 8: Teams decided before building; Notifying
+  the team, widened to confirmations and every edit of a confirmed lineup
+  and to newly assigned people; Updating a stored Lineup Playlist), the
+  [[workflow-spec]] (new TEAMS and ANNOUNCEMENTS sections, the playlist
+  rule, tables), the [[Glossary]] (Teams terms) and the
+  [[Development-Plan]] (Phase 8 split into parts A and B; "done when"
+  covers the new notifications). No vocal range.
+- **Teams app** (`apps/teams`, registered in settings, URLs `/teams/`; the
+  Module's page is My schedule): `TeamPart` (church-edited, seeded Vocals,
+  Acoustic guitar, Electric guitar, Bass, Keys, Drums), `TeamProfile`
+  (parts only, on the user account), `Assignment` (reply Pending,
+  Accepted or Declined) and `BlackoutDate` (whole days in the church's
+  time zone). Rules in `rostering.py`; pages: My schedule, My team parts,
+  blackout dates, Assign, Roster, Team parts; a Team card on the service
+  page. Default role permissions added. See [[Teams]].
+- **Playlist fix** (`apps/worship/playlists.py`, `apps/songs/spotify.py`):
+  a stored Lineup Playlist is made again only on a 404, or on a 403 when
+  the connected account doesn't own it, checked by asking Spotify for
+  both IDs (`playlist_owner_id`, `current_user_id`) and storing neither.
+  Any other 403 is a refusal; a 429 on a lookup fails fast.
+- **Tests:** `apps/teams/tests/test_rostering.py` and `test_views.py` (55
+  tests); 4 new in `apps/worship/tests/test_church_spotify.py` (403 from
+  another owner, 403 on the account's own playlist, 404 on the lookup, 429
+  on a lookup). New builders `make_team_part`, `make_team_profile`,
+  `make_assignment` ([[Code-Conventions]]).
+- **Notes:** [[Teams]] (new), [[Worship]] (playlist rule),
+  [[Code-Conventions]], [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 808
+  tests passed (59 new), with 97% coverage (`rostering.py` 99%,
+  `teams/views.py` 99%, `playlists.py` 93%). Not yet clicked through by
+  the user.
+
 ## 2026-11-22: part B passed the real Spotify test; merged into master
 
 - **Tested by the user** with a real Spotify account: connecting, playback,

@@ -1,0 +1,8 @@
+{# Tabs linking the Teams pages; expects `nav_links` and the request. #}
+{% if nav_links|length > 1 %}
+  <ul class="nav nav-tabs mb-3">
+    {% for label, url in nav_links %}
+      <li class="nav-item"><a class="nav-link{% if url == request.path %} active" aria-current="page{% endif %}" href="{{ url }}">{{ label }}</a></li>
+    {% endfor %}
+  </ul>
+{% endif %}

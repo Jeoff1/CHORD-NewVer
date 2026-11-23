@@ -20,6 +20,7 @@ from django.views.generic import (
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.core.views import FilteredListView, FormPageMixin
+from apps.teams.views import service_team_context
 
 from .. import scheduling
 from ..forms import (
@@ -121,6 +122,8 @@ class ServiceDetailView(ServiceMixin, DetailView):
         # songs get them, never team members.
         if context["can_suggest"]:
             context.update(panel_context(service, user))
+        # The service's team, while Teams is on (Phase 8).
+        context.update(service_team_context(service, user))
         # The lineup itself: team members get it only once it is confirmed.
         if user.has_perm("worship.view_lineup"):
             context.update(

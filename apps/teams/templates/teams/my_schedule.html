@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}My schedule{% endblock %}
+
+{% block content %}
+  {% include "teams/includes/nav.html" %}
+  <h1 class="h3 mb-3">My schedule</h1>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h5">Where I serve</h2>
+          <ul class="list-unstyled mb-0">
+            {% for assignment, closed in assignments %}
+              <li class="d-flex flex-wrap align-items-center gap-2 py-2{% if not forloop.last %} border-bottom{% endif %}">
+                <div class="me-auto">
+                  <a href="{% url 'worship:service' public_id=assignment.service.public_id %}"{% if assignment.service.is_cancelled %} class="text-decoration-line-through"{% endif %}>{{ assignment.service.name }}</a>
+                  <span class="text-body-secondary">· {{ assignment.service.starts_at|date:"D, M j · g:i A" }} · {{ assignment.part }}</span>
+                  {% if assignment.service.is_cancelled %}<span class="badge text-bg-secondary">Cancelled</span>{% endif %}
+                </div>
+                {% include "teams/includes/reply_badge.html" %}
+                {% if assignment.reply == 'pending' and not closed %}{% include "teams/includes/reply_buttons.html" %}{% endif %}
+              </li>
+            {% empty %}
+              {% label "worship_service" plural=True as services_word %}
+              <li class="text-body-secondary">You aren't assigned to any coming {{ services_word|lower }}.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <h2 class="h5">My team parts</h2>
+            <a href="{% url 'teams:my_parts' %}" class="btn btn-sm btn-outline-primary">Edit</a>
+          </div>
+          {% if parts %}
+            <p class="mb-0">{{ parts|join:", " }}</p>
+          {% else %}
+            <p class="text-body-secondary mb-0">None yet. Add the parts you can take, so you can be assigned.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <h2 class="h5">Blackout dates</h2>
+            <a href="{% url 'teams:blackout_create' %}" class="btn btn-sm btn-outline-primary">Add</a>
+          </div>
+          <ul class="list-unstyled mb-0">
+            {% for blackout in blackouts %}
+              <li class="d-flex align-items-center gap-2 py-1">
+                <span class="me-auto">{{ blackout.date_range }}{% if blackout.note %} <span class="text-body-secondary small">· {{ blackout.note }}</span>{% endif %}</span>
+                <form method="post" action="{% url 'teams:blackout_delete' pk=blackout.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-link text-danger p-0">Remove</button>
+                </form>
+              </li>
+            {% empty %}
+              <li class="text-body-secondary">No days blocked out.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

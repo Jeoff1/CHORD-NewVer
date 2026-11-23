@@ -67,6 +67,8 @@
         </div>
       </div>
 
+      {% if show_team %}{% include "teams/includes/service_team.html" %}{% endif %}
+
       {% if perms.worship.record_attendance or service.attendance is not None %}
         <div class="card shadow-sm mb-3">
           <div class="card-body">

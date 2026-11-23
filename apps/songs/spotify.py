@@ -437,6 +437,20 @@ class SpotifyClient:
             {"uris": uris[:PLAYLIST_LIMIT]},
         )
 
+    def current_user_id(self, access_token):
+        """The Spotify ID of the account the token belongs to. Callers only
+        compare it and never store it (AGENTS.md: stored Spotify fields)."""
+        return str(self._user_api("GET", "/me", access_token).get("id") or "")
+
+    def playlist_owner_id(self, access_token, playlist_id):
+        """The Spotify ID of the playlist's owner, only to compare, never
+        stored."""
+        data = self._user_api(
+            "GET", f"/playlists/{playlist_id}?fields=owner(id)", access_token
+        )
+        owner = data.get("owner")
+        return str(owner.get("id") or "") if isinstance(owner, dict) else ""
+
     def _user_tokens(self, form, *, refresh_token=""):
         reply = self._call("POST", TOKEN_URL, headers=self._basic_auth, form=form)
         if reply.status in (400, 401) and _token_error(reply) == "invalid_grant":

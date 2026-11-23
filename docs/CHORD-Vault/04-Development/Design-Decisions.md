@@ -372,6 +372,7 @@ An optional church setting ([[0011-church-spotify-account]], following [[0001-co
 - **When it isn't**, the playlist goes to the account of whoever confirms, as a private playlist, and "Save to Spotify" saves to the account of the person who presses it; only the owner gets the link.
 - The church account is never used for playback; each person plays through their own connection or the embedded player.
 - With the church account set but unusable (refused, revoked or a 429), the lineup still confirms and "Save to Spotify" shows for people who may save.
+- **A stored playlist that can't be updated** is made again only on a 404, or on a 403 when the connected account doesn't own it; any other 403 is a refusal (changed 2026-11-23; see Phase 8, "Updating a stored Lineup Playlist").
 - **One playlist per lineup.** Each service's lineup has its own playlist, named with the service name and date (for example "Sunday Church – Nov 29"). Confirming a new service's lineup makes a new playlist; reopening and confirming the same lineup again, or "Save to Spotify", updates that lineup's own playlist; other services' playlists are never changed.
 
 Tests: with the church account, confirming makes a public playlist on it and a team member sees the link; saving again updates the same playlist; confirming two services makes two playlists, and editing one leaves the other unchanged; without it, the playlist goes privately to the confirmer's account; only holders of the church-settings permission can connect or disconnect it; its tokens are encrypted; it's never used for playback; a 429 or a refusal leaves the lineup confirmed with "Save to Spotify".
@@ -410,15 +411,48 @@ Tests (made-up content only): the key read from `{key:}` and from `{k:}`; a file
 
 Decision: a headcount per service. The existing `WorshipService.attendance` field is enough; no per-person attendance.
 
-### Notifying the team of a pastor's edit
+### Notifying the team (changed 2026-11-23)
 
-- Once assignments exist, when the pastor (a holder of `worship.finalize_lineup`) edits a confirmed lineup, the team members assigned to that service are notified in the app. No email or SMS.
+(First: only the pastor's edit to a confirmed lineup. The project owner widened it on 2026-11-23.)
 
-Test: after the pastor edits a confirmed lineup, each assigned team member has an in-app notification, and nobody else does.
+- Notifications are **in the app only**: no email or SMS.
+- They go to that service's **assigned people whose reply is Pending or Accepted**, never to the person who caused them, when:
+  - the pastor (a holder of `worship.finalize_lineup`) edits a confirmed lineup ("Edited by <pastor Label>");
+  - anyone else edits a confirmed lineup ("Changed by");
+  - the lineup is confirmed.
+- A person is also notified **when they are assigned** to a service (unless they assigned themself).
+
+Tests: after each of the three lineup events, each Pending or Accepted assigned person has a notification, and nobody else does (not a Declined one, not someone assigned elsewhere, not the person who caused it); a newly assigned person is notified.
 
 ### Administrator role (question 7)
 
-Decision: keep the Administrator role undeletable, with every permission. Update the spec, which calls Admin "optional".
+Decision: keep the Administrator role undeletable, with every permission. (Done: the spec no longer calls Admin "optional".)
+
+### Teams: decided before building (2026-11-23)
+
+The project owner decided these before part A.
+
+- **Team Profile:** just a person's Team Parts. **No vocal range**: since Phase 7, keys come from the keys a song was sung in, so nothing would use it.
+- **Team Profiles belong to user accounts.** The Members module stays as built; a Member record is not needed to serve.
+- **Who can be assigned:** only people whose Team Profile has that part.
+- **Replies:** Pending, Accepted or Declined. A declined assignment stays on the service page for the leader to fill. No new assignments and no replies on a cancelled or past service.
+- **Blackout Dates:** a range of whole days in the church's time zone. Nobody can be assigned on a day they blacked out. A blackout that overlaps an existing assignment (Pending or Accepted, on a service that isn't cancelled) is refused, with a message pointing to Decline or a Swap Request.
+- **Swaps** (part B): no approval. The first person who has the part, isn't blacked out that day and isn't already on that service takes it and gets the assignment. The audit trail records it.
+- **Announcements** (part B): to "everyone" (everyone signed in) or to "one service's team" (its assigned people), the second offered only while Teams is on. Posting is a permission, held by Pastoral Staff and Worship Leader by default. No expiry: the author archives it.
+- **Order of work:** part A is the roster and availability (Team Parts, Team Profiles, Assignments and replies, Blackout Dates, My schedule) plus the playlist fix below; part B is swaps, announcements and notifications.
+
+Tests (part A): only people with the part can be assigned; nobody on a blackout day; no assignments or replies on a cancelled or past service; a declined assignment stays on the service page; a blackout over a Pending or Accepted assignment is refused, and one over a Declined or cancelled one isn't; blackout days follow the church's time zone.
+
+### Updating a stored Lineup Playlist (fix, decided 2026-11-23)
+
+Changes the Phase 7 rule that any 403 or 404 makes a new playlist.
+
+- When updating the lineup's stored playlist, a **new playlist is made only** on a **404**, or on a **403 when the connected account isn't the stored playlist's owner**.
+- Only when Spotify answers 403, CHORD asks Spotify for the connected account's ID and the playlist's owner, compares them, and **stores neither**. The hard rule on stored Spotify fields doesn't change ([[0010-store-own-playlist-id]]).
+- **Any other 403** is treated like a refusal: the lineup stays confirmed and "Save to Spotify" shows.
+- If either lookup gets a 429, it fails fast (review F10): nothing waits, and "Save to Spotify" shows.
+
+Tests: a 404 makes a new playlist; a 403 from another owner's playlist makes a new one; a 403 on the account's own playlist leaves the lineup confirmed with "Save to Spotify" and makes none; a 429 on a lookup fails fast with "Save to Spotify"; neither account ID is stored.
 
 ---
 

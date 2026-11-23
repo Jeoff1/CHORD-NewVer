@@ -1,0 +1,7 @@
+{# Accept and Decline for the assigned person's own Pending assignment; expects `assignment` and optional `back`. #}
+<form method="post" action="{% url 'teams:reply' public_id=assignment.public_id %}" class="d-inline-flex gap-1">
+  {% csrf_token %}
+  {% if back %}<input type="hidden" name="back" value="{{ back }}">{% endif %}
+  <button type="submit" name="reply" value="accepted" class="btn btn-sm btn-success">Accept</button>
+  <button type="submit" name="reply" value="declined" class="btn btn-sm btn-outline-danger">Decline</button>
+</form>

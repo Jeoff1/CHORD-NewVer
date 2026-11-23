@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.members.apps.MembersConfig",
     "apps.worship.apps.WorshipConfig",
     "apps.songs.apps.SongsConfig",
+    "apps.teams.apps.TeamsConfig",
 ]
 
 MIDDLEWARE = [

@@ -1,6 +1,6 @@
 === INTENDED WORKFLOW ===
 
-Updated 2026-11-19 with the decisions in [[Design-Decisions]]. Where this
+Updated 2026-11-23 with the decisions in [[Design-Decisions]] (Phase 8). Where this
 spec and Design-Decisions.md disagree, Design-Decisions.md wins (AGENTS.md
 sets the order).
 
@@ -92,9 +92,8 @@ SONG SELECTION (core module)
       lineup. It lasts until the pastor reopens the lineup.
     - If the leader confirms and the pastor edits afterwards, the lineup stays
       confirmed and is marked "Edited by <pastor Label> (<person's name>)"
-      with the time, shown to everyone who can see the lineup. Once team
-      assignments exist, the assigned team members are also notified in the
-      app.
+      with the time, shown to everyone who can see the lineup. The service's
+      assigned team is also notified in the app (see TEAMS).
     - If the leader edits a confirmed lineup that isn't under the pastor's
       lock, it stays confirmed and is marked "Changed by <person's name>" with
       the time, shown to everyone who can see it. There is no lock.
@@ -189,7 +188,41 @@ CHORDS AND PLAYBACK
   "Save to Spotify" button lets people who may save try again later.
   Confirming the same lineup again, or "Save to Spotify", updates that
   lineup's own playlist; other services' playlists are never changed. The
-  Church Spotify Account is never used for playback.
+  Church Spotify Account is never used for playback. A stored playlist is
+  made again only when Spotify answers 404, or 403 because the connected
+  account doesn't own it (checked by asking Spotify, storing neither
+  account's ID); any other 403 leaves the lineup confirmed with "Save to
+  Spotify".
+
+TEAMS (Teams module; needs Worship)
+- Team Parts are a list the church edits (voices and instruments), with
+  neutral defaults. A person's Team Profile is just the parts they can take;
+  it belongs to their user account, not to a Member record.
+- The worship leader assigns people to parts at a service. Only people
+  whose Team Profile has that part can be assigned, and nobody on a day
+  they blacked out. A cancelled or past service takes no new assignments
+  and no replies.
+- Each assignment has a reply: Pending, Accepted or Declined. A declined
+  assignment stays on the service page for the leader to fill.
+- Blackout Dates are ranges of whole days in the church's time zone. A
+  blackout over an existing assignment (Pending or Accepted, service not
+  cancelled) is refused; the person declines it or asks for a swap first.
+- "My schedule" shows a person's assignments, with reply buttons, their
+  parts and their blackout dates.
+- Swap Request: a person asks to be replaced. No approval: the first person
+  who has the part, isn't blacked out that day and isn't already on that
+  service takes it and gets the assignment. The audit trail records it.
+- In-app notifications only (no email or SMS) go to the service's assigned
+  people whose reply is Pending or Accepted, never to the person who caused
+  them, when the pastor edits a confirmed lineup, anyone else edits a
+  confirmed lineup, or the lineup is confirmed. A person is also notified
+  when they are assigned.
+
+ANNOUNCEMENTS (Announcements module)
+- Notes to everyone (everyone signed in) or to one service's team (its
+  assigned people; offered only while Teams is on). Posting is a
+  permission, held by Pastoral Staff and Worship Leader by default. No
+  expiry: the author archives an announcement.
 
 SPOTIFY SAFEGUARDS (every server-side Spotify call: search, tracks, playlists)
 - Stop on the first 429: make no Spotify call until Retry-After has passed.
@@ -228,7 +261,8 @@ HARD RULES (must not be violated)
 
 EXPECTED DATABASE TABLES
 User, Spotify connection (one per user), Church Spotify account (at most
-one), Service, Theme, Assignment,
+one), Service, Theme, Team part, Team profile, Assignment, Blackout date,
+Swap request, Notification,
 Search run, Song, Song tag, Song embedding, Lineup, Lineup item,
 Suggestion feedback, Chord sheet, Song usage, Announcement, Attendance.
 

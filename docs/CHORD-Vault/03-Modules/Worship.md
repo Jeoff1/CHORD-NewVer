@@ -482,8 +482,13 @@ playback and the Lineup Playlist** ([[Design-Decisions]], Phase 7):
     on the church account when connected (no personal connection needed),
     otherwise on the pressing person's account. Saving again on the same
     account (the church's, or the same person's) updates that lineup's
-    playlist; other services' playlists are never touched. A playlist
-    Spotify no longer has (403 or 404) is made again. The playlist ID is
+    playlist; other services' playlists are never touched. A stored
+    playlist is made again only on a 404, or on a 403 when the connected
+    account doesn't own it: only then, `_is_gone` asks Spotify for both
+    account IDs (`SpotifyClient.playlist_owner_id`, `current_user_id`),
+    compares them and stores neither. Any other 403 is a refusal (the
+    lineup stays confirmed with Save to Spotify), and a 429 on a lookup
+    fails fast (Phase 8 fix, 2026-11-23). The playlist ID is
     kept as soon as it exists, so a 429 on the next call doesn't make a
     second playlist on the next try;
   - an unusable church account (refused, revoked or a 429) leaves the

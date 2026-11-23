@@ -220,6 +220,79 @@ class ChurchPlaylistTests(ChurchAccountTestCase):
             Lineup.objects.get(pk=self.lineup.pk).spotify_playlist_id, "pl-new"
         )
 
+    # Updating a stored playlist (Design-Decisions, Phase 8): a new one only
+    # on a 404, or a 403 from a playlist the connected account doesn't own.
+
+    def with_stored_playlist(self):
+        Lineup.objects.filter(pk=self.lineup.pk).update(
+            spotify_playlist_id="pl1",
+            spotify_playlist_on_church_account=True,
+            spotify_playlist_tracks=["trackOLD"],
+        )
+
+    def refused_update(self, web, *, owner, me="church-user"):
+        web.reply("PUT", f"{spotify.API}/playlists/pl1/", {}, status=403)
+        web.reply("GET", f"{spotify.API}/playlists/pl1", {"owner": {"id": owner}})
+        web.reply("GET", f"{spotify.API}/me", {"id": me})
+        web.reply("POST", CREATE, {"id": "pl-new"}, status=201)
+        web.reply("PUT", f"{spotify.API}/playlists/pl-new/", {})
+
+    def test_a_403_from_a_playlist_another_account_owns_makes_a_new_one(self):
+        self.with_stored_playlist()
+        with FakeHttp() as web:
+            self.refused_update(web, owner="someone-else")
+            self.confirm(self.lineup)
+        lineup = Lineup.objects.get(pk=self.lineup.pk)
+        self.assertEqual(lineup.spotify_playlist_id, "pl-new")
+        self.assertEqual(len(lineup.spotify_playlist_tracks), 2)
+        # Both account IDs were only compared, never stored.
+        stored = str(list(Lineup.objects.values())) + str(
+            list(ChurchSpotifyAccount.objects.values())
+        )
+        self.assertNotIn("someone-else", stored)
+        self.assertNotIn("church-user", stored)
+
+    def test_a_403_on_the_accounts_own_playlist_is_a_refusal(self):
+        self.with_stored_playlist()
+        with FakeHttp() as web:
+            self.refused_update(web, owner="church-user")
+            page = self.confirm(self.lineup)
+        self.assertNotIn(CREATE, [call["path"] for call in web.calls])
+        lineup = Lineup.objects.get(pk=self.lineup.pk)
+        self.assertTrue(lineup.is_confirmed)
+        self.assertEqual(lineup.spotify_playlist_id, "pl1")
+        self.assertContains(page, "The Spotify playlist wasn&#x27;t saved")
+        self.assertContains(page, ">Save to Spotify</button>")
+
+    def test_a_403_whose_playlist_is_gone_on_lookup_makes_a_new_one(self):
+        self.with_stored_playlist()
+        with FakeHttp() as web:
+            self.refused_update(web, owner="x")
+            web.reply("GET", f"{spotify.API}/playlists/pl1", {}, status=404)
+            self.confirm(self.lineup)
+        self.assertEqual(
+            Lineup.objects.get(pk=self.lineup.pk).spotify_playlist_id, "pl-new"
+        )
+
+    def test_a_429_on_the_owner_lookup_fails_fast_with_save_to_spotify(self):
+        self.with_stored_playlist()
+        with FakeHttp() as web:
+            self.refused_update(web, owner="someone-else")
+            web.reply(
+                "GET",
+                f"{spotify.API}/me",
+                {},
+                status=429,
+                headers={"retry-after": "9"},
+            )
+            page = self.confirm(self.lineup)
+        self.assertNotIn(CREATE, [call["path"] for call in web.calls])
+        self.assertEqual(SpotifyLimit.objects.count(), 1)
+        lineup = Lineup.objects.get(pk=self.lineup.pk)
+        self.assertTrue(lineup.is_confirmed)
+        self.assertEqual(lineup.spotify_playlist_id, "pl1")
+        self.assertContains(page, ">Save to Spotify</button>")
+
     def test_a_429_leaves_the_lineup_confirmed_with_save_to_spotify(self):
         with FakeHttp() as web:
             web.reply("POST", CREATE, {}, status=429, headers={"retry-after": "9"})

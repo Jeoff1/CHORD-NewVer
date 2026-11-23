@@ -6,9 +6,9 @@ yet.
 
 | Topic          | Convention                                                                                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| App layout     | Each Module is one or more Django apps in `apps/` (Worship is `apps/worship` and `apps/songs`); the Module registry lists them. Shared code is in `apps/core`, and the audit trail in `apps/audit`. |
+| App layout     | Each Module is one or more Django apps in `apps/` (Worship is `apps/worship` and `apps/songs`; Teams is `apps/teams`); the Module registry lists them. Shared code is in `apps/core`, and the audit trail in `apps/audit`. |
 | Shared models  | `apps/core/models.py`: `TimeStampedModel` (created/updated) and `PublicIdModel` (UUID used in URLs, so IDs can't be guessed).    |
-| Business rules | Plain functions outside the views, tested directly. A small app keeps them in `services.py` (e.g. `apps/members/services.py`). The worship apps name each file for what it decides (e.g. `apps/worship/scheduling.py`), because "service" there means a Worship Service. |
+| Business rules | Plain functions outside the views, tested directly. A small app keeps them in `services.py` (e.g. `apps/members/services.py`); Teams keeps its rules in `apps/teams/rostering.py`. The worship apps name each file for what it decides (e.g. `apps/worship/scheduling.py`), because "service" there means a Worship Service. |
 | Large apps     | `apps/worship` splits `models/` and `views/` into one file per area (`schedule.py`, …); `models/__init__.py` exports every model. |
 | UI             | Django templates, Bootstrap 5 and HTMX from `static/vendor/` ([[0002-server-rendered-ui]]). Pages extend `templates/base.html`.  |
 | Page titles    | Every page sets `{% block title %}`; the base adds " · " and the church name.                                                    |
@@ -159,6 +159,12 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
     directly, with service keys
   - `make_chord_sheet(song, chordpro=HYMN_SHEET, key="G", approved=True)`:
     a chord sheet; `HYMN_SHEET` is a public-domain hymn in ChordPro
+  - `make_team_part(name=None)`: a Team Part with a unique name (the
+    seeded defaults exist too)
+  - `make_team_profile(user, parts=())`
+  - `make_assignment(service, person, part=None, reply="pending")`: an
+    Assignment stored directly (the rules refuse past services); the
+    person gets the part in their Team Profile
   - `TEST_PASSWORD`
   - `SPOTIFY_TEST_SETTINGS`: use with `override_settings(**...)` for
     Spotify set up with made-up credentials and token key.

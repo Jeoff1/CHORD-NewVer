@@ -8,38 +8,23 @@ development task.
 
 ## Current status
 
-**Phase 7 done (2026-11-22): part A and part B.** Phases 8 and 9 are
-next, in any order. Updated 2026-11-22.
+**Phase 8 in progress (2026-11-23): part A built; part B next.** Phase 9
+can follow in any order. Updated 2026-11-23.
 
 **Pick up here:**
-- **Branch:** `master` holds all of Phase 7: `phase-7-chords` was
-  fast-forwarded into it on 2026-11-22, after the user's test with a real
-  Spotify account. Start Phase 8 or 9 on a new branch from `master`.
+- **Branch:** `phase-8-teams` (pushed, not merged). `master` holds
+  Phases 0 to 7.
 - **Progress Check 2 is on 25 Nov 2026.**
-- **Phase 7, part A** (passed the user's click-through): ChordPro chord
-  sheets, typed, pasted or imported; chart marks; approval of team
-  members' sheets; Find chords; chord sheet counts; the lineup song page
-  with the server-side viewer ([[0009-transposition-on-the-server]]); the
-  keys a song was sung in; full lyrics only for people who plan.
-- **Phase 7, part B** (built and approved 2026-11-22): it passed the
-  automated tests and the user's test with a real Spotify account,
-  including the Church Spotify Account.
-  - each user's **Spotify Connection** (Authorization Code flow), tokens
-    encrypted with Fernet and refreshed as needed;
-  - **playback** on the lineup song page: the Web Playback SDK for a
-    connected account, falling back to the embedded player whenever the
-    SDK can't be used; "Open in Spotify" always;
-  - the **Lineup Playlist** saved on confirmation, with "Save to Spotify"
-    when it couldn't be;
-  - no web request waits on a Spotify Retry-After (review F10);
-  - the playlist ID kept to update the same playlist
-    ([[0010-store-own-playlist-id]]);
-  - the optional **Church Spotify Account** for public playlists the
-    team can open ([[0011-church-spotify-account]]).
-- **To try part B:** `SPOTIFY_TOKEN_KEY` in `.env`, the Redirect URI in
-  the Spotify dashboard and the testers under User Management
-  ([[Environment-Setup]]).
-- **Checks:** `scripts/check.ps1`; on 2026-11-22, 749 tests passed with
+- **Phase 8, part A** (built 2026-11-23, waiting for the user's
+  click-through): [[Teams]]: Team Parts, Team Profiles (parts only),
+  Assignments with replies, Blackout Dates, My schedule, and the Team card
+  on the service page; plus the playlist fix (a stored playlist is made
+  again only on a 404, or a 403 from a playlist the connected account
+  doesn't own).
+- **Phase 8, part B** (next): Swap Requests, in-app Notifications and the
+  Announcements module ([[Design-Decisions]], Phase 8).
+- **Choices to confirm:** listed under "Open questions" in [[Teams]].
+- **Checks:** `scripts/check.ps1`; on 2026-11-23, 808 tests passed with
   97% coverage.
 
 Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
@@ -70,8 +55,10 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 - [[Worship]]'s chord sheets (Phase 7, part A, 2026-11-20), as above.
 - [[Worship]]'s Spotify Connection, playback and Lineup Playlist (Phase 7,
   part B, 2026-11-22), as above.
+- [[Teams]] (Phase 8, part A, 2026-11-23): the roster and availability, as
+  above.
 
-**Next:** Phases 8 and 9, in any order.
+**Next:** Phase 8 part B, then Phase 9.
 
 ## Project
 
@@ -109,7 +96,7 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | Accounts (core)     | Built       | [[Accounts]]     |
 | Members             | Built       | [[Members]]      |
 | Worship             | In progress | [[Worship]]      |
-| Teams               | Not started |                  |
+| Teams               | In progress | [[Teams]]        |
 | Announcements       | Not started |                  |
 
 Out of scope: Services ([[Services]] keeps the old design), Giving,
