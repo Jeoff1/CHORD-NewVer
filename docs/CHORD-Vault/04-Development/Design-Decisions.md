@@ -421,8 +421,10 @@ Decision: a headcount per service. The existing `WorshipService.attendance` fiel
   - anyone else edits a confirmed lineup ("Changed by");
   - the lineup is confirmed.
 - A person is also notified **when they are assigned** to a service (unless they assigned themself).
+- **Nothing on cancelled or past services.** Team members still see nothing of a lineup until it is confirmed, so edits to a draft notify nobody.
+- The navigation shows the **unread count**; a person opens a notification (which marks it read) or marks all of them read.
 
-Tests: after each of the three lineup events, each Pending or Accepted assigned person has a notification, and nobody else does (not a Declined one, not someone assigned elsewhere, not the person who caused it); a newly assigned person is notified.
+Tests: after each of the three lineup events, each Pending or Accepted assigned person has a notification, and nobody else does (not a Declined one, not someone assigned elsewhere, not the person who caused it); a newly assigned person is notified; nothing for a cancelled or past service or a draft; the unread count and marking read.
 
 ### Administrator role (question 7)
 
@@ -437,11 +439,38 @@ The project owner decided these before part A.
 - **Who can be assigned:** only people whose Team Profile has that part.
 - **Replies:** Pending, Accepted or Declined. A declined assignment stays on the service page for the leader to fill. No new assignments and no replies on a cancelled or past service.
 - **Blackout Dates:** a range of whole days in the church's time zone. Nobody can be assigned on a day they blacked out. A blackout that overlaps an existing assignment (Pending or Accepted, on a service that isn't cancelled) is refused, with a message pointing to Decline or a Swap Request.
-- **Swaps** (part B): no approval. The first person who has the part, isn't blacked out that day and isn't already on that service takes it and gets the assignment. The audit trail records it.
+- **Swaps** (part B; details below): no approval. The first person who has the part, isn't blacked out that day and isn't already on that service takes it and gets the assignment. The audit trail records it.
 - **Announcements** (part B): to "everyone" (everyone signed in) or to "one service's team" (its assigned people), the second offered only while Teams is on. Posting is a permission, held by Pastoral Staff and Worship Leader by default. No expiry: the author archives it.
 - **Order of work:** part A is the roster and availability (Team Parts, Team Profiles, Assignments and replies, Blackout Dates, My schedule) plus the playlist fix below; part B is swaps, announcements and notifications.
 
 Tests (part A): only people with the part can be assigned; nobody on a blackout day; no assignments or replies on a cancelled or past service; a declined assignment stays on the service page; a blackout over a Pending or Accepted assignment is refused, and one over a Declined or cancelled one isn't; blackout days follow the church's time zone.
+
+### Approved after part A (2026-11-23)
+
+The project owner answered the part A open questions.
+
+**Accepted as built:**
+- A reply is given once, while Pending.
+- A past service's team is frozen: no assignments, replies, removals or swaps.
+- Blackout Dates for days already passed are refused.
+- Pastoral Staff see the roster and each service's team but don't assign by default. A church may give `teams.add_assignment` to a pastor (or anyone) per user; the Administrator assigns by holding every permission.
+- "Save to Spotify" shows after a refused update only when the lineup's songs differ from what the playlist holds.
+
+**Changed: the team is a permission.**
+- Only holders of `teams.view_assignment` can have a Team Profile or Blackout Dates. My team parts and the Blackout pages need it (a permission check, never a role name), so Office Staff don't see them.
+- `candidates()` leaves out anyone without it, even with a Team Profile from before; they can't be assigned or take a swap.
+
+Tests: Office Staff are refused on My team parts and the Blackout pages; a user with parts but without the permission isn't offered in Assign and can't be assigned; the permission given to one user makes them a candidate.
+
+### Swap Requests (decided 2026-11-23, part B)
+
+- Someone **Pending or Accepted** on a **future service that isn't cancelled** can ask for a swap, and can **withdraw** it while it is open. One open request per assignment.
+- **Anyone eligible sees it:** they're on the team (`teams.view_assignment`), have the part, aren't blacked out that day and aren't already on that service.
+- **The first eligible person to take it gets the assignment, as Accepted.** No approval. Taking locks the request's row, so if two people press at once only the first gets it; the other is told someone else took it first.
+- The **original assignment ends**. The audit trail records who handed over and who took it (the request, and the assignment ended and made).
+- The blackout refusal's "ask for a swap" **links** to asking for that swap.
+
+Tests: asking and withdrawing, only while Pending or Accepted on a future open service; who sees it; taking gives an Accepted assignment and ends the original; the audit trail; a second taker is refused, including two at once on two database connections; the blackout link.
 
 ### Updating a stored Lineup Playlist (fix, decided 2026-11-23)
 
@@ -452,7 +481,7 @@ Changes the Phase 7 rule that any 403 or 404 makes a new playlist.
 - **Any other 403** is treated like a refusal: the lineup stays confirmed and "Save to Spotify" shows.
 - If either lookup gets a 429, it fails fast (review F10): nothing waits, and "Save to Spotify" shows.
 
-Tests: a 404 makes a new playlist; a 403 from another owner's playlist makes a new one; a 403 on the account's own playlist leaves the lineup confirmed with "Save to Spotify" and makes none; a 429 on a lookup fails fast with "Save to Spotify"; neither account ID is stored.
+Tests: a 404 makes a new playlist; a 403 from another owner's playlist makes a new one, on the Church Spotify Account and on the confirmer's own account (private); a 403 on the account's own playlist leaves the lineup confirmed with "Save to Spotify" and makes none; a 429 on a lookup fails fast with "Save to Spotify"; neither account ID is stored.
 
 ---
 

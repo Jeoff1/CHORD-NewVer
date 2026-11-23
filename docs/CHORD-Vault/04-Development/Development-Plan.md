@@ -38,7 +38,7 @@ flowchart LR
 | 5     | Song suggestions              | L    | 4          | Done (2026-11-18) |
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
 | 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
-| 8     | Teams and announcements       | M    | 6          | In progress       |
+| 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
 | 9     | Learning to rank              | S    | 6          | Not started       |
 | 10    | Hardening and release         | M    | 7, 8, 9    | Not started       |
 
@@ -429,6 +429,8 @@ is refused; team members don't see full lyrics on the song page.
 
 ## Phase 8: Teams and announcements
 
+**Status: done (2026-11-23).** See [[Teams]] and [[Announcements]].
+
 Goal: who serves when, and notes to them. Decisions: [[Design-Decisions]],
 Phase 8 (2026-11-23).
 
@@ -442,21 +444,30 @@ Part A: roster and availability (built 2026-11-23).
 - [x] Updating a stored Lineup Playlist: a new one only on a 404, or a 403
   from a playlist the connected account doesn't own.
 
-Part B: swaps, announcements and notifications.
+Part B: swaps, announcements and notifications (built 2026-11-23).
 
-- [ ] **Swap Request**: ask to be replaced; the first eligible person takes
-  it.
-- [ ] **Announcements** to everyone or to one service's team.
-- [ ] In-app notifications (no email or SMS) to a service's Pending and
+- [x] The team is a permission: only holders of `teams.view_assignment`
+  have a Team Profile or Blackout Dates, are offered in Assign, or take a
+  swap.
+- [x] **Swap Request**: ask to be replaced and withdraw while open; the
+  first eligible person takes it, as Accepted, under a row lock.
+- [x] **Announcements** to everyone or to one service's team.
+- [x] In-app notifications (no email or SMS) to a service's Pending and
   Accepted assigned people, never the person who caused them: the pastor
   edits a confirmed lineup, anyone else edits a confirmed lineup, the
-  lineup is confirmed; and to a person when they are assigned.
+  lineup is confirmed; and to a person when they are assigned. Nothing for
+  cancelled or past services. An unread count in the navigation, and
+  marking read.
 
-**Done when** nobody can be assigned on a blackout date or without the
-part, a swap moves the assignment, and each of the pastor's edit, another
-person's edit and the confirmation of a lineup notifies that service's
-Pending and Accepted assigned people and nobody else (not Declined ones,
-not the person who caused it), and a newly assigned person is notified.
+**Done when** nobody can be assigned on a blackout date, without the part
+or without the team permission; a swap moves the assignment to the first
+eligible taker as Accepted, and a second taker at the same moment is
+refused; each of the pastor's edit, another person's edit and the
+confirmation of a lineup notifies that service's Pending and Accepted
+assigned people and nobody else (not Declined ones, not the person who
+caused it, nothing for a cancelled or past service or a draft); a newly
+assigned person is notified; and an announcement to one service's team
+reaches only that team.
 
 ## Phase 9: Learning to rank
 

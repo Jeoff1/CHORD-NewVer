@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load church %}
+{% load church people %}
 
 {% block title %}My schedule{% endblock %}
 
@@ -9,11 +9,11 @@
 
   <div class="row g-3">
     <div class="col-lg-8">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm mb-3">
         <div class="card-body">
           <h2 class="h5">Where I serve</h2>
           <ul class="list-unstyled mb-0">
-            {% for assignment, closed in assignments %}
+            {% for assignment, closed, swap in assignments %}
               <li class="d-flex flex-wrap align-items-center gap-2 py-2{% if not forloop.last %} border-bottom{% endif %}">
                 <div class="me-auto">
                   <a href="{% url 'worship:service' public_id=assignment.service.public_id %}"{% if assignment.service.is_cancelled %} class="text-decoration-line-through"{% endif %}>{{ assignment.service.name }}</a>
@@ -21,11 +21,45 @@
                   {% if assignment.service.is_cancelled %}<span class="badge text-bg-secondary">Cancelled</span>{% endif %}
                 </div>
                 {% include "teams/includes/reply_badge.html" %}
-                {% if assignment.reply == 'pending' and not closed %}{% include "teams/includes/reply_buttons.html" %}{% endif %}
+                {% if swap %}<span class="badge text-bg-warning">Swap requested</span>{% endif %}
+                {% if not closed %}
+                  {% if assignment.reply == 'pending' %}{% include "teams/includes/reply_buttons.html" %}{% endif %}
+                  {% if swap %}
+                    <form method="post" action="{% url 'teams:swap_action' public_id=swap.public_id action='withdraw' %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw swap</button>
+                    </form>
+                  {% elif assignment.reply != 'declined' %}
+                    <a href="{% url 'teams:swap_request' public_id=assignment.public_id %}" class="btn btn-sm btn-outline-primary">Ask for a swap</a>
+                  {% endif %}
+                {% endif %}
               </li>
             {% empty %}
               {% label "worship_service" plural=True as services_word %}
               <li class="text-body-secondary">You aren't assigned to any coming {{ services_word|lower }}.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h2 class="h5">Swaps I can take</h2>
+          <p class="small text-body-secondary">The first person to take one gets it.</p>
+          <ul class="list-unstyled mb-0">
+            {% for swap in open_swaps %}
+              <li class="d-flex flex-wrap align-items-center gap-2 py-2{% if not forloop.last %} border-bottom{% endif %}">
+                <div class="me-auto">
+                  <a href="{% url 'worship:service' public_id=swap.service.public_id %}">{{ swap.service.name }}</a>
+                  <span class="text-body-secondary">· {{ swap.service.starts_at|date:"D, M j · g:i A" }} · {{ swap.part }} · from {{ swap.requested_by|person_name }}</span>
+                </div>
+                <form method="post" action="{% url 'teams:swap_action' public_id=swap.public_id action='take' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-primary">Take it</button>
+                </form>
+              </li>
+            {% empty %}
+              <li class="text-body-secondary">No swaps you can take right now.</li>
             {% endfor %}
           </ul>
         </div>

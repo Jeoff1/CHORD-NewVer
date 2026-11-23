@@ -30,6 +30,11 @@
             {% endfor %}
           </ul>
           <ul class="navbar-nav">
+            {% if "teams" in enabled_modules %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'teams:notifications' %}">Notifications{% if unread_notifications %} <span class="badge rounded-pill text-bg-danger" aria-label="{{ unread_notifications }} unread">{{ unread_notifications }}</span>{% endif %}</a>
+              </li>
+            {% endif %}
             {% if perms.church.change_churchprofile or perms.accounts.view_user or perms.accounts.view_role or perms.audit.view_auditevent %}
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administration</a>
@@ -49,7 +54,7 @@
                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My profile</a></li>
                 {% if "members" in enabled_modules and user.member %}<li><a class="dropdown-item" href="{% url 'members:me' %}">My {{ labels.member|lower }} record</a></li>{% endif %}
                 <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Change password</a></li>
-                {% if "teams" in enabled_modules %}<li><a class="dropdown-item" href="{% url 'teams:my_schedule' %}">My schedule</a></li>{% endif %}
+                {% if "teams" in enabled_modules and perms.teams.view_assignment %}<li><a class="dropdown-item" href="{% url 'teams:my_schedule' %}">My schedule</a></li>{% endif %}
                 {% if "worship" in enabled_modules %}<li><a class="dropdown-item" href="{% url 'songs:spotify_account' %}">Spotify account</a></li>{% endif %}
                 <li><hr class="dropdown-divider"></li>
                 <li>

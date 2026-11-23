@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.worship.apps.WorshipConfig",
     "apps.songs.apps.SongsConfig",
     "apps.teams.apps.TeamsConfig",
+    "apps.announcements.apps.AnnouncementsConfig",
 ]
 
 MIDDLEWARE = [
@@ -69,6 +70,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.church.context_processors.church",
+                "apps.teams.context_processors.notifications",
             ],
         },
     },

@@ -75,6 +75,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         "teams.view_teampart",
         "teams.view_teamprofile",
         "teams.view_assignment",
+        # Announcements (Phase 8)
+        "announcements.add_announcement",
     ],
     "worship_leader": [
         "members.view_member",
@@ -123,6 +125,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         "teams.view_assignment",
         "teams.add_assignment",
         "teams.delete_assignment",
+        # Announcements (Phase 8)
+        "announcements.add_announcement",
     ],
     "team_member": [
         # Worship schedule (Phase 3)

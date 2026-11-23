@@ -32,7 +32,9 @@ class RosterTestCase(TestCase):
         self.leader = make_user(roles=["worship_leader"])
         self.bass = make_team_part("Bass guitar")
         self.drums = make_team_part("Percussion")
-        self.player = make_user(first_name="Sam", last_name="Reyes")
+        self.player = make_user(
+            roles=["team_member"], first_name="Sam", last_name="Reyes"
+        )
         make_team_profile(self.player, [self.bass])
         self.service = make_service()
 
@@ -142,7 +144,7 @@ class AssigningTests(RosterTestCase):
         )
 
     def test_candidates_give_each_person_a_reason_or_none(self):
-        blocked = make_user(first_name="Ana")
+        blocked = make_user(roles=["team_member"], first_name="Ana")
         make_team_profile(blocked, [self.bass])
         day = rostering.service_day(self.service)
         BlackoutDate.objects.create(person=blocked, starts_on=day, ends_on=day)
@@ -150,6 +152,24 @@ class AssigningTests(RosterTestCase):
         self.assertEqual(reasons[self.player], "")
         self.assertIn("blackout date", reasons[blocked])
         self.assertNotIn(self.leader, reasons)
+
+    def test_only_people_on_the_team_are_candidates_or_can_be_assigned(self):
+        office = make_user(roles=["office_staff"])
+        make_team_profile(office, [self.bass])
+        self.assertNotIn(office, dict(rostering.candidates(self.service, self.bass)))
+        self.assertIn(
+            "isn't on the team",
+            self.refused(
+                rostering.assign, self.service, self.bass, office, self.leader
+            ),
+        )
+        self.refused(rostering.set_parts, office, [self.bass], self.leader)
+        self.refused(rostering.add_blackout, office, days_ahead(1), days_ahead(1))
+
+    def test_the_permission_may_be_given_to_one_user(self):
+        helper = make_user(perms=["teams.view_assignment"])
+        make_team_profile(helper, [self.bass])
+        self.assertIn(helper, dict(rostering.candidates(self.service, self.bass)))
 
     def test_assigning_and_removing_are_in_the_audit_trail(self):
         assignment = rostering.assign(self.service, self.bass, self.player, self.leader)
@@ -285,7 +305,7 @@ class TeamProfileTests(RosterTestCase):
         )
 
     def test_a_new_profile_is_created_and_holds_only_parts(self):
-        newcomer = make_user()
+        newcomer = make_user(roles=["team_member"])
         rostering.set_parts(newcomer, [self.drums], self.leader)
         profile = TeamProfile.objects.get(user=newcomer)
         self.assertEqual(list(profile.parts.all()), [self.drums])

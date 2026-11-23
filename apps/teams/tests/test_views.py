@@ -116,13 +116,45 @@ class MySchedulePageTests(TeamsViewTestCase):
         self.assertContains(page, "Bass guitar")
         self.assertContains(page, "Away")
 
-    def test_anyone_signed_in_edits_their_own_parts(self):
+    def test_a_team_member_edits_their_own_parts(self):
         drums = make_team_part("Percussion")
-        self.client.force_login(self.office)
+        self.client.force_login(self.member)
         response = self.client.post(reverse("teams:my_parts"), {"parts": [drums.pk]})
         self.assertRedirects(response, MY_SCHEDULE)
+        self.assertEqual(rostering.parts_of(self.member), [drums])
+
+    def test_people_not_on_the_team_are_refused_my_parts_and_blackouts(self):
+        """Only holders of teams.view_assignment have a Team Profile or
+        Blackout Dates; Office Staff don't."""
+        day = (rostering.church_today() + datetime.timedelta(days=60)).isoformat()
+        own = BlackoutDate.objects.create(
+            person=self.office,
+            starts_on=rostering.church_today(),
+            ends_on=rostering.church_today(),
+        )
+        self.client.force_login(self.office)
+        for url in (reverse("teams:my_parts"), reverse("teams:blackout_create")):
+            self.assertEqual(self.client.get(url).status_code, 403, url)
         self.assertEqual(
-            list(TeamProfile.objects.get(user=self.office).parts.all()), [drums]
+            self.client.post(
+                reverse("teams:blackout_create"),
+                {"starts_on": day, "ends_on": day, "note": ""},
+            ).status_code,
+            403,
+        )
+        remove = reverse("teams:blackout_delete", kwargs={"pk": own.pk})
+        self.assertEqual(self.client.post(remove).status_code, 403)
+        self.assertEqual(
+            self.client.post(
+                reverse("teams:my_parts"), {"parts": [self.bass.pk]}
+            ).status_code,
+            403,
+        )
+        self.assertFalse(TeamProfile.objects.filter(user=self.office).exists())
+        page = self.client.get(reverse("home"))
+        self.assertNotContains(page, ">My schedule</a>")
+        self.assertRedirects(
+            self.client.get(MY_SCHEDULE), reverse("teams:notifications")
         )
 
     def test_adding_a_blackout_over_an_assignment_shows_the_refusal(self):
@@ -218,6 +250,20 @@ class AssignViewTests(TeamsViewTestCase):
         self.assertNotContains(page, "Lee Outsider")
         response = self.client.post(
             assign_page(self.service), {"part": self.bass.pk, "person": outsider.pk}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Assignment.objects.exists())
+
+    def test_someone_with_parts_but_not_on_the_team_isnt_offered(self):
+        """A profile left from before, without teams.view_assignment."""
+        make_team_profile(self.office, [self.bass])
+        self.office.first_name, self.office.last_name = "Ola", "Office"
+        self.office.save()
+        self.client.force_login(self.leader)
+        page = self.client.get(assign_page(self.service), {"part": self.bass.pk})
+        self.assertNotContains(page, "Ola Office")
+        response = self.client.post(
+            assign_page(self.service), {"part": self.bass.pk, "person": self.office.pk}
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Assignment.objects.exists())

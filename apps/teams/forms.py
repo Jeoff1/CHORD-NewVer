@@ -53,3 +53,7 @@ class AssignForm(forms.Form):
 
     def clean_person(self):
         return self.people[self.cleaned_data["person"]]
+
+
+class SwapRequestForm(forms.Form):
+    """Nothing to fill in: the page confirms which assignment to hand over."""

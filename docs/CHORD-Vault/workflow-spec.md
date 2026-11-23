@@ -195,34 +195,49 @@ CHORDS AND PLAYBACK
   Spotify".
 
 TEAMS (Teams module; needs Worship)
+- The team is a permission: holders of teams.view_assignment (Team Member,
+  Worship Leader and Pastoral Staff by default; never a role-name check).
+  Only they can have a Team Profile or Blackout Dates, be assigned or take
+  a swap. Office Staff don't see these pages.
 - Team Parts are a list the church edits (voices and instruments), with
   neutral defaults. A person's Team Profile is just the parts they can take;
   it belongs to their user account, not to a Member record.
-- The worship leader assigns people to parts at a service. Only people
-  whose Team Profile has that part can be assigned, and nobody on a day
-  they blacked out. A cancelled or past service takes no new assignments
-  and no replies.
-- Each assignment has a reply: Pending, Accepted or Declined. A declined
-  assignment stays on the service page for the leader to fill.
-- Blackout Dates are ranges of whole days in the church's time zone. A
-  blackout over an existing assignment (Pending or Accepted, service not
-  cancelled) is refused; the person declines it or asks for a swap first.
-- "My schedule" shows a person's assignments, with reply buttons, their
-  parts and their blackout dates.
-- Swap Request: a person asks to be replaced. No approval: the first person
-  who has the part, isn't blacked out that day and isn't already on that
-  service takes it and gets the assignment. The audit trail records it.
+- The worship leader assigns people to parts at a service (Pastoral Staff
+  see teams but don't assign by default). Only people on the team whose
+  Team Profile has that part can be assigned, and nobody on a day they
+  blacked out. A cancelled or past service's team is frozen: no new
+  assignments, replies, removals or swaps.
+- Each assignment has a reply: Pending, Accepted or Declined, given once
+  while Pending. A declined assignment stays on the service page for the
+  leader to fill.
+- Blackout Dates are ranges of whole days in the church's time zone, not
+  already passed. A blackout over an existing assignment (Pending or
+  Accepted, service not cancelled) is refused; the person declines it, or
+  asks for a swap (the message links to it).
+- "My schedule" shows a person's assignments with reply and swap buttons,
+  the swaps they can take, their parts and their blackout dates.
+- Swap Request: someone Pending or Accepted on a future service that isn't
+  cancelled asks to be replaced, and may withdraw while it is open. Anyone
+  eligible sees it: on the team, has the part, isn't blacked out that day
+  and isn't already on that service. No approval: the first to take it gets
+  the assignment as Accepted (if two press at once, only the first does),
+  and the original assignment ends. The audit trail records who handed over
+  and who took it.
 - In-app notifications only (no email or SMS) go to the service's assigned
   people whose reply is Pending or Accepted, never to the person who caused
   them, when the pastor edits a confirmed lineup, anyone else edits a
   confirmed lineup, or the lineup is confirmed. A person is also notified
-  when they are assigned.
+  when they are assigned. Nothing is sent for a cancelled or past service,
+  or for a draft. The navigation shows the unread count; opening a
+  notification marks it read, and all can be marked read at once.
 
 ANNOUNCEMENTS (Announcements module)
 - Notes to everyone (everyone signed in) or to one service's team (its
-  assigned people; offered only while Teams is on). Posting is a
-  permission, held by Pastoral Staff and Worship Leader by default. No
-  expiry: the author archives an announcement.
+  assigned people who are Pending or Accepted; offered and shown only while
+  Teams is on, for a coming service that isn't cancelled). Posting is the
+  permission announcements.add_announcement, held by Pastoral Staff and
+  Worship Leader by default. No expiry: the author archives an
+  announcement, and then nobody sees it.
 
 SPOTIFY SAFEGUARDS (every server-side Spotify call: search, tracks, playlists)
 - Stop on the first 429: make no Spotify call until Retry-After has passed.

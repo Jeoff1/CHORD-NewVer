@@ -8,23 +8,24 @@ development task.
 
 ## Current status
 
-**Phase 8 in progress (2026-11-23): part A built; part B next.** Phase 9
-can follow in any order. Updated 2026-11-23.
+**Phase 8 done (2026-11-23): parts A and B.** Phase 9 is next. Updated
+2026-11-23.
 
 **Pick up here:**
-- **Branch:** `phase-8-teams` (pushed, not merged). `master` holds
-  Phases 0 to 7.
+- **Branch:** `phase-8-teams` (pushed, not merged; waiting for the
+  user's click-through). `master` holds Phases 0 to 7.
 - **Progress Check 2 is on 25 Nov 2026.**
-- **Phase 8, part A** (built 2026-11-23, waiting for the user's
-  click-through): [[Teams]]: Team Parts, Team Profiles (parts only),
-  Assignments with replies, Blackout Dates, My schedule, and the Team card
-  on the service page; plus the playlist fix (a stored playlist is made
-  again only on a 404, or a 403 from a playlist the connected account
-  doesn't own).
-- **Phase 8, part B** (next): Swap Requests, in-app Notifications and the
-  Announcements module ([[Design-Decisions]], Phase 8).
-- **Choices to confirm:** listed under "Open questions" in [[Teams]].
-- **Checks:** `scripts/check.ps1`; on 2026-11-23, 808 tests passed with
+- **Phase 8, part A:** [[Teams]]: Team Parts, Team Profiles (parts only),
+  Assignments with replies, Blackout Dates, My schedule, the Team card on
+  the service page; the playlist fix (a stored playlist is made again only
+  on a 404, or a 403 from a playlist the connected account doesn't own).
+- **Phase 8, part B:** the team is the permission `teams.view_assignment`;
+  Swap Requests (first eligible taker, under a row lock); in-app
+  Notifications with an unread count; [[Announcements]] to everyone or one
+  service's team.
+- **Choices to confirm:** "Open questions" in [[Teams]] and
+  [[Announcements]].
+- **Checks:** `scripts/check.ps1`; on 2026-11-23, 858 tests passed with
   97% coverage.
 
 Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
@@ -55,10 +56,10 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 - [[Worship]]'s chord sheets (Phase 7, part A, 2026-11-20), as above.
 - [[Worship]]'s Spotify Connection, playback and Lineup Playlist (Phase 7,
   part B, 2026-11-22), as above.
-- [[Teams]] (Phase 8, part A, 2026-11-23): the roster and availability, as
-  above.
+- [[Teams]] and [[Announcements]] (Phase 8, 2026-11-23): the roster,
+  availability, swaps, Notifications and announcements, as above.
 
-**Next:** Phase 8 part B, then Phase 9.
+**Next:** Phase 9, then Phase 10.
 
 ## Project
 
@@ -96,8 +97,8 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | Accounts (core)     | Built       | [[Accounts]]     |
 | Members             | Built       | [[Members]]      |
 | Worship             | In progress | [[Worship]]      |
-| Teams               | In progress | [[Teams]]        |
-| Announcements       | Not started |                  |
+| Teams               | Built       | [[Teams]]        |
+| Announcements       | Built       | [[Announcements]] |
 
 Out of scope: Services ([[Services]] keeps the old design), Giving,
 Records, Ministries, Events, leadership appointment and ordination, SMS

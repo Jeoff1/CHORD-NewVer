@@ -27,7 +27,7 @@ from apps.core.testing import (
     quiet_logger,
 )
 from apps.songs import connections, spotify
-from apps.songs.models import ChurchSpotifyAccount, SpotifyLimit
+from apps.songs.models import ChurchSpotifyAccount, SpotifyConnection, SpotifyLimit
 from apps.worship import lineups
 from apps.worship.models import Lineup
 
@@ -351,6 +351,41 @@ class WithoutChurchAccountTests(ChurchAccountTestCase):
         # Private: a team member sees no link.
         page = self.lineup_page(lineup, self.member)
         self.assertNotContains(page, "open.spotify.com/playlist")
+
+    def test_a_403_from_another_owners_playlist_makes_a_new_private_one(self):
+        """The private-playlist path of the Phase 8 fix: the stored playlist
+        is on the confirmer's own account in CHORD, but Spotify says another
+        account owns it (the person reconnected a different Spotify
+        account). A new private one is made on the confirmer's account."""
+        make_spotify_connection(self.leader, access="leader-access")
+        lineup = self.new_lineup("Alpha", "Beta")
+        Lineup.objects.filter(pk=lineup.pk).update(
+            spotify_playlist_id="pl1",
+            spotify_playlist_owner=self.leader,
+            spotify_playlist_on_church_account=False,
+            spotify_playlist_tracks=["trackOLD"],
+        )
+        with FakeHttp() as web:
+            web.reply("PUT", f"{spotify.API}/playlists/pl1/", {}, status=403)
+            web.reply(
+                "GET", f"{spotify.API}/playlists/pl1", {"owner": {"id": "old-account"}}
+            )
+            web.reply("GET", f"{spotify.API}/me", {"id": "leader-account"})
+            web.reply("POST", CREATE, {"id": "pl-mine"}, status=201)
+            web.reply("PUT", f"{spotify.API}/playlists/pl-mine/", {})
+            self.confirm(lineup)
+        create = next(call for call in web.calls if call["path"] == CREATE)
+        self.assertEqual(create["headers"]["Authorization"], "Bearer leader-access")
+        self.assertFalse(json.loads(create["body"])["public"])
+        lineup.refresh_from_db()
+        self.assertEqual(lineup.spotify_playlist_id, "pl-mine")
+        self.assertEqual(lineup.spotify_playlist_owner, self.leader)
+        self.assertFalse(lineup.spotify_playlist_on_church_account)
+        stored = str(list(Lineup.objects.values())) + str(
+            list(SpotifyConnection.objects.values())
+        )
+        self.assertNotIn("old-account", stored)
+        self.assertNotIn("leader-account", stored)
 
 
 class ChurchAccountSettingTests(ChurchAccountTestCase):

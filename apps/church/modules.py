@@ -56,6 +56,7 @@ MODULES = (
         "Announcements",
         "Notes to everyone, or to the team of one worship service.",
         ("announcements",),
+        url_name="announcements:list",
     ),
 )
 

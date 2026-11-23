@@ -40,7 +40,7 @@ from apps.church.models import ChurchProfile
 from apps.songs.cleanup import base_title
 from apps.songs.models import Song
 
-from . import feedback, sequencing, suggesting
+from . import feedback, sequencing, signals, suggesting
 from .models import Lineup, LineupItem, SearchRun
 
 CHANGE = "worship.change_lineup"
@@ -108,14 +108,20 @@ def _check_final_say(user):
 def _edited(lineup, user):
     """After a change to the songs. An edit to a confirmed lineup keeps it
     confirmed and replaces its mark with this one; the pastor's edit also
-    puts on the pastor's lock. Edits to a draft leave no mark."""
-    if lineup.is_confirmed:
+    puts on the pastor's lock. Edits to a draft leave no mark (and, since
+    team members can't see a draft, notify nobody)."""
+    confirmed = lineup.is_confirmed
+    if confirmed:
         final_say = has_final_say(user)
         lineup.edited_at, lineup.edited_by = timezone.now(), user
         lineup.edited_with_final_say = final_say
         if final_say:
             lineup.pastor_locked = True
     lineup.save()
+    if confirmed:
+        signals.lineup_changed.send(
+            sender=Lineup, lineup=lineup, user=user, event=signals.EDITED
+        )
 
 
 def _clear_mark(lineup):
@@ -510,6 +516,9 @@ def confirm(lineup, user):
         lineup.sent_back_note, lineup.sent_back_at, lineup.sent_back_by = "", None, None
         lineup.save()
         feedback.record(lineup)
+        signals.lineup_changed.send(
+            sender=Lineup, lineup=lineup, user=user, event=signals.CONFIRMED
+        )
     return lineup
 
 

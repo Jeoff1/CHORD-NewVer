@@ -352,9 +352,17 @@ A voice or instrument someone can take at a Worship Service, such as
 Vocals or Bass. A Church-edited List with neutral defaults.
 _Avoid_: position, instrument (alone), ministry role
 
+**Team**:
+The people who hold the permission `teams.view_assignment` (Team Member,
+Worship Leader and Pastoral Staff by default). Only they have a Team
+Profile and Blackout Dates, can be assigned and can take a Swap Request.
+A **service's team** is that service's assigned people whose reply is
+Pending or Accepted.
+_Avoid_: band, musicians, ministry
+
 **Team Profile**:
-The Team Parts a person can take. It belongs to their user account, not to
-a Member record, and holds nothing else (no vocal range).
+The Team Parts a person on the Team can take. It belongs to their user
+account, not to a Member record, and holds nothing else (no vocal range).
 _Avoid_: musician profile, skills
 
 **Assignment**:
@@ -376,15 +384,18 @@ Team Profile and their Blackout Dates.
 _Avoid_: my roster, calendar (that is the service calendar)
 
 **Swap Request**:
-A person asking to be replaced in an Assignment. The first person who has
-the part, isn't blacked out that day and isn't already on that service
-takes it, with no approval.
+A person asking to be replaced in an Assignment (Pending or Accepted, at a
+future service that isn't cancelled); they may withdraw it while it is
+open. The first person on the Team who has the part, isn't blacked out
+that day and isn't already on that service takes it, with no approval, and
+gets the Assignment as Accepted; the original Assignment ends.
 _Avoid_: substitution, trade
 
 **Notification**:
-A note in the app for one person, about a change that concerns them, such
-as a confirmed Lineup for a service they serve at. Never sent by email or
-SMS.
+A note in the app for one person, about a change that concerns them: a
+Lineup confirmed or a confirmed one edited, for a service they serve at,
+or being assigned. Never sent by email or SMS. Unread ones are counted in
+the navigation.
 _Avoid_: alert, message (alone)
 
 **Announcement**:

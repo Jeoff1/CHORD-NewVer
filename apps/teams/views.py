@@ -1,13 +1,13 @@
-"""Teams pages: My schedule, Team Profiles, Blackout Dates and the service
-team (Design-Decisions, Phase 8)."""
+"""Teams pages: My schedule, Team Profiles, Blackout Dates, Swap Requests,
+Notifications and the service team (Design-Decisions, Phase 8)."""
 
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import FormView, ListView, TemplateView
 
@@ -17,21 +17,32 @@ from apps.core.views import FormPageMixin
 from apps.worship.models import WorshipService
 from apps.worship.views.base import service_url
 
-from . import rostering
-from .forms import AssignForm, BlackoutForm, PartsForm
-from .models import Assignment, BlackoutDate, TeamPart
+from . import notifying, rostering
+from .forms import AssignForm, BlackoutForm, PartsForm, SwapRequestForm
+from .models import Assignment, BlackoutDate, Notification, SwapRequest, TeamPart
 
 MY_SCHEDULE = reverse_lazy("teams:my_schedule")
+NOTIFICATIONS = reverse_lazy("teams:notifications")
 
 
 class TeamsMixin(ModuleRequiredMixin, LoginRequiredMixin):
     module = "teams"
 
 
+class TeamMemberMixin(TeamsMixin, PermissionRequiredMixin):
+    """Pages only people on the team use: their Team Profile, Blackout
+    Dates and swaps. Being on the team is a permission, never a role."""
+
+    permission_required = rostering.TEAM_PERMISSION
+
+
 def teams_nav(request):
     """Tabs linking the Teams pages the user may open."""
     user = request.user
-    links = [("My schedule", reverse("teams:my_schedule"))]
+    links = []
+    if user.has_perm(rostering.TEAM_PERMISSION):
+        links.append(("My schedule", reverse("teams:my_schedule")))
+    links.append(("Notifications", reverse("teams:notifications")))
     if user.has_perm("teams.view_teamprofile"):
         links.append(("Roster", reverse("teams:roster")))
     if user.has_perm("teams.view_teampart"):
@@ -50,23 +61,36 @@ class TeamsPageMixin(TeamsMixin):
 
 
 class MyScheduleView(TeamsPageMixin, TemplateView):
+    """The module's page. People who aren't on the team see their
+    notifications instead."""
+
     template_name = "teams/my_schedule.html"
+
+    def get(self, request, *args, **kwargs):
+        if not rostering.may_serve(request.user):
+            return redirect(NOTIFICATIONS)
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context.update(
             assignments=[
-                (assignment, rostering.roster_closed(assignment.service))
+                (
+                    assignment,
+                    rostering.roster_closed(assignment.service),
+                    rostering.open_swap(assignment),
+                )
                 for assignment in rostering.upcoming_assignments(user)
             ],
             parts=rostering.parts_of(user),
             blackouts=rostering.upcoming_blackouts(user),
+            open_swaps=rostering.swaps_open_to(user),
         )
         return context
 
 
-class MyPartsView(TeamsMixin, FormPageMixin, FormView):
+class MyPartsView(TeamMemberMixin, FormPageMixin, FormView):
     form_class = PartsForm
     page_title = "My team parts"
     intro = (
@@ -88,7 +112,7 @@ class MyPartsView(TeamsMixin, FormPageMixin, FormView):
         return super().form_valid(form)
 
 
-class BlackoutCreateView(TeamsMixin, FormPageMixin, FormView):
+class BlackoutCreateView(TeamMemberMixin, FormPageMixin, FormView):
     form_class = BlackoutForm
     page_title = "Add blackout dates"
     intro = (
@@ -98,6 +122,23 @@ class BlackoutCreateView(TeamsMixin, FormPageMixin, FormView):
     submit_label = "Add"
     success_url = MY_SCHEDULE
     cancel_url = MY_SCHEDULE
+    conflict = None
+
+    def get_links(self):
+        """After a refusal over an assignment: where to free that day."""
+        assignment = self.conflict
+        if assignment is None:
+            return []
+        if assignment.reply == Assignment.Reply.PENDING:
+            return [("Decline it on My schedule", str(MY_SCHEDULE))]
+        if rostering.open_swap(assignment):
+            return [("Your swap request is open on My schedule", str(MY_SCHEDULE))]
+        return [
+            (
+                f"Ask for a swap: {assignment.part} at {assignment.service}",
+                rostering.swap_url(assignment),
+            )
+        ]
 
     def form_valid(self, form):
         data = form.cleaned_data
@@ -106,6 +147,7 @@ class BlackoutCreateView(TeamsMixin, FormPageMixin, FormView):
                 self.request.user, data["starts_on"], data["ends_on"], data["note"]
             )
         except rostering.RosterRefused as refused:
+            self.conflict = refused.assignment
             form.add_error(None, str(refused))
             return self.form_invalid(form)
         messages.success(
@@ -114,7 +156,7 @@ class BlackoutCreateView(TeamsMixin, FormPageMixin, FormView):
         return super().form_valid(form)
 
 
-class BlackoutDeleteView(TeamsMixin, View):
+class BlackoutDeleteView(TeamMemberMixin, View):
     def post(self, request, pk):
         blackout = get_object_or_404(BlackoutDate, pk=pk, person=request.user)
         rostering.remove_blackout(blackout, request.user)
@@ -144,6 +186,104 @@ class ReplyView(TeamsMixin, View):
         if request.POST.get("back") == "service":
             return redirect(service_url(assignment.service))
         return redirect(MY_SCHEDULE)
+
+
+# --- Swap Requests --------------------------------------------------------------
+
+
+class SwapRequestView(TeamMemberMixin, FormPageMixin, FormView):
+    """Ask to be replaced in one of your own assignments."""
+
+    form_class = SwapRequestForm
+    page_title = "Ask for a swap"
+    submit_label = "Ask for a swap"
+    success_url = MY_SCHEDULE
+    cancel_url = MY_SCHEDULE
+
+    @cached_property
+    def assignment(self):
+        return get_object_or_404(
+            Assignment.objects.select_related("service", "part").prefetch_related(
+                "swap_requests"
+            ),
+            public_id=self.kwargs["public_id"],
+            person=self.request.user,
+        )
+
+    def get_context_data(self, **kwargs):
+        assignment = self.assignment
+        refusal = rostering.swap_refusal(assignment, self.request.user)
+        self.intro = refusal or (
+            f"{assignment.part} at {assignment.service}. Anyone who has the part, "
+            "isn't blacked out that day and isn't already on it can take your "
+            "place; the first to take it gets it. You can withdraw until then."
+        )
+        return super().get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        try:
+            rostering.request_swap(self.assignment, self.request.user)
+        except rostering.RosterRefused as refused:
+            messages.error(self.request, str(refused))
+        else:
+            messages.success(
+                self.request,
+                f"You asked for a swap: {self.assignment.part} at "
+                f"{self.assignment.service}.",
+            )
+        return redirect(MY_SCHEDULE)
+
+
+class SwapActionView(TeamMemberMixin, View):
+    """Withdraw your own open request, or take someone else's."""
+
+    def post(self, request, public_id, action):
+        swap = get_object_or_404(
+            SwapRequest.objects.select_related("service", "part"), public_id=public_id
+        )
+        try:
+            if action == "withdraw":
+                rostering.withdraw_swap(swap, request.user)
+                done = f"You withdrew your swap request for {swap.part}."
+            elif action == "take":
+                rostering.take_swap(swap, request.user)
+                done = f"You took {swap.part} at {swap.service}."
+            else:
+                raise Http404("Unknown action.")
+        except rostering.RosterRefused as refused:
+            messages.error(request, str(refused))
+        else:
+            messages.success(request, done)
+        return redirect(MY_SCHEDULE)
+
+
+# --- Notifications ----------------------------------------------------------------
+
+
+class NotificationListView(TeamsPageMixin, ListView):
+    template_name = "teams/notifications.html"
+    paginate_by = 25
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)
+
+
+class NotificationOpenView(TeamsMixin, View):
+    """Mark one of your own Notifications read and go where it points."""
+
+    def post(self, request, pk):
+        notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+        notifying.mark_read(notification)
+        url = notification.url
+        if url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+            return redirect(url)
+        return redirect(NOTIFICATIONS)
+
+
+class NotificationsReadView(TeamsMixin, View):
+    def post(self, request):
+        notifying.mark_all_read(request.user)
+        return redirect(NOTIFICATIONS)
 
 
 # --- The service team ---------------------------------------------------------
@@ -257,8 +397,7 @@ class RosterView(TeamsPageMixin, PermissionRequiredMixin, ListView):
 
     def get_queryset(self):
         return (
-            get_user_model()
-            .objects.filter(is_active=True)
+            rostering.team_people()
             .select_related("team_profile")
             .prefetch_related("team_profile__parts")
             .order_by("first_name", "last_name", "username")
@@ -273,7 +412,7 @@ class PersonPartsView(TeamsMixin, PermissionRequiredMixin, FormPageMixin, FormVi
 
     @cached_property
     def person(self):
-        return get_object_or_404(get_user_model(), pk=self.kwargs["pk"], is_active=True)
+        return get_object_or_404(rostering.team_people(), pk=self.kwargs["pk"])
 
     def get_page_title(self):
         return f"Team parts: {display_name(self.person)}"

@@ -15,6 +15,7 @@
           <span class="text-body-secondary">{{ assignment.part }}:</span>
           <span{% if assignment.reply == 'declined' %} class="text-decoration-line-through"{% endif %}>{{ assignment.person|person_name }}</span>
           {% include "teams/includes/reply_badge.html" %}
+          {% if assignment.open_swap_request %}<span class="badge text-bg-warning">Swap requested</span>{% endif %}
           {% if assignment.reply == 'declined' and perms.teams.add_assignment and not team_closed %}<span class="text-danger">Needs filling</span>{% endif %}
           {% if assignment.person_id == user.pk and assignment.reply == 'pending' and not team_closed %}
             {% include "teams/includes/reply_buttons.html" with back="service" %}

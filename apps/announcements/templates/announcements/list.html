@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load people %}
+
+{% block title %}Announcements{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Announcements</h1>
+    {% if perms.announcements.add_announcement %}<a href="{% url 'announcements:create' %}" class="btn btn-primary">Post an announcement</a>{% endif %}
+  </div>
+
+  {% for announcement in object_list %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+          <h2 class="h5 mb-1">{{ announcement.title }}</h2>
+          {% if announcement.author_id == user.pk %}
+            <form method="post" action="{% url 'announcements:archive' public_id=announcement.public_id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-secondary">Archive</button>
+            </form>
+          {% endif %}
+        </div>
+        <p class="small text-body-secondary mb-2">
+          {{ announcement.author|person_name }} · {{ announcement.created_at|date:"M j, Y · g:i A" }} ·
+          {% if announcement.service %}To the team of <a href="{% url 'worship:service' public_id=announcement.service.public_id %}">{{ announcement.service }}</a>{% else %}To everyone{% endif %}
+        </p>
+        <p class="mb-0">{{ announcement.body|linebreaksbr }}</p>
+      </div>
+    </div>
+  {% empty %}
+    <p class="text-body-secondary">There are no announcements.</p>
+  {% endfor %}
+  {% include "includes/pagination.html" %}
+{% endblock %}

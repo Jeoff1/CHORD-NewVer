@@ -2,6 +2,58 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-23: Phase 8 part B: Swap Requests, Notifications, Announcements; the team is a permission
+
+On branch `phase-8-teams`. Phase 8 is done.
+
+- **Recorded:** the project owner's answers to the part A questions in
+  [[Design-Decisions]] (Phase 8: "Approved after part A", with the team
+  permission change, and "Swap Requests"; notifications on cancelled or
+  past services and the unread count added), the [[workflow-spec]] (Teams
+  and Announcements sections), the [[Glossary]] (Team; Team Profile, Swap
+  Request and Notification updated) and the [[Development-Plan]] (part B
+  ticked, "done when" updated, Phase 8 Done).
+- **Part A fixes:**
+  - only holders of `teams.view_assignment` have a Team Profile or
+    Blackout Dates: `TeamMemberMixin` gates My team parts and the
+    Blackout pages; `candidates()`, the Roster and editing someone's parts
+    use `team_people()`; `assign`, `set_parts` and `add_blackout` refuse
+    anyone else. People off the team who open My schedule are sent to
+    their Notifications;
+  - a test of the playlist fix on the private path (no Church Spotify
+    Account): a 403 on another owner's playlist makes a new private one on
+    the confirmer's account and stores neither ID.
+- **Swap Requests** (`SwapRequest`, `rostering.request_swap`,
+  `withdraw_swap`, `swaps_open_to`, `take_swap`): asked for by someone
+  Pending or Accepted on a future open service, withdrawn while open,
+  taken by the first eligible person as Accepted under a row lock; the
+  original assignment ends; the audit trail records both people. Declining
+  or removing an assignment withdraws its open request. The blackout
+  refusal links to asking for the swap.
+- **Notifications** (`Notification`, `notifying.py`): confirmation and
+  every edit of a confirmed lineup reach the service's Pending and
+  Accepted people, never the person who did it; being assigned reaches the
+  person. Nothing for cancelled or past services or drafts. Worship sends
+  a new signal, `apps.worship.signals.lineup_changed`, so it doesn't
+  import Teams. Unread count in the navigation; open one or mark all read.
+- **Announcements** (new app `apps/announcements`): to everyone signed in
+  or to one service's team (only while Teams is on), posted with
+  `announcements.add_announcement` (Pastoral Staff and Worship Leader by
+  default), archived by the author.
+- **Tests:** new `apps/teams/tests/test_swaps.py` (including two people
+  taking one swap at once, on two database connections),
+  `test_notifications.py` and `apps/announcements/tests/test_announcements.py`;
+  team-permission tests in `test_rostering.py` and `test_views.py`; the
+  private-path playlist test in `test_church_spotify.py`.
+- **Notes:** [[Teams]] (rewritten), [[Announcements]] (new),
+  [[Code-Conventions]] (signals between Modules, row locks, lock tests),
+  [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 858
+  tests passed (50 new), with 97% coverage (`teams/rostering.py` 99%,
+  `teams/notifying.py` 95%, `teams/views.py` 98%, `announcements/views.py`
+  93%). Not yet clicked through by the user.
+
 ## 2026-11-23: Phase 8 part A: Team Parts, Team Profiles, Assignments, Blackout Dates; playlist 403 fix
 
 On branch `phase-8-teams`. Part A of Phase 8 is built; part B (swaps,

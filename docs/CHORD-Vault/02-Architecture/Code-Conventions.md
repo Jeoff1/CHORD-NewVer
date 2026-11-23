@@ -6,7 +6,7 @@ yet.
 
 | Topic          | Convention                                                                                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| App layout     | Each Module is one or more Django apps in `apps/` (Worship is `apps/worship` and `apps/songs`; Teams is `apps/teams`); the Module registry lists them. Shared code is in `apps/core`, and the audit trail in `apps/audit`. |
+| App layout     | Each Module is one or more Django apps in `apps/` (Worship is `apps/worship` and `apps/songs`; Teams is `apps/teams`; Announcements is `apps/announcements`); the Module registry lists them. Shared code is in `apps/core`, and the audit trail in `apps/audit`. |
 | Shared models  | `apps/core/models.py`: `TimeStampedModel` (created/updated) and `PublicIdModel` (UUID used in URLs, so IDs can't be guessed).    |
 | Business rules | Plain functions outside the views, tested directly. A small app keeps them in `services.py` (e.g. `apps/members/services.py`); Teams keeps its rules in `apps/teams/rostering.py`. The worship apps name each file for what it decides (e.g. `apps/worship/scheduling.py`), because "service" there means a Worship Service. |
 | Large apps     | `apps/worship` splits `models/` and `views/` into one file per area (`schedule.py`, …); `models/__init__.py` exports every model. |
@@ -23,6 +23,8 @@ yet.
 | HTMX requests  | `base.html` sends the CSRF token in every HTMX request header.                                                                   |
 | Page scripts   | A page's own script lives in `apps/<app>/static/<app>/` and is loaded with `defer` from its include (e.g. `songs/player.js`). It reads the CSRF token from the body's `hx-headers`. |
 | Deleting       | Users are deactivated and members archived, never deleted. Church-edited list items and Custom Fields are switched off. Worship services are cancelled, not deleted. |
+| Between Modules | A Module never imports a Module that builds on it. It sends a signal instead, which the other Module connects to in its `AppConfig.ready()`: Worship sends `apps.worship.signals.lineup_changed`, and Teams turns it into Notifications. |
+| Row locks      | When two people can race for one thing (taking a swap, or assigning someone while they add a blackout), lock the row with `select_for_update` inside `transaction.atomic()`, and re-check the rules after the lock. With `select_related` on a nullable foreign key, lock only the row itself: `select_for_update(of=("self",))`. |
 | Dates and times | Stored in UTC and shown in the church's time zone, which the middleware activates for each request. Code that runs outside a request (rules, the worker) asks `scheduling.church_time_zone()`. |
 | Files          | Only the church logo is public (`media/church/`). Personal files use private storage (see below). |
 
@@ -187,6 +189,12 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   invented or public domain.
 - Tests that upload files use `override_settings(MEDIA_ROOT=...)` or
   `override_settings(PRIVATE_MEDIA_ROOT=...)` with a temporary folder.
+- A test that two people at once really wait on a row lock needs committed
+  data, so it uses `TransactionTestCase` with `serialized_rollback = True`
+  (which restores the seeded rows afterwards) and two threads, each
+  closing its database connection when done. Pause the first inside the
+  lock by patching a function it calls after locking
+  (`apps/teams/tests/test_swaps.py`, `SimultaneousTakeTests`).
 - Every view gets tests for both an allowed user and a refused user.
 - `apps/core/tests/test_denomination_free.py` enforces
   [[0001-configure-behavior-not-identity]]. It fails if "denomination",
