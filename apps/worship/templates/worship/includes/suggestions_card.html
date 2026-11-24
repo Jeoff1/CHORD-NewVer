@@ -1,0 +1,17 @@
+{% load church %}
+{# Song suggestions on the service page (Phase 9A A7): open while there is no lineup, folded once one is saved. The panel itself is worship/includes/suggestions.html. #}
+{% if lineup %}
+  {% label "lineup" as lineup_word %}
+  <section class="card shadow-sm" aria-labelledby="suggestions-title">
+    <div class="card-body">
+      <div class="chord-card-head"><h2 id="suggestions-title" class="card-title">Song suggestions</h2></div>
+      <p class="text-body-secondary mb-2">{% if ranked_count %}{{ ranked_count }} song{{ ranked_count|pluralize }} ranked{% if latest_run.finished_at %} on {{ latest_run.finished_at|date:"M j" }}{% endif %}.{% else %}No suggestions kept.{% endif %} Folded while the {{ lineup_word|lower }} is saved.</p>
+      <details>
+        <summary class="btn btn-outline-secondary chord-btn">Show</summary>
+        <div class="mt-3">{% include "worship/includes/suggestions.html" %}</div>
+      </details>
+    </div>
+  </section>
+{% else %}
+  {% include "worship/includes/suggestions.html" %}
+{% endif %}

@@ -1,93 +1,80 @@
 {% extends "base.html" %}
-{% load church %}
+{% load church ui %}
 
 {% block title %}{{ service }}{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-      {% url 'worship:home' as back_url %}{% label "worship_service" plural=True as back_label %}{% include "includes/back_link.html" with url=back_url label=back_label %}
-      <h1 class="h3 mb-1{% if service.is_cancelled %} text-decoration-line-through{% endif %}">{{ service.name }}</h1>
-      <div class="text-body-secondary">{{ service.starts_at|date:"l, F j, Y · g:i A" }}</div>
-      {% if service.is_cancelled %}<span class="badge text-bg-secondary mt-1">Cancelled</span>{% endif %}
-    </div>
-    {% if perms.worship.change_worshipservice %}
-      <a href="{% url 'worship:service_update' public_id=service.public_id %}" class="btn btn-outline-primary">Edit</a>
+  {% url 'worship:home' as back_url %}{% label "worship_service" plural=True as back_label %}{% include "includes/back_link.html" with url=back_url label="Back to "|add:back_label %}
+  {% with when=service.starts_at|date:"l, F j, Y" start=service.starts_at|date:"g:i A" end=service.ends_at|date:"g:i A" %}
+    {% if service.rehearsal_at %}
+      {% with rehearsal=service.rehearsal_at|date:"D g:i A" %}{% with subtitle=when|add:" · "|add:start|add:" to "|add:end|add:" · Rehearsal "|add:rehearsal %}
+        {% page_header service.name subtitle=subtitle %}
+          {% if perms.worship.change_worshipservice %}<a href="{% url 'worship:service_update' public_id=service.public_id %}" class="btn btn-primary">Edit {{ labels.worship_service|lower }}</a>{% endif %}
+        {% endpage_header %}
+      {% endwith %}{% endwith %}
+    {% else %}
+      {% with subtitle=when|add:" · "|add:start|add:" to "|add:end %}
+        {% page_header service.name subtitle=subtitle %}
+          {% if perms.worship.change_worshipservice %}<a href="{% url 'worship:service_update' public_id=service.public_id %}" class="btn btn-primary">Edit {{ labels.worship_service|lower }}</a>{% endif %}
+        {% endpage_header %}
+      {% endwith %}
     {% endif %}
-  </div>
+  {% endwith %}
+  {% if service.is_cancelled %}<p class="mt-n2">{% include "includes/status_pill.html" with status="cancelled" %}</p>{% endif %}
 
-  <div class="row g-3">
-    <div class="col-lg-8">
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start gap-2">
-            <h2 class="h5">Theme</h2>
-            {% if perms.worship.change_theme %}
-              <a href="{% url 'worship:theme' public_id=service.public_id %}" class="btn btn-sm {% if theme %}btn-outline-primary{% else %}btn-primary{% endif %}">{% if theme %}Edit theme{% else %}Post the theme{% endif %}</a>
-            {% endif %}
-          </div>
-          {% if theme %}
-            <p class="fs-5 mb-1">{{ theme.title }}</p>
-            <p class="text-body-secondary mb-2">
-              {% if theme.scripture %}{{ theme.scripture }}{% endif %}
-              {% if theme.series %}{% if theme.scripture %} · {% endif %}{% label "sermon" %} series: {{ theme.series }}{% endif %}
-            </p>
-            {% if can_plan and theme.notes %}
-              <h3 class="h6 mt-3">{% label "sermon" %} notes</h3>
-              <div class="border rounded p-2 bg-body-tertiary small" style="max-height: 16rem; overflow-y: auto">{{ theme.notes|linebreaksbr }}</div>
-            {% endif %}
-          {% else %}
-            <p class="text-body-secondary mb-0">The theme hasn't been posted yet. Song suggestions start from it.</p>
-          {% endif %}
-        </div>
-      </div>
+  {% if steps %}{% include "worship/includes/planning_steps.html" %}{% endif %}
 
-      {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
-
-      {% if can_suggest %}{% include "worship/includes/suggestions.html" %}{% endif %}
-
-      {% if service.notes %}
-        <div class="card shadow-sm mb-3">
-          <div class="card-body">
-            <h2 class="h5">Notes</h2>
-            <p class="mb-0">{{ service.notes|linebreaksbr }}</p>
-          </div>
-        </div>
+  <div class="chord-columns">
+    <div class="chord-main">
+      {% comment %}The next step's card comes first (Phase 9A A7); without a step bar, the theme leads.{% endcomment %}
+      {% if first_card == "lineup" %}
+        {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
+        {% include "worship/includes/theme_card.html" %}
+        {% if can_suggest %}{% include "worship/includes/suggestions_card.html" %}{% endif %}
+      {% elif first_card == "suggestions" %}
+        {% if can_suggest %}{% include "worship/includes/suggestions_card.html" %}{% endif %}
+        {% include "worship/includes/theme_card.html" %}
+        {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
+      {% else %}
+        {% include "worship/includes/theme_card.html" %}
+        {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
+        {% if can_suggest %}{% include "worship/includes/suggestions_card.html" %}{% endif %}
       {% endif %}
     </div>
 
-    <div class="col-lg-4">
-      <div class="card shadow-sm mb-3">
+    <div class="chord-side">
+      {% if show_team %}{% include "teams/includes/service_team.html" %}{% endif %}
+
+      <section class="card shadow-sm" aria-labelledby="details-title">
         <div class="card-body">
-          <h2 class="h5">Details</h2>
+          <div class="chord-card-head"><h2 id="details-title" class="card-title">Details</h2></div>
           <dl class="mb-0">
             <dt>Template</dt><dd>{{ service.template }}</dd>
             <dt>Booked</dt><dd>{{ service.starts_at|date:"g:i A" }} to {{ service.ends_at|date:"g:i A" }}</dd>
-            <dt>Rehearsal</dt><dd class="mb-0">{{ service.rehearsal_at|date:"D, M j, Y · g:i A"|default:"Not set" }}</dd>
+            <dt>Notes</dt><dd class="mb-0">{{ service.notes|linebreaksbr|default:"None" }}</dd>
           </dl>
         </div>
-      </div>
-
-      {% if show_team %}{% include "teams/includes/service_team.html" %}{% endif %}
+      </section>
 
       {% if perms.worship.record_attendance or service.attendance is not None %}
-        <div class="card shadow-sm mb-3">
+        <section class="card shadow-sm" aria-labelledby="headcount-title">
           <div class="card-body">
-            <h2 class="h5">Attendance</h2>
+            <div class="chord-card-head"><h2 id="headcount-title" class="card-title">Headcount</h2></div>
             {% if perms.worship.record_attendance %}
+              <p class="small text-body-secondary">Recorded after the {{ labels.worship_service|lower }}.</p>
               <form method="post" action="{% url 'worship:attendance' public_id=service.public_id %}" class="d-flex gap-2 align-items-end">
                 {% csrf_token %}
-                <div>
-                  <label for="{{ attendance_form.attendance.id_for_label }}" class="form-label small mb-1">Headcount</label>
+                <div class="flex-grow-1">
+                  <label for="{{ attendance_form.attendance.id_for_label }}" class="form-label small mb-1">People</label>
                   {{ attendance_form.attendance }}
                 </div>
-                <button type="submit" class="btn btn-outline-primary">Save</button>
+                <button type="submit" class="btn btn-outline-secondary chord-btn">Save</button>
               </form>
             {% else %}
               <p class="mb-0">{{ service.attendance }} {% if service.attendance == 1 %}person{% else %}people{% endif %}</p>
             {% endif %}
           </div>
-        </div>
+        </section>
       {% endif %}
 
       {% block side %}{% endblock %}
