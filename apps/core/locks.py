@@ -14,6 +14,8 @@ from contextlib import contextmanager
 from django.db import connection as default_connection
 
 SEARCH_WORKER = "chord.search-worker"
+# Booking a time on the calendar (Phase 9A, A5).
+BOOKINGS = "chord.bookings"
 
 
 class LockHeld(Exception):
@@ -41,3 +43,12 @@ def advisory_lock(name, connection=None):
     finally:
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_advisory_unlock(%s)", [key])
+
+
+def wait_for_transaction_lock(name, connection=None):
+    """Wait for the advisory lock ``name`` and hold it until the current
+    transaction ends. Call it inside ``transaction.atomic()``: two people
+    booking the calendar at once take turns (``BOOKINGS``)."""
+    connection = connection or default_connection
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(%s)", [lock_key(name)])

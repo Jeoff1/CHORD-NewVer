@@ -154,7 +154,7 @@ class MySchedulePageTests(TeamsViewTestCase):
         page = self.client.get(reverse("home"))
         self.assertNotContains(page, ">My schedule</a>")
         self.assertRedirects(
-            self.client.get(MY_SCHEDULE), reverse("teams:notifications")
+            self.client.get(MY_SCHEDULE), reverse("notifications:list")
         )
 
     def test_adding_a_blackout_over_an_assignment_shows_the_refusal(self):

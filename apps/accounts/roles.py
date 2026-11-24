@@ -77,6 +77,9 @@ DEFAULT_ROLE_PERMISSIONS = {
         "teams.view_assignment",
         # Announcements (Phase 8)
         "announcements.add_announcement",
+        # Occasions (Phase 9A, A5): approving is a permission, never a role
+        "worship.request_occasion",
+        "worship.approve_occasion",
     ],
     "worship_leader": [
         "members.view_member",
@@ -127,6 +130,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         "teams.delete_assignment",
         # Announcements (Phase 8)
         "announcements.add_announcement",
+        # Occasions (Phase 9A, A5)
+        "worship.request_occasion",
     ],
     "team_member": [
         # Worship schedule (Phase 3)
@@ -148,6 +153,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         # Announcements to everyone and their own member record need no
         # permission.
         "worship.view_worshipservice",
+        # Occasions (Phase 9A, A5): they ask; they see others only as "Booked"
+        "worship.request_occasion",
     ],
 }
 

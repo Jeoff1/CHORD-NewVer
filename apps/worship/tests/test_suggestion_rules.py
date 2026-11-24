@@ -239,7 +239,7 @@ class SequencingTests(TestCase):
     def setUp(self):
         # The seeded template: Opening (upbeat), Praise (mid-tempo),
         # Worship (slow), Response (slow).
-        self.slots = list(ServiceTemplate.objects.get().slots.all())
+        self.slots = list(ServiceTemplate.objects.active().get().slots.all())
 
     def placed(self, ranked, slots=None, feel_weight=0.15):
         return {

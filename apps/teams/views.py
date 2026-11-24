@@ -1,5 +1,5 @@
-"""Teams pages: My schedule, Team Profiles, Blackout Dates, Swap Requests,
-Notifications and the service team (Design-Decisions, Phase 8)."""
+"""Teams pages: My schedule, Team Profiles, Blackout Dates, Swap Requests
+and the service team (Design-Decisions, Phase 8)."""
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -7,7 +7,6 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import FormView, ListView, TemplateView
 
@@ -17,12 +16,12 @@ from apps.core.views import FormPageMixin
 from apps.worship.models import WorshipService
 from apps.worship.views.base import service_url
 
-from . import notifying, rostering
+from . import rostering
 from .forms import AssignForm, BlackoutForm, PartsForm, SwapRequestForm
-from .models import Assignment, BlackoutDate, Notification, SwapRequest, TeamPart
+from .models import Assignment, BlackoutDate, SwapRequest, TeamPart
 
 MY_SCHEDULE = reverse_lazy("teams:my_schedule")
-NOTIFICATIONS = reverse_lazy("teams:notifications")
+NOTIFICATIONS = reverse_lazy("notifications:list")
 
 
 class TeamsMixin(ModuleRequiredMixin, LoginRequiredMixin):
@@ -42,7 +41,6 @@ def teams_nav(request):
     links = []
     if user.has_perm(rostering.TEAM_PERMISSION):
         links.append(("My schedule", reverse("teams:my_schedule")))
-    links.append(("Notifications", reverse("teams:notifications")))
     if user.has_perm("teams.view_teamprofile"):
         links.append(("Roster", reverse("teams:roster")))
     if user.has_perm("teams.view_teampart"):
@@ -255,35 +253,6 @@ class SwapActionView(TeamMemberMixin, View):
         else:
             messages.success(request, done)
         return redirect(MY_SCHEDULE)
-
-
-# --- Notifications ----------------------------------------------------------------
-
-
-class NotificationListView(TeamsPageMixin, ListView):
-    template_name = "teams/notifications.html"
-    paginate_by = 25
-
-    def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user)
-
-
-class NotificationOpenView(TeamsMixin, View):
-    """Mark one of your own Notifications read and go where it points."""
-
-    def post(self, request, pk):
-        notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
-        notifying.mark_read(notification)
-        url = notification.url
-        if url and url_has_allowed_host_and_scheme(url, allowed_hosts=None):
-            return redirect(url)
-        return redirect(NOTIFICATIONS)
-
-
-class NotificationsReadView(TeamsMixin, View):
-    def post(self, request):
-        notifying.mark_all_read(request.user)
-        return redirect(NOTIFICATIONS)
 
 
 # --- The service team ---------------------------------------------------------

@@ -29,7 +29,7 @@ REFUSED = (403, 404)
 
 
 class ChurchMemberRoleTests(TestCase):
-    def test_role_is_seeded_with_only_the_schedule(self):
+    def test_role_is_seeded_with_the_schedule_and_occasion_requests(self):
         role = Role.objects.get(key="church_member")
         self.assertEqual(role.name, "Church Member")
         self.assertEqual(
@@ -37,11 +37,11 @@ class ChurchMemberRoleTests(TestCase):
                 f"{p.content_type.app_label}.{p.codename}"
                 for p in role.permissions.all()
             },
-            {"worship.view_worshipservice"},
+            {"worship.view_worshipservice", "worship.request_occasion"},
         )
         self.assertEqual(
             roles.DEFAULT_ROLE_PERMISSIONS["church_member"],
-            ["worship.view_worshipservice"],
+            ["worship.view_worshipservice", "worship.request_occasion"],
         )
 
     def test_role_is_editable_like_any_role(self):
@@ -157,7 +157,7 @@ class ChurchMemberPagesTests(TestCase):
 
     def test_my_schedule_sends_it_to_notifications(self):
         response = self.client.get(reverse("teams:my_schedule"))
-        self.assertRedirects(response, reverse("teams:notifications"))
+        self.assertRedirects(response, reverse("notifications:list"))
 
 
 class ModuleNavigationTests(TestCase):

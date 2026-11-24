@@ -515,6 +515,63 @@ playback and the Lineup Playlist** ([[Design-Decisions]], Phase 7):
   `apps/songs/tests/test_spotify_limits.py` (web requests fail fast; the
   worker's single wait).
 
+Built in Phase 9A, A5 (2026-11-24), **occasions** ([[0012-occasion-services]];
+[[Design-Decisions]], "Adviser comments, 24 Nov"):
+
+- **Booked time:** every Service Template has a **usual length**
+  (`length_minutes`, 15 minutes to a day, 90 by default), and every
+  service books the time from its start for that long
+  (`WorshipService.ends_at`). Shown on the service page.
+- **Occasion:** a template marked `is_occasion` (a check box on the
+  template form; an "Occasion" badge in the list). Two examples are seeded
+  **switched off**, "Wedding" (120 minutes) and "Funeral" (90 minutes),
+  each with three song slots (migration `0013_seed_occasion_templates`;
+  the owner's choice). The church switches on, renames or edits them, or
+  adds its own.
+- An occasion's service also records **For** (who it is for, as text),
+  the **Officiant** (a user) and the **Venue**; they are on the service
+  form and in the audit trail. Its lineup works as for any service.
+- **Occasion Request** (`models/occasions.py`, `OccasionRequest`): who
+  asked, the occasion template, the preferred date and start time, For, a
+  note for the approvers, and its status: **Pending**, then **Approved**
+  (linked to the service it created), **Declined** (with the reason) or
+  **Withdrawn**. Every change is in the audit trail.
+- **Rules** (`occasions.py`):
+  - asking needs `worship.request_occasion`, an active occasion template
+    and a time that hasn't passed;
+  - **overlaps are refused**: a request, or an approval, whose booked
+    time overlaps that of a service that isn't cancelled; back-to-back
+    times are fine;
+  - approving needs `worship.approve_occasion`; the approver may change the
+    date and time, and set the name, officiant and venue. Approvals take a
+    database lock (`apps/core/locks.py`, `BOOKINGS`), so two approvals
+    can't take the same time;
+  - declining needs a reason; only the requester withdraws, and only
+    while Pending; a decided request can't be decided again;
+  - the requester gets a **Notification** when it is approved or declined,
+    linking to their requests, even while Teams is off.
+- **Who sees an occasion** (`can_see_occasions`): people holding any of
+  `worship.change_worshipservice`, `worship.view_lineup`,
+  `worship.approve_occasion` or `worship.record_attendance` (those who
+  plan, play at, approve or count it). Everyone else, such as Church
+  Members, sees it on the calendar only as "<start> to <end> Booked"
+  (nothing for a cancelled one); it is left out of their schedule list
+  and search, and its pages are a 404 for them (`ServiceMixin`). A clash
+  is named only for people who may see it.
+- **Screens:** "Request an occasion" (`/worship/occasions/request/`, on
+  the schedule and calendar); **My requests** (`/worship/occasions/`), with
+  Withdraw; for approvers, **Occasion requests**
+  (`/worship/occasions/requests/`: Pending, then the latest 50 decided) and
+  each request's page with Approve and Decline. The Worship tabs show
+  **Occasions**, with the Pending count for approvers
+  (`context_processors.occasions`).
+- Tests: `apps/worship/tests/test_occasions.py` (the seeded examples, the
+  default permissions, requests, overlaps and back-to-back times, a
+  cancelled service, the clash message, approving, moving the time,
+  refused approvals, declining, withdrawing, notifications with Teams off,
+  the pages and who may open them, "Booked" for Church Members, the
+  template form, Worship off).
+
 ## Permissions
 
 | Permission                                   | Allows                                   |
@@ -547,6 +604,8 @@ playback and the Lineup Playlist** ([[Design-Decisions]], Phase 7):
 | `worship.change_lineup` or `worship.finalize_lineup` | Save to Spotify; seeing a personal playlist's line |
 | `church.change_churchprofile`                | Connecting and disconnecting the Church Spotify Account |
 | (signed in)                                  | Connecting one's own Spotify account; playback |
+| `worship.request_occasion`                   | Requesting an occasion; My requests      |
+| `worship.approve_occasion`                   | Approving and declining Occasion Requests; seeing occasions |
 
 Default roles ([[Accounts]]):
 - **Pastoral Staff** schedule services, post themes, record headcounts and
@@ -562,10 +621,14 @@ Default roles ([[Accounts]]):
   drafts or full lyrics. Worship Leader and Pastoral Staff also hold the
   chord sheet permissions, including approving, and `view_lyrics`.
 - **Office Staff** see the schedule and record headcounts.
+- **Church Member** sees the schedule (occasions only as "Booked") and
+  requests occasions. Pastoral Staff and Worship Leader may request too;
+  only **Pastoral Staff** approve (`approve_occasion`).
 
 ## Church settings this module depends on
 
-- Service Templates and their Song Slots
+- Service Templates and their Song Slots, usual length, and whether each
+  is an occasion (the examples "Wedding" and "Funeral" start switched off)
 - Series
 - Theme Tags and Trusted Artists
 - Worship Check Settings: pass mark, the rule for artists not on the
@@ -576,6 +639,8 @@ Default roles ([[Accounts]]):
   ranked songs kept
 - The "worship service", "sermon", "lineup" and "pastor" Labels
 - Who holds the final say: whichever Roles hold `worship.finalize_lineup`
+- Who may request and approve occasions: whichever Roles hold
+  `worship.request_occasion` and `worship.approve_occasion`
 - The church's time zone (Church Profile)
 - The Church Spotify Account (optional; church settings, Spotify tab)
 - Installation settings in `.env`: `SPOTIFY_CLIENT_ID`,

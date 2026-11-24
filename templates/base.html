@@ -30,11 +30,9 @@
             {% endfor %}
           </ul>
           <ul class="navbar-nav">
-            {% if "teams" in enabled_modules %}
-              <li class="nav-item">
-                <a class="nav-link" href="{% url 'teams:notifications' %}">Notifications{% if unread_notifications %} <span class="badge rounded-pill text-bg-danger" aria-label="{{ unread_notifications }} unread">{{ unread_notifications }}</span>{% endif %}</a>
-              </li>
-            {% endif %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'notifications:list' %}">Notifications{% if unread_notifications %} <span class="badge rounded-pill text-bg-danger" aria-label="{{ unread_notifications }} unread">{{ unread_notifications }}</span>{% endif %}</a>
+            </li>
             {% if perms.church.change_churchprofile or perms.accounts.view_user or perms.accounts.view_role or perms.audit.view_auditevent %}
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administration</a>

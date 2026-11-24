@@ -8,6 +8,7 @@ from apps.songs.models import ThemeTag
 
 from .models import (
     LineupItem,
+    OccasionRequest,
     Season,
     SermonSeries,
     ServiceTemplate,
@@ -45,6 +46,9 @@ class ServiceForm(forms.ModelForm):
             "rehearsal_at",
             "notes",
             "is_cancelled",
+            "occasion_for",
+            "officiant",
+            "venue",
         ]
         widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
         help_texts = {
@@ -58,6 +62,7 @@ class ServiceForm(forms.ModelForm):
         self.fields["template"].queryset = ServiceTemplate.objects.usable(
             self.instance.template_id
         )
+        self.fields["officiant"].queryset = officiants(self.instance.officiant_id)
         if not self.instance.pk:
             del self.fields["is_cancelled"]
             templates = list(self.fields["template"].queryset[:2])
@@ -73,6 +78,17 @@ class ServiceForm(forms.ModelForm):
         if starts_at and rehearsal_at and rehearsal_at > starts_at:
             self.add_error("rehearsal_at", "The rehearsal must be before the service.")
         return cleaned
+
+
+def officiants(current=None):
+    """Active users, plus the one already chosen."""
+    from django.contrib.auth import get_user_model
+
+    return (
+        get_user_model()
+        .objects.filter(Q(is_active=True) | Q(pk=current))
+        .order_by("first_name", "last_name", "username")
+    )
 
 
 class ThemeForm(forms.ModelForm):
@@ -105,12 +121,25 @@ class TemplateForm(forms.ModelForm):
             "description",
             "weekday",
             "start_time",
+            "length_minutes",
+            "is_occasion",
             "sort_order",
             "is_active",
         ]
         widgets = {
             "start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M")
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["length_minutes"].required = False
+
+    def clean_length_minutes(self):
+        """Left blank, a template keeps its length (90 minutes when new)."""
+        value = self.cleaned_data.get("length_minutes")
+        if value is None:
+            return self.instance.length_minutes
+        return value
 
     def clean(self):
         cleaned = super().clean()
@@ -154,6 +183,55 @@ class ScheduleAheadForm(forms.Form):
         self.fields["template"].queryset = ServiceTemplate.objects.active().filter(
             weekday__isnull=False, start_time__isnull=False
         )
+
+
+# --- Occasions -----------------------------------------------------------------
+
+
+class OccasionRequestForm(forms.ModelForm):
+    """Ask for an Occasion (Phase 9A, A5)."""
+
+    starts_at = moment_field(label="Preferred date and start time")
+
+    class Meta:
+        model = OccasionRequest
+        fields = ["template", "starts_at", "occasion_for", "note"]
+        widgets = {"note": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        from .occasions import occasion_templates
+
+        super().__init__(*args, **kwargs)
+        self.fields["template"].queryset = occasion_templates()
+        self.fields["template"].empty_label = None
+        self.fields[
+            "template"
+        ].help_text = "Each takes its usual length on the calendar."
+
+
+class ApproveOccasionForm(forms.Form):
+    """What approving sets on the new service; the date and time may change."""
+
+    starts_at = moment_field(label="Date and start time")
+    name = forms.CharField(
+        max_length=120,
+        required=False,
+        help_text="Leave blank to name it after the occasion and who it is for.",
+    )
+    officiant = forms.ModelChoiceField(queryset=None, required=False)
+    venue = forms.CharField(max_length=200, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["officiant"].queryset = officiants()
+
+
+class DeclineOccasionForm(forms.Form):
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3}),
+        max_length=1000,
+        help_text="The person who asked reads this.",
+    )
 
 
 # --- Song suggestions --------------------------------------------------------

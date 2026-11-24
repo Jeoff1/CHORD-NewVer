@@ -1,6 +1,7 @@
 """Shared pieces for the worship views."""
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -8,6 +9,7 @@ from django.utils.functional import cached_property
 from apps.church.modules import ModuleRequiredMixin
 
 from ..models import WorshipService
+from ..occasions import can_see_occasions
 
 # Settings pages of the Worship Module: (label, permission, URL name). Labels
 # may contain "{sermon}", filled in with the church's word.
@@ -35,10 +37,15 @@ class ServiceMixin(WorshipMixin):
 
     @cached_property
     def service(self):
-        return get_object_or_404(
+        service = get_object_or_404(
             WorshipService.objects.select_related("template"),
             public_id=self.kwargs["public_id"],
         )
+        # An occasion's pages are hidden from people who see only "Booked"
+        # (Phase 9A, A5).
+        if service.is_occasion and not can_see_occasions(self.request.user):
+            raise Http404
+        return service
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

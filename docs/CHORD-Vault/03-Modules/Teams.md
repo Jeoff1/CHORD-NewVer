@@ -4,8 +4,10 @@ status: built
 
 # Teams
 
-Who serves at each worship service, when people can't, swaps between them,
-and in-app Notifications. Module code `teams`; app `apps/teams`. It needs
+Who serves at each worship service, when people can't, and swaps between
+them; it sends in-app Notifications about them (the Notifications
+themselves are core since Phase 9A: `apps/notifications`). Module code
+`teams`; app `apps/teams`. It needs
 [[Worship]]: Teams counts as switched off while Worship is off. Decisions:
 [[Design-Decisions]], Phase 8 (2026-11-23).
 
@@ -73,8 +75,8 @@ Phase 8, parts A and B, built 2026-11-23:
   for people on the team): the person's assignments from today on with
   Accept, Decline, Ask for a swap and Withdraw swap; the swaps they can
   take; their parts; their coming blackout dates.
-- **Notifications** (`Notification`, `apps/teams/notifying.py`), in the
-  app only:
+- **Notifications Teams sends** (`apps/teams/notifying.py`, through
+  `apps.notifications.services.notify`), in the app only:
   - to a service's **Pending and Accepted** assigned people, never the
     person who caused it, when its **lineup is confirmed** or a
     **confirmed lineup is edited** ("edited by <pastor Label> (<name>)"
@@ -87,9 +89,9 @@ Phase 8, parts A and B, built 2026-11-23:
     off;
   - lineup edits collapse: an unread edit note for the same lineup is
     brought up to date (`key`) instead of adding another;
-  - the navigation shows **Notifications** with the unread count
-    (`apps.teams.context_processors.notifications`); the page
-    `/teams/notifications/` opens one (marking it read) or marks all read.
+  - the Notifications page and the unread count are core since Phase 9A
+    (A5): see [[Accounts]] ("Notifications"). Teams' notes stop while
+    Teams is off; the ones already sent stay readable.
 - **Leaving the team** (`leaving.py`, Phase 9A, A2): when a change of
   roles or active status on the user page takes away
   `teams.view_assignment`, the page lists the person's Pending or Accepted
@@ -116,7 +118,7 @@ Permissions (default roles, `apps/accounts/roles.py`):
 | `teams.delete_assignment`   | Yes            |                |             |
 
 Replies, swaps, a person's own Team Profile and Blackout Dates need only
-`teams.view_assignment`; Notifications need none. The Administrator holds
+`teams.view_assignment`. The Administrator holds
 every permission; a church may give `teams.add_assignment` to a pastor per
 user.
 
@@ -150,5 +152,7 @@ Choices made while building part B, for the project owner to confirm:
 - **Unread notes about edits to one lineup collapse** into one, brought up
   to date, so several quick edits don't pile up; confirmations and
   assignments are always new notes.
-- Notifications sit in the Teams module (every one of them is about a
-  service's team), so they're hidden while Teams is off.
+- ~~Notifications sit in the Teams module.~~ Settled 2026-11-24 (Phase
+  9A, A5, the owner's choice): Notifications moved to the core
+  `notifications` app, so they show whichever Modules are on; Teams still
+  sends its own only while it is on.

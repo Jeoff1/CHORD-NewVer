@@ -575,7 +575,18 @@ Special services such as weddings and funerals are now in scope, as part of sche
 
 Tests: marking a template as an occasion; a request is Pending, and approving creates the service with its details; declining needs a reason; withdrawing only while Pending; an overlapping request or approval is refused, and a cancelled service frees its time; a Church Member sees "Booked" and no details; only holders of `worship.approve_occasion` approve; the requester is notified; the Module-off case.
 
-To settle while building (ask the owner): where the in-app notifications live when Teams is off (they are in `apps/teams` today); whether Wedding and Funeral are seeded as switched-off example templates or not at all; whether the requester must have a Member record.
+Settled with the owner on 2026-11-24, while building:
+- **Notifications move out of Teams** into the core `notifications` app, so they work whichever Modules are on. Teams still sends its own only while Teams is on.
+- **Examples included:** "Wedding" and "Funeral" are seeded as occasion templates, switched off.
+- **Signing in is enough** to request: no Member record is needed.
+
+How it was built (2026-11-24):
+- `ServiceTemplate.length_minutes` (15 to 1,440; 90 by default, so existing templates got 90) and `is_occasion`; `WorshipService.occasion_for`, `officiant` and `venue`; the model `OccasionRequest`, whose Meta declares `request_occasion` and `approve_occasion`. Rules in `apps/worship/occasions.py`.
+- **"Who it is for" is a text field**, not names linked to Members: Worship doesn't depend on the Members Module, and nothing in A5 reads the link. Linking can be added later if a report needs it.
+- **Who sees an occasion:** holders of `worship.change_worshipservice`, `worship.view_lineup`, `worship.approve_occasion` or `worship.record_attendance` (people who plan, play at, approve or count it), so the team assigned to a wedding sees it. Everyone else sees "Booked" on the calendar; occasions are left out of their schedule list and search, and an occasion's pages are a 404 for them.
+- Only requests and approvals are checked for overlaps, as decided; services added by hand or scheduled ahead are not. Two approvals take turns under a database lock.
+- Requesting is held by Church Member, Pastoral Staff and Worship Leader by default; approving by Pastoral Staff (and the Administrator). Approvers see the Pending count on the Worship "Occasions" tab, not as a Notification.
+- The request's note is seen only by approvers and, once approved, on the service page by people who may see occasions.
 
 ### A6: Reports
 

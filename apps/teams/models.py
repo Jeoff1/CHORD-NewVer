@@ -182,28 +182,3 @@ class SwapRequest(PublicIdModel, TimeStampedModel):
     @property
     def is_open(self):
         return self.status == self.Status.OPEN
-
-
-class Notification(TimeStampedModel):
-    """A note in the app for one person. Never sent by email or SMS."""
-
-    recipient = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
-    )
-    text = models.CharField(max_length=300)
-    url = models.CharField(max_length=300, blank=True)
-    # A repeat with the same key replaces an unread one instead of piling up.
-    key = models.CharField(max_length=100, blank=True)
-    read_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ["-created_at", "-pk"]
-        default_permissions = ()
-        indexes = [models.Index(fields=["recipient", "read_at"])]
-
-    def __str__(self):
-        return self.text
-
-    @property
-    def is_read(self):
-        return self.read_at is not None

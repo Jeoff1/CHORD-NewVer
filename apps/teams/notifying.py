@@ -1,4 +1,5 @@
-"""In-app Notifications (Design-Decisions, Phase 8). Never email or SMS.
+"""When Teams sends in-app Notifications (Design-Decisions, Phase 8; the
+Notifications themselves are core, in ``apps/notifications``).
 
 They go to a service's assigned people whose reply is Pending or Accepted,
 never to the person who caused them, when:
@@ -15,30 +16,16 @@ gets it updated, not another one.
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.utils import timezone
 
 from apps.church.models import ChurchProfile
 from apps.church.modules import is_enabled
 from apps.core.people import display_name
+from apps.notifications.services import notify
 from apps.worship import signals
 
-from .models import Assignment, Notification
+from .models import Assignment
 
 SERVING = (Assignment.Reply.PENDING, Assignment.Reply.ACCEPTED)
-
-
-def notify(people, text, url="", *, key=""):
-    """Give each of ``people`` a Notification. With ``key``, an unread one
-    with the same key is brought up to date instead."""
-    now = timezone.now()
-    for person in people:
-        updated = 0
-        if key:
-            updated = Notification.objects.filter(
-                recipient=person, key=key, read_at__isnull=True
-            ).update(text=text, url=url, created_at=now, updated_at=now)
-        if not updated:
-            Notification.objects.create(recipient=person, text=text, url=url, key=key)
 
 
 def _open(service):
@@ -94,20 +81,4 @@ def on_lineup_changed(sender, lineup, user, event, **kwargs):
         lineup_text(lineup, user, event),
         reverse("worship:lineup", kwargs={"public_id": service.public_id}),
         key=key,
-    )
-
-
-def unread_count(user):
-    return Notification.objects.filter(recipient=user, read_at__isnull=True).count()
-
-
-def mark_read(notification):
-    if notification.read_at is None:
-        notification.read_at = timezone.now()
-        notification.save(update_fields=["read_at", "updated_at"])
-
-
-def mark_all_read(user):
-    return Notification.objects.filter(recipient=user, read_at__isnull=True).update(
-        read_at=timezone.now()
     )

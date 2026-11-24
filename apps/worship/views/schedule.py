@@ -32,6 +32,7 @@ from ..forms import (
     ThemeForm,
 )
 from ..models import Lineup, ServiceTemplate, Theme, WorshipService
+from ..occasions import can_see_occasions
 from .base import ServiceMixin, WorshipMixin, can_plan, service_url, settings_nav
 from .lineups import lineup_context
 from .suggestions import can_suggest, panel_context
@@ -52,6 +53,9 @@ class ServiceListView(WorshipMixin, FilteredListView):
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related("template", "theme")
+        if not can_see_occasions(self.request.user):
+            # They see occasions only as "Booked", on the calendar.
+            queryset = queryset.exclude(template__is_occasion=True)
         if self.get_when() == "past":
             return queryset.past().order_by("-starts_at")
         return queryset.upcoming()
@@ -90,13 +94,14 @@ class CalendarView(WorshipMixin, TemplateView):
         start, end = scheduling.month_bounds(year, month)
         services = WorshipService.objects.filter(
             starts_at__gte=start, starts_at__lt=end
-        ).select_related("theme")
+        ).select_related("theme", "template")
         context.update(
             month=datetime.date(year, month, 1),
             weeks=scheduling.month_grid(year, month, services),
             previous_month="{}-{:02d}".format(*scheduling.shift_month(year, month, -1)),
             next_month="{}-{:02d}".format(*scheduling.shift_month(year, month, 1)),
             weekday_names=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            can_see_occasions=can_see_occasions(self.request.user),
         )
         return context
 
@@ -117,6 +122,7 @@ class ServiceDetailView(ServiceMixin, DetailView):
             can_plan=can_plan(user),
             attendance_form=AttendanceForm(instance=service),
             can_suggest=can_suggest(user),
+            occasion_request=getattr(service, "occasion_request", None),
         )
         # Suggestions are an unconfirmed lineup: only people who may suggest
         # songs get them, never team members.

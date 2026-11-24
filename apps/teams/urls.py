@@ -52,17 +52,6 @@ urlpatterns = [
         views.SwapActionView.as_view(),
         name="swap_action",
     ),
-    path("notifications/", views.NotificationListView.as_view(), name="notifications"),
-    path(
-        "notifications/<int:pk>/open/",
-        views.NotificationOpenView.as_view(),
-        name="notification_open",
-    ),
-    path(
-        "notifications/read/",
-        views.NotificationsReadView.as_view(),
-        name="notifications_read",
-    ),
     path("roster/", views.RosterView.as_view(), name="roster"),
     path("roster/<int:pk>/", views.PersonPartsView.as_view(), name="person_parts"),
     *setting_list_urls(PARTS_LIST, route_prefix="settings/"),

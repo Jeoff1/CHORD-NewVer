@@ -34,7 +34,7 @@ def service_url(service, name="service"):
 
 
 def default_template():
-    return ServiceTemplate.objects.get()
+    return ServiceTemplate.objects.active().get()
 
 
 def service_data(**overrides):

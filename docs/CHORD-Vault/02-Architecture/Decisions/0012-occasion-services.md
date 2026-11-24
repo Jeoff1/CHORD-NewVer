@@ -37,13 +37,18 @@ services. The fees, requirements and church records of the old
 
 - Follows [[0001-configure-behavior-not-identity]]: the church names its own
   occasion templates, and nothing in code or seed data names one church's
-  practice (no "Mass" or other tradition-specific template is seeded).
+  practice. Two examples common to Christian churches, "Wedding" and
+  "Funeral", are seeded **switched off** (the owner's choice, 2026-11-24);
+  the church switches on, renames or edits them.
 - Approving is a permission, never a check on a role name, like the final
   say ([[0008-final-say-permission]]).
 - Every service now has a length (from its template), so the calendar and
   the clash check can tell when a time is booked. People without planning
   permissions see only "Booked".
 - Occasion Requests come from signed-in people, so a church member needs an
-  account; batch accounts (A4) make that practical.
+  account; batch accounts (A4) make that practical. No Member record is
+  needed (the owner's choice, 2026-11-24).
+- The requester's answer is an in-app Notification, so Notifications moved
+  out of Teams into a core app that works whichever Modules are on.
 - Hard to reverse: once churches have occasion templates, requests and
   services made from them, removing the feature needs a data migration.

@@ -431,8 +431,9 @@ _Avoid_: substitution, trade
 **Notification**:
 A note in the app for one person, about a change that concerns them: a
 Lineup confirmed or a confirmed one edited, for a service they serve at,
-or being assigned. Never sent by email or SMS. Unread ones are counted in
-the navigation.
+being assigned, or an answer to their Occasion Request. Never sent by
+email or SMS. Unread ones are counted in the navigation. Core, not part of
+a Module: everyone signed in has them, whichever Modules are on.
 _Avoid_: alert, message (alone)
 
 **Announcement**:

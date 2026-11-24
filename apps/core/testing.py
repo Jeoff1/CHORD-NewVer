@@ -192,6 +192,19 @@ def make_service(**fields):
     return WorshipService.objects.create(**fields)
 
 
+def make_occasion_template(**fields):
+    """An active occasion template (Phase 9A, A5) with a unique name, sorted
+    after the default template so ``make_service`` keeps using that one."""
+    from apps.worship.models import ServiceTemplate
+
+    n = next(_sequence)
+    fields.setdefault("name", f"Occasion {n}")
+    fields.setdefault("is_occasion", True)
+    fields.setdefault("length_minutes", 120)
+    fields.setdefault("sort_order", 500)
+    return ServiceTemplate.objects.create(**fields)
+
+
 def make_theme(service=None, **fields):
     """Post a theme on a service (a new one unless given)."""
     from apps.worship.models import Theme

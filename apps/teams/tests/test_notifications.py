@@ -1,4 +1,5 @@
-"""In-app Notifications (Design-Decisions, Phase 8, decision 6)."""
+"""When Teams sends Notifications (Design-Decisions, Phase 8, decision 6).
+The Notifications pages are tested in ``apps/notifications/tests``."""
 
 import datetime
 
@@ -16,12 +17,11 @@ from apps.core.testing import (
     make_team_profile,
     make_user,
 )
-from apps.teams import notifying, rostering
-from apps.teams.models import Notification
+from apps.notifications.models import Notification
+from apps.notifications.services import mark_all_read
+from apps.teams import rostering
 from apps.worship import lineups
 from apps.worship.models import Lineup
-
-NOTIFICATIONS = reverse("teams:notifications")
 
 
 def texts(user):
@@ -114,7 +114,7 @@ class LineupNotificationTests(NotificationTestCase):
         self.assertEqual(len(notes), 2)  # the confirmation and one edit note
         self.assertIn("edited by Pastor (Pat Pastor)", notes[0])
         # Once read, a later edit is a new note.
-        notifying.mark_all_read(self.accepted)
+        mark_all_read(self.accepted)
         # The pastor's lock now stops the leader, so the pastor edits again.
         lineups.set_details(self.lineup, self.item(), "B", "", self.pastor)
         self.assertEqual(len(texts(self.accepted)), 3)
@@ -155,66 +155,3 @@ class AssignedNotificationTests(NotificationTestCase):
         make_team_profile(self.leader, [self.part])
         rostering.assign(self.service, self.part, self.leader, self.leader)
         self.assertFalse(Notification.objects.exists())
-
-
-class NotificationPageTests(NotificationTestCase):
-    def setUp(self):
-        super().setUp()
-        lineups.confirm(self.lineup, self.leader)
-        self.note = Notification.objects.get(recipient=self.accepted)
-
-    def test_the_navigation_shows_the_unread_count(self):
-        notifying.notify([self.accepted], "Another note")
-        self.client.force_login(self.accepted)
-        page = self.client.get(reverse("home"))
-        self.assertContains(page, 'aria-label="2 unread"')
-        self.client.force_login(self.outsider)
-        self.assertNotContains(self.client.get(reverse("home")), "unread")
-
-    def test_opening_marks_it_read_and_goes_to_the_confirmed_lineup(self):
-        self.client.force_login(self.accepted)
-        response = self.client.post(
-            reverse("teams:notification_open", kwargs={"pk": self.note.pk})
-        )
-        lineup_url = reverse(
-            "worship:lineup", kwargs={"public_id": self.service.public_id}
-        )
-        self.assertRedirects(response, lineup_url)
-        self.note.refresh_from_db()
-        self.assertTrue(self.note.is_read)
-
-    def test_mark_all_as_read(self):
-        notifying.notify([self.accepted], "Another note")
-        self.client.force_login(self.accepted)
-        page = self.client.get(NOTIFICATIONS)
-        self.assertContains(page, "Mark all as read")
-        self.assertContains(page, "was confirmed")
-        self.assertRedirects(
-            self.client.post(reverse("teams:notifications_read")), NOTIFICATIONS
-        )
-        self.assertEqual(notifying.unread_count(self.accepted), 0)
-
-    def test_someone_elses_notification_is_a_404(self):
-        self.client.force_login(self.outsider)
-        response = self.client.post(
-            reverse("teams:notification_open", kwargs={"pk": self.note.pk})
-        )
-        self.assertEqual(response.status_code, 404)
-        self.note.refresh_from_db()
-        self.assertFalse(self.note.is_read)
-
-    def test_a_note_without_a_link_just_marks_read(self):
-        notifying.notify([self.accepted], "Plain note")
-        plain = Notification.objects.get(text="Plain note")
-        self.client.force_login(self.accepted)
-        response = self.client.post(
-            reverse("teams:notification_open", kwargs={"pk": plain.pk})
-        )
-        self.assertRedirects(response, NOTIFICATIONS)
-
-    def test_switched_off_teams_hides_notifications(self):
-        complete_setup(disabled_modules=["teams"])
-        self.client.force_login(self.accepted)
-        self.assertEqual(self.client.get(NOTIFICATIONS).status_code, 404)
-        self.assertNotContains(self.client.get(reverse("home")), "Notifications")
-        self.assertTrue(Notification.objects.filter(pk=self.note.pk).exists())

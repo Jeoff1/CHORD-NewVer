@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}My occasion requests{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{% label "worship_service" plural=True %}</h1>
+    {% if can_request %}<a href="{% url 'worship:occasion_request' %}" class="btn btn-primary">Request an occasion</a>{% endif %}
+  </div>
+
+  {% include "worship/includes/nav.html" with active="occasions" %}
+
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <h2 class="h5 mb-0">My occasion requests</h2>
+    {% if perms.worship.approve_occasion %}<a href="{% url 'worship:occasion_requests' %}" class="small">All requests</a>{% endif %}
+  </div>
+  <p class="text-body-secondary">Special services you asked for, such as a wedding or a funeral. You get a notification when one is approved or declined.</p>
+
+  <div class="card shadow-sm">
+    <ul class="list-group list-group-flush">
+      {% for occasion in object_list %}
+        <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
+          <div class="me-auto">
+            <div class="fw-semibold">{{ occasion.template.name }} for {{ occasion.occasion_for }}</div>
+            <div class="small text-body-secondary">{% if occasion.service %}{{ occasion.service.starts_at|date:"l, F j, Y · g:i A" }}{% else %}{{ occasion.starts_at|date:"l, F j, Y · g:i A" }}{% endif %}</div>
+            {% if occasion.status == "declined" and occasion.decline_reason %}<div class="small">Reason: {{ occasion.decline_reason }}</div>{% endif %}
+          </div>
+          <span class="badge {% if occasion.status == 'approved' %}text-bg-success{% elif occasion.status == 'declined' %}text-bg-danger{% elif occasion.status == 'pending' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ occasion.get_status_display }}</span>
+          {% if occasion.is_pending %}
+            <form method="post" action="{% url 'worship:occasion_withdraw' public_id=occasion.public_id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
+            </form>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li class="list-group-item text-body-secondary">{% if can_request %}You haven't requested an occasion yet.{% else %}The church hasn't set up any occasions yet.{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% include "includes/pagination.html" %}
+{% endblock %}

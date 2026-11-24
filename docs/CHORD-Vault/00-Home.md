@@ -9,14 +9,16 @@ development task.
 ## Current status
 
 **Phase 9A (adviser requests, 24 Nov) is in progress: A1 (Church Member
-role), A2 (a role change keeps history), A3 (user history) and A4 (batch
-accounts) done 2026-11-24; A5 (occasions) is next.** Phase 8 done (2026-11-23). Updated
+role), A2 (a role change keeps history), A3 (user history), A4 (batch
+accounts) and A5 (occasions, with Notifications moved into a core app)
+done 2026-11-24; A6 (member reports) is next, after the owner decides
+about "who attended a service".** Phase 8 done (2026-11-23). Updated
 2026-11-24.
 
 **Pick up here:**
-- **Branch:** `adviser-comments` (from `master`, not pushed) holds the
-  Phase 9A plan; build Phase 9A there. `master` holds Phases 0 to 8. Merge
-  nothing into `master` until the user says so.
+- **Branch:** build Phase 9A on `adviser-comments`. A1 to A4 were merged
+  into `master` and pushed on 2026-11-24; merge the rest when the user
+  says so.
 - **Phase 9A** ([[Development-Plan]]; rules in [[Design-Decisions]],
   "Adviser comments, 24 Nov"): A1 Church Member role, A2 a role change
   keeps history, A3 user history, A4 batch accounts, A5 occasions
@@ -38,8 +40,8 @@ accounts) done 2026-11-24; A5 (occasions) is next.** Phase 8 done (2026-11-23). 
   service's team.
 - **Choices to confirm:** "Open questions" in [[Teams]] and
   [[Announcements]].
-- **Checks:** `scripts/check.ps1` (from `.venv`, about 30 minutes); on
-  2026-11-24, after A3 and A4, 913 tests passed with 97% coverage.
+- **Checks:** `scripts/check.ps1` (from `.venv`, about 10 minutes); on
+  2026-11-24, after A5, 954 tests passed with 97% coverage.
 - **Waiting on the user, too:** whether the pastor may create batch
   accounts (only the Administrator can today; see the plan's decisions).
 
@@ -111,6 +113,7 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | ------------------- | ----------- | ---------------- |
 | Church Setup (core) | Built       | [[Church-Setup]] |
 | Accounts (core)     | Built       | [[Accounts]]     |
+| Notifications (core) | Built      | [[Accounts]] ("Notifications") |
 | Members             | Built       | [[Members]]      |
 | Worship             | In progress | [[Worship]]      |
 | Teams               | Built       | [[Teams]]        |

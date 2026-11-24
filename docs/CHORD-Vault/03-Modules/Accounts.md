@@ -88,6 +88,28 @@ the core; it can't be switched off. App: `apps/accounts`.
   users, roles, matrix, default-role syncing, the Church Member role, role
   history); leaving the team in `apps/teams/tests/test_leaving_team.py`.
 
+### Notifications (core, `apps/notifications`)
+
+Moved out of Teams on 2026-11-24 (Phase 9A, A5, the owner's choice), so
+they work whichever Modules a church switches on.
+
+- **Notification** (`models.py`): one person's in-app note, with text, an
+  optional link inside CHORD, an optional `key` and when it was read. Never
+  email or SMS. The table was renamed from Teams', so no note was lost
+  (migrations `teams/0004_move_notification_out` and
+  `notifications/0001_initial`).
+- `services.py`: `notify(people, text, url, key=...)` (a `key` brings an
+  unread note up to date instead of adding another), `unread_count`,
+  `mark_read`, `mark_all_read`. Modules decide when to send: Teams
+  (`apps/teams/notifying.py`, only while Teams is on) and Worship
+  (answers to Occasion Requests).
+- The navigation shows **Notifications** with the unread count to everyone
+  signed in (`context_processors.notifications`). `/notifications/` lists
+  the person's own; opening one marks it read and follows its link (never
+  to another site); all can be marked read at once. No permission needed.
+- Tests: `apps/notifications/tests/test_notifications.py`, including the
+  pages with every Module switched off.
+
 ## Permissions
 
 | Permission                            | Allows                                  |

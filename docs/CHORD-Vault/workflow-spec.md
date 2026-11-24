@@ -239,6 +239,9 @@ TEAMS (Teams module; needs Worship)
   when they are assigned. Nothing is sent for a cancelled or past service,
   or for a draft. The navigation shows the unread count; opening a
   notification marks it read, and all can be marked read at once.
+- Notifications are core (Phase 9A): everyone signed in has them,
+  whichever modules are switched on. Teams sends its own only while Teams
+  is on; occasion answers are sent whenever Worship is on.
 
 ANNOUNCEMENTS (Announcements module)
 - Notes to everyone (everyone signed in) or to one service's team (its
@@ -248,17 +251,19 @@ ANNOUNCEMENTS (Announcements module)
   Worship Leader by default. No expiry: the author archives an
   announcement, and then nobody sees it.
 
-OCCASIONS (Worship module; Phase 9A, planned; [[0012-occasion-services]])
+OCCASIONS (Worship module; Phase 9A, built 2026-11-24; [[0012-occasion-services]])
 - A Service Template the church names (Wedding, Funeral, ...) can be marked
-  as an occasion, with a usual length. An occasion's service also records
+  as an occasion; every template has a usual length. "Wedding" and
+  "Funeral" come as examples, switched off. An occasion's service also records
   who it is for, the officiant and the venue; its lineup works as usual.
 - A church member requests an occasion (template, date and start time, who
-  it is for, a note). The request is Pending, then Approved or Declined
+  it is for, a note). Signing in is enough; no member record is needed. The request is Pending, then Approved or Declined
   (with a reason); the requester may withdraw it while Pending.
 - Approving is the permission worship.approve_occasion (Pastoral Staff by
   default, never a role-name check) and creates the service.
-- The calendar shows booked times; people who don't plan see only
-  "Booked". A request or approval that overlaps a booked time is refused.
+- The calendar shows booked times; people who don't plan, play at,
+  approve or count an occasion see only "Booked", and never its page. A
+  request or approval that overlaps a booked time is refused.
 - The requester is notified in the app. No fees, requirements or records.
 
 ACCOUNTS, HISTORY AND REPORTS (Phase 9A, planned)

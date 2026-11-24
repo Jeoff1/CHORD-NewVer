@@ -59,8 +59,8 @@ MODULES = (
         ("teams",),
         url_name="teams:my_schedule",
         requires=("worship",),
-        # My schedule is for the team; anyone else reaches their
-        # Notifications from the navigation's own link.
+        # My schedule is for the team. Notifications are core and have
+        # their own link in the navigation.
         view_permission="teams.view_assignment",
     ),
     Module(

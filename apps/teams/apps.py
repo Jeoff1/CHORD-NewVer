@@ -2,8 +2,8 @@ from django.apps import AppConfig
 
 
 class TeamsConfig(AppConfig):
-    """Teams: Team Parts, Team Profiles, Assignments, Blackout Dates, Swap
-    Requests and Notifications."""
+    """Teams: Team Parts, Team Profiles, Assignments, Blackout Dates and Swap
+    Requests. It sends Notifications through the core ``notifications`` app."""
 
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.teams"

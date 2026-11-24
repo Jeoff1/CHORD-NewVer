@@ -2,6 +2,60 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-24: Phase 9A, A5: occasions; Notifications made core
+
+On branch `adviser-comments`. A5 of Phase 9A is done, after the owner
+settled the three open points: Notifications move out of Teams; "Wedding"
+and "Funeral" are seeded as switched-off examples; signing in is enough to
+request (no Member record).
+
+- **Notifications are core** (`apps/notifications`): the model, `notify`
+  and the read helpers, the page `/notifications/` and the unread count,
+  for everyone signed in, whichever Modules are on. The table was renamed,
+  not copied (migrations `teams/0004_move_notification_out` and
+  `notifications/0001_initial`, which also renames the index and moves the
+  content type); undoing and redoing it was tried on the local database.
+  Teams keeps `notifying.py` and still sends its notes only while it is on.
+- **Occasions** ([[0012-occasion-services]]; migrations
+  `worship/0012_occasions`, `0013_seed_occasion_templates`):
+  - `ServiceTemplate.length_minutes` (90 by default; a blank form keeps it)
+    and `is_occasion`; `WorshipService.occasion_for`, `officiant`, `venue`
+    and `ends_at`; `OccasionRequest` with `worship.request_occasion` and
+    `worship.approve_occasion` (Church Member, Pastoral Staff and Worship
+    Leader request; Pastoral Staff approve).
+  - Rules in `apps/worship/occasions.py`: requests and approvals that
+    overlap a booked time of a service that isn't cancelled are refused;
+    approvals take the `BOOKINGS` transaction lock
+    (`apps/core/locks.py`, `wait_for_transaction_lock`); declining needs a
+    reason; only the requester withdraws, while Pending; the requester is
+    notified either way.
+  - Who sees an occasion: holders of `change_worshipservice`,
+    `view_lineup`, `approve_occasion` or `record_attendance`. Others see
+    "Booked" on the calendar, and nothing in the schedule list or search;
+    the occasion's pages are a 404 for them (`ServiceMixin`).
+  - Pages: Request an occasion, My requests (with Withdraw), Occasion
+    requests and each request's Approve and Decline; an "Occasions" tab in
+    Worship with the Pending count for approvers.
+- **Built differently from the plan, for the owner to confirm:** "who it
+  is for" is a text field, not names linked to Members (Worship doesn't
+  depend on Members, and nothing in A5 reads the link).
+- **Found by the first full run, and fixed:** older tests assumed one
+  seeded Service Template (`objects.get()`; now `active().get()`); the
+  Church Member test expected one default permission; the template form
+  refused a missing length (it now keeps 90 minutes, with a test).
+- **Tests:** new `apps/notifications/tests/test_notifications.py` (10; the
+  page tests moved here from Teams) and
+  `apps/worship/tests/test_occasions.py` (37).
+- **Notes:** [[Design-Decisions]] (A5: the owner's answers, how it was
+  built), [[0012-occasion-services]], [[Worship]], [[Accounts]]
+  ("Notifications"), [[Teams]], [[Glossary]], [[workflow-spec]],
+  [[Code-Conventions]], [[Development-Plan]] (A5 ticked), [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed on the second run. Ruff lint and
+  format were clean, `manage.py check` was clean, and no migrations were
+  missing. 954 tests passed, with 97% coverage
+  (`worship/views/occasions.py` 94%). The first run had failed (2
+  failures, 25 errors), as above.
+
 ## 2026-11-24: Phase 9A, A3 and A4: user history; batch accounts
 
 On branch `adviser-comments`. A3 and A4 of Phase 9A are done, built

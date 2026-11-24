@@ -12,6 +12,7 @@ from django.utils import timezone
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.church.models import ChurchProfile
+from apps.core.people import display_name
 
 from .models import WorshipService
 
@@ -39,6 +40,11 @@ SERVICE_AUDIT_FIELDS = {
     "Notes": "notes",
     "Headcount": "attendance",
     "Cancelled": "is_cancelled",
+    "For": "occasion_for",
+    "Officiant": lambda service: (
+        display_name(service.officiant) if service.officiant_id else ""
+    ),
+    "Venue": "venue",
 }
 THEME_AUDIT_FIELDS = {
     "Title": "title",
@@ -53,6 +59,8 @@ TEMPLATE_AUDIT_FIELDS = {
     "Usual start time": lambda template: (
         f"{template.start_time:%H:%M}" if template.start_time else ""
     ),
+    "Usual length (minutes)": "length_minutes",
+    "Occasion": "is_occasion",
     "Order": "sort_order",
     "Active": "is_active",
     "Song slots": lambda template: " / ".join(str(s) for s in template.slots.all()),
