@@ -515,7 +515,10 @@ drawn alongside, for the owner's review.
   CSV; age groups as a church-edited list. Ask the owner about "who
   attended a service" first (on hold).
 - [ ] **A7 UI pass**: wireframes of the main screens for the owner's
-  approval, then button placement and layout; colours later.
+  approval, then button placement and layout; colours later. Part 2, the
+  owner's design system and the Spotify player card, built 2026-11-25 on
+  branch `ui-design-system` ([[Design-System]]); the per-screen layout
+  changes are still to do, when the owner asks.
 
 **Done when** the tests listed for A1 to A7 in [[Design-Decisions]] pass:
 a Church Member is refused on lineups, song pages and chord sheets; a

@@ -5,7 +5,7 @@
 {% block content %}
   <div class="row justify-content-center">
     <div class="col-lg-9">
-      <a href="{{ next }}" class="small text-decoration-none">← Back</a>
+      {% include "includes/back_link.html" with url=next label="Back" %}
       <h1 class="h3 mb-1">Chord sheet: {{ song.title }}</h1>
       <p class="text-body-secondary">{{ song.artist }}</p>
       <p>Type or paste the chords and words. ChordPro works as it is; a chart with the chords on the line above the words (as on Ultimate Guitar) is converted to ChordPro. <b>Convert</b> shows the result so you can check it before saving.{% if not approves %} Your sheet waits for approval by someone who plans the lineup; the team sees it once it is approved.{% endif %}</p>

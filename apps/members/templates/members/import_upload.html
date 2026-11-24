@@ -6,7 +6,7 @@
 {% block content %}
   <div class="row justify-content-center">
     <div class="col-lg-9 col-xl-8">
-      <a href="{% url 'members:list' %}" class="small text-decoration-none">← {% label "member" plural=True %}</a>
+      {% url 'members:list' as back_url %}{% label "member" plural=True as back_label %}{% include "includes/back_link.html" with url=back_url label=back_label %}
       <h1 class="h3 mb-3">Import {{ labels.member|lower }} list</h1>
       <p class="text-body-secondary">
         Bring in an existing list from a spreadsheet. You'll see every row checked

@@ -5,7 +5,7 @@
 
 {% block content %}
   {% label "lineup" as lineup_word %}
-  <a href="{% url 'worship:lineup' public_id=service.public_id %}" class="small text-decoration-none">← {{ lineup_word }}</a>
+  {% url 'worship:lineup' public_id=service.public_id as back_url %}{% include "includes/back_link.html" with url=back_url label=lineup_word %}
   <h1 class="h3 mb-1">Add a song from the pool</h1>
   <p class="text-body-secondary">Any song in the pool except those marked as not a worship song. Put it in an empty slot, or at the end.</p>
 

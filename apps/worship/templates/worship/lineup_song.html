@@ -7,7 +7,7 @@
   {% label "lineup" as lineup_word %}
   <div class="row justify-content-center">
     <div class="col-lg-9">
-      <a href="{% url 'worship:lineup' public_id=service.public_id %}" class="small text-decoration-none">← {{ lineup_word }}, {{ service }}</a>
+      {% url 'worship:lineup' public_id=service.public_id as back_url %}{% include "includes/back_link.html" with url=back_url label=lineup_word detail=service %}
       <h1 class="h3 mb-1">{{ song.title }}</h1>
       <p class="text-body-secondary mb-3">
         {{ song.artist }}{% if item.slot %} · {{ item.slot.name }}{% endif %}

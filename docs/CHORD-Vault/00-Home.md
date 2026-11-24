@@ -12,8 +12,10 @@ development task.
 role), A2 (a role change keeps history), A3 (user history), A4 (batch
 accounts) and A5 (occasions, their own Module; Notifications moved into
 a core app) done 2026-11-24; A6 (member reports) is next, after the owner decides
-about "who attended a service".** Phase 8 done (2026-11-23). Updated
-2026-11-24.
+about "who attended a service". A7 part 2, the owner's design system and
+the Spotify player card, built 2026-11-25 on branch `ui-design-system`
+(not merged; [[Design-System]]).** Phase 8 done (2026-11-23). Updated
+2026-11-25.
 
 **Pick up here:**
 - **Branch:** build Phase 9A on `adviser-comments`. A1 to A4 were merged
@@ -90,6 +92,7 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 
 - [[Environment-Setup]]: running the project and its database
 - [[Code-Conventions]]: code layout, forms, UI and tests
+- [[Design-System]]: the owner's colours, fonts, icons, dark mode and player card
 - Decisions (ADRs):
   - [[0001-configure-behavior-not-identity|0001 Configure behavior, not identity]]
   - [[0002-server-rendered-ui|0002 Server-rendered UI with Bootstrap and HTMX]]

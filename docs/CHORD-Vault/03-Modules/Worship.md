@@ -443,18 +443,25 @@ playback and the Lineup Playlist** ([[Design-Decisions]], Phase 7):
   endpoints of Spotify's February 2026 Web API.
 - **Playback** on the lineup song page (`songs/includes/player.html`,
   `playback_context`):
+  - it is a green **"Listen" card** in both colour modes since Phase 9A,
+    A7 part 2 ([[Design-System]]): full playback, the embedded player, or
+    "No playback for this song" when the song has no Spotify track;
   - a connected account gets the **Web Playback SDK** (`static/songs/player.js`):
-    a Play button that plays the track in the browser. The script asks
+    the song's title and artist (CHORD's own), a cover from the SDK (shown
+    in the browser only, never stored), a progress bar with the time, back
+    and forward 10 seconds and a gold play/pause button. The script asks
     `/worship/songs/spotify/player-token/` (POST, never cached) for the
     person's own access token, which stays in its memory; the refresh token
     never leaves the server;
   - whenever the SDK can't be used (no Premium, an unsupported browser, a
     refused or missing token, a 429 from Spotify or from the token page, or
     no "ready" within 15 s), it shows a short message and falls back to
-    Spotify's **embedded player**, with no automatic retry;
+    Spotify's **embedded player** inside the same card, with no automatic
+    retry;
   - without a connection the embedded player shows at once, with a link to
     connect. **Open in Spotify** always shows. A song without a Spotify
-    track ID has no player.
+    track ID gets the card with "No playback for this song" and no link to
+    fix it (no page links an existing song to a track yet).
 - **Church Spotify Account** (`ChurchSpotifyAccount`, at most one row;
   [[0011-church-spotify-account]]): an optional church setting on the
   **Spotify** tab of church settings (`/worship/songs/spotify/church/`),

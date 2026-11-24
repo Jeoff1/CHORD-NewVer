@@ -528,14 +528,23 @@ class SheetDiscardView(_SheetDecisionView):
 # --- Playback and each user's Spotify account ------------------------------------
 
 
+def clock(seconds):
+    """A length as minutes and seconds: 272 -> "4:32"."""
+    minutes, seconds = divmod(int(seconds), 60)
+    return f"{minutes}:{seconds:02d}"
+
+
 def playback_context(song, user):
-    """How a song plays on its page (Design-Decisions, Phase 7). A
-    connected account plays it in the browser with the Web Playback SDK,
-    which needs Premium; the page's script falls back to Spotify's embedded
-    player whenever the SDK can't be used. Without a connection the
-    embedded player shows at once. "Open in Spotify" always shows."""
+    """How a song plays on its page (Design-Decisions, Phase 7; the player
+    card, Phase 9A A7). A connected account plays it in the browser with
+    the Web Playback SDK, which needs Premium; the page's script falls back
+    to Spotify's embedded player whenever the SDK can't be used. Without a
+    connection the embedded player shows at once. "Open in Spotify" always
+    shows. A song without a Spotify track gets ``None``, and the card says
+    so. The title, artist and length are CHORD's own, from the Song."""
     if not song.spotify_id:
         return {"playback": None}
+    length = song.length_seconds
     return {
         "playback": {
             "track_uri": f"spotify:track:{song.spotify_id}",
@@ -543,6 +552,10 @@ def playback_context(song, user):
             "open_url": song.spotify_url,
             "use_sdk": connections.is_connected(user),
             "may_connect": connections.is_configured(),
+            "title": song.title,
+            "artist": song.artist,
+            "length_ms": length * 1000 if length else "",
+            "length_text": clock(length) if length else "0:00",
         }
     }
 

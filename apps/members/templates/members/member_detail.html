@@ -12,7 +12,7 @@
   {% else %}
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
       <div>
-        {% if not own_record %}<a href="{% url 'members:list' %}" class="small text-decoration-none">← {% label "member" plural=True %}</a>{% endif %}
+        {% if not own_record %}{% url 'members:list' as back_url %}{% label "member" plural=True as back_label %}{% include "includes/back_link.html" with url=back_url label=back_label %}{% endif %}
         <h1 class="h3 mb-1">{{ member.full_name }}</h1>
         <span class="badge text-bg-primary">{{ member.status }}</span>
         {% if member.is_archived %}<span class="badge text-bg-secondary">Archived {{ member.archived_at|date:"M j, Y" }}</span>{% endif %}

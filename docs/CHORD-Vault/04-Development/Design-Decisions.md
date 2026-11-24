@@ -607,6 +607,28 @@ Tests: each filter; age groups on the report's date, and "Age not given"; privat
 
 Tests: the existing view tests keep passing; every action that moved is still permission-checked.
 
+#### The owner's design system (25 Nov)
+
+The owner gave the colours and fonts on 2026-11-25: "Colours and fonts come later, from the owner's instructions" above. Built on branch `ui-design-system` (not merged); the details, file locations and contrast table are in [[Design-System]].
+
+- **Light mode (default):** page `#E6E2E1`; surface `#FFFFFF`; text `#173630`; secondary text `#4A5E59`; border `#D3CDC9`; strong border `#9FA7A2`; primary `#173630` with `#E5C690` text; accent gold `#E5C690` (never as text on white); accent tint `#F3E6C9`; links `#173630`, hover `#0B1F1B`, underlined; chord letters `#7A5A1E`.
+- **Dark mode:** page `#060F00`; surface `#0F241F` (cards), `#173630` (raised: navbar, dropdowns, modals); text `#E6E2E1`; headings and accent `#E5C690`; secondary text `#B9C4BF`; border `#2E4A44`; primary `#E5C690` with `#060F00` text; chord letters `#E5C690`.
+- **Dark mode follows the device** (`prefers-color-scheme`, through `data-bs-theme`), set by a script in `<head>` so nothing flashes. No toggle.
+- **Fonts:** Raleway (600, 700, 800) for headings, the brand and card titles; Fira Sans Condensed (400 to 700) for the rest; self-hosted with their OFL licences. The chord sheet's chords stay monospace.
+- **Icons:** solid (filled) inline SVG partials (search, gear, eye, closed eye, person, play, pause), used only where a screen needs them: the navbar (gear) and the player.
+- **Profile letter:** the first letter of the person's name in a gold-on-green circle beside their name.
+- **Back links:** every existing "←" link is one shared pill link (44px, chevron).
+- **Status colours** stay Bootstrap's, at shades that reach 4.5:1 in both modes.
+- **The player card** (wireframes "6 Lineup song page" and "6b Spotify card, no playback"): green in both modes, in three states: full playback (cover, title and artist from the Song, progress, back and forward 10 seconds, play/pause), the embedded player, or "No playback for this song". The cover comes from the SDK in the browser only and is never stored (AGENTS.md). Every Phase 7 playback rule stays: fall back on any SDK failure with no retry, stop on the first 429, the token in script memory only, the 15-second timeout.
+- Page layouts don't change in this part; the per-screen wireframe changes are separate A7 work.
+
+How it was built (2026-11-25):
+- `static/css/chord.css` sets Bootstrap's variables for both modes; `--bs-body-bg` is the surface and `body` gets the page colour, so cards, inputs, tables and menus are white (dark green in dark mode) without touching their templates. Chosen here, where the owner gave no value: tertiary surface `#F4F1F0` (light) and `#173630` (dark); dark strong border `#6E8A83`.
+- **No link to fix a song without a track:** CHORD has no page that links an existing song to a Spotify track ("Find on Spotify" only adds new songs; the song form has no track field), so the card shows only the message.
+- **Contrast:** every text pair passes. **The light-mode strong border `#9FA7A2` is 2.46:1 on white**, below the 3:1 that input and button outlines need; it is used as given, for the owner to decide (`#6E8A83`, 3.73:1, would pass).
+
+Tests: `apps/songs/tests/test_design_system.py` (each player state, the safeguards in `player.js`, the theme and fonts on every page, the profile letter, the back link); `test_spotify_playlists.py` (a song without a track now gets the card).
+
 ---
 
 ## Phase 9: learning to rank

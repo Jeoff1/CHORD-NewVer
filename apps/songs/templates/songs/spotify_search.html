@@ -3,7 +3,7 @@
 {% block title %}Find on Spotify{% endblock %}
 
 {% block content %}
-  <a href="{% url 'songs:list' %}" class="small text-decoration-none">← Songs</a>
+  {% url 'songs:list' as back_url %}{% include "includes/back_link.html" with url=back_url label="Songs" %}
   <h1 class="h3 mb-2">Find on Spotify</h1>
   <p class="text-body-secondary">Search by title or artist, and add a track to the song pool. Its lyrics are then fetched and analysed like every other song.</p>
   {% if block_message %}<div class="alert alert-warning">{{ block_message }}</div>{% endif %}

@@ -6,7 +6,7 @@
 {% block content %}
   <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
-      <a href="{% url 'worship:service' public_id=service.public_id %}" class="small text-decoration-none">← {{ service }}</a>
+      {% url 'worship:service' public_id=service.public_id as back_url %}{% include "includes/back_link.html" with url=back_url label=service %}
       <h1 class="h3 mb-3">Assign the team</h1>
 
       {% if closed %}

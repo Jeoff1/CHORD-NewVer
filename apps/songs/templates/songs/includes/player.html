@@ -1,29 +1,59 @@
 {% load static %}
-{# Playing a song (Design-Decisions, Phase 7). Expects `playback` from playback_context() in apps/songs/views.py, and `here` (this page's URL). #}
-{% if playback %}
-  <div class="card shadow-sm mb-3" id="listen">
-    <div class="card-body">
-      <h2 class="h5">Listen</h2>
-      {% if playback.use_sdk %}
-        {# Full playback in this browser with the Web Playback SDK. player.js falls back to the embedded player whenever the SDK can't be used, with a short message and no automatic retry. #}
-        <div data-spotify-player data-track="{{ playback.track_uri }}" data-token-url="{% url 'songs:spotify_player_token' %}" class="d-flex flex-wrap align-items-center gap-2 mb-2">
-          <button type="button" class="btn btn-success btn-sm" data-player-toggle disabled>Play</button>
-          <span class="small text-body-secondary" data-player-status role="status">Connecting to Spotify…</span>
-        </div>
-        <div data-player-fallback hidden>
-          <iframe data-src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" style="border: 0; border-radius: 12px"></iframe>
-        </div>
-        <noscript><iframe src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" style="border: 0; border-radius: 12px"></iframe></noscript>
-        <script src="{% static 'songs/player.js' %}" defer></script>
-      {% else %}
-        <div data-player-embed>
-          <iframe src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" style="border: 0; border-radius: 12px"></iframe>
-        </div>
-      {% endif %}
-      <p class="small mb-0 mt-1">
-        <a href="{{ playback.open_url }}" target="_blank" rel="noopener">Open in Spotify</a>
-        {% if not playback.use_sdk and playback.may_connect %} · <a href="{% url 'songs:spotify_account' %}?next={{ here|urlencode }}">Connect your Spotify account</a> <span class="text-body-secondary">to play songs in full here (Premium).</span>{% endif %}
-      </p>
-    </div>
+{# Playing a song: the "Listen" card (Design-Decisions, Phase 7; the card, Phase 9A A7). Expects `playback` from playback_context() in apps/songs/views.py, and `here` (this page's URL). Three states: full playback in this browser, Spotify's embedded player, or no playback. #}
+<section class="chord-player" id="listen" aria-labelledby="listen-title">
+  <div class="chord-player__head">
+    <h2 id="listen-title" class="chord-player__title">Listen</h2>
+    <span class="chord-player__brand">Spotify</span>
   </div>
-{% endif %}
+
+  {% if not playback %}
+    {# The song has no Spotify track. CHORD has no page yet that links an existing song to a track ("Find on Spotify" adds new songs), so there is no link to offer. #}
+    <div class="chord-player__none">
+      <span class="chord-player__none-icon" aria-hidden="true">{% include "includes/icons/play.html" with size=24 %}</span>
+      <p class="chord-player__none-title">No playback for this song</p>
+      <p class="chord-player__none-text">This song isn't linked to a Spotify track yet. The chord sheet still works without it.</p>
+    </div>
+
+  {% elif playback.use_sdk %}
+    {# Full playback in this browser with the Web Playback SDK. player.js falls back to the embedded player, inside this card, whenever the SDK can't be used, with a short message and no automatic retry. #}
+    <div data-spotify-player data-track="{{ playback.track_uri }}" data-token-url="{% url 'songs:spotify_player_token' %}" data-length-ms="{{ playback.length_ms }}">
+      <div data-player-controls>
+        <div class="chord-player__now">
+          {# The cover comes from Spotify's player in the browser only: it is never sent to CHORD or stored. #}
+          <div class="chord-player__cover" aria-hidden="true"><img data-player-cover alt="" hidden></div>
+          <div class="chord-player__song">
+            <p class="chord-player__song-title">{{ playback.title }}</p>
+            <p class="chord-player__artist">{{ playback.artist }}</p>
+          </div>
+        </div>
+        <div class="chord-player__progress">
+          <span data-player-elapsed>0:00</span>
+          <div class="chord-player__bar" role="progressbar" aria-label="Playback position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0:00 of {{ playback.length_text }}" data-player-progress><div class="chord-player__fill" data-player-fill></div></div>
+          <span data-player-total>{{ playback.length_text }}</span>
+        </div>
+        <div class="chord-player__controls">
+          <button type="button" class="chord-player__skip" data-player-back aria-label="Back 10 seconds" disabled>{% include "includes/icons/back-10.html" with size=22 %}</button>
+          <button type="button" class="chord-player__play" data-player-toggle aria-label="Play" disabled><span data-icon-play>{% include "includes/icons/play.html" with size=24 %}</span><span data-icon-pause hidden>{% include "includes/icons/pause.html" with size=24 %}</span></button>
+          <button type="button" class="chord-player__skip" data-player-forward aria-label="Forward 10 seconds" disabled>{% include "includes/icons/forward-10.html" with size=22 %}</button>
+        </div>
+      </div>
+      <p class="chord-player__status" data-player-status role="status">Connecting to Spotify…</p>
+    </div>
+    <div data-player-fallback hidden class="chord-player__embed">
+      <iframe data-src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+    </div>
+    <noscript><div class="chord-player__embed"><iframe src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy"></iframe></div></noscript>
+    <script src="{% static 'songs/player.js' %}" defer></script>
+    <p class="chord-player__links"><a href="{{ playback.open_url }}" target="_blank" rel="noopener">Open in Spotify</a></p>
+
+  {% else %}
+    {# Not connected: Spotify's own embedded player, which can't be restyled, inside the card. #}
+    <div data-player-embed class="chord-player__embed">
+      <iframe src="{{ playback.embed_url }}" title="Spotify player" width="100%" height="152" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+    </div>
+    <p class="chord-player__links">
+      <a href="{{ playback.open_url }}" target="_blank" rel="noopener">Open in Spotify</a>
+      {% if playback.may_connect %}<br><a href="{% url 'songs:spotify_account' %}?next={{ here|urlencode }}">Connect your Spotify account</a> to play songs in full here (Premium).{% endif %}
+    </p>
+  {% endif %}
+</section>

@@ -1,0 +1,2 @@
+{# The pill-shaped back link at the top of a page (design system, Phase 9A A7). Expects `url` and `label`; optional `detail`, shown after a comma. #}
+<a href="{{ url }}" class="chord-back-link">{% include "includes/icons/chevron-left.html" with size=20 %}<span>{{ label }}{% if detail %}, {{ detail }}{% endif %}</span></a>

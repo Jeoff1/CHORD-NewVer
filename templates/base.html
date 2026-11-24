@@ -3,15 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  {% comment %}Dark mode follows the device (design system, Phase 9A A7). Set before the stylesheets load, so the page never flashes the other theme.{% endcomment %}
+  <script>(function () { var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", dark.matches ? "dark" : "light"); } apply(); dark.addEventListener("change", apply); })();</script>
   <title>{% block title %}{% endblock %} · {{ church.name|default:"CHORD" }}</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chord.css' %}">
   <script src="{% static 'vendor/bootstrap-5.3.3/bootstrap.bundle.min.js' %}" defer></script>
   <script src="{% static 'vendor/htmx-2.0.4/htmx.min.js' %}" defer></script>
 </head>
-<body class="bg-body-tertiary" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-  <nav class="navbar navbar-expand-lg bg-body border-bottom">
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <nav class="navbar navbar-expand-lg border-bottom">
     <div class="container">
-      <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="{% url 'home' %}">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
         {% if church.logo %}<img src="{{ church.logo.url }}" alt="" height="32" class="rounded">{% endif %}
         {{ church.name|default:"CHORD" }}
       </a>
@@ -35,7 +39,7 @@
             </li>
             {% if perms.church.change_churchprofile or perms.accounts.view_user or perms.accounts.view_role or perms.audit.view_auditevent %}
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Administration</a>
+                <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{% include "includes/icons/gear.html" %}Administration</a>
                 <ul class="dropdown-menu dropdown-menu-end">
                   {% if perms.church.change_churchprofile %}<li><a class="dropdown-item" href="{% url 'church:settings' section='details' %}">Church settings</a></li>{% endif %}
                   {% if perms.accounts.view_user %}<li><a class="dropdown-item" href="{% url 'accounts:user_list' %}">Users</a></li>{% endif %}
@@ -45,8 +49,8 @@
               </li>
             {% endif %}
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                {{ user.get_full_name|default:user.get_username }}
+              <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                {% with name=user.get_full_name|default:user.get_username %}<span class="chord-avatar" aria-hidden="true">{{ name|first|upper }}</span>{{ name }}{% endwith %}
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My profile</a></li>
