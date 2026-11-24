@@ -25,6 +25,8 @@ class AccountsConfig(AppConfig):
 
         post_migrate.connect(_sync_roles, dispatch_uid="chord_sync_default_roles")
         register(
+            # Everyone's own light or dark mode (Phase 9A, A7).
+            SettingsPage("personal", "Appearance", "accounts:appearance", None),
             SettingsPage(
                 "people", "Users", "accounts:user_list", "accounts.view_user", order=10
             ),

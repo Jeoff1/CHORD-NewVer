@@ -13,6 +13,18 @@ class User(AbstractUser):
     # them to Change password (``middleware.PasswordChangeRequiredMiddleware``).
     must_change_password = models.BooleanField(default=False, editable=False)
 
+    class Theme(models.TextChoices):
+        DEVICE = "device", "Match my device"
+        LIGHT = "light", "Light"
+        DARK = "dark", "Dark"
+
+    # The person's own choice of light or dark mode (Phase 9A, A7; the
+    # Settings hub's Personal category). By default the page follows the
+    # device's setting.
+    theme = models.CharField(
+        "Appearance", max_length=6, choices=Theme.choices, default=Theme.DEVICE
+    )
+
     class Meta(AbstractUser.Meta):
         default_permissions = ("add", "change", "view")
 

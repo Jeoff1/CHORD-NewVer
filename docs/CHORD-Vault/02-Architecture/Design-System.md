@@ -13,7 +13,7 @@ these pieces; don't add colours, fonts or icons outside them.
 | Icons | `templates/includes/icons/<name>.html`: search, gear, eye, eye-off, person, play, pause, plus chevron-left, back-10 and forward-10. Solid, `fill="currentColor"`, `aria-hidden="true"`; optional `size` (px, 20 by default): `{% include "includes/icons/play.html" with size=24 %}` |
 | Back link | `templates/includes/back_link.html` with `url`, `label` and an optional `detail` (shown after a comma): a pill at least 44px tall with a chevron |
 | Profile letter | `base.html`: `.chord-avatar`, the first letter of the full name (else the username), gold on green, `aria-hidden`; the name shows beside it |
-| Dark mode | `base.html`: a few lines of script in `<head>` set `data-bs-theme` from `prefers-color-scheme`, before the stylesheets load, so nothing flashes. No toggle |
+| Light or dark mode | `base.html`: a few lines of script in `<head>` set `data-bs-theme` before the stylesheets load, so nothing flashes: the person's own choice (`User.theme`: Settings › Personal › Appearance, also in the user menu), else the device's (`prefers-color-scheme`). Signed out, the device's |
 
 Bootstrap stays the base ([[0002-server-rendered-ui]]): `chord.css` only
 sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**

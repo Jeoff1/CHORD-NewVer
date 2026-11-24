@@ -23,6 +23,8 @@ CATEGORIES = (
     ("worship", "Worship"),
     ("teams_occasions", "Teams and occasions"),
     ("integrations", "Integrations"),
+    # Last, so the gear still opens the church's own settings first.
+    ("personal", "Personal"),
 )
 CATEGORY_TITLES = dict(CATEGORIES)
 CATEGORY_ORDER = {key: index for index, (key, _) in enumerate(CATEGORIES)}

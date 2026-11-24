@@ -78,11 +78,13 @@ class DashboardTests(TestCase):
         # The Settings gear replaced the Administration menu (Phase 9A, A7).
         self.assertContains(response, 'aria-label="Settings"')
 
-    def test_plain_user_has_no_settings_gear(self):
+    def test_plain_users_gear_opens_their_appearance(self):
+        # Everyone has Settings › Personal › Appearance (Phase 9A, A7).
         complete_setup()
         self.client.force_login(make_user())
-        self.assertNotContains(
-            self.client.get(reverse("home")), 'aria-label="Settings"'
+        self.assertContains(
+            self.client.get(reverse("home")),
+            f'href="{reverse("accounts:appearance")}" aria-label="Settings"',
         )
 
 

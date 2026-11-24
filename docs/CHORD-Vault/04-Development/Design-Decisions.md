@@ -613,7 +613,7 @@ The owner gave the colours and fonts on 2026-11-25: "Colours and fonts come late
 
 - **Light mode (default):** page `#E6E2E1`; surface `#FFFFFF`; text `#173630`; secondary text `#4A5E59`; border `#D3CDC9`; strong border `#9FA7A2`; primary `#173630` with `#E5C690` text; accent gold `#E5C690` (never as text on white); accent tint `#F3E6C9`; links `#173630`, hover `#0B1F1B`, underlined; chord letters `#7A5A1E`.
 - **Dark mode:** page `#060F00`; surface `#0F241F` (cards), `#173630` (raised: navbar, dropdowns, modals); text `#E6E2E1`; headings and accent `#E5C690`; secondary text `#B9C4BF`; border `#2E4A44`; primary `#E5C690` with `#060F00` text; chord letters `#E5C690`.
-- **Dark mode follows the device** (`prefers-color-scheme`, through `data-bs-theme`), set by a script in `<head>` so nothing flashes. No toggle.
+- **Dark mode follows the device** (`prefers-color-scheme`, through `data-bs-theme`), set by a script in `<head>` so nothing flashes. Since 2026-11-25, at the owner's request, each person may choose instead: Settings › Personal › **Appearance** (Match my device, Light or Dark; `User.theme`, "device" by default), applied by the same script.
 - **Fonts:** Raleway (600, 700, 800) for headings, the brand and card titles; Fira Sans Condensed (400 to 700) for the rest; self-hosted with their OFL licences. The chord sheet's chords stay monospace.
 - **Icons:** solid (filled) inline SVG partials (search, gear, eye, closed eye, person, play, pause), used only where a screen needs them: the navbar (gear) and the player.
 - **Profile letter:** the first letter of the person's name in a gold-on-green circle beside their name.
@@ -644,6 +644,8 @@ The owner approved the A7 wireframes on 2026-11-25, in the design system above. 
 - **Lineup song page:** Previous and Next song through the lineup's order (disabled at either end); the chord sheet's controls in one toolbar; the Listen card, Notes for the team and This lineup on the right.
 - **Members:** Add member; Import, Export, Create accounts and Members settings under More; tabs People and Households; one filter row; columns Name, Status, Household, Phone (private) and Can sign in. The Email column is gone (no test or decision needed it).
 - **Dashboard:** what needs the person now. Each Module adds its items, rows and side cards through `apps/church/dashboard.py`, so Church Setup imports none of them.
+
+**Appearance (the owner's request, 25 Nov):** each person chooses light or dark mode, or to match their device (the default), on Settings › Personal › Appearance (`/accounts/appearance/`; also in the user menu). It is saved on their account (`User.theme`, migration `accounts/0007_user_theme`), applies on every device they sign in on, and isn't audited (a preference, not church data). Personal is the hub's last category, open to everyone signed in, so everyone now has the gear; for a Church Member it opens Appearance.
 
 **Left out, with no data or view behind them (for the owner to decide):**
 - The Team column's "N of M places filled" and "Open place" rows: CHORD has no planned places for a service, only assignments (a removed assignment is gone). The column shows "N of M accepted" (accepted of those assigned) instead.

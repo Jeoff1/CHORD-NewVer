@@ -30,6 +30,20 @@ class ProfileForm(forms.ModelForm):
         fields = ["first_name", "last_name", "email"]
 
 
+class AppearanceForm(forms.ModelForm):
+    """The person's own light or dark mode (Phase 9A, A7)."""
+
+    class Meta:
+        model = User
+        fields = ["theme"]
+        widgets = {"theme": forms.RadioSelect}
+        labels = {"theme": "Light or dark mode"}
+        help_texts = {
+            "theme": "Only for you, on every device you sign in on. Match my "
+            "device follows your phone's or computer's own setting."
+        }
+
+
 class UserCreateForm(RolesMixin, UserCreationForm):
     roles = role_field()
 

@@ -26,7 +26,7 @@ from apps.audit.services import diff, record_change, snapshot
 from apps.core.views import FilteredListView, FormPageMixin
 
 from . import role_changes
-from .forms import ProfileForm, RoleForm, UserCreateForm, UserEditForm
+from .forms import AppearanceForm, ProfileForm, RoleForm, UserCreateForm, UserEditForm
 from .models import Role, User
 from .roles import managed_permissions
 
@@ -51,6 +51,24 @@ class StaffMixin(LoginRequiredMixin, PermissionRequiredMixin):
 
 
 # --- Own account -----------------------------------------------------------
+
+
+class AppearanceView(LoginRequiredMixin, FormPageMixin, UpdateView):
+    """The person's own light or dark mode (Phase 9A, A7). Anyone signed in
+    may change their own; it is a preference, so it isn't audited."""
+
+    form_class = AppearanceForm
+    page_title = "Appearance"
+    submit_label = "Save"
+    success_url = reverse_lazy("accounts:appearance")
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Your appearance was saved.")
+        return response
 
 
 class ProfileView(LoginRequiredMixin, FormPageMixin, UpdateView):

@@ -116,6 +116,12 @@ Users, Roles and permissions and the Audit log are the Settings hub's
 "People and access" category (`apps/core/settings_menu.py`); the gear in
 the navbar replaced the Administration menu.
 
+**Appearance** (Settings › Personal; `/accounts/appearance/`,
+`AppearanceView`, `AppearanceForm`): each person's own light or dark mode,
+or Match my device (the default), saved as `User.theme` and applied by
+`base.html` before the page draws. Anyone signed in; not audited. Tests:
+`apps/accounts/tests/test_appearance.py`.
+
 ## Permissions
 
 | Permission                            | Allows                                  |
