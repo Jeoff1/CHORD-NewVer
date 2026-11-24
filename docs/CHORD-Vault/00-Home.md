@@ -43,7 +43,7 @@ the Spotify player card, built 2026-11-25 on branch `ui-design-system`
 - **Choices to confirm:** "Open questions" in [[Teams]] and
   [[Announcements]].
 - **Checks:** `scripts/check.ps1` (from `.venv`, about 10 minutes); on
-  2026-11-24, after A5 (rebuilt), 961 tests passed with 97% coverage.
+  2026-11-25, on `ui-design-system`, 968 tests passed with 97% coverage.
 - **Waiting on the user, too:** whether the pastor may create batch
   accounts (only the Administrator can today; see the plan's decisions).
 
