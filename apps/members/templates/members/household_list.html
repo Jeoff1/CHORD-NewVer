@@ -9,6 +9,7 @@
     <h1 class="h3 mb-0">Households</h1>
     {% if perms.members.add_household %}<a href="{% url 'members:household_create' %}" class="btn btn-primary">Add household</a>{% endif %}
   </div>
+  {% load ui members_ui %}{% members_sections as links %}{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label="Members sections" %}
 
   {% include "includes/list_toolbar.html" with placeholder="Search households" %}
 
