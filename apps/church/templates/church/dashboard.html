@@ -1,10 +1,16 @@
 {% extends "base.html" %}
+{% load church %}
 
 {% block title %}Home{% endblock %}
 
 {% block content %}
-  <h1 class="h3 mb-1">{{ church.name }}</h1>
-  <p class="text-body-secondary mb-4">Welcome, {{ user.get_short_name|default:user.get_username }}.</p>
+  {# What needs the person now (Phase 9A A7). Each Module adds its part through apps/church/dashboard.py. #}
+  <div class="chord-page-header">
+    <div class="chord-page-header__text">
+      <h1 class="h3 mb-0">{{ greeting }}, {{ first_name }}</h1>
+      <p class="chord-page-header__subtitle">{{ today|date:"l, F j" }} · {{ church.name }}</p>
+    </div>
+  </div>
 
   {% if not church.setup_completed %}
     <div class="alert alert-warning">
@@ -12,23 +18,106 @@
     </div>
   {% endif %}
 
-  <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">
-    {% for entry in module_entries %}
-      <div class="col">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body">
-            <h2 class="h5 card-title d-flex justify-content-between align-items-start gap-2">
-              {% if entry.url %}<a href="{{ entry.url }}" class="stretched-link text-decoration-none">{{ entry.name }}</a>{% else %}{{ entry.name }}{% endif %}
-              {% if not entry.url %}<span class="badge text-bg-secondary fw-normal">Coming soon</span>{% endif %}
-            </h2>
-            <p class="card-text text-body-secondary">{{ entry.description }}</p>
+  <div class="chord-columns">
+    <div class="chord-main">
+      <section class="card shadow-sm" aria-labelledby="attention-title">
+        <div class="card-body">
+          <div class="chord-card-head">
+            <h2 id="attention-title" class="card-title">Needs your attention</h2>
+            <span class="chord-card-head__extra">{{ attention|length }} item{{ attention|length|pluralize }}</span>
           </div>
+          {% if attention %}
+            <ul class="list-unstyled mb-0">
+              {% for item in attention %}
+                <li class="d-flex flex-wrap align-items-center gap-3 py-2{% if not forloop.last %} border-bottom{% endif %}">
+                  <div class="flex-grow-1" style="min-width: 14rem">
+                    <div class="fw-semibold">{{ item.text }}</div>
+                    <div class="small text-body-secondary">{{ item.detail }}</div>
+                  </div>
+                  <a href="{{ item.url }}" class="btn chord-btn {% if forloop.first %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ item.button }}</a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-body-secondary mb-0">Nothing needs you right now.</p>
+          {% endif %}
         </div>
-      </div>
-    {% empty %}
-      <div class="col">
-        <p class="text-body-secondary">{% if modules_switched_on %}Your role doesn't open any module yet. Ask an administrator if you need one.{% else %}No modules are switched on.{% endif %}</p>
-      </div>
-    {% endfor %}
+      </section>
+
+      <section class="card shadow-sm" aria-labelledby="coming-title">
+        <div class="card-body">
+          <div class="chord-card-head">
+            <h2 id="coming-title" class="card-title">Coming up</h2>
+            {% if "worship" in enabled_modules and perms.worship.view_worshipservice %}<a href="{% url 'worship:home' %}" class="fw-semibold">Full schedule</a>{% endif %}
+          </div>
+          {% if coming_up %}
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">When</th>
+                    <th scope="col">{% label "worship_service" %} or occasion</th>
+                    <th scope="col">Theme</th>
+                    {% if perms.worship.view_lineup %}<th scope="col">{% label "lineup" %}</th>{% endif %}
+                    {% if "teams" in enabled_modules and perms.teams.view_assignment %}<th scope="col">Team</th>{% endif %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in coming_up %}
+                    <tr{% if row.is_cancelled %} class="text-body-secondary"{% endif %}>
+                      <td class="text-nowrap">{{ row.starts_at|date:"D, M j" }}<br><span class="small text-body-secondary">{{ row.starts_at|date:"g:i A" }}</span></td>
+                      <td>
+                        <a href="{{ row.url }}" class="fw-semibold{% if row.is_cancelled %} text-decoration-line-through{% endif %}">{{ row.title }}</a>
+                        {% if row.is_occasion %}{% include "includes/status_pill.html" with status="occasion" %}{% endif %}
+                        {% if row.is_cancelled %}{% include "includes/status_pill.html" with status="cancelled" %}{% endif %}
+                      </td>
+                      <td>{% if row.theme %}{{ row.theme }}{% if row.passage %}<br><span class="small text-body-secondary">{{ row.passage }}</span>{% endif %}{% elif row.is_occasion %}<span class="text-body-secondary">None</span>{% else %}<span class="text-body-secondary">Not posted</span>{% endif %}</td>
+                      {% if perms.worship.view_lineup %}<td>{% if row.lineup %}{% include "includes/status_pill.html" with status=row.lineup %}{% else %}<span class="text-body-secondary">None</span>{% endif %}</td>{% endif %}
+                      {% if "teams" in enabled_modules and perms.teams.view_assignment %}<td class="text-nowrap">{{ row.team|default:"None" }}</td>{% endif %}
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-body-secondary mb-0">Nothing is coming up.</p>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <div class="chord-side">
+      {% for panel in panels %}
+        <section class="card shadow-sm" aria-labelledby="panel-{{ forloop.counter }}">
+          <div class="card-body">
+            <div class="chord-card-head"><h2 id="panel-{{ forloop.counter }}" class="card-title">{{ panel.title }}</h2></div>
+            {% for text, detail, status in panel.lines %}
+              <div class="py-2{% if not forloop.last %} border-bottom{% endif %}">
+                <div class="fw-semibold">{{ text }}{% if status %} {% include "includes/status_pill.html" with status=status %}{% endif %}</div>
+                {% if detail %}<div class="small text-body-secondary">{{ detail }}</div>{% endif %}
+              </div>
+            {% empty %}
+              <p class="text-body-secondary mb-2">{{ panel.empty }}</p>
+            {% endfor %}
+            {% if panel.link_url %}<a href="{{ panel.link_url }}" class="d-inline-block mt-2">{{ panel.link_label }}</a>{% endif %}
+          </div>
+        </section>
+      {% endfor %}
+
+      <section class="card shadow-sm" aria-labelledby="go-title">
+        <div class="card-body">
+          <div class="chord-card-head"><h2 id="go-title" class="card-title">Go to</h2></div>
+          {% if module_entries %}
+            <div class="d-grid gap-2" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+              {% for entry in module_entries %}
+                {% if entry.url %}<a href="{{ entry.url }}" class="btn btn-outline-secondary chord-btn justify-content-center">{{ entry.name }}</a>{% endif %}
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-body-secondary mb-0">{% if modules_switched_on %}Your role doesn't open any module yet. Ask an administrator if you need one.{% else %}No modules are switched on.{% endif %}</p>
+          {% endif %}
+        </div>
+      </section>
+    </div>
   </div>
 {% endblock %}

@@ -11,6 +11,11 @@ class TeamsConfig(AppConfig):
 
     def ready(self):
         from apps.accounts import role_changes
+        from apps.church import dashboard as church_dashboard
+
+        from .dashboard import my_schedule
+
+        church_dashboard.register_panel(my_schedule, order=10)
         from apps.core.settings_menu import SettingsPage, register
         from apps.worship.signals import lineup_changed
 

@@ -10,8 +10,14 @@ class OccasionsConfig(AppConfig):
     verbose_name = "Occasions"
 
     def ready(self):
+        from apps.church import dashboard as church_dashboard
         from apps.core.settings_menu import SettingsPage, register
         from apps.worship import bookings
+
+        from . import dashboard
+
+        church_dashboard.register_attention(dashboard.attention)
+        church_dashboard.register_coming_up(dashboard.coming_up)
 
         from .rules import calendar_source
 

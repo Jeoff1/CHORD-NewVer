@@ -9,7 +9,14 @@ class WorshipConfig(AppConfig):
     verbose_name = "Worship"
 
     def ready(self):
+        from apps.church import dashboard as church_dashboard
         from apps.core.settings_menu import SettingsPage, register
+
+        from . import dashboard
+
+        # The dashboard's "Needs your attention" and "Coming up" (Phase 9A, A7).
+        church_dashboard.register_attention(dashboard.attention)
+        church_dashboard.register_coming_up(dashboard.coming_up)
 
         from .views.base import SETTINGS_GROUPS, SETTINGS_PAGES
 

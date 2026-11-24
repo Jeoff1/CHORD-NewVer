@@ -55,7 +55,7 @@
             <tr>
               <td>
                 <a href="{% url 'members:detail' public_id=person.public_id %}" class="fw-semibold">{{ person.last_name }}, {{ person.first_name }}{% if person.middle_name %} {{ person.middle_name }}{% endif %}{% if person.suffix %} {{ person.suffix }}{% endif %}</a>
-                {% if person.is_archived %}{% include "includes/status_pill.html" with status="none" text="Archived" %}{% endif %}
+                {% if person.is_archived %}{% include "includes/status_pill.html" with status="none" pill_text="Archived" %}{% endif %}
               </td>
               <td>{{ person.status }}</td>
               <td>{{ person.household|default:"—" }}{% if person.relationship %} <span class="text-body-secondary small">({{ person.relationship }})</span>{% endif %}</td>

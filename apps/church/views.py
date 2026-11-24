@@ -3,11 +3,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import FormView, TemplateView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 
+from . import dashboard
 from .forms import SECTION_ORDER, SECTIONS
 from .labels import LABEL_DEFINITIONS
 from .models import ChurchProfile
@@ -40,7 +42,24 @@ def profile_audit_fields():
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
+    """What needs the person now (Phase 9A, A7): what to act on, what is
+    coming up, and the Modules' side cards. Each Module adds its own
+    through ``apps/church/dashboard.py``."""
+
     template_name = "church/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context.update(
+            greeting=dashboard.greeting(),
+            first_name=user.first_name or user.get_username(),
+            today=timezone.localdate(),
+            attention=dashboard.attention(self.request),
+            coming_up=dashboard.coming_up(self.request),
+            panels=dashboard.panels(self.request),
+        )
+        return context
 
     def get(self, request, *args, **kwargs):
         if not request.church.setup_completed and request.user.has_perm(
