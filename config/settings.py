@@ -73,6 +73,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.church.context_processors.church",
+                "apps.core.settings_menu.settings_menu",
                 "apps.notifications.context_processors.notifications",
                 "apps.occasions.context_processors.pending_requests",
             ],

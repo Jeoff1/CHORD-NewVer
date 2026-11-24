@@ -20,7 +20,20 @@ class SongsConfig(AppConfig):
     verbose_name = "Songs"
 
     def ready(self):
+        from apps.core.settings_menu import SettingsPage, register
+
         from .models import TrustedArtist
+
+        # The Church Spotify Account (decision 0011), under Integrations.
+        register(
+            SettingsPage(
+                "integrations",
+                "Spotify",
+                "songs:church_spotify",
+                "church.change_churchprofile",
+                "worship",
+            )
+        )
 
         post_save.connect(
             recheck_after_trusted_artist_change,

@@ -178,7 +178,8 @@ class _SettingFormView(SettingListMixin, FormPageMixin):
         return self.url("list")
 
     def get_links(self):
-        return self.nav_links()
+        # The Settings hub's menu links the other settings pages.
+        return []
 
     def form_valid(self, form):
         response = super().form_valid(form)

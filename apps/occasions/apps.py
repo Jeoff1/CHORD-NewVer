@@ -10,6 +10,7 @@ class OccasionsConfig(AppConfig):
     verbose_name = "Occasions"
 
     def ready(self):
+        from apps.core.settings_menu import SettingsPage, register
         from apps.worship import bookings
 
         from .rules import calendar_source
@@ -17,3 +18,13 @@ class OccasionsConfig(AppConfig):
         # Occasions show on the Worship calendar; Worship never imports
         # this Module.
         bookings.register(calendar_source)
+        register(
+            SettingsPage(
+                "teams_occasions",
+                "Occasion types",
+                "occasions:types_list",
+                "occasions.view_occasiontype",
+                "occasions",
+                order=20,
+            )
+        )

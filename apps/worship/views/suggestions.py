@@ -25,7 +25,7 @@ from apps.songs.spotify import block_message, current_block
 from .. import suggesting
 from ..forms import SuggestionSettingsForm
 from ..models import Lineup, SearchRun, Suggestion, SuggestionSettings
-from .base import ServiceMixin, WorshipMixin, settings_nav
+from .base import ServiceMixin, WorshipMixin
 
 SUGGEST = "worship.suggest_songs"
 
@@ -189,9 +189,6 @@ class SuggestionSettingsView(WorshipMixin, FormPageMixin, UpdateView):
 
     def get_object(self, queryset=None):
         return SuggestionSettings.load()
-
-    def get_links(self):
-        return settings_nav(self.request)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

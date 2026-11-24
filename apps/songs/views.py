@@ -19,7 +19,6 @@ from apps.church.models import ChurchProfile
 from apps.church.modules import ModuleRequiredMixin
 from apps.core.music import Feel
 from apps.core.views import FilteredListView, FormPageMixin
-from apps.worship.views.base import settings_nav
 
 from . import connections, pool, sheets
 from .analysis import apply_check_rules
@@ -101,7 +100,6 @@ class SongListView(SongsMixin, FilteredListView):
             lyrics_choices=Song.LyricsStatus.choices,
             known_choices=self.KNOWN.items(),
             tags=ThemeTag.objects.active(),
-            settings_url=next(iter(settings_nav(self.request)), (None, None))[1],
         )
         return context
 
@@ -332,9 +330,6 @@ class WorshipCheckSettingsView(SongsMixin, FormPageMixin, UpdateView):
 
     def get_success_url(self):
         return reverse("songs:check_settings")
-
-    def get_links(self):
-        return settings_nav(self.request)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

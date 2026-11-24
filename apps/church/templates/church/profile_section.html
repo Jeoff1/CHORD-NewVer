@@ -3,8 +3,8 @@
 {% block title %}{% if wizard %}Set up your church{% else %}Church settings{% endif %}{% endblock %}
 
 {% block content %}
-  <div class="row justify-content-center">
-    <div class="col-lg-9 col-xl-8">
+  <div class="{% if wizard %}row justify-content-center{% else %}d-block{% endif %}">
+    <div class="{% if wizard %}col-lg-9 col-xl-8{% else %}d-block{% endif %}">
       {% if wizard %}
         <h1 class="h3 mb-1">Set up your church</h1>
         <p class="text-body-secondary mb-3">Step {{ step_number }} of {{ sections|length }}: {{ section_title }}</p>
@@ -13,8 +13,7 @@
           <div class="progress-bar" style="width: {% widthratio step_number sections|length 100 %}%"></div>
         </div>
       {% else %}
-        <h1 class="h3 mb-3">Church settings</h1>
-        {% include "church/includes/settings_tabs.html" %}
+        <h2 class="h3 mb-3">{{ section_title }}</h2>
       {% endif %}
 
       <p class="text-body-secondary">

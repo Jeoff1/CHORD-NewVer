@@ -21,4 +21,18 @@ class AccountsConfig(AppConfig):
     verbose_name = "Users and Roles"
 
     def ready(self):
+        from apps.core.settings_menu import SettingsPage, register
+
         post_migrate.connect(_sync_roles, dispatch_uid="chord_sync_default_roles")
+        register(
+            SettingsPage(
+                "people", "Users", "accounts:user_list", "accounts.view_user", order=10
+            ),
+            SettingsPage(
+                "people",
+                "Roles and permissions",
+                "accounts:role_list",
+                "accounts.view_role",
+                order=20,
+            ),
+        )

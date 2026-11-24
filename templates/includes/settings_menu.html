@@ -1,0 +1,18 @@
+{# The Settings hub's side menu (Phase 9A A7; apps/core/settings_menu.py). Categories open and close without JavaScript; the one holding the current page starts open. #}
+<nav class="chord-settings-menu" aria-label="Settings">
+  {% for category in settings_menu.categories %}
+    <details{% if category.is_open %} open{% endif %}>
+      <summary>
+        {{ category.title }}
+        <span class="chord-settings-menu__count">{{ category.pages|length }}</span>
+        {% include "includes/icons/chevron-left.html" with size=16 %}
+      </summary>
+      <ul>
+        {% for page in category.pages %}
+          {% ifchanged page.group %}{% if page.group %}<li class="chord-settings-menu__group" aria-hidden="true">{{ page.group }}</li>{% endif %}{% endifchanged %}
+          <li><a href="{{ page.url }}"{% if page.current %} aria-current="page"{% endif %}>{{ page.label }}</a></li>
+        {% endfor %}
+      </ul>
+    </details>
+  {% endfor %}
+</nav>

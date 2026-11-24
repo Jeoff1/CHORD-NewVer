@@ -512,10 +512,11 @@ class SeriesTests(WorshipTestCase):
         complete_setup(labels={"sermon": {"singular": "Message", "plural": "Messages"}})
         self.client.force_login(make_administrator())
         response = self.client.get(reverse("worship:series_list"))
+        # In the Settings hub, the page's heading is an H2 (Phase 9A, A7).
         self.assertContains(
-            response, '<h1 class="h3 mb-0">Message series</h1>', html=True
+            response, '<h2 class="h3 mb-0">Message series</h2>', html=True
         )
-        self.assertContains(response, "Service templates")  # settings tabs
+        self.assertContains(response, "Service templates")  # the hub's menu
 
     def test_add_a_series(self):
         self.client.force_login(make_administrator())

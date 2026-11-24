@@ -1,0 +1,8 @@
+{# A page's header (design system, Phase 9A A7): the heading on the left, with an optional subtitle, and the actions on the right. Rendered by {% page_header %} in apps/core/templatetags/ui.py. #}
+<div class="chord-page-header">
+  <div class="chord-page-header__text">
+    {% if level == 2 %}<h2 class="h3 mb-0">{{ title }}</h2>{% else %}<h1 class="h3 mb-0">{{ title }}</h1>{% endif %}
+    {% if subtitle %}<p class="chord-page-header__subtitle">{{ subtitle }}</p>{% endif %}
+  </div>
+  {% if actions %}<div class="chord-page-header__actions">{{ actions }}</div>{% endif %}
+</div>

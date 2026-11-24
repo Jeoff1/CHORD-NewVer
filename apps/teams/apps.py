@@ -11,6 +11,7 @@ class TeamsConfig(AppConfig):
 
     def ready(self):
         from apps.accounts import role_changes
+        from apps.core.settings_menu import SettingsPage, register
         from apps.worship.signals import lineup_changed
 
         from .leaving import leaving_team
@@ -20,3 +21,13 @@ class TeamsConfig(AppConfig):
         # A role change that takes someone off the team lists their coming
         # assignments for the admin to end or keep (Phase 9A, A2).
         role_changes.register(leaving_team)
+        register(
+            SettingsPage(
+                "teams_occasions",
+                "Team parts",
+                "teams:parts_list",
+                "teams.view_teampart",
+                "teams",
+                order=10,
+            )
+        )

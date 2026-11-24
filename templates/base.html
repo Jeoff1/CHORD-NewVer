@@ -37,15 +37,9 @@
             <li class="nav-item">
               <a class="nav-link" href="{% url 'notifications:list' %}">Notifications{% if unread_notifications %} <span class="badge rounded-pill text-bg-danger" aria-label="{{ unread_notifications }} unread">{{ unread_notifications }}</span>{% endif %}</a>
             </li>
-            {% if perms.church.change_churchprofile or perms.accounts.view_user or perms.accounts.view_role or perms.audit.view_auditevent %}
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">{% include "includes/icons/gear.html" %}Administration</a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  {% if perms.church.change_churchprofile %}<li><a class="dropdown-item" href="{% url 'church:settings' section='details' %}">Church settings</a></li>{% endif %}
-                  {% if perms.accounts.view_user %}<li><a class="dropdown-item" href="{% url 'accounts:user_list' %}">Users</a></li>{% endif %}
-                  {% if perms.accounts.view_role %}<li><a class="dropdown-item" href="{% url 'accounts:role_list' %}">Roles and permissions</a></li>{% endif %}
-                  {% if perms.audit.view_auditevent %}<li><a class="dropdown-item" href="{% url 'audit:log' %}">Audit log</a></li>{% endif %}
-                </ul>
+            {% if settings_menu.home_url %}
+              <li class="nav-item">
+                <a class="nav-link chord-icon-btn" href="{{ settings_menu.home_url }}" aria-label="Settings"{% if settings_menu.current %} aria-current="page"{% endif %}>{% include "includes/icons/gear.html" with size=22 %}</a>
               </li>
             {% endif %}
             <li class="nav-item dropdown">
@@ -81,7 +75,20 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
     {% endfor %}
+    {% if settings_menu.current %}
+      {% comment %}The Settings hub (Phase 9A A7): every registered settings page, and its add and edit pages, sits beside the side menu.{% endcomment %}
+      {% url 'home' as dashboard_url %}{% include "includes/back_link.html" with url=dashboard_url label="Dashboard" %}
+      <h1 class="h3 mb-3">Settings</h1>
+      <div class="chord-columns">
+        {% include "includes/settings_menu.html" %}
+        <div class="chord-main" style="gap: 0">
+          <p class="chord-eyebrow">{{ settings_menu.current.category_title }}{% if settings_menu.current.group %} · {{ settings_menu.current.group }}{% endif %}</p>
+    {% endif %}
     {% block content %}{% endblock %}
+    {% if settings_menu.current %}
+        </div>
+      </div>
+    {% endif %}
   </main>
 </body>
 </html>

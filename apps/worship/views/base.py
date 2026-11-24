@@ -14,16 +14,26 @@ from ..models import WorshipService
 SETTINGS_PAGES = [
     ("Service templates", "worship.view_servicetemplate", "worship:template_list"),
     ("{sermon} series", "worship.view_sermonseries", "worship:series_list"),
+    ("Seasons", "worship.view_season", "worship:seasons_list"),
     ("Theme tags", "songs.view_themetag", "songs:theme_tags_list"),
     ("Trusted artists", "songs.view_trustedartist", "songs:trusted_artists_list"),
     ("Worship check", "songs.change_worshipchecksettings", "songs:check_settings"),
-    ("Seasons", "worship.view_season", "worship:seasons_list"),
     (
         "Suggestion settings",
         "worship.change_suggestionsettings",
         "worship:suggestion_settings",
     ),
 ]
+# Their groups in the Settings hub's Worship category (Phase 9A, A7).
+SETTINGS_GROUPS = {
+    "worship:template_list": "Services",
+    "worship:series_list": "Services",
+    "worship:seasons_list": "Services",
+    "songs:theme_tags_list": "Songs and suggestions",
+    "songs:trusted_artists_list": "Songs and suggestions",
+    "songs:check_settings": "Songs and suggestions",
+    "worship:suggestion_settings": "Songs and suggestions",
+}
 
 
 class WorshipMixin(ModuleRequiredMixin, LoginRequiredMixin, PermissionRequiredMixin):
