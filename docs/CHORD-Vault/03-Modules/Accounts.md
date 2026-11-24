@@ -13,7 +13,7 @@ the core; it can't be switched off. App: `apps/accounts`.
   deactivated, never deleted, so the audit trail keeps its actors (there is
   no delete permission).
 - **Role** (`accounts.Role`, built on Django's Group;
-  [[0003-editable-roles]]): a name, description and permissions. The five
+  [[0003-editable-roles]]): a name, description and permissions. The six
   default roles are created by migrations:
   - Administrator
   - Office Staff
@@ -21,6 +21,14 @@ the core; it can't be switched off. App: `apps/accounts`.
     lineups, `worship.finalize_lineup`, by default: [[0008-final-say-permission]])
   - Worship Leader
   - Team Member
+  - Church Member (Phase 9A, A1; migration `0005_church_member_role`, not
+    made if the church already has a role of that name): only
+    `worship.view_worshipservice`, so the schedule, the calendar and each
+    service's theme title. Announcements to everyone and their own member
+    record need no permission. The service page shows lineups, the team,
+    suggestions and theme notes only to holders of their own permissions,
+    so a Church Member sees none of them. Tests:
+    `apps/accounts/tests/test_church_member.py`.
 
   Finance, Records Keeper and Ministry Leader were default roles until the
   scope changed ([[0005-worship-planning-scope]]). The migration removed

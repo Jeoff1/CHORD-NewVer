@@ -8,8 +8,9 @@ development task.
 
 ## Current status
 
-**Phase 9A (adviser requests, 24 Nov) is next, before Phase 9.** Phase 8
-done (2026-11-23). Updated 2026-11-24.
+**Phase 9A (adviser requests, 24 Nov) is in progress: A1 (Church Member
+role) done 2026-11-24; A2 is next.** Phase 8 done (2026-11-23). Updated
+2026-11-24.
 
 **Pick up here:**
 - **Branch:** `adviser-comments` (from `master`, not pushed) holds the
@@ -36,8 +37,8 @@ done (2026-11-23). Updated 2026-11-24.
   service's team.
 - **Choices to confirm:** "Open questions" in [[Teams]] and
   [[Announcements]].
-- **Checks:** `scripts/check.ps1`; on 2026-11-23, 858 tests passed with
-  97% coverage.
+- **Checks:** `scripts/check.ps1` (from `.venv`); on 2026-11-24, 872
+  tests passed with 97% coverage.
 
 Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 

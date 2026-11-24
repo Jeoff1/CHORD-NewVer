@@ -42,7 +42,7 @@ flowchart LR
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
 | 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
 | 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
-| 9A    | Adviser requests (24 Nov)     | L    | 8          | Next              |
+| 9A    | Adviser requests (24 Nov)     | L    | 8          | In progress (A1 done) |
 | 9     | Learning to rank              | S    | 6, after 9A | Not started (only if time remains) |
 | 10    | Hardening and release         | M    | 7, 8, 9A (9 if built) | Not started       |
 
@@ -477,7 +477,7 @@ reaches only that team.
 
 ## Phase 9A: Adviser requests (24 Nov)
 
-**Status: next.** On branch `adviser-comments`. The rules and tests are in
+**Status: in progress (A1 done 2026-11-24).** On branch `adviser-comments`. The rules and tests are in
 [[Design-Decisions]], "Adviser comments, 24 Nov"; more comments or changes
 may come. Nothing is merged into `master` until the owner says so.
 
@@ -485,10 +485,12 @@ Goal: what the adviser asked for on 2026-11-24, each in its smallest useful
 form. Order: A1 to A3 (small), then A4, A5 and A6; the A7 wireframes are
 drawn alongside, for the owner's review.
 
-- [ ] **A1 Church Member role**: a default role that sees the dashboard,
-  its own member record, announcements to everyone, the schedule with theme
-  titles, and its own Occasion Requests; no lineups, song pages, chord
-  sheets, lyrics or other members.
+- [x] **A1 Church Member role** (done 2026-11-24): a default role that
+  sees the dashboard, its own member record, announcements to everyone and
+  the schedule with theme titles (its own Occasion Requests come with A5);
+  no lineups, song pages, chord sheets, lyrics or other members. The
+  navigation and dashboard list only Modules a person can open, and the
+  "Spotify account" link shows only to people who can see lineups.
 - [ ] **A2 A role change keeps history**: proved by tests; a role history
   on the user's page; when someone leaves the team, their future
   assignments are listed and the admin ends or keeps them.

@@ -27,8 +27,13 @@ of the core and can't be switched off. App: `apps/church`.
   - All Modules start switched on, and the church switches off what it
     doesn't use.
   - `ModuleRequiredMixin` returns 404 for a switched-off Module's pages.
-  - The navigation and dashboard show only switched-on Modules. Data is
-    never deleted when a Module is switched off.
+  - The navigation and dashboard show only switched-on Modules, and of
+    those only the ones the person can open (Phase 9A): each Module names
+    the permission its main page needs (`Module.view_permission`: Members
+    `members.view_member`, Worship `worship.view_worshipservice`, Teams
+    `teams.view_assignment`; Announcements needs none). A person who can
+    open none sees a short message instead of cards. Data is never deleted
+    when a Module is switched off.
 - **Labels** (`labels.py`): member, worship service, sermon, lineup and
   pastor (the people with the final say on a lineup; added in Phase 6).
   - Each has a neutral default singular and plural, which the church can
@@ -44,8 +49,9 @@ of the core and can't be switched off. App: `apps/church`.
     other users see a notice.
   - After it's finished, the same forms live at
     `/church/settings/<section>/`.
-- **Dashboard** (`/`): a card for each switched-on Module, named in the
-  church's words. Modules not built yet say "Coming soon".
+- **Dashboard** (`/`): a card for each switched-on Module the person can
+  open, named in the church's words. Modules not built yet say "Coming
+  soon".
 - Every profile change is recorded in the audit trail, field by field
   (see [[Code-Conventions#Audit trail]]).
 - Tests: `apps/church/tests/` (profile, Labels, module switching, time

@@ -2,6 +2,44 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-24: Phase 9A, A1: the Church Member role
+
+On branch `adviser-comments`. A1 of Phase 9A is done.
+
+- **Church Member** default role (migration
+  `accounts/0005_church_member_role`; not made if the church already has a
+  role of that name) with one default permission,
+  `worship.view_worshipservice` (`DEFAULT_ROLE_PERMISSIONS`). It sees the
+  schedule, the calendar and theme titles, announcements to everyone and
+  its own member record; the service page already shows lineups, the team,
+  suggestions and theme notes only to holders of their permissions.
+- **Only openable Modules are listed:** `Module.view_permission` and
+  `Module.can_open(user)` (`apps/church/modules.py`); the `church` context
+  processor's `module_entries` now holds only the Modules the user can
+  open (`enabled_modules` still names every switched-on one). A user who
+  can open none sees a message. Affects every role: Office Staff no longer
+  see Teams, Team Members no longer see Members.
+- **"Spotify account" menu link** only for holders of `worship.view_lineup`
+  (the owner's choice); the page still works for anyone signed in.
+- **Environment:** the user's virtual environment was in `venv`, but
+  `check.ps1` and [[Environment-Setup]] use `.venv`; at the user's request
+  the folder was renamed to `.venv` (the dev server, worker and VS Code's
+  Black formatter were stopped for it). Running `check.ps1` from a
+  PowerShell 5.1 session with `2>&1` stops it at the tests (Django's
+  stderr becomes an error); run it in a terminal, or with
+  `powershell -File` and the output redirected outside PowerShell.
+- **Tests:** new `apps/accounts/tests/test_church_member.py` (14 tests:
+  the role's permissions, editable like any role, each allowed page, the
+  refused lineup, lineup song, suggestions, song, chord sheet, reports,
+  roster and member pages, the Modules each role sees, the Spotify link by
+  role, the no-module message); `test_roles.py` expects the sixth role.
+- **Notes:** [[Design-Decisions]] (A1, and the Phase 7 Spotify line),
+  [[Accounts]], [[Church-Setup]], [[Code-Conventions]],
+  [[Development-Plan]] (A1 ticked), [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed from `.venv`. Ruff lint and
+  format were clean, `manage.py check` was clean, and no migrations were
+  missing. 872 tests passed (14 new), with 97% coverage.
+
 ## 2026-11-24: Adviser comments recorded; Phase 9A planned
 
 On branch `adviser-comments` (from `master`, not pushed). Documentation

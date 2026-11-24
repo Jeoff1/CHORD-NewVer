@@ -141,6 +141,14 @@ DEFAULT_ROLE_PERMISSIONS = {
         # and Blackout Dates are their own and need no permission
         "teams.view_assignment",
     ],
+    "church_member": [
+        # Phase 9A (A1): the schedule, with each service's theme title. The
+        # service page shows lineups, the team, suggestions and theme notes
+        # only to holders of their own permissions, so none of them shows.
+        # Announcements to everyone and their own member record need no
+        # permission.
+        "worship.view_worshipservice",
+    ],
 }
 
 

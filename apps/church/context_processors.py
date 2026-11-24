@@ -41,12 +41,23 @@ def module_entries(profile):
 
 
 def church(request):
-    """Template context: the Church Profile, its Labels and the module nav."""
+    """Template context: the Church Profile, its Labels and the module nav.
+
+    ``module_entries`` holds only the switched-on Modules the user can open;
+    ``enabled_modules`` names every switched-on Module, for templates that
+    link to a Module's other pages.
+    """
     profile = getattr(request, "church", None) or ChurchProfile.load()
     entries = module_entries(profile)
+    user = getattr(request, "user", None)
     return {
         "church": profile,
         "labels": profile.label_set,
-        "module_entries": entries,
+        "module_entries": [
+            entry
+            for entry in entries
+            if user is not None and MODULES_BY_CODE[entry.code].can_open(user)
+        ],
+        "modules_switched_on": bool(entries),
         "enabled_modules": {entry.code for entry in entries},
     }

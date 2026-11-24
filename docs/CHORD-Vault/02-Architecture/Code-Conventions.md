@@ -16,7 +16,7 @@ yet.
 | Form pages     | Simple create and edit pages use `FormPageMixin` and `templates/form_page.html`, with no template of their own.                  |
 | Lists          | `FilteredListView` (`apps/core/views.py`): pagination and `?q=` search over `search_fields`, plus the `includes/list_toolbar.html` and `includes/pagination.html` templates. |
 | Permissions    | Views use `LoginRequiredMixin` and `PermissionRequiredMixin`; a user without permission gets a 403 page. Templates check `perms.app.codename`. |
-| Module pages   | Every view of a Module puts `ModuleRequiredMixin` (with `module = "<code>"`) first, so a switched-off Module's pages return 404. |
+| Module pages   | Every view of a Module puts `ModuleRequiredMixin` (with `module = "<code>"`) first, so a switched-off Module's pages return 404. A Module's `view_permission` (`apps/church/modules.py`) is the permission its main page needs; the navigation and dashboard list it only for people who hold it. |
 | Church wording | UI text for concepts in the Labels list uses `{% label %}` ([[Church-Setup]]).                                                   |
 | Naming people  | Text that names who did something uses the full name, or the username when there is none: `display_name(user)` (`apps/core/people.py`), or `{{ user\|person_name }}` with `{% load people %}`. Never print a user object directly. |
 | Brackets       | Don't nest brackets in text: list songs as "Title, Artist" separated by semicolons, since artist names may hold brackets, such as "Charles Wesley (1739)". |

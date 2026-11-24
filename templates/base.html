@@ -55,7 +55,8 @@
                 {% if "members" in enabled_modules and user.member %}<li><a class="dropdown-item" href="{% url 'members:me' %}">My {{ labels.member|lower }} record</a></li>{% endif %}
                 <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Change password</a></li>
                 {% if "teams" in enabled_modules and perms.teams.view_assignment %}<li><a class="dropdown-item" href="{% url 'teams:my_schedule' %}">My schedule</a></li>{% endif %}
-                {% if "worship" in enabled_modules %}<li><a class="dropdown-item" href="{% url 'songs:spotify_account' %}">Spotify account</a></li>{% endif %}
+                {% comment %}Only people who can see lineups have anything to play, and each connection takes one of Spotify's Development Mode slots (Phase 9A, A1).{% endcomment %}
+                {% if "worship" in enabled_modules and perms.worship.view_lineup %}<li><a class="dropdown-item" href="{% url 'songs:spotify_account' %}">Spotify account</a></li>{% endif %}
                 <li><hr class="dropdown-divider"></li>
                 <li>
                   <form method="post" action="{% url 'accounts:logout' %}">

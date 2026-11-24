@@ -27,7 +27,7 @@
       </div>
     {% empty %}
       <div class="col">
-        <p class="text-body-secondary">No modules are switched on.</p>
+        <p class="text-body-secondary">{% if modules_switched_on %}Your role doesn't open any module yet. Ask an administrator if you need one.{% else %}No modules are switched on.{% endif %}</p>
       </div>
     {% endfor %}
   </div>

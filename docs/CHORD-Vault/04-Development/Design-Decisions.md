@@ -358,7 +358,7 @@ The project owner approved these, and the Church Spotify Account below.
 - The player is on the lineup song page only.
 - Songs not on Spotify are left out of the playlist, and the message says how many.
 - The playlist line shows only to people who may save, except a playlist on the Church Spotify Account: it is public, so everyone who can see the confirmed lineup gets its link.
-- Anyone signed in may connect their own Spotify account.
+- Anyone signed in may connect their own Spotify account. (Since 2026-11-24, Phase 9A: the "Spotify account" menu link shows only to people who can see lineups, `worship.view_lineup`; the page itself still works for anyone signed in.)
 - Find on Spotify fails fast on a 429 (review F10).
 
 Tests: the token page refuses GET, never hands out another person's token, and sends no-store headers; a stored token isn't the plain token and decrypts back; songs not on Spotify are left out with the count; team members see no personal playlist link.
@@ -507,6 +507,9 @@ Not decided yet: what is shown at Progress Check 2 (25 Nov) and what goes in the
 - It sees: the dashboard, the person's own member record, announcements to everyone, the service schedule and calendar with each service's date, time and theme title, and its own Occasion Requests (A5). It can request an Occasion.
 - It doesn't see: lineups (draft or confirmed), song pages, chord sheets, lyrics, suggestions, theme notes, the roster or other people's member records. These stay with the team and the people who plan.
 - Accounts created in a batch (A4) get this role by default.
+- Its one default permission is `worship.view_worshipservice`; the rest needs none. Requesting an Occasion comes with A5.
+- **Only openable Modules are listed** (built with A1, 2026-11-24): the navigation and dashboard list a switched-on Module only for people who can open its main page (Members: `members.view_member`; Worship: `worship.view_worshipservice`; Teams: `teams.view_assignment`; Announcements: anyone). Before, everyone saw every switched-on Module and some got a 403 page. This applies to every role: Office Staff no longer see Teams, and Team Members no longer see Members.
+- **The "Spotify account" menu link** shows only to people who can see lineups (`worship.view_lineup`), decided by the owner on 2026-11-24: Church Members (and Office Staff) have nothing to play, and each connection takes one of Spotify's Development Mode slots. The page still works for anyone signed in, as Phase 7 decided.
 
 Tests: a Church Member reaches each allowed page and is refused (403, or 404 where the rules already hide a page) on lineups, song pages, chord sheets, the roster and other members' records.
 

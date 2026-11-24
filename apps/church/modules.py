@@ -25,6 +25,13 @@ class Module:
     # Modules this one builds on: it counts as switched off while any of
     # them is switched off.
     requires: tuple[str, ...] = ()
+    # The permission the Module's main page needs; None when anyone signed
+    # in may open it. The navigation and the dashboard list a Module only
+    # for people who can open it (Phase 9A, A1).
+    view_permission: str | None = None
+
+    def can_open(self, user):
+        return self.view_permission is None or user.has_perm(self.view_permission)
 
 
 MODULES = (
@@ -35,6 +42,7 @@ MODULES = (
         ("members",),
         url_name="members:list",
         label_key="member",
+        view_permission="members.view_member",
     ),
     Module(
         "worship",
@@ -42,6 +50,7 @@ MODULES = (
         "Worship services, their themes and song lineups, and the song library.",
         ("worship", "songs"),
         url_name="worship:home",
+        view_permission="worship.view_worshipservice",
     ),
     Module(
         "teams",
@@ -50,6 +59,9 @@ MODULES = (
         ("teams",),
         url_name="teams:my_schedule",
         requires=("worship",),
+        # My schedule is for the team; anyone else reaches their
+        # Notifications from the navigation's own link.
+        view_permission="teams.view_assignment",
     ),
     Module(
         "announcements",

@@ -18,6 +18,7 @@ class DefaultRolesTests(TestCase):
                 "pastoral_staff",
                 "worship_leader",
                 "team_member",
+                "church_member",
             },
         )
 
