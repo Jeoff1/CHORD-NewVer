@@ -4,11 +4,12 @@
 {% block title %}Households{% endblock %}
 
 {% block content %}
-  <a href="{% url 'members:list' %}" class="small text-decoration-none">← {% label "member" plural=True %}</a>
+  {% url 'members:list' as back_url %}{% label "member" plural=True as back_label %}{% include "includes/back_link.html" with url=back_url label=back_label %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0">Households</h1>
     {% if perms.members.add_household %}<a href="{% url 'members:household_create' %}" class="btn btn-primary">Add household</a>{% endif %}
   </div>
+  {% load ui members_ui %}{% members_sections as links %}{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label="Members sections" %}
 
   {% include "includes/list_toolbar.html" with placeholder="Search households" %}
 

@@ -92,14 +92,6 @@ class MemberListView(MembersMixin, FilteredListView):
             status_filter=self.get_status(),
             statuses=MembershipStatus.objects.all(),
             private=can_view_private(user),
-            can_settings=any(
-                user.has_perm(p)
-                for p in (
-                    "members.view_membershipstatus",
-                    "members.view_relationshiptype",
-                    "members.view_memberfield",
-                )
-            ),
         )
         return context
 

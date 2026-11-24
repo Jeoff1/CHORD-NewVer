@@ -335,11 +335,14 @@ class PlaybackTests(TestCase):
         self.assertNotContains(page, "data-spotify-player")
         self.assertNotContains(page, "Connect your Spotify account")
 
-    def test_a_song_not_on_spotify_has_no_player(self):
+    def test_a_song_not_on_spotify_says_so_in_the_card(self):
+        # Since Phase 9A, A7 the card stays and says there is no playback.
         self.song.spotify_id = ""
         self.song.save()
         page = self.client.get(self.url)
-        self.assertNotContains(page, 'id="listen"')
+        self.assertContains(page, 'id="listen"')
+        self.assertContains(page, "No playback for this song")
+        self.assertNotContains(page, "open.spotify.com/embed")
 
     def test_the_player_script_falls_back_without_retrying(self):
         # The SDK runs in the browser, which the test suite doesn't run; this

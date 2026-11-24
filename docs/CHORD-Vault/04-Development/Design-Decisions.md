@@ -607,6 +607,56 @@ Tests: each filter; age groups on the report's date, and "Age not given"; privat
 
 Tests: the existing view tests keep passing; every action that moved is still permission-checked.
 
+#### The owner's design system (25 Nov)
+
+The owner gave the colours and fonts on 2026-11-25: "Colours and fonts come later, from the owner's instructions" above. Built on branch `ui-design-system` (not merged); the details, file locations and contrast table are in [[Design-System]].
+
+- **Light mode (default):** page `#E6E2E1`; surface `#FFFFFF`; text `#173630`; secondary text `#4A5E59`; border `#D3CDC9`; strong border `#9FA7A2`; primary `#173630` with `#E5C690` text; accent gold `#E5C690` (never as text on white); accent tint `#F3E6C9`; links `#173630`, hover `#0B1F1B`, underlined; chord letters `#7A5A1E`.
+- **Dark mode:** page `#060F00`; surface `#0F241F` (cards), `#173630` (raised: navbar, dropdowns, modals); text `#E6E2E1`; headings and accent `#E5C690`; secondary text `#B9C4BF`; border `#2E4A44`; primary `#E5C690` with `#060F00` text; chord letters `#E5C690`.
+- **Dark mode follows the device** (`prefers-color-scheme`, through `data-bs-theme`), set by a script in `<head>` so nothing flashes. Since 2026-11-25, at the owner's request, each person may choose instead: Settings › Personal › **Appearance** (Match my device, Light or Dark; `User.theme`, "device" by default), applied by the same script.
+- **Fonts:** Raleway (600, 700, 800) for headings, the brand and card titles; Fira Sans Condensed (400 to 700) for the rest; self-hosted with their OFL licences. The chord sheet's chords stay monospace.
+- **Icons:** solid (filled) inline SVG partials (search, gear, eye, closed eye, person, play, pause), used only where a screen needs them: the navbar (gear) and the player.
+- **Profile letter:** the first letter of the person's name in a gold-on-green circle beside their name.
+- **Back links:** every existing "←" link is one shared pill link (44px, chevron).
+- **Status colours** stay Bootstrap's, at shades that reach 4.5:1 in both modes.
+- **The player card** (wireframes "6 Lineup song page" and "6b Spotify card, no playback"): green in both modes, in three states: full playback (cover, title and artist from the Song, progress, back and forward 10 seconds, play/pause), the embedded player, or "No playback for this song". The cover comes from the SDK in the browser only and is never stored (AGENTS.md). Every Phase 7 playback rule stays: fall back on any SDK failure with no retry, stop on the first 429, the token in script memory only, the 15-second timeout.
+- Page layouts don't change in this part; the per-screen wireframe changes are separate A7 work.
+
+How it was built (2026-11-25):
+- `static/css/chord.css` sets Bootstrap's variables for both modes; `--bs-body-bg` is the surface and `body` gets the page colour, so cards, inputs, tables and menus are white (dark green in dark mode) without touching their templates. Chosen here, where the owner gave no value: tertiary surface `#F4F1F0` (light) and `#173630` (dark); dark strong border `#6E8A83`.
+- **No link to fix a song without a track:** CHORD has no page that links an existing song to a Spotify track ("Find on Spotify" only adds new songs; the song form has no track field), so the card shows only the message.
+- **Contrast:** every text pair passes. **The light-mode strong border `#9FA7A2` is 2.46:1 on white**, below the 3:1 that input and button outlines need; it is used as given, for the owner to decide (`#6E8A83`, 3.73:1, would pass).
+
+Tests: `apps/songs/tests/test_design_system.py` (each player state, the safeguards in `player.js`, the theme and fonts on every page, the profile letter, the back link); `test_spotify_playlists.py` (a song without a track now gets the card).
+
+#### The screens follow the approved wireframes (25 Nov)
+
+The owner approved the A7 wireframes on 2026-11-25, in the design system above. Built on branch `ui-design-system` (A7 part 3), one commit per screen. Layout and button placement only: no button changed what it does or who may use it.
+
+**Shared patterns** ([[Design-System]], "Page patterns"): a page header with one primary button and the rest under "More" (`{% page_header %}`, `{% more_menu %}`: an item the person may not use doesn't show, and an empty "More" doesn't show); section tabs with a gold underline (`includes/section_tabs.html`); status pills (`includes/status_pill.html`); cards with a title row; two columns that stack on a phone.
+
+**Design change: the Settings hub.** Settings were spread over the Administration menu and a "Settings" button in each Module. Now there is one hub: a gear in the navbar (it replaces the Administration menu) opens the first settings page the person may open, and every settings page shows a side menu of collapsible categories (General; People and access; Members; Worship, in two groups, Services and Songs and suggestions; Teams and occasions; Integrations), with "Category · Group" above its heading. Each app registers its pages in `apps/core/settings_menu.py`; the menu shows only pages of switched-on Modules that the person holds the permission for. The Modules' "Settings" buttons became "<Module> settings" in their "More" menus. No numbered decision: it changes navigation only, and the registry is easy to change back.
+
+**The screens:**
+- **Worship schedule and calendar:** Add service; Schedule weeks ahead and Worship settings under More; tabs Schedule, Calendar, Songs, Reports (each only for people who may open it). The schedule has an Upcoming/Past toggle, the search, and the columns When, Service, Theme, Lineup, Team and Open; a draft shows as one only to people who plan, and Team only while Teams is on, for people who may see teams. The calendar has icon buttons for the months, Today and a legend; decision 0013's "Booked" rule is unchanged.
+- **Service page:** Edit service as the one button; a five-step bar for people who plan (Theme, Suggestions, Lineup, Confirmed, Playlist); the next step's card first; Team, Details and Headcount on the right.
+- **Lineup:** Confirm lineup on top; Regenerate, Send back and Reopen under More; song rows with only Move up and down, Lock and a menu (Swap, Key and notes, Open the song page, Remove).
+- **Lineup song page:** Previous and Next song through the lineup's order (disabled at either end); the chord sheet's controls in one toolbar; the Listen card, Notes for the team and This lineup on the right.
+- **Members:** Add member; Import, Export, Create accounts and Members settings under More; tabs People and Households; one filter row; columns Name, Status, Household, Phone (private) and Can sign in. The Email column is gone (no test or decision needed it).
+- **Dashboard:** what needs the person now. Each Module adds its items, rows and side cards through `apps/church/dashboard.py`, so Church Setup imports none of them.
+
+**Appearance (the owner's request, 25 Nov):** each person chooses light or dark mode, or to match their device (the default), on Settings › Personal › Appearance (`/accounts/appearance/`; also in the user menu). It is saved on their account (`User.theme`, migration `accounts/0007_user_theme`), applies on every device they sign in on, and isn't audited (a preference, not church data). Personal is the hub's last category, open to everyone signed in, so everyone now has the gear; for a Church Member it opens Appearance.
+
+**Left out, with no data or view behind them (for the owner to decide):**
+- The Team column's "N of M places filled" and "Open place" rows: CHORD has no planned places for a service, only assignments (a removed assignment is gone). The column shows "N of M accepted" (accepted of those assigned) instead.
+- "Saved by <name>" on the lineup: no field records who saved a lineup. It shows "Saved <date>"; "Edited by" shows as before.
+- Print on the lineup song page: there is no print layout yet (A6 work).
+- A "More" menu on the service page: no other service action exists (cancelling is on the edit form), so it doesn't show.
+- The step bar shows only to people who plan, so the team never sees a draft's state.
+- The Members Reports tab: A6 isn't built.
+
+Tests: `apps/core/tests/test_ui_patterns.py`, `test_settings_hub.py`; `apps/worship/tests/test_schedule_screens.py`, `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_song_screen.py`; `apps/members/tests/test_members_screen.py`; `apps/church/tests/test_dashboard_screen.py`. Each moved action is still refused without its permission, and its menu entry doesn't show.
+
 ---
 
 ## Phase 9: learning to rank

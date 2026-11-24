@@ -1,0 +1,9 @@
+{# A status pill (design system, Phase 9A A7). Expects `status`: draft, confirmed, none, cancelled, occasion, pending, accepted, declined or open; optional `pill_text` replaces the default wording. #}
+{% if status == "draft" %}<span class="chord-pill chord-pill--warning">{{ pill_text|default:"Draft" }}</span>
+{% elif status == "confirmed" %}<span class="chord-pill chord-pill--success">{{ pill_text|default:"Confirmed" }}</span>
+{% elif status == "cancelled" %}<span class="chord-pill chord-pill--danger">{{ pill_text|default:"Cancelled" }}</span>
+{% elif status == "occasion" %}<span class="chord-pill chord-pill--accent">{{ pill_text|default:"Occasion" }}</span>
+{% elif status == "pending" %}<span class="chord-pill chord-pill--warning">{{ pill_text|default:"Pending" }}</span>
+{% elif status == "accepted" %}<span class="chord-pill chord-pill--success">{{ pill_text|default:"Accepted" }}</span>
+{% elif status == "declined" %}<span class="chord-pill chord-pill--danger">{{ pill_text|default:"Declined" }}</span>
+{% else %}<span class="chord-pill chord-pill--neutral">{{ pill_text|default:"None yet" }}</span>{% endif %}

@@ -1,10 +1,10 @@
 {# A song's chord sheet card. Expects `song` and the context from song_sheet_context() in apps/songs/views.py, plus `here` (this page's URL, to come back to). #}
-<div class="card shadow-sm mb-3" id="chords">
+<section class="card shadow-sm mb-3" id="chords" aria-labelledby="chords-title">
   <div class="card-body">
-    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
-      <h2 class="h5 mb-0">Chord sheet</h2>
+    <div class="chord-card-head">
+      <h2 id="chords-title" class="card-title">Chord sheet</h2>
       {% if may_add_sheet %}
-        <a href="{% url 'songs:chordsheet' public_id=song.public_id %}?next={{ here|urlencode }}" class="btn btn-sm btn-outline-primary">{% if approved_sheet and may_approve_sheets %}Edit the chord sheet{% elif may_approve_sheets %}Add a chord sheet{% else %}Paste a chord sheet{% endif %}</a>
+        <a href="{% url 'songs:chordsheet' public_id=song.public_id %}?next={{ here|urlencode }}" class="btn btn-outline-secondary chord-btn">{% if approved_sheet and may_approve_sheets %}Edit sheet{% elif may_approve_sheets %}Add a chord sheet{% else %}Paste a chord sheet{% endif %}</a>
       {% endif %}
     </div>
 
@@ -32,4 +32,4 @@
       {% endif %}
     {% endif %}
   </div>
-</div>
+</section>

@@ -33,6 +33,9 @@ Built 2026-11-23 (Phase 8, part B):
 Tests: `apps/announcements/tests/test_announcements.py` (audiences, the
 Teams-off case, archiving, permissions, module switching).
 
+Phase 9A, A7 part 3: the dashboard's side column shows the latest two
+announcements the person may see (`dashboard.py`).
+
 ## Church settings this module depends on
 
 - Whether the Announcements module is switched on; "one service's team"

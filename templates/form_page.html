@@ -3,9 +3,9 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-  <div class="row justify-content-center">
-    <div class="col-lg-8 col-xl-7">
-      <h1 class="h3 mb-3">{{ page_title }}</h1>
+  <div class="{% if settings_menu.current %}d-block{% else %}row justify-content-center{% endif %}">
+    <div class="{% if settings_menu.current %}d-block{% else %}col-lg-8 col-xl-7{% endif %}">
+      {% if settings_menu.current %}<h2 class="h3 mb-3">{{ page_title }}</h2>{% else %}<h1 class="h3 mb-3">{{ page_title }}</h1>{% endif %}
       {% if intro %}<p class="text-body-secondary">{{ intro }}</p>{% endif %}
       {% if links %}
         <p class="d-flex flex-wrap gap-3">

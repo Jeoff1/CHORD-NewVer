@@ -30,6 +30,7 @@ urlpatterns = [
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    path("appearance/", views.AppearanceView.as_view(), name="appearance"),
     path(
         "password/change/",
         views.PasswordChangeView.as_view(),

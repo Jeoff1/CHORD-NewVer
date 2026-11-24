@@ -4,6 +4,7 @@ import datetime
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Count, Q
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -19,10 +20,11 @@ from django.views.generic import (
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.church.modules import is_enabled
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.teams.views import service_team_context
 
-from .. import bookings, scheduling
+from .. import bookings, scheduling, suggesting
 from ..forms import (
     AttendanceForm,
     ScheduleAheadForm,
@@ -31,7 +33,7 @@ from ..forms import (
     TemplateForm,
     ThemeForm,
 )
-from ..models import Lineup, ServiceTemplate, Theme, WorshipService
+from ..models import Lineup, SearchRun, ServiceTemplate, Theme, WorshipService
 from .base import ServiceMixin, WorshipMixin, can_plan, service_url, settings_nav
 from .lineups import lineup_context
 from .suggestions import can_suggest, panel_context
@@ -51,7 +53,22 @@ class ServiceListView(WorshipMixin, FilteredListView):
         return when if when in self.WHEN else "upcoming"
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related("template", "theme")
+        queryset = super().get_queryset().select_related("template", "theme", "lineup")
+        if show_team(self.request.user):
+            # The Team column: who accepted, of the people assigned (Pending
+            # or Accepted). Phase 9A, A7.
+            queryset = queryset.annotate(
+                team_assigned=Count(
+                    "assignments",
+                    filter=Q(assignments__reply__in=("pending", "accepted")),
+                    distinct=True,
+                ),
+                team_accepted=Count(
+                    "assignments",
+                    filter=Q(assignments__reply="accepted"),
+                    distinct=True,
+                ),
+            )
         if self.get_when() == "past":
             return queryset.past().order_by("-starts_at")
         return queryset.upcoming()
@@ -62,13 +79,28 @@ class ServiceListView(WorshipMixin, FilteredListView):
         context.update(
             when=self.get_when(),
             when_choices=self.WHEN.items(),
-            can_schedule_ahead=user.has_perm("worship.add_worshipservice")
-            and ServiceTemplate.objects.active()
-            .filter(weekday__isnull=False, start_time__isnull=False)
-            .exists(),
-            settings_url=next(iter(settings_nav(self.request)), (None, None))[1],
+            can_schedule_ahead=can_schedule_ahead(user),
+            show_lineup=user.has_perm("worship.view_lineup"),
+            show_team=show_team(user),
+            can_plan=can_plan(user),
         )
         return context
+
+
+def can_schedule_ahead(user):
+    """Whether "Schedule weeks ahead" has anything to offer this person."""
+    return (
+        user.has_perm("worship.add_worshipservice")
+        and ServiceTemplate.objects.active()
+        .filter(weekday__isnull=False, start_time__isnull=False)
+        .exists()
+    )
+
+
+def show_team(user):
+    """The schedule's Team column: while Teams is on, for people who may
+    see each service's team."""
+    return is_enabled("teams") and user.has_perm("teams.view_assignment")
 
 
 class CalendarView(WorshipMixin, TemplateView):
@@ -102,6 +134,7 @@ class CalendarView(WorshipMixin, TemplateView):
             previous_month="{}-{:02d}".format(*scheduling.shift_month(year, month, -1)),
             next_month="{}-{:02d}".format(*scheduling.shift_month(year, month, 1)),
             weekday_names=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            can_schedule_ahead=can_schedule_ahead(self.request.user),
         )
         return context
 
@@ -130,11 +163,77 @@ class ServiceDetailView(ServiceMixin, DetailView):
         # The service's team, while Teams is on (Phase 8).
         context.update(service_team_context(service, user))
         # The lineup itself: team members get it only once it is confirmed.
+        lineup = Lineup.objects.filter(service=service).first()
         if user.has_perm("worship.view_lineup"):
-            context.update(
-                lineup_context(Lineup.objects.filter(service=service).first(), user)
-            )
+            context.update(lineup_context(lineup, user))
+        # The step bar and the order of the cards, for people who plan
+        # (Phase 9A, A7).
+        if context["can_plan"]:
+            run = suggesting.latest_run(service)
+            context.update(planning_steps(service, lineup, run))
         return context
+
+
+def planning_steps(service, lineup, run):
+    """Where planning a service stands: five steps, each done or not, the
+    first one not done being current; and which card comes first."""
+    ranked = (
+        run.suggestions.count()
+        if run is not None and run.status == SearchRun.Status.DONE
+        else 0
+    )
+    confirmed = lineup is not None and lineup.is_confirmed
+    if lineup is None:
+        lineup_state = "None yet"
+    elif confirmed:
+        lineup_state = "Confirmed"
+    else:
+        lineup_state = "Draft, to review"
+    steps = [
+        {
+            "key": "theme",
+            "label": "Theme",
+            "state": "Posted" if service.posted_theme else "Not posted",
+            "done": service.posted_theme is not None,
+        },
+        {
+            "key": "suggestions",
+            "label": "Suggestions",
+            "state": f"{ranked} song{'' if ranked == 1 else 's'} ranked"
+            if ranked
+            else "Not yet",
+            "done": bool(ranked) or lineup is not None,
+        },
+        {"key": "lineup", "label": "Lineup", "state": lineup_state, "done": confirmed},
+        {
+            "key": "confirmed",
+            "label": "Confirmed",
+            "state": "Team sees it" if confirmed else "Not yet",
+            "done": confirmed,
+        },
+        {
+            "key": "playlist",
+            "label": "Playlist",
+            "state": "Saved on Spotify"
+            if lineup is not None and lineup.spotify_playlist_id
+            else "Not saved yet",
+            "done": lineup is not None and bool(lineup.spotify_playlist_id),
+        },
+    ]
+    current = next((step for step in steps if not step["done"]), None)
+    if current is not None:
+        current["current"] = True
+    key = current["key"] if current else "lineup"
+    if key in ("lineup", "confirmed", "playlist"):
+        first_card = "lineup" if lineup is not None else "suggestions"
+    else:
+        first_card = key
+    return {
+        "steps": steps,
+        "first_card": first_card,
+        "ranked_count": ranked,
+        "latest_run": run,
+    }
 
 
 class ServiceFormMixin(WorshipMixin, FormPageMixin):

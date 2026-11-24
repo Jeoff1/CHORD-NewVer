@@ -5,18 +5,53 @@
 
 {% block content %}
   {% label "lineup" as lineup_word %}
-  <div class="row justify-content-center">
-    <div class="col-lg-9">
-      <a href="{% url 'worship:lineup' public_id=service.public_id %}" class="small text-decoration-none">← {{ lineup_word }}, {{ service }}</a>
-      <h1 class="h3 mb-1">{{ song.title }}</h1>
-      <p class="text-body-secondary mb-3">
-        {{ song.artist }}{% if item.slot %} · {{ item.slot.name }}{% endif %}
-        · {% if item.key %}Service key {{ item.key }}{% else %}No service key set{% if approved_sheet %}; shown in the sheet's key, {{ approved_sheet.key }}{% endif %}{% endif %}
+  {% url 'worship:lineup' public_id=service.public_id as back_url %}{% include "includes/back_link.html" with url=back_url label="Back to "|add:lineup_word %}
+
+  <div class="chord-page-header">
+    <div class="chord-page-header__text">
+      <h1 class="h3 mb-0">{{ song.title }}</h1>
+      <p class="chord-page-header__subtitle">
+        {{ song.artist }}{% if item.slot %} · {{ item.slot.name }}{% endif %} · song {{ song_number }} of {{ lineup_order|length }} · {{ service }}
         {% if perms.songs.view_song %} · <a href="{% url 'songs:detail' public_id=song.public_id %}">Song details</a>{% endif %}
       </p>
-      {% if item.notes %}<div class="alert alert-light border small">{{ item.notes|linebreaksbr }}</div>{% endif %}
-      {% include "songs/includes/player.html" %}
+    </div>
+    <nav class="chord-page-header__actions" aria-label="Songs in this {{ lineup_word|lower }}">
+      {% if previous_item %}<a href="{% url 'worship:lineup_song' public_id=service.public_id pk=previous_item.pk %}" class="btn btn-outline-secondary chord-btn">{% include "includes/icons/chevron-left.html" with size=18 %}Previous song</a>
+      {% else %}<button type="button" class="btn btn-outline-secondary chord-btn" disabled>{% include "includes/icons/chevron-left.html" with size=18 %}Previous song</button>{% endif %}
+      {% if next_item %}<a href="{% url 'worship:lineup_song' public_id=service.public_id pk=next_item.pk %}" class="btn btn-outline-secondary chord-btn">Next song{% include "includes/icons/chevron-right.html" with size=18 %}</a>
+      {% else %}<button type="button" class="btn btn-outline-secondary chord-btn" disabled>Next song{% include "includes/icons/chevron-right.html" with size=18 %}</button>{% endif %}
+    </nav>
+  </div>
+
+  <div class="chord-columns">
+    <div class="chord-main">
       {% include "songs/includes/sheet_card.html" %}
+    </div>
+
+    <div class="chord-side">
+      {% include "songs/includes/player.html" %}
+
+      <section class="card shadow-sm" aria-labelledby="notes-title">
+        <div class="card-body">
+          <div class="chord-card-head"><h2 id="notes-title" class="card-title">Notes for the team</h2></div>
+          <p class="mb-0">{% if item.notes %}{{ item.notes|linebreaksbr }}{% else %}<span class="text-body-secondary">No notes for this song.</span>{% endif %}</p>
+        </div>
+      </section>
+
+      <section class="card shadow-sm" aria-labelledby="order-title">
+        <div class="card-body">
+          <div class="chord-card-head"><h2 id="order-title" class="card-title">This {{ lineup_word|lower }}</h2></div>
+          <ol class="mb-0 ps-3">
+            {% for entry in lineup_order %}
+              {% if entry.pk == item.pk %}
+                <li class="py-1" aria-current="true"><strong>{{ entry.song.title }}</strong>{% if entry.key %} · {{ entry.key }}{% endif %}</li>
+              {% else %}
+                <li class="py-1"><a href="{% url 'worship:lineup_song' public_id=service.public_id pk=entry.pk %}">{{ entry.song.title }}</a>{% if entry.key %} · {{ entry.key }}{% endif %}</li>
+              {% endif %}
+            {% endfor %}
+          </ol>
+        </div>
+      </section>
     </div>
   </div>
 {% endblock %}

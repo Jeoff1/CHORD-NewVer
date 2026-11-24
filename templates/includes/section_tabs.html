@@ -1,0 +1,10 @@
+{# A module's section tabs (design system, Phase 9A A7). Expects `tabs` from {% section_tabs %} (label, url, current) and `label`, the navigation's name. Shows nothing when there is only one tab. #}
+{% if tabs|length > 1 %}
+  <nav class="chord-tabs" aria-label="{{ label|default:'Sections' }}">
+    <ul>
+      {% for tab in tabs %}
+        <li><a href="{{ tab.url }}"{% if tab.current %} class="active" aria-current="page"{% endif %}>{{ tab.label }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+{% endif %}

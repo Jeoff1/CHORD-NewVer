@@ -348,10 +348,15 @@ def service_team_context(service, user):
     team, while Teams is switched on."""
     if not is_enabled("teams") or not user.has_perm("teams.view_assignment"):
         return {}
+    team = list(rostering.service_team(service))
+    serving = [a for a in team if a.reply in rostering.SERVING]
     return {
-        "team": rostering.service_team(service),
+        "team": team,
         "team_closed": rostering.roster_closed(service),
         "show_team": True,
+        # The card's count (Phase 9A, A7): who accepted, of those serving.
+        "team_assigned": len(serving),
+        "team_accepted": sum(a.reply == "accepted" for a in serving),
     }
 
 

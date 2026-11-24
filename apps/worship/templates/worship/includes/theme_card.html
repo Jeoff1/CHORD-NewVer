@@ -1,0 +1,24 @@
+{% load church %}
+{# The service's theme on the service page (Phase 9A A7). The notes behind it are folded, and only for people who plan. #}
+<section class="card shadow-sm" aria-labelledby="theme-title">
+  <div class="card-body">
+    <div class="chord-card-head">
+      <h2 id="theme-title" class="card-title">Theme</h2>
+      {% if perms.worship.change_theme %}<a href="{% url 'worship:theme' public_id=service.public_id %}" class="fw-semibold">{% if theme %}Edit theme{% else %}Post the theme{% endif %}</a>{% endif %}
+    </div>
+    {% if theme %}
+      <p class="fs-5 fw-semibold mb-1">{{ theme.title }}</p>
+      <p class="text-body-secondary mb-0">
+        {% if theme.scripture %}{{ theme.scripture }}{% endif %}{% if theme.series %}{% if theme.scripture %} · {% endif %}{% label "sermon" %} series: {{ theme.series }}{% endif %}
+      </p>
+      {% if can_plan and theme.notes %}
+        <details class="mt-3">
+          <summary class="fw-semibold" style="min-height: 44px; display: flex; align-items: center">{% label "sermon" %} notes</summary>
+          <div class="border rounded p-2 bg-body-tertiary small" style="max-height: 16rem; overflow-y: auto">{{ theme.notes|linebreaksbr }}</div>
+        </details>
+      {% endif %}
+    {% else %}
+      <p class="text-body-secondary mb-0">The theme hasn't been posted yet. Song suggestions start from it.</p>
+    {% endif %}
+  </div>
+</section>

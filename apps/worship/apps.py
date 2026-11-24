@@ -7,3 +7,44 @@ class WorshipConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.worship"
     verbose_name = "Worship"
+
+    def ready(self):
+        from apps.church import dashboard as church_dashboard
+        from apps.core.settings_menu import SettingsPage, register
+
+        from . import dashboard
+
+        # The dashboard's "Needs your attention" and "Coming up" (Phase 9A, A7).
+        church_dashboard.register_attention(dashboard.attention)
+        church_dashboard.register_coming_up(dashboard.coming_up)
+
+        from .views.base import SETTINGS_GROUPS, SETTINGS_PAGES
+
+        # The Worship settings (with the song pool's) in the Settings hub,
+        # in two groups (Phase 9A, A7).
+        for order, (label, permission, url_name) in enumerate(SETTINGS_PAGES):
+            register(
+                SettingsPage(
+                    "worship",
+                    _settings_label(label),
+                    url_name,
+                    permission,
+                    "worship",
+                    group=SETTINGS_GROUPS[url_name],
+                    order=order,
+                )
+            )
+
+
+def _settings_label(label):
+    """A label that may name the church's word for a sermon."""
+    if "{sermon}" not in label:
+        return label
+
+    def with_sermon(request):
+        from apps.church.models import ChurchProfile
+
+        church = getattr(request, "church", None) or ChurchProfile.load()
+        return label.format(sermon=church.label_set.get("sermon"))
+
+    return with_sermon

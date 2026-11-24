@@ -63,6 +63,10 @@ Built in Phase 9A, A5 (2026-11-24):
   notifications with Teams off, every page and who may open it, the
   settings list, switching Occasions or Worship off, the calendar).
 
+Phase 9A, A7 part 3: Occasion types is in the Settings hub's "Teams and
+occasions" category; the dashboard shows waiting requests to approvers
+and the coming occasions to people who may see them (`dashboard.py`).
+
 ## Permissions
 
 | Permission                          | Allows                                          | Default roles |

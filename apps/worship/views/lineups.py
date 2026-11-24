@@ -347,7 +347,7 @@ class LineupSongView(ItemMixin, TemplateView):
 
     def sheet_context(self):
         item = self.visible_item()
-        return song_sheet_context(
+        context = song_sheet_context(
             item.song,
             self.request,
             base_key=item.key,
@@ -356,6 +356,8 @@ class LineupSongView(ItemMixin, TemplateView):
                 kwargs={"public_id": self.service.public_id, "pk": item.pk},
             ),
         )
+        context["key_label"] = "Service key"
+        return context
 
     def get(self, request, *args, **kwargs):
         if request.headers.get("HX-Request"):
@@ -373,6 +375,18 @@ class LineupSongView(ItemMixin, TemplateView):
             item=self.item,
             song=self.item.song,
             here=self.request.get_full_path(),
+        )
+        # The lineup's order: Previous and Next, "song N of M" and the
+        # "This lineup" list (Phase 9A, A7).
+        items = list(
+            self.lineup.items.select_related("song", "slot").order_by("position", "pk")
+        )
+        index = next(i for i, item in enumerate(items) if item.pk == self.item.pk)
+        context.update(
+            lineup_order=items,
+            song_number=index + 1,
+            previous_item=items[index - 1] if index > 0 else None,
+            next_item=items[index + 1] if index + 1 < len(items) else None,
         )
         return context
 

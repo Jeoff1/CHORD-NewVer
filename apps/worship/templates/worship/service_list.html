@@ -1,29 +1,21 @@
 {% extends "base.html" %}
-{% load church %}
+{% load church ui %}
 
 {% block title %}{% label "worship_service" plural=True %}{% endblock %}
 
 {% block content %}
+  {% include "worship/includes/schedule_header.html" %}
+  {% include "worship/includes/nav.html" %}
+
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">{% label "worship_service" plural=True %}</h1>
-    <div class="d-flex flex-wrap gap-2">
-      {% if settings_url %}<a href="{{ settings_url }}" class="btn btn-outline-secondary">Settings</a>{% endif %}
-      {% if can_schedule_ahead %}<a href="{% url 'worship:schedule_ahead' %}" class="btn btn-outline-secondary">Schedule weeks ahead</a>{% endif %}
-      {% if perms.worship.add_worshipservice %}<a href="{% url 'worship:service_create' %}" class="btn btn-primary">Add {{ labels.worship_service|lower }}</a>{% endif %}
-    </div>
-  </div>
-
-  {% include "worship/includes/nav.html" with active="schedule" %}
-
-  <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-    <ul class="nav nav-tabs flex-grow-1">
+    <form method="get" role="group" aria-label="Show" class="btn-group">
+      {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
       {% for key, title in when_choices %}
-        <li class="nav-item"><a class="nav-link{% if when == key %} active{% endif %}" href="{% querystring when=key page=None %}">{{ title }}</a></li>
+        <button type="submit" name="when" value="{{ key }}" aria-pressed="{% if when == key %}true{% else %}false{% endif %}" class="btn chord-btn {% if when == key %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ title }}</button>
       {% endfor %}
-    </ul>
+    </form>
+    {% include "includes/list_toolbar.html" with placeholder="Search by name or theme" %}
   </div>
-
-  {% include "includes/list_toolbar.html" with placeholder="Search by name or theme" %}
 
   <div class="card shadow-sm">
     <div class="table-responsive">
@@ -33,27 +25,43 @@
             <th scope="col">When</th>
             <th scope="col">{% label "worship_service" %}</th>
             <th scope="col">Theme</th>
+            {% if show_lineup %}<th scope="col">{% label "lineup" %}</th>{% endif %}
+            {% if show_team %}<th scope="col">Team</th>{% endif %}
+            <th scope="col"><span class="visually-hidden">Open</span></th>
           </tr>
         </thead>
         <tbody>
           {% for service in object_list %}
+            {% url 'worship:service' public_id=service.public_id as service_url %}
             <tr{% if service.is_cancelled %} class="text-body-secondary"{% endif %}>
               <td class="text-nowrap">{{ service.starts_at|date:"D, M j, Y" }}<br><span class="small text-body-secondary">{{ service.starts_at|date:"g:i A" }}</span></td>
               <td>
-                <a href="{% url 'worship:service' public_id=service.public_id %}" class="fw-semibold text-decoration-none{% if service.is_cancelled %} text-decoration-line-through{% endif %}">{{ service.name }}</a>
-                {% if service.is_cancelled %}<span class="badge text-bg-secondary ms-1">Cancelled</span>{% endif %}
+                <a href="{{ service_url }}" class="fw-semibold{% if service.is_cancelled %} text-decoration-line-through{% endif %}">{{ service.name }}</a>
+                {% if service.is_cancelled %}{% include "includes/status_pill.html" with status="cancelled" %}{% endif %}
               </td>
               <td>
                 {% if service.posted_theme %}
                   {{ service.posted_theme.title }}
-                  {% if service.posted_theme.scripture %}<span class="text-body-secondary small">· {{ service.posted_theme.scripture }}</span>{% endif %}
+                  {% if service.posted_theme.scripture %}<br><span class="small text-body-secondary">{{ service.posted_theme.scripture }}</span>{% endif %}
                 {% else %}
-                  <span class="text-body-secondary">No theme yet</span>
+                  <span class="text-body-secondary">Not posted</span>
                 {% endif %}
               </td>
+              {% if show_lineup %}
+                <td>
+                  {% with lineup=service.lineup %}
+                    {% comment %}A draft is shown as one only to people who plan: the team sees a lineup only once it is confirmed.{% endcomment %}
+                    {% if lineup and lineup.is_confirmed %}{% include "includes/status_pill.html" with status="confirmed" %}
+                    {% elif lineup and can_plan %}{% include "includes/status_pill.html" with status="draft" %}
+                    {% else %}{% include "includes/status_pill.html" with status="none" %}{% endif %}
+                  {% endwith %}
+                </td>
+              {% endif %}
+              {% if show_team %}<td class="text-nowrap">{% if service.team_assigned %}{{ service.team_accepted }} of {{ service.team_assigned }} accepted{% else %}<span class="text-body-secondary">No one yet</span>{% endif %}</td>{% endif %}
+              <td class="text-end"><a href="{{ service_url }}" aria-label="Open {{ service }}">Open</a></td>
             </tr>
           {% empty %}
-            <tr><td colspan="3" class="text-center text-body-secondary py-4">
+            <tr><td colspan="6" class="text-center text-body-secondary py-4">
               {% if q %}Nothing matches your search.{% elif when == "past" %}No past {{ labels.worship_service|lower }} yet.{% else %}Nothing is scheduled yet.{% endif %}
             </td></tr>
           {% endfor %}

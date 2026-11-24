@@ -515,7 +515,10 @@ drawn alongside, for the owner's review.
   CSV; age groups as a church-edited list. Ask the owner about "who
   attended a service" first (on hold).
 - [ ] **A7 UI pass**: wireframes of the main screens for the owner's
-  approval, then button placement and layout; colours later.
+  approval, then button placement and layout; colours later. Part 2, the
+  owner's design system and the Spotify player card, built 2026-11-25 on
+  branch `ui-design-system` ([[Design-System]]); the per-screen layout
+  changes are still to do, when the owner asks.
 
 **Done when** the tests listed for A1 to A7 in [[Design-Decisions]] pass:
 a Church Member is refused on lineups, song pages and chord sheets; a
@@ -557,7 +560,10 @@ Goal: ready for the proposal and for a real church.
   (`manage.py check --deploy` clean).
 - [ ] Performance: query counts on list pages and the lineup page.
 - [ ] Mobile layout and basic accessibility pass, especially the song
-  page.
+  page. Partly done by Phase 9A A7 (2026-11-25): the dashboard, schedule,
+  calendar, service, lineup, lineup song page, Members list and the
+  Settings hub stack at 390px, use 44px buttons and label icon-only
+  buttons. Left: the other pages.
 - [ ] A `seed_demo` command with fictional churches that work differently.
 - [ ] A backup and restore script (`pg_dump`) and a deployment guide.
 - [ ] User acceptance testing with the evaluation instrument the proposal

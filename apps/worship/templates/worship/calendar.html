@@ -4,17 +4,22 @@
 {% block title %}Calendar: {{ month|date:"F Y" }}{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">{% label "worship_service" plural=True %}</h1>
-    {% if perms.worship.add_worshipservice %}<a href="{% url 'worship:service_create' %}" class="btn btn-primary">Add {{ labels.worship_service|lower }}</a>{% endif %}
-  </div>
+  {% include "worship/includes/schedule_header.html" %}
+  {% include "worship/includes/nav.html" %}
 
-  {% include "worship/includes/nav.html" with active="calendar" %}
-
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="?month={{ previous_month }}" class="btn btn-outline-secondary btn-sm">← Previous</a>
-    <h2 class="h5 mb-0">{{ month|date:"F Y" }}</h2>
-    <a href="?month={{ next_month }}" class="btn btn-outline-secondary btn-sm">Next →</a>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div class="d-flex align-items-center gap-2">
+      <a href="?month={{ previous_month }}" class="btn btn-outline-secondary chord-icon-btn" aria-label="Previous month">{% include "includes/icons/chevron-left.html" %}</a>
+      <h2 class="h5 mb-0 text-center" style="min-width: 10rem">{{ month|date:"F Y" }}</h2>
+      <a href="?month={{ next_month }}" class="btn btn-outline-secondary chord-icon-btn" aria-label="Next month">{% include "includes/icons/chevron-right.html" %}</a>
+      <a href="{% url 'worship:calendar' %}" class="btn btn-outline-secondary chord-btn">Today</a>
+    </div>
+    <ul class="list-unstyled d-flex flex-wrap gap-3 mb-0 small" aria-label="Legend">
+      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-primary" aria-hidden="true"></span>{% label "worship_service" %}</li>
+      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-info" aria-hidden="true"></span>Occasion</li>
+      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-light border" aria-hidden="true"></span>Booked (details hidden)</li>
+      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-secondary" aria-hidden="true"></span><span class="text-decoration-line-through">Cancelled</span></li>
+    </ul>
   </div>
 
   <div class="card shadow-sm">

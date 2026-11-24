@@ -3,9 +3,8 @@
 {% block title %}Service templates{% endblock %}
 
 {% block content %}
-  {% include "worship/includes/settings_tabs.html" %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-    <h1 class="h3 mb-0">Service templates</h1>
+    <h2 class="h3 mb-0">Service templates</h2>
     {% if perms.worship.add_servicetemplate %}<a href="{% url 'worship:template_create' %}" class="btn btn-primary">Add service template</a>{% endif %}
   </div>
   <p class="text-body-secondary">

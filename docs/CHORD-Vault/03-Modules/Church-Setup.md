@@ -57,6 +57,24 @@ of the core and can't be switched off. App: `apps/church`.
 - Tests: `apps/church/tests/` (profile, Labels, module switching, time
   zone, wizard, settings, logo upload).
 
+### The dashboard and the Settings hub (Phase 9A, A7 part 3)
+
+- **Dashboard** (`church/dashboard.html`, `apps/church/dashboard.py`): a
+  greeting with today's date; **Needs your attention** (one sentence, a
+  detail and one button per item, the first primary); **Coming up** (the
+  next services and occasions); side cards; **Go to**. Each Module
+  registers what it adds from its `AppConfig.ready()`: Worship (draft
+  lineups to confirm, services with no theme, chord sheets waiting, the
+  coming services), Occasions (waiting requests, the coming occasions),
+  Teams (My schedule) and Announcements (the latest two). Each only for
+  people who may act on it, and nothing from a switched-off Module.
+- **Settings hub:** the gear in the navbar replaced the Administration
+  menu. The Church Profile's sections (Church details, Labels, Modules) are
+  its General category; the setup wizard stays outside it.
+  ([[Design-System]], "Page patterns".)
+- Tests: `apps/church/tests/test_dashboard_screen.py`,
+  `apps/core/tests/test_settings_hub.py`.
+
 ## Church settings this module depends on
 
 This module *is* the church's settings: Church Profile details, switched-off

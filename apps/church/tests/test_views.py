@@ -75,12 +75,17 @@ class DashboardTests(TestCase):
         response = self.client.get(reverse("home"))
         self.assertContains(response, "Worship")
         self.assertNotContains(response, "Announcements")
-        self.assertContains(response, "Administration")
+        # The Settings gear replaced the Administration menu (Phase 9A, A7).
+        self.assertContains(response, 'aria-label="Settings"')
 
-    def test_plain_user_has_no_administration_menu(self):
+    def test_plain_users_gear_opens_their_appearance(self):
+        # Everyone has Settings › Personal › Appearance (Phase 9A, A7).
         complete_setup()
         self.client.force_login(make_user())
-        self.assertNotContains(self.client.get(reverse("home")), "Administration")
+        self.assertContains(
+            self.client.get(reverse("home")),
+            f'href="{reverse("accounts:appearance")}" aria-label="Settings"',
+        )
 
 
 class SetupWizardTests(TestCase):

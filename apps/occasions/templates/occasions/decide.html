@@ -4,7 +4,7 @@
 {% block title %}{{ record }}{% endblock %}
 
 {% block content %}
-  <a href="{% url 'occasions:requests' %}" class="small text-decoration-none">← Occasion requests</a>
+  {% url 'occasions:requests' as back_url %}{% include "includes/back_link.html" with url=back_url label="Occasion requests" %}
   <h1 class="h3 mb-1">{{ record.occasion_type.name }} for {{ record.occasion_for }}</h1>
   <p class="text-body-secondary">Asked by {{ record.requester|person_name }} on {{ record.created_at|date:"M j, Y" }} · <span class="badge {% if record.status == 'approved' %}text-bg-success{% elif record.status == 'declined' %}text-bg-danger{% elif record.status == 'pending' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ record.get_status_display }}</span></p>
 

@@ -2,6 +2,49 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Phase 9A, A7 part 2: the owner's design system and the player card
+
+On branch `ui-design-system` (from `master`; not merged, at the owner's
+request, since Progress Check 2 is demoed from `master`).
+
+- **Theme** (`static/css/chord.css`, after Bootstrap in `base.html`): the
+  owner's light and dark tokens as Bootstrap variables; `--bs-body-bg` is
+  the surface and `body` the page colour; buttons, menus, tabs, pills,
+  forms, cards and status text restyled. Dark mode follows the device
+  (`data-bs-theme`, set in `<head>`), with no toggle.
+- **Fonts:** Raleway (variable, 600 to 800) and Fira Sans Condensed (400
+  to 700), Latin and Latin Extended woff2 from Google Fonts, self-hosted in
+  `static/vendor/fonts/` with their OFL licences; `font-display: swap`.
+- **Icons:** `templates/includes/icons/` (search, gear, eye, eye-off,
+  person, play, pause, chevron-left, back-10, forward-10), solid,
+  `currentColor`, `aria-hidden`. Used in the navbar (gear) and the player.
+- **base.html:** the theme stylesheet and dark-mode script; no
+  `bg-body-tertiary`; the profile letter (`.chord-avatar`) beside the name.
+- **Back links:** `templates/includes/back_link.html`; the 15 "←" links
+  now use it (the calendar's "Previous" month button is not a back link).
+- **Chord letters** use `--chord-chord-letter` (`songs/includes/chord_sheet.html`).
+- **Player card** (`songs/includes/player.html`, `songs/static/songs/player.js`;
+  `playback_context` adds the Song's title, artist and length): three
+  states (full playback, embedded player, no playback), green in both
+  modes. The SDK state gives the cover (browser only), the progress (about
+  once a second while playing, not while hidden) and seeking. Every Phase 7
+  safeguard kept. Only the lineup song page uses the player.
+- **No page links an existing song to a Spotify track**, so the
+  no-playback card shows no fix link.
+- **Contrast:** every text pair is at least 4.5:1 ([[Design-System]]). The
+  light-mode strong border `#9FA7A2` is 2.46:1 on white, under 3:1 for
+  input outlines: kept as given, for the owner to decide.
+- **Tests:** new `apps/songs/tests/test_design_system.py` (7: the three
+  card states, the player's safeguards, the theme and fonts, the profile
+  letter, the back link); `test_spotify_playlists.py`: a song without a
+  track now gets the card.
+- **Notes:** [[Design-System]] (new), [[Design-Decisions]] (A7: the owner's
+  design system), [[Code-Conventions]], [[Worship]] (playback),
+  [[Development-Plan]], [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 968
+  tests passed, with 97% coverage.
+
 ## 2026-11-24: Phase 9A, A5 rebuilt: Occasions as their own Module
 
 On branch `adviser-comments`. The owner decided that weddings, baptisms

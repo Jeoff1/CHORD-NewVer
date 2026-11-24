@@ -1,7 +1,2 @@
-{# Section links shown at the top of the main Worship pages. `active` names the current one. #}
-<ul class="nav nav-pills mb-3">
-  <li class="nav-item"><a class="nav-link{% if active == 'schedule' %} active{% endif %}" href="{% url 'worship:home' %}">Schedule</a></li>
-  <li class="nav-item"><a class="nav-link{% if active == 'calendar' %} active{% endif %}" href="{% url 'worship:calendar' %}">Calendar</a></li>
-  {% if perms.songs.view_song %}<li class="nav-item"><a class="nav-link{% if active == 'songs' %} active{% endif %}" href="{% url 'songs:list' %}">Songs</a></li>{% endif %}
-  {% if perms.worship.view_song_usage or perms.worship.record_attendance %}<li class="nav-item"><a class="nav-link{% if active == 'reports' %} active{% endif %}" href="{% url 'worship:reports' %}">Reports</a></li>{% endif %}
-</ul>
+{# The Worship Module's section tabs (Phase 9A A7): Schedule, Calendar, and Songs and Reports for people who may open them. The current tab is found from the page's address. #}
+{% load ui worship_ui %}{% worship_sections as links %}{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label="Worship sections" %}

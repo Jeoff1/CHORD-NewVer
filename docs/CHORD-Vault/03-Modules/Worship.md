@@ -443,18 +443,25 @@ playback and the Lineup Playlist** ([[Design-Decisions]], Phase 7):
   endpoints of Spotify's February 2026 Web API.
 - **Playback** on the lineup song page (`songs/includes/player.html`,
   `playback_context`):
+  - it is a green **"Listen" card** in both colour modes since Phase 9A,
+    A7 part 2 ([[Design-System]]): full playback, the embedded player, or
+    "No playback for this song" when the song has no Spotify track;
   - a connected account gets the **Web Playback SDK** (`static/songs/player.js`):
-    a Play button that plays the track in the browser. The script asks
+    the song's title and artist (CHORD's own), a cover from the SDK (shown
+    in the browser only, never stored), a progress bar with the time, back
+    and forward 10 seconds and a gold play/pause button. The script asks
     `/worship/songs/spotify/player-token/` (POST, never cached) for the
     person's own access token, which stays in its memory; the refresh token
     never leaves the server;
   - whenever the SDK can't be used (no Premium, an unsupported browser, a
     refused or missing token, a 429 from Spotify or from the token page, or
     no "ready" within 15 s), it shows a short message and falls back to
-    Spotify's **embedded player**, with no automatic retry;
+    Spotify's **embedded player** inside the same card, with no automatic
+    retry;
   - without a connection the embedded player shows at once, with a link to
     connect. **Open in Spotify** always shows. A song without a Spotify
-    track ID has no player.
+    track ID gets the card with "No playback for this song" and no link to
+    fix it (no page links an existing song to a track yet).
 - **Church Spotify Account** (`ChurchSpotifyAccount`, at most one row;
   [[0011-church-spotify-account]]): an optional church setting on the
   **Spotify** tab of church settings (`/worship/songs/spotify/church/`),
@@ -532,6 +539,34 @@ Built in Phase 9A, A5 (2026-11-24), **booked time** for [[Occasions]]
 - Tests: `apps/worship/tests/test_schedule.py` (`BookedTimeTests`, and the
   length in `test_create_with_slots`); the calendar with occasions in
   `apps/occasions/tests/test_occasions.py`.
+
+Phase 9A, A7 part 3 (2026-11-25), **the screens follow the approved
+wireframes** ([[Design-Decisions]], A7):
+
+- **Schedule and calendar:** a shared header (Add service; Schedule weeks
+  ahead and Worship settings under More) and tabs Schedule, Calendar,
+  Songs, Reports (`templatetags/worship_ui.py`). The schedule's Lineup
+  column shows Draft only to people who plan; its Team column ("N of M
+  accepted") only while Teams is on, for people who may see teams.
+- **Service page:** a step bar for people who plan
+  (`views/schedule.py`, `planning_steps`; `includes/planning_steps.html`),
+  the next step's card first (`includes/theme_card.html`,
+  `lineup_card.html` with "Review and confirm", `suggestions_card.html`,
+  folded once a lineup is saved), and Team, Details and Headcount on the
+  right.
+- **Lineup:** Confirm on top, the rest under More; song rows with Move,
+  Lock and a "More for this song" menu.
+- **Lineup song page:** Previous and Next song, "song N of M", the sheet's
+  one toolbar (Service key, My key, Capo), and the Listen card, Notes for
+  the team and This lineup on the right.
+- **Settings:** in the Settings hub's Worship category (Services; Songs
+  and suggestions), from `views/base.py`, `SETTINGS_PAGES` and
+  `SETTINGS_GROUPS`.
+- **Dashboard:** `dashboard.py` adds draft lineups, services with no
+  theme, chord sheets waiting and the coming services.
+- Tests: `apps/worship/tests/test_schedule_screens.py`,
+  `test_service_screen.py`, `test_lineup_screen.py`,
+  `test_lineup_song_screen.py`.
 
 ## Permissions
 
