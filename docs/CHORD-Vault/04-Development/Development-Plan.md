@@ -560,7 +560,10 @@ Goal: ready for the proposal and for a real church.
   (`manage.py check --deploy` clean).
 - [ ] Performance: query counts on list pages and the lineup page.
 - [ ] Mobile layout and basic accessibility pass, especially the song
-  page.
+  page. Partly done by Phase 9A A7 (2026-11-25): the dashboard, schedule,
+  calendar, service, lineup, lineup song page, Members list and the
+  Settings hub stack at 390px, use 44px buttons and label icon-only
+  buttons. Left: the other pages.
 - [ ] A `seed_demo` command with fictional churches that work differently.
 - [ ] A backup and restore script (`pg_dump`) and a deployment guide.
 - [ ] User acceptance testing with the evaluation instrument the proposal

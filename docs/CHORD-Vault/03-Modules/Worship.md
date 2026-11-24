@@ -540,6 +540,34 @@ Built in Phase 9A, A5 (2026-11-24), **booked time** for [[Occasions]]
   length in `test_create_with_slots`); the calendar with occasions in
   `apps/occasions/tests/test_occasions.py`.
 
+Phase 9A, A7 part 3 (2026-11-25), **the screens follow the approved
+wireframes** ([[Design-Decisions]], A7):
+
+- **Schedule and calendar:** a shared header (Add service; Schedule weeks
+  ahead and Worship settings under More) and tabs Schedule, Calendar,
+  Songs, Reports (`templatetags/worship_ui.py`). The schedule's Lineup
+  column shows Draft only to people who plan; its Team column ("N of M
+  accepted") only while Teams is on, for people who may see teams.
+- **Service page:** a step bar for people who plan
+  (`views/schedule.py`, `planning_steps`; `includes/planning_steps.html`),
+  the next step's card first (`includes/theme_card.html`,
+  `lineup_card.html` with "Review and confirm", `suggestions_card.html`,
+  folded once a lineup is saved), and Team, Details and Headcount on the
+  right.
+- **Lineup:** Confirm on top, the rest under More; song rows with Move,
+  Lock and a "More for this song" menu.
+- **Lineup song page:** Previous and Next song, "song N of M", the sheet's
+  one toolbar (Service key, My key, Capo), and the Listen card, Notes for
+  the team and This lineup on the right.
+- **Settings:** in the Settings hub's Worship category (Services; Songs
+  and suggestions), from `views/base.py`, `SETTINGS_PAGES` and
+  `SETTINGS_GROUPS`.
+- **Dashboard:** `dashboard.py` adds draft lineups, services with no
+  theme, chord sheets waiting and the coming services.
+- Tests: `apps/worship/tests/test_schedule_screens.py`,
+  `test_service_screen.py`, `test_lineup_screen.py`,
+  `test_lineup_song_screen.py`.
+
 ## Permissions
 
 | Permission                                   | Allows                                   |

@@ -629,6 +629,32 @@ How it was built (2026-11-25):
 
 Tests: `apps/songs/tests/test_design_system.py` (each player state, the safeguards in `player.js`, the theme and fonts on every page, the profile letter, the back link); `test_spotify_playlists.py` (a song without a track now gets the card).
 
+#### The screens follow the approved wireframes (25 Nov)
+
+The owner approved the A7 wireframes on 2026-11-25, in the design system above. Built on branch `ui-design-system` (A7 part 3), one commit per screen. Layout and button placement only: no button changed what it does or who may use it.
+
+**Shared patterns** ([[Design-System]], "Page patterns"): a page header with one primary button and the rest under "More" (`{% page_header %}`, `{% more_menu %}`: an item the person may not use doesn't show, and an empty "More" doesn't show); section tabs with a gold underline (`includes/section_tabs.html`); status pills (`includes/status_pill.html`); cards with a title row; two columns that stack on a phone.
+
+**Design change: the Settings hub.** Settings were spread over the Administration menu and a "Settings" button in each Module. Now there is one hub: a gear in the navbar (it replaces the Administration menu) opens the first settings page the person may open, and every settings page shows a side menu of collapsible categories (General; People and access; Members; Worship, in two groups, Services and Songs and suggestions; Teams and occasions; Integrations), with "Category · Group" above its heading. Each app registers its pages in `apps/core/settings_menu.py`; the menu shows only pages of switched-on Modules that the person holds the permission for. The Modules' "Settings" buttons became "<Module> settings" in their "More" menus. No numbered decision: it changes navigation only, and the registry is easy to change back.
+
+**The screens:**
+- **Worship schedule and calendar:** Add service; Schedule weeks ahead and Worship settings under More; tabs Schedule, Calendar, Songs, Reports (each only for people who may open it). The schedule has an Upcoming/Past toggle, the search, and the columns When, Service, Theme, Lineup, Team and Open; a draft shows as one only to people who plan, and Team only while Teams is on, for people who may see teams. The calendar has icon buttons for the months, Today and a legend; decision 0013's "Booked" rule is unchanged.
+- **Service page:** Edit service as the one button; a five-step bar for people who plan (Theme, Suggestions, Lineup, Confirmed, Playlist); the next step's card first; Team, Details and Headcount on the right.
+- **Lineup:** Confirm lineup on top; Regenerate, Send back and Reopen under More; song rows with only Move up and down, Lock and a menu (Swap, Key and notes, Open the song page, Remove).
+- **Lineup song page:** Previous and Next song through the lineup's order (disabled at either end); the chord sheet's controls in one toolbar; the Listen card, Notes for the team and This lineup on the right.
+- **Members:** Add member; Import, Export, Create accounts and Members settings under More; tabs People and Households; one filter row; columns Name, Status, Household, Phone (private) and Can sign in. The Email column is gone (no test or decision needed it).
+- **Dashboard:** what needs the person now. Each Module adds its items, rows and side cards through `apps/church/dashboard.py`, so Church Setup imports none of them.
+
+**Left out, with no data or view behind them (for the owner to decide):**
+- The Team column's "N of M places filled" and "Open place" rows: CHORD has no planned places for a service, only assignments (a removed assignment is gone). The column shows "N of M accepted" (accepted of those assigned) instead.
+- "Saved by <name>" on the lineup: no field records who saved a lineup. It shows "Saved <date>"; "Edited by" shows as before.
+- Print on the lineup song page: there is no print layout yet (A6 work).
+- A "More" menu on the service page: no other service action exists (cancelling is on the edit form), so it doesn't show.
+- The step bar shows only to people who plan, so the team never sees a draft's state.
+- The Members Reports tab: A6 isn't built.
+
+Tests: `apps/core/tests/test_ui_patterns.py`, `test_settings_hub.py`; `apps/worship/tests/test_schedule_screens.py`, `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_song_screen.py`; `apps/members/tests/test_members_screen.py`; `apps/church/tests/test_dashboard_screen.py`. Each moved action is still refused without its permission, and its menu entry doesn't show.
+
 ---
 
 ## Phase 9: learning to rank

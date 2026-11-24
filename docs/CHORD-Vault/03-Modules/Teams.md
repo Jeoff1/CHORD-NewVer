@@ -127,6 +127,11 @@ Tests: `apps/teams/tests/test_rostering.py` (the rules),
 (including two people taking one swap at once, on two database
 connections), `test_notifications.py` and `test_leaving_team.py`.
 
+Phase 9A, A7 part 3: the service page's **Team** card shows "N of M
+accepted" and a status pill per person; the dashboard's **My schedule**
+card shows the person's next assignment (`dashboard.py`); Team parts is in
+the Settings hub's "Teams and occasions" category.
+
 ## Church settings this module depends on
 
 - The **Team Parts** list (names, order, switched on or off).

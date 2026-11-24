@@ -99,6 +99,17 @@ Default roles ([[Accounts]]):
   details, import and export, and can view the settings lists.
 - **Pastoral Staff** and **Worship Leader** can view members.
 
+### The Members list (Phase 9A, A7 part 3)
+
+Add member is the one primary button; Import from CSV, Export CSV, Create
+accounts and Members settings are under **More**, each behind its own
+permission. Tabs **People** and **Households**. One filter row: a
+labelled search, Status, **Show archived** (the `show` filter) and Filter.
+Columns: Name, Status, Household, Phone (with `members.view_private_details`
+only) and **Can sign in** (whether the person has an account). The Email
+column was dropped. The settings lists are in the Settings hub's Members
+category. Tests: `apps/members/tests/test_members_screen.py`.
+
 ## Church settings this module depends on
 
 - Membership Statuses

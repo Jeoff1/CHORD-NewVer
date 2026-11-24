@@ -96,7 +96,9 @@ class DashboardScreenTests(TestCase):
 
     def test_coming_up_with_occasions_for_people_who_see_them(self):
         make_service(name="Sunday gathering")
-        make_occasion(make_occasion_type(name="Garden wedding"), occasion_for="Ana and Ben")
+        make_occasion(
+            make_occasion_type(name="Garden wedding"), occasion_for="Ana and Ben"
+        )
         page = self.page(self.pastor)
         self.assertContains(page, "Sunday gathering")
         self.assertContains(page, "Garden wedding: Ana and Ben")

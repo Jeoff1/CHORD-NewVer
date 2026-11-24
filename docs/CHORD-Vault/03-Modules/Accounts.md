@@ -110,6 +110,12 @@ they work whichever Modules a church switches on.
 - Tests: `apps/notifications/tests/test_notifications.py`, including the
   pages with every Module switched off.
 
+### Settings hub (Phase 9A, A7 part 3)
+
+Users, Roles and permissions and the Audit log are the Settings hub's
+"People and access" category (`apps/core/settings_menu.py`); the gear in
+the navbar replaced the Administration menu.
+
 ## Permissions
 
 | Permission                            | Allows                                  |

@@ -20,6 +20,20 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 (cards, inputs, tables, dropdowns read it); the page behind them is
 `--chord-page`, on `body`.
 
+## Page patterns (A7 part 3)
+
+| Pattern | Where | Use |
+| ------- | ----- | --- |
+| Page header | `{% load ui %}{% page_header title subtitle=… %}…{% endpage_header %}` (`apps/core/templatetags/ui.py`, `includes/page_header.html`) | The heading left, the actions right. One primary button (`btn-primary`) per page |
+| More | `{% more_menu %}<li>…</li>{% endmore_menu %}` | Every other page action, each behind its own permission; an empty menu doesn't render |
+| Section tabs | `{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label=… %}` | A Module's sections; the current one (the longest link the page's path starts with) gets the gold underline and `aria-current` |
+| Status pill | `{% include "includes/status_pill.html" with status=… %}` | draft, confirmed, none, cancelled, occasion, pending, accepted, declined; optional `pill_text` |
+| Cards | `.card` with `.chord-card-head` (a Raleway `.card-title`, and a count or link on the right) | Content blocks |
+| Two columns | `.chord-columns` holding `.chord-main` and `.chord-side` | Main content and a side column; they stack on a phone |
+| Settings hub | Each app registers `SettingsPage`s in `apps/core/settings_menu.py`; `base.html` shows the hub on their pages | One place for every setting |
+| Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
+| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots | Icon-only buttons carry an `aria-label` and are at least 44px |
+
 ## Tokens
 
 **Light mode (default)**
