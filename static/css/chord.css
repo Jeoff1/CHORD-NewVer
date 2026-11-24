@@ -946,3 +946,42 @@ a {
   font-size: 0.8125rem;
   color: var(--bs-secondary-color);
 }
+
+/* A song row on the lineup page: move, the song, lock and its menu. */
+.chord-song-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.chord-song-row:last-child {
+  border-bottom: 0;
+}
+
+.chord-song-row__move {
+  display: flex;
+  flex-direction: column;
+}
+
+.chord-song-row__move .chord-icon-btn {
+  height: 32px;
+  color: var(--bs-secondary-color);
+}
+
+.chord-song-row__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.chord-song-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 575.98px) {
+  .chord-song-row { flex-wrap: wrap; }
+  .chord-song-row__actions { margin-left: auto; }
+}
