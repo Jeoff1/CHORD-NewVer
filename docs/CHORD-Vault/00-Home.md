@@ -9,8 +9,8 @@ development task.
 ## Current status
 
 **Phase 9A (adviser requests, 24 Nov) is in progress: A1 (Church Member
-role) and A2 (a role change keeps history) done 2026-11-24; A3 (user
-history) is next.** Phase 8 done (2026-11-23). Updated
+role), A2 (a role change keeps history), A3 (user history) and A4 (batch
+accounts) done 2026-11-24; A5 (occasions) is next.** Phase 8 done (2026-11-23). Updated
 2026-11-24.
 
 **Pick up here:**
@@ -38,8 +38,10 @@ history) is next.** Phase 8 done (2026-11-23). Updated
   service's team.
 - **Choices to confirm:** "Open questions" in [[Teams]] and
   [[Announcements]].
-- **Checks:** `scripts/check.ps1` (from `.venv`); on 2026-11-24, 887
-  tests passed with 97% coverage.
+- **Checks:** `scripts/check.ps1` (from `.venv`, about 30 minutes); on
+  2026-11-24, after A3 and A4, 913 tests passed with 97% coverage.
+- **Waiting on the user, too:** whether the pastor may create batch
+  accounts (only the Administrator can today; see the plan's decisions).
 
 Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 

@@ -42,7 +42,16 @@ Record every change to sensitive data with `apps/audit/services.py`:
    - A change with no differences is not recorded.
 
 `FIELDS` maps a display label to an attribute name or a function. Never put
-password values in it. Events are listed at `/audit/` for users with
+password values in it.
+
+Sign-ins, sign-outs and failed sign-ins are recorded apart, in
+`audit.SignInEvent`, from Django's sign-in signals (`apps/audit/signins.py`),
+so `AuditEvent` holds only changes to data. Signing a test client in
+(`force_login`) records a sign-in there too, never an `AuditEvent`.
+
+A CSV a person downloads escapes cells a spreadsheet would run as a formula
+(starting with `=`, `+`, `-` or `@`) with a leading apostrophe
+(`apps/members/accounts.py`, `_safe`). Events are listed at `/audit/` for users with
 `audit.view_auditevent`.
 
 ## Church-edited lists

@@ -42,7 +42,7 @@ flowchart LR
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
 | 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
 | 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
-| 9A    | Adviser requests (24 Nov)     | L    | 8          | In progress (A1, A2 done) |
+| 9A    | Adviser requests (24 Nov)     | L    | 8          | In progress (A1–A4 done) |
 | 9     | Learning to rank              | S    | 6, after 9A | Not started (only if time remains) |
 | 10    | Hardening and release         | M    | 7, 8, 9A (9 if built) | Not started       |
 
@@ -477,7 +477,7 @@ reaches only that team.
 
 ## Phase 9A: Adviser requests (24 Nov)
 
-**Status: in progress (A1 and A2 done 2026-11-24).** On branch `adviser-comments`. The rules and tests are in
+**Status: in progress (A1 to A4 done 2026-11-24).** On branch `adviser-comments`. The rules and tests are in
 [[Design-Decisions]], "Adviser comments, 24 Nov"; more comments or changes
 may come. Nothing is merged into `master` until the owner says so.
 
@@ -495,11 +495,13 @@ drawn alongside, for the owner's review.
   tests; a role history on the user's page; when someone leaves the team
   (a change of roles or active status), their coming assignments are
   listed and the admin ends or keeps them.
-- [ ] **A3 User history**: sign-in, sign-out and failed sign-in in the
-  Audit Trail; a History tab on each user's page.
-- [ ] **A4 Batch accounts** from the Members list: a chosen role (Church
-  Member by default), linked to the Member record, temporary passwords shown
-  once and never stored or logged, changed at first sign-in.
+- [x] **A3 User history** (done 2026-11-24): sign-in, sign-out and failed
+  sign-in in the Audit Trail (`SignInEvent`, apart from changes); a History
+  page for each user, linked from their edit page.
+- [x] **A4 Batch accounts** (done 2026-11-24) from the Members list: a
+  chosen role (Church Member by default), linked to the Member record,
+  temporary passwords shown once and never stored or logged, changed at
+  first sign-in. Administrator only for now (see the decisions below).
 - [ ] **A5 Occasions** ([[0012-occasion-services]]): occasion templates
   with a length; who it's for, officiant and venue; Occasion Requests
   (Pending, Approved, Declined, withdrawn) approved with
@@ -587,6 +589,7 @@ phase takes it on.
 | 9A    | Where in-app notifications live when Teams is off (Occasion Requests need them) | Ask while building A5 |
 | 9A    | "Five users or fewer" in the brief, now that church members get accounts | Suggested: "five Spotify-connected users or fewer" |
 | 9A    | What is shown at Progress Check 2 (25 Nov), and what goes in the Progress Report | The owner decides later |
+| 9A    | Should the pastor also create batch accounts? Today only the Administrator holds `accounts.add_user`. Granting it as it is would let the holder give any role, Administrator included (on Add user too) | Waiting on the owner. Suggested: a separate `members.create_accounts` permission for Pastoral Staff that can give only roles without user or settings permissions |
 | 9A    | Warn about coming assignments when the team permission is taken from a whole role (matrix) or a role is deleted | Left for now (owner, 2026-11-24); only a change to one user's roles or status warns. Revisit if the adviser asks |
 
 Record each decision in `02-Architecture/Decisions/` once it is made.

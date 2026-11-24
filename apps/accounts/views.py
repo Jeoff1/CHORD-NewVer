@@ -21,7 +21,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from apps.audit.models import AuditEvent
+from apps.audit.models import AuditEvent, SignInEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.core.views import FilteredListView, FormPageMixin
 
@@ -84,8 +84,22 @@ class PasswordChangeView(FormPageMixin, auth_views.PasswordChangeView):
     success_url = reverse_lazy("accounts:profile")
     cancel_url = reverse_lazy("accounts:profile")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.must_change_password:
+            # A Temporary Password: the person can't go anywhere else yet.
+            context.update(
+                intro="Welcome! Your account started with a temporary password. "
+                "Enter it as your old password, then choose your own to go on.",
+                cancel_url=None,
+            )
+        return context
+
     def form_valid(self, form):
         response = super().form_valid(form)
+        if self.request.user.must_change_password:
+            self.request.user.must_change_password = False
+            self.request.user.save(update_fields=["must_change_password"])
         record_change(
             self.request.user,
             self.request.user,
@@ -114,6 +128,11 @@ class PasswordResetConfirmView(FormPageMixin, auth_views.PasswordResetConfirmVie
     page_title = "Set a new password"
     submit_label = "Set password"
     success_url = reverse_lazy("accounts:password_reset_complete")
+
+    def form_valid(self, form):
+        # The person chose this password, so a Temporary Password is gone.
+        form.user.must_change_password = False
+        return super().form_valid(form)
 
 
 # --- Users -------------------------------------------------------------------
@@ -206,7 +225,11 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
 
     def get_links(self):
         url = reverse("accounts:user_password", kwargs={"pk": self.object.pk})
-        return [("Set a new password", url)]
+        links = [("Set a new password", url)]
+        if self.request.user.has_perm(HISTORY_PERMISSION):
+            history = reverse("accounts:user_history", kwargs={"pk": self.object.pk})
+            links.append(("History", history))
+        return links
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -250,6 +273,33 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
             )
         messages.success(self.request, f"User {self.object.username} was saved.")
         return response
+
+
+HISTORY_PERMISSION = "audit.view_auditevent"
+HISTORY_LENGTH = 50
+
+
+class UserHistoryView(StaffMixin, TemplateView):
+    """A user's History (Phase 9A, A3): their latest sign-ins, sign-outs and
+    failed sign-ins, and the latest changes they made, from the Audit
+    Trail. Needs the permission that shows the audit log."""
+
+    permission_required = HISTORY_PERMISSION
+    template_name = "accounts/user_history.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        person = get_object_or_404(User, pk=self.kwargs["pk"])
+        context.update(
+            person=person,
+            sign_ins=SignInEvent.objects.filter(user=person)[:HISTORY_LENGTH],
+            changes=AuditEvent.objects.filter(actor=person).select_related(
+                "content_type"
+            )[:HISTORY_LENGTH],
+            history_length=HISTORY_LENGTH,
+            can_edit=self.request.user.has_perm("accounts.change_user"),
+        )
+        return context
 
 
 class UserSetPasswordView(StaffMixin, FormPageMixin, FormView):

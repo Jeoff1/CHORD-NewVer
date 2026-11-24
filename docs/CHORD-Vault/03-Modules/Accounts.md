@@ -60,6 +60,17 @@ the core; it can't be switched off. App: `apps/accounts`.
   - **Role history** on the edit page (Phase 9A, A2): every change to the
     user's Roles or Active status from the audit trail, newest first, with
     who made it. Changing roles never deletes what the person did before.
+  - **History** (`/accounts/users/<id>/history/`, Phase 9A, A3; needs
+    `audit.view_auditevent`, linked from the edit page): the person's latest
+    50 sign-ins, sign-outs and failed sign-ins (`audit.SignInEvent`,
+    recorded from Django's sign-in signals in `apps/audit/signins.py`; a
+    failed one keeps only the username tried, never the password) and the
+    latest 50 changes they made;
+  - **Temporary Passwords** (Phase 9A, A4): accounts made in a batch from
+    the Members list ([[Members]]) have `must_change_password`; until the
+    person sets their own password (Change password, or a reset by email),
+    `PasswordChangeRequiredMiddleware` sends every other page to Change
+    password (Sign out, static files and the logo still work);
   - **What a change takes away** (`role_changes.py`): before saving a
     change of roles or active status, the page asks each registered Module
     what the user would lose (Teams: their coming assignments, when they

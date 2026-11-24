@@ -8,6 +8,11 @@ class User(AbstractUser):
     Users are deactivated, never deleted, so the audit trail keeps its actors.
     """
 
+    # Set on accounts made in a batch with a Temporary Password (Phase 9A,
+    # A4): until the person chooses their own password, every page sends
+    # them to Change password (``middleware.PasswordChangeRequiredMiddleware``).
+    must_change_password = models.BooleanField(default=False, editable=False)
+
     class Meta(AbstractUser.Meta):
         default_permissions = ("add", "change", "view")
 

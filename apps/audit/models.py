@@ -37,3 +37,40 @@ class AuditEvent(models.Model):
 
     def __str__(self):
         return f"{self.get_action_display()} {self.object_repr}"
+
+
+class SignInEvent(models.Model):
+    """One sign-in, sign-out or failed sign-in (Phase 9A, A3).
+
+    Part of the Audit Trail, kept apart from ``AuditEvent`` (which records
+    changes to data) so that signing in never mixes with what people
+    changed. Never edited or removed. Never holds a password: a failed
+    sign-in keeps only the username that was tried.
+    """
+
+    class Kind(models.TextChoices):
+        SIGNED_IN = "signed_in", "Signed in"
+        SIGNED_OUT = "signed_out", "Signed out"
+        FAILED = "failed", "Failed sign-in"
+
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    # The account, when the username matched one (a failed sign-in with an
+    # unknown username has none).
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    username = models.CharField(max_length=150, blank=True)
+    occurred_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["-occurred_at", "-pk"]
+        # Seen with audit.view_auditevent, like the rest of the Audit Trail.
+        default_permissions = ()
+        indexes = [models.Index(fields=["user", "-occurred_at"])]
+
+    def __str__(self):
+        return f"{self.get_kind_display()}: {self.username}"

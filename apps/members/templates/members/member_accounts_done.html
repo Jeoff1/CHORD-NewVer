@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load church %}
+
+{% block title %}Accounts created{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-1">Accounts created</h1>
+  {% if created %}
+    <div class="alert alert-warning">
+      <p class="fw-semibold mb-1">Copy or download these temporary passwords now. They are shown only this once and aren't saved anywhere.</p>
+      <p class="mb-0">Give each person their username and temporary password privately. They sign in at <span class="font-monospace">{{ sign_in_url }}</span> and then choose their own password.</p>
+    </div>
+
+    <p><a href="{{ csv_href }}" download="new-accounts.csv" class="btn btn-primary">Download as CSV</a></p>
+
+    <div class="card shadow-sm mb-3">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Username</th>
+              <th scope="col">Temporary password</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in created %}
+              <tr>
+                <td>{{ row.member.last_name }}, {{ row.member.first_name }}</td>
+                <td class="font-monospace">{{ row.user.username }}</td>
+                <td class="font-monospace">{{ row.password }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="text-body-secondary">{{ created|length }} account{{ created|length|pluralize }} created, with the role {{ role }}.</p>
+  {% else %}
+    <p class="text-body-secondary">No accounts were created.</p>
+  {% endif %}
+
+  {% if skipped %}
+    <h2 class="h5">Skipped ({{ skipped|length }})</h2>
+    <ul>
+      {% for row in skipped %}<li>{{ row.member.first_name }} {{ row.member.last_name }} {{ row.reason }}.</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  <p class="d-flex gap-3">
+    <a href="{% url 'members:list' %}">Back to {% label "member" plural=True %}</a>
+    {% if perms.accounts.view_user %}<a href="{% url 'accounts:user_list' %}">Users</a>{% endif %}
+  </p>
+{% endblock %}

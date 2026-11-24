@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.contenttypes.models import ContentType
@@ -6,7 +8,9 @@ from django.db.models import Count, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.cache import never_cache
 from django.views.generic import CreateView, DetailView, FormView, UpdateView
 
 from apps.audit.models import AuditEvent
@@ -16,8 +20,9 @@ from apps.core.custom_fields import custom_values
 from apps.core.storage import private_file_response
 from apps.core.views import FilteredListView, FormPageMixin
 
+from . import accounts as member_accounts
 from . import services
-from .forms import HouseholdForm, ImportUploadForm, MemberForm
+from .forms import HouseholdForm, ImportUploadForm, MemberAccountsForm, MemberForm
 from .models import Household, Member, MemberField, MembershipStatus
 
 PRIVATE_PERMISSION = "members.view_private_details"
@@ -148,6 +153,81 @@ class MemberDetailView(MembersMixin, MemberObjectMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context.update(member_detail_context(self.object, self.request.user))
         return context
+
+
+@method_decorator(never_cache, name="dispatch")
+class MemberAccountsView(MembersMixin, View):
+    """Create accounts for members in a batch (Phase 9A, A4).
+
+    GET lists current members without an account, filtered like the
+    Members list (name and status). POST makes the accounts and shows the
+    Temporary Passwords once, with a CSV of them built into the page: they
+    are never stored, logged or audited, and the page is never cached.
+    """
+
+    permission_required = ("members.view_member", "accounts.add_user")
+    template_name = "members/member_accounts.html"
+    LIMIT = 200
+
+    def get_status(self):
+        status = self.request.GET.get("status", "")
+        return int(status) if status.isdigit() else None
+
+    def candidates(self):
+        queryset = member_accounts.eligible().select_related("status")
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            condition = Q()
+            for field in ("first_name", "middle_name", "last_name", "suffix"):
+                condition |= Q(**{f"{field}__icontains": query})
+            queryset = queryset.filter(condition)
+        if self.get_status():
+            queryset = queryset.filter(status_id=self.get_status())
+        return queryset
+
+    def render_form(self, form):
+        candidates = self.candidates()
+        return render(
+            self.request,
+            self.template_name,
+            {
+                "form": form,
+                "candidates": candidates[: self.LIMIT],
+                "more": max(candidates.count() - self.LIMIT, 0),
+                "limit": self.LIMIT,
+                "statuses": MembershipStatus.objects.all(),
+                "status_filter": self.get_status(),
+                "q": self.request.GET.get("q", "").strip(),
+                "private": can_view_private(self.request.user),
+                "ticked": {str(pk) for pk in form["members"].value() or []},
+            },
+        )
+
+    def get(self, request):
+        return self.render_form(MemberAccountsForm())
+
+    def post(self, request):
+        form = MemberAccountsForm(request.POST)
+        if not form.is_valid():
+            return self.render_form(form)
+        created, skipped = member_accounts.create_accounts(
+            form.cleaned_data["members"].order_by("last_name", "first_name"),
+            form.cleaned_data["role"],
+            request.user,
+        )
+        sign_in_url = request.build_absolute_uri(reverse("accounts:login"))
+        csv_text = member_accounts.accounts_csv(created, sign_in_url)
+        return render(
+            request,
+            "members/member_accounts_done.html",
+            {
+                "created": created,
+                "skipped": skipped,
+                "role": form.cleaned_data["role"],
+                "sign_in_url": sign_in_url,
+                "csv_href": "data:text/csv;charset=utf-8," + quote(csv_text),
+            },
+        )
 
 
 class MyRecordView(ModuleRequiredMixin, LoginRequiredMixin, View):

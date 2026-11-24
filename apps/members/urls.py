@@ -82,6 +82,7 @@ urlpatterns = [
     path("", views.MemberListView.as_view(), name="list"),
     path("new/", views.MemberCreateView.as_view(), name="create"),
     path("export/", views.MemberExportView.as_view(), name="export"),
+    path("accounts/", views.MemberAccountsView.as_view(), name="accounts"),
     path("me/", views.MyRecordView.as_view(), name="me"),
     path("me/photo/", views.MyFileView.as_view(), {"kind": "photo"}, name="my_photo"),
     path(

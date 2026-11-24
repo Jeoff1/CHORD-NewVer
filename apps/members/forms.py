@@ -129,3 +129,30 @@ class ImportUploadForm(forms.Form):
         "the column names.",
         widget=forms.ClearableFileInput(attrs={"accept": ".csv,text/csv"}),
     )
+
+
+class MemberAccountsForm(forms.Form):
+    """Accounts for ticked members, with one role (Phase 9A, A4). Members
+    who already have an account by the time it is saved are skipped, not
+    refused, so the queryset is every member."""
+
+    members = forms.ModelMultipleChoiceField(
+        queryset=Member.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        error_messages={"required": "Tick at least one person."},
+    )
+    role = forms.ModelChoiceField(
+        queryset=None,
+        empty_label=None,
+        help_text="Every new account gets this role. You can change it later "
+        "on each user's page.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        from apps.accounts.models import Role
+
+        super().__init__(*args, **kwargs)
+        self.fields["role"].queryset = Role.objects.order_by("name")
+        default = Role.objects.filter(key="church_member").first()
+        if default:
+            self.fields["role"].initial = default.pk

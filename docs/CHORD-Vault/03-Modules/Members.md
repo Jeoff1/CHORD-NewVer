@@ -57,6 +57,19 @@ including visitors, with their households. App: `apps/members`. Module code
     and imported again. A blank template file is also available.
 - **CSV export** (`/members/export/`) follows the current list filters and
   uses the same columns as the import, so an export can be imported again.
+- **Create accounts** (`/members/accounts/`, Phase 9A, A4; rules in
+  `accounts.py`): from the list's "Create accounts" button, for holders of
+  both `members.view_member` and `accounts.add_user`. Tick current members
+  without an account (filtered by name and status, first 200), choose a
+  role (Church Member by default), and each gets an account linked to the
+  record: username "first.last" (then "first.last2"), the record's email,
+  and a 12-character Temporary Password they must change at first sign-in.
+  The result page shows the passwords once, with a CSV download built into
+  the page, and is never cached; passwords are never stored, logged or
+  audited. Members who already have an account, or are archived, are
+  skipped with the reason. Each member's row is locked while its account is
+  made. The audit trail records the account created and the member's
+  linked account.
 - **Privacy:** only users with `members.view_private_details` see birth
   date, email, phone, address and private Custom Fields. This applies to
   lists, search, detail pages, forms, imports and exports. Editors without
@@ -67,7 +80,8 @@ including visitors, with their households. App: `apps/members`. Module code
 - Every change is in the audit trail, including Custom Field values,
   archiving and imports.
 - Tests: `apps/members/tests/` (list, privacy, own record, archive, files,
-  households, settings lists, import and export).
+  households, settings lists, import and export, batch accounts and the
+  first sign-in).
 
 ## Permissions
 
@@ -95,5 +109,9 @@ Default roles ([[Accounts]]):
 ## Open questions
 
 - None for now. The [[Concept-Brief]] asks only for a basic directory;
-  this Module stays as built. Team members are user accounts, and a Member
-  record can be linked to an account.
+  this Module stays as built, plus what Phase 9A adds (batch accounts;
+  member reports next). Team members are user accounts, and a Member record
+  can be linked to an account.
+- The CSV **export** (older than Phase 9A) doesn't yet guard against cells
+  a spreadsheet would run as a formula; the batch accounts CSV does. For
+  Phase 10's security review.

@@ -67,6 +67,11 @@ urlpatterns = [
     path("users/new/", views.UserCreateView.as_view(), name="user_create"),
     path("users/<int:pk>/", views.UserUpdateView.as_view(), name="user_update"),
     path(
+        "users/<int:pk>/history/",
+        views.UserHistoryView.as_view(),
+        name="user_history",
+    ),
+    path(
         "users/<int:pk>/password/",
         views.UserSetPasswordView.as_view(),
         name="user_password",

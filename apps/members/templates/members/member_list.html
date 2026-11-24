@@ -10,6 +10,7 @@
       {% if perms.members.view_household %}<a href="{% url 'members:household_list' %}" class="btn btn-outline-secondary">Households</a>{% endif %}
       {% if can_settings %}<a href="{% url 'members:status_list' %}" class="btn btn-outline-secondary">Settings</a>{% endif %}
       {% if perms.members.import_member %}<a href="{% url 'members:import' %}" class="btn btn-outline-secondary">Import</a>{% endif %}
+      {% if perms.accounts.add_user %}<a href="{% url 'members:accounts' %}{% querystring page=None show=None %}" class="btn btn-outline-secondary">Create accounts</a>{% endif %}
       {% if perms.members.export_member %}<a href="{% url 'members:export' %}{% querystring page=None %}" class="btn btn-outline-secondary">Export CSV</a>{% endif %}
       {% if perms.members.add_member %}<a href="{% url 'members:create' %}" class="btn btn-primary">Add {{ labels.member|lower }}</a>{% endif %}
     </div>

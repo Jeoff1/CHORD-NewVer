@@ -535,6 +535,11 @@ Tests: after a Worship Leader becomes a Church Member, their past lineups, marks
 - Never recorded: passwords, temporary passwords (A4), Spotify tokens, lyrics or chord sheet text.
 - Phase 10's limit on repeated failed sign-ins will read these events.
 
+How it was built (2026-11-24):
+- Sign-ins are kept in their own Audit Trail table, `SignInEvent` (`apps/audit`), not as new actions on `AuditEvent`: `AuditEvent` records changes to data, and mixing sign-ins into it would fill the audit log and would add rows to every test that signs someone in. Like the rest of the Audit Trail, it is never edited or removed, and it is read with `audit.view_auditevent`.
+- The History page is `/accounts/users/<id>/history/`, linked from the user's edit page for holders of the permission: the latest 50 sign-ins and the latest 50 changes the person made.
+- No IP address or device is recorded; Phase 10's limit on failed sign-ins decides whether it needs one.
+
 Tests: signing in, signing out and a failed sign-in are each recorded; no password appears in any event; the History tab shows only that user's events and is refused without the permission.
 
 ### A4: Batch accounts from the Members list
@@ -544,6 +549,13 @@ Tests: signing in, signing out and a failed sign-in are each recorded; no passwo
 - **Temporary passwords** are random, shown once on the result page, and offered as a CSV download from a never-cached page. They are never logged, audited, emailed or stored in plain text. The person must change it at first sign-in.
 - Members who already have an account, or are archived, are skipped, and the result says how many and why.
 - The Audit Trail records each account created, without its password.
+
+How it was built (2026-11-24):
+- "Create accounts" on the Members list opens `/members/accounts/`: current members without an account, filtered by name and status like the list (the first 200), each with a tick box, and the role (Church Member by default). It needs both `members.view_member` and `accounts.add_user`.
+- Usernames are "first.last" in lowercase (accents dropped), then "first.last2" and so on. Temporary Passwords are 12 characters without look-alike characters (0/O, 1/l/I).
+- The result page shows the passwords once and offers the CSV as a download built into the page itself, so the passwords are never stored on the server, even for a moment. The page is never cached; sending the form again only skips the members who now have an account. Cells a spreadsheet would run as a formula (starting with =, +, - or @) are prefixed with an apostrophe.
+- `User.must_change_password`: until the person sets their own password (Change password, or a reset by email), every page except Change password and Sign out sends them to Change password; static files and the church logo still load.
+- Sending the passwords by email isn't built; the admin hands them over.
 
 To confirm with the owner: the [[Concept-Brief]] and [[Project-Overview]] say "one church, five users or fewer". Accounts for church members go past that. Spotify's 5-user limit applies only to people who connect Spotify (and the Church Spotify Account), not to CHORD accounts, so the suggested wording is "five Spotify-connected users or fewer".
 

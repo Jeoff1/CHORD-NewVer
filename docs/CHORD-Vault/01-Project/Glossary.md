@@ -32,7 +32,8 @@ _Avoid_: user type, position
 **Audit Trail**:
 The permanent record of who changed what, and when. Entries are never
 edited or removed. From Phase 9A it also records sign-ins, sign-outs and
-failed sign-ins; a user's **History** is their part of it.
+failed sign-ins (as Sign-in Events, kept apart from changes); a user's
+**History** is their part of it.
 _Avoid_: history, log (alone)
 
 **Church-edited List**:

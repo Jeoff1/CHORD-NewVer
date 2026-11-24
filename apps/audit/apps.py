@@ -7,3 +7,18 @@ class AuditConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.audit"
     verbose_name = "Audit Trail"
+
+    def ready(self):
+        from django.contrib.auth import signals
+
+        from . import signins
+
+        signals.user_logged_in.connect(
+            signins.on_signed_in, dispatch_uid="audit_signed_in"
+        )
+        signals.user_logged_out.connect(
+            signins.on_signed_out, dispatch_uid="audit_signed_out"
+        )
+        signals.user_login_failed.connect(
+            signins.on_failed, dispatch_uid="audit_sign_in_failed"
+        )

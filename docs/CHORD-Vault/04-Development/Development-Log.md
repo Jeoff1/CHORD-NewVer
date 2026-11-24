@@ -2,6 +2,56 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-24: Phase 9A, A3 and A4: user history; batch accounts
+
+On branch `adviser-comments`. A3 and A4 of Phase 9A are done, built
+together with one full check run at the end.
+
+- **A3, user history:**
+  - `audit.SignInEvent` (migration `audit/0002_signinevent`): sign-in,
+    sign-out and failed sign-in, recorded from Django's signals
+    (`apps/audit/signins.py`, connected in `AuditConfig.ready()`). A
+    failed one keeps the username tried and the account it names, never
+    the password. Kept apart from `AuditEvent`, so the change log isn't
+    flooded and tests that read "the one audit event" still hold.
+  - History page `/accounts/users/<id>/history/` (`audit.view_auditevent`),
+    linked from the user's edit page: the latest 50 sign-ins and the latest
+    50 changes the person made.
+- **A4, batch accounts:**
+  - `/members/accounts/` (`apps/members/accounts.py`, `MemberAccountsView`),
+    from a "Create accounts" button on the Members list; needs
+    `members.view_member` and `accounts.add_user` (Administrator only by
+    default). Current members without an account, filtered by name and
+    status; the chosen role, Church Member by default.
+  - Each account is linked to its member, with username "first.last"
+    (unique), the member's email and a 12-character Temporary Password.
+    Each member's row is locked while its account is made; members who
+    already have one or are archived are skipped with the reason.
+  - The result page shows the passwords once, with the CSV built into the
+    page as a download (never stored on the server), is never cached, and
+    escapes formula-like cells. Passwords never reach the Audit Trail.
+  - `User.must_change_password` (migration
+    `accounts/0006_user_must_change_password`) and
+    `PasswordChangeRequiredMiddleware`: until the person sets their own
+    password (Change password, or a reset by email), every page except
+    Change password and Sign out sends them to Change password; static
+    files and the logo still load.
+- **Found in review before the full run, and fixed:** the middleware would
+  have blocked the church logo on the Change password page; a password
+  reset by email didn't clear the flag.
+- **Open, for the owner:** whether the pastor should create batch accounts
+  too ([[Development-Plan]] decisions: `accounts.add_user` would let them
+  give any role, Administrator included). The Members CSV export (older)
+  doesn't escape formula-like cells; noted in [[Members]] for Phase 10.
+- **Tests:** new `apps/audit/tests/test_sign_ins.py` (8) and
+  `apps/members/tests/test_member_accounts.py` (18).
+- **Notes:** [[Design-Decisions]] (A3, A4: how they were built),
+  [[Accounts]], [[Members]], [[Code-Conventions]] (sign-ins, CSV cells),
+  [[Glossary]], [[Development-Plan]], [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 913
+  tests passed (26 new), with 97% coverage.
+
 ## 2026-11-24: Phase 9A, A2: a role change keeps history
 
 On branch `adviser-comments`. A2 of Phase 9A is done.
