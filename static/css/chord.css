@@ -877,3 +877,11 @@ a {
 [data-bs-theme=dark] .chord-settings-menu a[aria-current="page"] {
   border-left-color: #E5C690;
 }
+
+/* A colour key, as in the calendar's legend. */
+.chord-swatch {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+}

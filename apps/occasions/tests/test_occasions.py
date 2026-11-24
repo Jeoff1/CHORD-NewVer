@@ -482,7 +482,7 @@ class CalendarTests(OccasionTestCase):
     def test_a_church_member_sees_only_booked(self):
         self.client.force_login(self.member)
         page = self.client.get(self.calendar)
-        self.assertContains(page, "Booked")
+        self.assertContains(page, " Booked</span>")
         self.assertNotContains(page, "Ana and Ben")
         self.assertContains(page, "Sunday gathering")
 
@@ -499,7 +499,7 @@ class CalendarTests(OccasionTestCase):
         self.occasion.is_cancelled = True
         self.occasion.save()
         self.client.force_login(self.member)
-        self.assertNotContains(self.client.get(self.calendar), "Booked")
+        self.assertNotContains(self.client.get(self.calendar), " Booked</span>")
 
     def test_occasions_never_show_as_worship_services(self):
         self.client.force_login(self.pastor)
@@ -512,4 +512,4 @@ class CalendarTests(OccasionTestCase):
         self.client.force_login(self.pastor)
         page = self.client.get(self.calendar)
         self.assertNotContains(page, "Ana and Ben")
-        self.assertNotContains(page, "Booked")
+        self.assertNotContains(page, " Booked</span>")

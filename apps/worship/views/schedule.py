@@ -4,6 +4,7 @@ import datetime
 
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Count, Q
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -19,6 +20,7 @@ from django.views.generic import (
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.church.modules import is_enabled
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.teams.views import service_team_context
 
@@ -51,7 +53,22 @@ class ServiceListView(WorshipMixin, FilteredListView):
         return when if when in self.WHEN else "upcoming"
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related("template", "theme")
+        queryset = super().get_queryset().select_related("template", "theme", "lineup")
+        if show_team(self.request.user):
+            # The Team column: who accepted, of the people assigned (Pending
+            # or Accepted). Phase 9A, A7.
+            queryset = queryset.annotate(
+                team_assigned=Count(
+                    "assignments",
+                    filter=Q(assignments__reply__in=("pending", "accepted")),
+                    distinct=True,
+                ),
+                team_accepted=Count(
+                    "assignments",
+                    filter=Q(assignments__reply="accepted"),
+                    distinct=True,
+                ),
+            )
         if self.get_when() == "past":
             return queryset.past().order_by("-starts_at")
         return queryset.upcoming()
@@ -62,13 +79,28 @@ class ServiceListView(WorshipMixin, FilteredListView):
         context.update(
             when=self.get_when(),
             when_choices=self.WHEN.items(),
-            can_schedule_ahead=user.has_perm("worship.add_worshipservice")
-            and ServiceTemplate.objects.active()
-            .filter(weekday__isnull=False, start_time__isnull=False)
-            .exists(),
-            settings_url=next(iter(settings_nav(self.request)), (None, None))[1],
+            can_schedule_ahead=can_schedule_ahead(user),
+            show_lineup=user.has_perm("worship.view_lineup"),
+            show_team=show_team(user),
+            can_plan=can_plan(user),
         )
         return context
+
+
+def can_schedule_ahead(user):
+    """Whether "Schedule weeks ahead" has anything to offer this person."""
+    return (
+        user.has_perm("worship.add_worshipservice")
+        and ServiceTemplate.objects.active()
+        .filter(weekday__isnull=False, start_time__isnull=False)
+        .exists()
+    )
+
+
+def show_team(user):
+    """The schedule's Team column: while Teams is on, for people who may
+    see each service's team."""
+    return is_enabled("teams") and user.has_perm("teams.view_assignment")
 
 
 class CalendarView(WorshipMixin, TemplateView):
@@ -102,6 +134,7 @@ class CalendarView(WorshipMixin, TemplateView):
             previous_month="{}-{:02d}".format(*scheduling.shift_month(year, month, -1)),
             next_month="{}-{:02d}".format(*scheduling.shift_month(year, month, 1)),
             weekday_names=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            can_schedule_ahead=can_schedule_ahead(self.request.user),
         )
         return context
 

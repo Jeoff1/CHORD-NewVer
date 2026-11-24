@@ -1,0 +1,10 @@
+{# The Worship schedule's header, shared by the Schedule and the Calendar (Phase 9A A7): Add service, and Schedule weeks ahead and Worship settings under More. Expects `can_schedule_ahead`. #}
+{% load church ui %}
+{% label "worship_service" plural=True as services_word %}
+{% page_header services_word %}
+  {% more_menu %}
+    {% if can_schedule_ahead %}<li><a class="dropdown-item" href="{% url 'worship:schedule_ahead' %}">Schedule weeks ahead</a></li>{% endif %}
+    {% if settings_menu.category_urls.worship %}<li><a class="dropdown-item" href="{{ settings_menu.category_urls.worship }}">Worship settings</a></li>{% endif %}
+  {% endmore_menu %}
+  {% if perms.worship.add_worshipservice %}<a href="{% url 'worship:service_create' %}" class="btn btn-primary">Add {{ labels.worship_service|lower }}</a>{% endif %}
+{% endpage_header %}
