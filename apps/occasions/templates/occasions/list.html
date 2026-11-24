@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load people %}
+
+{% block title %}Occasions{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Occasions</h1>
+    <div class="d-flex flex-wrap gap-2">
+      {% if perms.occasions.request_occasion %}<a href="{% url 'occasions:request' %}" class="btn btn-outline-primary">Request an occasion</a>{% endif %}
+      {% if perms.occasions.add_occasion %}<a href="{% url 'occasions:create' %}" class="btn btn-primary">Add an occasion</a>{% endif %}
+    </div>
+  </div>
+  <p class="text-body-secondary">Weddings, baptisms, funerals and other special services. They share the calendar with worship services: the same time can't be booked twice.</p>
+
+  {% include "occasions/includes/nav.html" %}
+
+  <ul class="nav nav-pills mb-3">
+    {% for key, title in when_choices %}
+      <li class="nav-item"><a class="nav-link{% if when == key %} active{% endif %}" href="{% querystring when=key page=None %}">{{ title }}</a></li>
+    {% endfor %}
+  </ul>
+
+  {% include "includes/list_toolbar.html" with placeholder="Search by name, occasion or venue" %}
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Occasion</th>
+            <th scope="col">Officiant</th>
+            <th scope="col">Venue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for occasion in object_list %}
+            <tr{% if occasion.is_cancelled %} class="text-body-secondary"{% endif %}>
+              <td class="text-nowrap">{{ occasion.starts_at|date:"D, M j, Y" }}<br><span class="small text-body-secondary">{{ occasion.starts_at|date:"g:i A" }} to {{ occasion.ends_at|date:"g:i A" }}</span></td>
+              <td>
+                <a href="{% url 'occasions:detail' public_id=occasion.public_id %}" class="fw-semibold text-decoration-none{% if occasion.is_cancelled %} text-decoration-line-through{% endif %}">{{ occasion.occasion_type.name }}: {{ occasion.occasion_for }}</a>
+                {% if occasion.is_cancelled %}<span class="badge text-bg-secondary ms-1">Cancelled</span>{% endif %}
+              </td>
+              <td>{% if occasion.officiant %}{{ occasion.officiant|person_name }}{% else %}<span class="text-body-secondary">Not set</span>{% endif %}</td>
+              <td>{{ occasion.venue|default:"The usual place" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-center text-body-secondary py-4">{% if q %}Nothing matches your search.{% elif when == "past" %}No past occasions yet.{% else %}No occasions are booked.{% endif %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% include "includes/pagination.html" %}
+{% endblock %}

@@ -2,6 +2,60 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-24: Phase 9A, A5 rebuilt: Occasions as their own Module
+
+On branch `adviser-comments`. The owner decided that weddings, baptisms
+and funerals are not worship services: they need their own form and part,
+with no lineup or team, and the pastor adds them directly as well as
+approving requests. New decision [[0013-occasions-module]] replaces
+[[0012-occasion-services]] (marked superseded); `AGENTS.md` scope updated.
+The previous entry's design was built and replaced the same day; its
+commit was never pushed or merged.
+
+- **Worship back to worship services:** the occasion fields, the occasion
+  templates and the worship-side requests were removed (their migrations
+  were unapplied locally and replaced by `worship/0012_template_length`).
+  Kept: `ServiceTemplate.length_minutes` (90 by default) and
+  `WorshipService.ends_at`. New `apps/worship/bookings.py`: other Modules
+  register calendar sources, so the calendar shows them without Worship
+  importing them.
+- **Occasions Module** (`apps/occasions`, requires Worship; [[Occasions]]):
+  - `OccasionType` (church-edited, with a usual length; "Wedding",
+    "Baptism" and "Funeral" seeded switched off), `Occasion` (type, time,
+    length, For, officiant, venue, notes, cancelled) and `OccasionRequest`
+    (`request_occasion`, `approve_occasion`).
+  - Rules in `rules.py`: adding, moving, requesting and approving refuse a
+    time that overlaps a worship service or another occasion that isn't
+    cancelled (under the `BOOKINGS` lock); the requester is notified.
+  - Pages: Occasions (Upcoming/Past, search), Add an occasion, each
+    occasion with Edit, Requests with Approve and Decline (Pending count on
+    the tab), My requests, and the Occasion types settings. The calendar
+    shows occasions to holders of `occasions.view_occasion` and "Booked"
+    to everyone else.
+  - Defaults: Pastoral Staff add, edit, approve and keep the types; Office
+    Staff and Worship Leader see occasions; Church Member, Pastoral Staff
+    and Worship Leader request.
+  - `Module.view_permission` may be a tuple: Occasions opens for people
+    who see occasions or may request one.
+- **Kept from the first build:** Notifications in the core
+  `apps/notifications` app.
+- **Tests:** new `apps/occasions/tests/test_occasions.py` (42); booked time
+  in `apps/worship/tests/test_schedule.py`; the module lists in
+  `apps/church/tests/test_views.py` and
+  `apps/accounts/tests/test_church_member.py` now include Occasions.
+- **Notes:** [[0013-occasions-module]], [[0012-occasion-services]],
+  [[Occasions]] (new), [[Worship]], [[Services]], [[Design-Decisions]]
+  (A5 rewritten), [[Glossary]] (Occasion, Occasion Type, Occasion
+  Request), [[workflow-spec]], [[Concept-Brief]], [[Project-Overview]],
+  [[0005-worship-planning-scope]], [[Code-Conventions]],
+  [[Development-Plan]], [[00-Home]], `AGENTS.md`.
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 961
+  tests passed, with 97% coverage (`occasions/rules.py` 99%,
+  `occasions/views.py` 94%). An earlier run stopped with two PostgreSQL
+  "out of memory" errors while C: had about 1 GB free; the rerun passed
+  unchanged.
+
 ## 2026-11-24: Phase 9A, A5: occasions; Notifications made core
 
 On branch `adviser-comments`. A5 of Phase 9A is done, after the owner

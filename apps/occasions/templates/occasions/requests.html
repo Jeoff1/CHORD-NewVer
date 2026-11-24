@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load people %}
+
+{% block title %}Occasion requests{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-3">Occasion requests</h1>
+
+  {% include "occasions/includes/nav.html" %}
+
+  <h2 class="h5">Pending ({{ paginator.count }})</h2>
+  <div class="card shadow-sm mb-4">
+    <ul class="list-group list-group-flush">
+      {% for record in object_list %}
+        <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
+          <div class="me-auto">
+            <a href="{% url 'occasions:decide' public_id=record.public_id %}" class="fw-semibold text-decoration-none">{{ record.occasion_type.name }} for {{ record.occasion_for }}</a>
+            <div class="small text-body-secondary">{{ record.starts_at|date:"l, F j, Y · g:i A" }} · asked by {{ record.requester|person_name }}</div>
+          </div>
+          <a href="{% url 'occasions:decide' public_id=record.public_id %}" class="btn btn-sm btn-outline-primary">Decide</a>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-body-secondary">No requests are waiting.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% include "includes/pagination.html" %}
+
+  <h2 class="h5">Decided</h2>
+  <p class="small text-body-secondary">The latest {{ decided_shown }}.</p>
+  <div class="card shadow-sm">
+    <ul class="list-group list-group-flush">
+      {% for record in decided %}
+        <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
+          <div class="me-auto">
+            {% if record.occasion %}
+              <a href="{% url 'occasions:detail' public_id=record.occasion.public_id %}" class="fw-semibold text-decoration-none">{{ record.occasion_type.name }} for {{ record.occasion_for }}</a>
+            {% else %}
+              <span class="fw-semibold">{{ record.occasion_type.name }} for {{ record.occasion_for }}</span>
+            {% endif %}
+            <div class="small text-body-secondary">{{ record.starts_at|date:"M j, Y · g:i A" }} · asked by {{ record.requester|person_name }}{% if record.decided_by %} · decided by {{ record.decided_by|person_name }}{% endif %}</div>
+            {% if record.decline_reason %}<div class="small">Reason: {{ record.decline_reason }}</div>{% endif %}
+          </div>
+          <span class="badge {% if record.status == 'approved' %}text-bg-success{% elif record.status == 'declined' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ record.get_status_display }}</span>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-body-secondary">Nothing decided yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock %}

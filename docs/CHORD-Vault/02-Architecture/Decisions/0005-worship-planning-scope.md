@@ -78,7 +78,9 @@ The brief calls its stack "suggestions, not requirements".
 At the adviser's request, special services (weddings, funerals and the
 like) are back in scope as **occasions**: scheduled, and requested by
 church members, but without the old design's fees, requirements or church
-records ([[0012-occasion-services]]). The rest of this decision stands.
+records ([[0012-occasion-services]], since replaced by
+[[0013-occasions-module]]: occasions are their own Module). The rest of
+this decision stands.
 Per-person attendance is still out of scope; the adviser's request for "who
 attended a service" is on hold ([[Design-Decisions]], "Adviser comments, 24
 Nov").

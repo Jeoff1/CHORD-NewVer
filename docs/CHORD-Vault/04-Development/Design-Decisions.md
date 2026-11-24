@@ -495,7 +495,7 @@ The adviser commented on CHORD on 2026-11-24. The project owner approved the pla
 | A2 | "What if X is no longer the Worship Leader next month?" | Changing a role keeps every record of the past; the admin decides about future assignments | S |
 | A3 | User logs or history | Sign-in events in the Audit Trail, and a per-user History page | S–M |
 | A4 | Admins add church members' accounts in a batch | Create accounts from the Members list | M |
-| A5 | Scheduling for special services such as weddings and funerals | **Occasions** are in scope, with requests from church members and a calendar that shows booked times ([[0012-occasion-services]]) | L |
+| A5 | Scheduling for special services such as weddings and funerals | **Occasions** are in scope as their own Module, apart from worship services, with requests from church members and booked times on the calendar ([[0013-occasions-module]], replacing [[0012-occasion-services]]) | L |
 | A6 | Printable reports from the church's data (senior citizens, who attended a service, and so on) | A filtered Members report, printable and exported as CSV; per-person attendance **on hold** | M–L |
 | A7 | Improve the UI: button locations and wireframes | Wireframes first, for the owner's approval; colours later, from the owner | L |
 
@@ -561,32 +561,34 @@ To confirm with the owner: the [[Concept-Brief]] and [[Project-Overview]] say "o
 
 Tests: accounts are created and linked; the chosen role is given; existing accounts and archived members are skipped with the count; no password appears in the Audit Trail or logs; the CSV page sends no-store headers and works only once; first sign-in forces a password change; only holders of the permission see the button or can post.
 
-### A5: Occasions (special services) ([[0012-occasion-services]])
+### A5: Occasions (special services) ([[0013-occasions-module]])
 
-Special services such as weddings and funerals are now in scope, as part of scheduling. This amends [[0005-worship-planning-scope]] and the AGENTS.md scope.
+Special services such as weddings, baptisms and funerals are in scope, apart from worship services. The first design ([[0012-occasion-services]]: an occasion as a Worship Service made from an "occasion" template) was built and then replaced the same day: the owner decided that these are **not worship services** and need their own form and part, with no song lineup or team. Built as the **Occasions** Module ([[Occasions]]).
 
-- **Occasion:** a Service Template can be marked as an occasion and has a usual length (for example 2 hours). The church names its own templates (Wedding, Funeral, Dedication, …). No template is named for one church's practice in seed data or code ([[0001-configure-behavior-not-identity]]).
-- An occasion's Worship Service also records: who it is for (names, each optionally linked to a Member), the officiant (a user), the venue and notes. The lineup pipeline works as for any service.
-- **Occasion Request:** a signed-in person who may request (Church Member and the planning roles by default; a permission, never a role name) asks for an occasion: the template, the preferred date and start time, who it is for, and a note. It is **Pending**, then **Approved** or **Declined** (with a reason); the requester may withdraw it while Pending.
-- **Approving is a permission**, `worship.approve_occasion`, held by Pastoral Staff by default (and by the Administrator, like every permission). Approving creates the Worship Service from the request. The approver may change the date and time first.
-- **Booked times:** every service takes the time from its start to its start plus its template's length. The calendar shows booked times to everyone who can see the schedule; people without planning permissions see only "Booked", never what or for whom. A request, or an approval, that overlaps a booked time of a service that isn't cancelled is refused, with the clash named for people who may see it.
-- The requester gets an in-app notification when the request is approved or declined; people who may approve see the number of Pending requests.
-- **Not built:** fees, payments, a requirements checklist, church records or certificates ([[Services]] keeps that old design for reference).
-
-Tests: marking a template as an occasion; a request is Pending, and approving creates the service with its details; declining needs a reason; withdrawing only while Pending; an overlapping request or approval is refused, and a cancelled service frees its time; a Church Member sees "Booked" and no details; only holders of `worship.approve_occasion` approve; the requester is notified; the Module-off case.
-
-Settled with the owner on 2026-11-24, while building:
-- **Notifications move out of Teams** into the core `notifications` app, so they work whichever Modules are on. Teams still sends its own only while Teams is on.
-- **Examples included:** "Wedding" and "Funeral" are seeded as occasion templates, switched off.
+Decided by the owner on 2026-11-24:
+- **Fully separate:** an **Occasion** of a church-edited **Occasion Type** (with a usual length), in its own Module and pages; no theme, lineup, suggestions or team.
+- **The pastor (and the Administrator) add occasions directly**, not only through requests.
+- **Notifications move out of Teams** into the core `notifications` app, so the requester is told whichever Modules are on.
+- **Examples included:** "Wedding", "Baptism" and "Funeral" are seeded as Occasion Types, switched off.
 - **Signing in is enough** to request: no Member record is needed.
 
+The rules:
+- An Occasion records its type, date and time, length, who it is for, the officiant (a user), the venue, notes, and whether it is cancelled.
+- **Occasion Request:** a signed-in person with `occasions.request_occasion` asks for an active type, a date and time that hasn't passed, who it is for, and a note. It is **Pending**, then **Approved** or **Declined** (with a reason); the requester may withdraw it while Pending.
+- **Approving is a permission**, `occasions.approve_occasion` (Pastoral Staff by default, and the Administrator). Approving books the Occasion; the approver may change the date and time first.
+- **Booked times:** every worship service books its template's usual length, and every Occasion its own length. Adding, moving, requesting or approving an Occasion that overlaps a booking that isn't cancelled is refused, naming the clash only for people who may see it.
+- **The calendar** (Worship's) shows Occasions to holders of `occasions.view_occasion` (Pastoral Staff, Worship Leader, Office Staff by default) and only "Booked" to everyone else.
+- The requester gets an in-app Notification when the request is approved or declined; approvers see the number of Pending requests on the Requests tab.
+- **Not built:** fees, payments, a requirements checklist, church records or certificates ([[Services]] keeps that old design for reference).
+
 How it was built (2026-11-24):
-- `ServiceTemplate.length_minutes` (15 to 1,440; 90 by default, so existing templates got 90) and `is_occasion`; `WorshipService.occasion_for`, `officiant` and `venue`; the model `OccasionRequest`, whose Meta declares `request_occasion` and `approve_occasion`. Rules in `apps/worship/occasions.py`.
-- **"Who it is for" is a text field**, not names linked to Members: Worship doesn't depend on the Members Module, and nothing in A5 reads the link. Linking can be added later if a report needs it.
-- **Who sees an occasion:** holders of `worship.change_worshipservice`, `worship.view_lineup`, `worship.approve_occasion` or `worship.record_attendance` (people who plan, play at, approve or count it), so the team assigned to a wedding sees it. Everyone else sees "Booked" on the calendar; occasions are left out of their schedule list and search, and an occasion's pages are a 404 for them.
-- Only requests and approvals are checked for overlaps, as decided; services added by hand or scheduled ahead are not. Two approvals take turns under a database lock.
-- Requesting is held by Church Member, Pastoral Staff and Worship Leader by default; approving by Pastoral Staff (and the Administrator). Approvers see the Pending count on the Worship "Occasions" tab, not as a Notification.
-- The request's note is seen only by approvers and, once approved, on the service page by people who may see occasions.
+- `apps/occasions`: `OccasionType`, `Occasion`, `OccasionRequest` (its Meta declares `request_occasion` and `approve_occasion`); rules in `rules.py`. The Module requires Worship.
+- Worship keeps only `ServiceTemplate.length_minutes` (90 by default) and `WorshipService.ends_at`, and gained `apps/worship/bookings.py`, a registry Occasions joins so the calendar shows its bookings without Worship importing it.
+- **"For" is a text field**, not names linked to Members: neither Module depends on Members, and nothing reads the link. It can be added if a report needs it.
+- Only Occasions are checked for clashes; scheduling a worship service is not (left as an open question in [[Occasions]]). Bookings take a database lock (`BOOKINGS`), so two at once take turns.
+- `Module.view_permission` may now be a tuple, any one of which opens the Module: Occasions opens for people who see occasions and for people who may only request one.
+
+Tests: `apps/occasions/tests/test_occasions.py` and `apps/notifications/tests/test_notifications.py`; the usual length in `apps/worship/tests/test_schedule.py`.
 
 ### A6: Reports
 

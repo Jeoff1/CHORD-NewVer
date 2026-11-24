@@ -56,7 +56,7 @@ Out of scope since [[0005-worship-planning-scope]]: Giving, Records,
 the old Services design (fees, requirements, records), Ministries, Events,
 leadership appointment and ordination, SMS messaging, check-in and
 follow-up, and per-person attendance (on hold since the adviser asked for
-it on 2026-11-24). Occasions are back in scope ([[0012-occasion-services]]).
+it on 2026-11-24). Occasions are back in scope as their own Module ([[0013-occasions-module]]).
 
 Each phase also builds its section of [[Design-Decisions]], with the tests
 listed there. Where the two disagree, Design-Decisions wins.
@@ -502,13 +502,15 @@ drawn alongside, for the owner's review.
   chosen role (Church Member by default), linked to the Member record,
   temporary passwords shown once and never stored or logged, changed at
   first sign-in. Administrator only for now (see the decisions below).
-- [x] **A5 Occasions** (done 2026-11-24; [[0012-occasion-services]]):
-  templates with a usual length, marked as occasions ("Wedding" and
-  "Funeral" seeded switched off); who it's for, officiant and venue;
-  Occasion Requests (Pending, Approved, Declined, Withdrawn) approved with
-  `worship.approve_occasion`; booked times on the calendar ("Booked" for
-  people who don't plan); overlaps refused; the requester notified.
-  Notifications moved out of Teams into a core app first.
+- [x] **A5 Occasions** (done 2026-11-24; [[0013-occasions-module]]):
+  the [[Occasions]] Module, apart from worship services: Occasion Types
+  with a usual length ("Wedding", "Baptism" and "Funeral" seeded switched
+  off); Occasions added by the pastor, with who it's for, officiant and
+  venue; Occasion Requests (Pending, Approved, Declined, Withdrawn)
+  approved with `occasions.approve_occasion`; booked times shared with
+  worship services on the calendar ("Booked" for people who may not see
+  occasions); overlaps refused; the requester notified. Notifications
+  moved out of Teams into a core app first.
 - [ ] **A6 Reports**: a filtered Members report with a print layout and
   CSV; age groups as a church-edited list. Ask the owner about "who
   attended a service" first (on hold).
@@ -521,7 +523,7 @@ Worship Leader made a Church Member keeps every past record under their
 name, and the admin's choice about future assignments holds; sign-ins are
 recorded without passwords; batch accounts never store or log a
 temporary password; an overlapping Occasion Request or approval is refused,
-and only `worship.approve_occasion` approves; the report's filters, age
+and only `occasions.approve_occasion` approves; the report's filters, age
 groups and private details are right; and every moved action is still
 permission-checked.
 

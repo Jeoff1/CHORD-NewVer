@@ -15,6 +15,7 @@ urlpatterns = [
     path("worship/songs/", include("apps.songs.urls")),
     path("worship/", include("apps.worship.urls")),
     path("teams/", include("apps.teams.urls")),
+    path("occasions/", include("apps.occasions.urls")),
     path("announcements/", include("apps.announcements.urls")),
     path("", DashboardView.as_view(), name="home"),
 ]

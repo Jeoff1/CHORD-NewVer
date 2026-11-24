@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.worship.apps.WorshipConfig",
     "apps.songs.apps.SongsConfig",
     "apps.teams.apps.TeamsConfig",
+    "apps.occasions.apps.OccasionsConfig",
     "apps.announcements.apps.AnnouncementsConfig",
 ]
 
@@ -73,7 +74,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "apps.church.context_processors.church",
                 "apps.notifications.context_processors.notifications",
-                "apps.worship.context_processors.occasions",
+                "apps.occasions.context_processors.pending_requests",
             ],
         },
     },

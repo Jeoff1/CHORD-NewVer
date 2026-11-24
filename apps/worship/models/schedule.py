@@ -11,7 +11,7 @@ from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.music import Feel
 from apps.core.setting_lists import ChoiceItem
 
-# The longest a service may book: one day.
+# The longest a booking may last: one day (Phase 9A, A5).
 MAX_LENGTH_MINUTES = 24 * 60
 
 
@@ -40,20 +40,14 @@ class ServiceTemplate(ChoiceItem):
     )
     start_time = models.TimeField("Usual start time", null=True, blank=True)
     # Every service books the time from its start for this long, so the
-    # calendar can show booked times and refuse clashing occasions (Phase
-    # 9A, A5; decision 0012).
+    # calendar can tell when a time is taken and Occasions can refuse a
+    # clash (Phase 9A, A5; decision 0013).
     length_minutes = models.PositiveSmallIntegerField(
         "Usual length (minutes)",
         default=90,
         validators=[MinValueValidator(15), MaxValueValidator(MAX_LENGTH_MINUTES)],
         help_text="How long this service usually takes. The calendar books this "
         "much time from its start.",
-    )
-    is_occasion = models.BooleanField(
-        "Occasion",
-        default=False,
-        help_text="A special service people may request, such as a wedding or a "
-        "funeral. Its details show only to people who plan services.",
     )
 
     class Meta(ChoiceItem.Meta):
@@ -130,27 +124,6 @@ class WorshipService(PublicIdModel, TimeStampedModel):
         "Headcount", null=True, blank=True, help_text="How many people attended."
     )
     is_cancelled = models.BooleanField("Cancelled", default=False)
-    # An occasion's details (Phase 9A, A5). Shown only to people who may see
-    # occasions (``apps.worship.occasions.can_see_occasions``).
-    occasion_for = models.CharField(
-        "For",
-        max_length=200,
-        blank=True,
-        help_text="For an occasion: who it is for, such as the couple's names.",
-    )
-    officiant = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="officiated_services",
-        help_text="For an occasion: who leads it.",
-    )
-    venue = models.CharField(
-        max_length=200,
-        blank=True,
-        help_text="For an occasion held somewhere other than the usual place.",
-    )
 
     objects = WorshipServiceQuerySet.as_manager()
 
@@ -185,10 +158,6 @@ class WorshipService(PublicIdModel, TimeStampedModel):
     def ends_at(self):
         """The end of the service's booked time."""
         return self.starts_at + datetime.timedelta(minutes=self.template.length_minutes)
-
-    @property
-    def is_occasion(self):
-        return self.template.is_occasion
 
     @property
     def posted_theme(self):

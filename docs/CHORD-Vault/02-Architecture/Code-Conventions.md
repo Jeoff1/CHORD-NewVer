@@ -6,7 +6,7 @@ yet.
 
 | Topic          | Convention                                                                                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| App layout     | Each Module is one or more Django apps in `apps/` (Worship is `apps/worship` and `apps/songs`; Teams is `apps/teams`; Announcements is `apps/announcements`); the Module registry lists them. Shared code is in `apps/core`, the audit trail in `apps/audit`, and in-app Notifications in `apps/notifications` (core: always on; send one with `notifications.services.notify`). |
+| App layout     | Each Module is one or more Django apps in `apps/` (Worship is `apps/worship` and `apps/songs`; Teams is `apps/teams`; Occasions is `apps/occasions`; Announcements is `apps/announcements`); the Module registry lists them. Shared code is in `apps/core`, the audit trail in `apps/audit`, and in-app Notifications in `apps/notifications` (core: always on; send one with `notifications.services.notify`). |
 | Shared models  | `apps/core/models.py`: `TimeStampedModel` (created/updated) and `PublicIdModel` (UUID used in URLs, so IDs can't be guessed).    |
 | Business rules | Plain functions outside the views, tested directly. A small app keeps them in `services.py` (e.g. `apps/members/services.py`); Teams keeps its rules in `apps/teams/rostering.py`. The worship apps name each file for what it decides (e.g. `apps/worship/scheduling.py`), because "service" there means a Worship Service. |
 | Large apps     | `apps/worship` splits `models/` and `views/` into one file per area (`schedule.py`, …); `models/__init__.py` exports every model. |
@@ -23,7 +23,7 @@ yet.
 | HTMX requests  | `base.html` sends the CSRF token in every HTMX request header.                                                                   |
 | Page scripts   | A page's own script lives in `apps/<app>/static/<app>/` and is loaded with `defer` from its include (e.g. `songs/player.js`). It reads the CSRF token from the body's `hx-headers`. |
 | Deleting       | Users are deactivated and members archived, never deleted. Church-edited list items and Custom Fields are switched off. Worship services are cancelled, not deleted. |
-| Between Modules | A Module never imports a Module that builds on it. It sends a signal instead, which the other Module connects to in its `AppConfig.ready()`: Worship sends `apps.worship.signals.lineup_changed`, and Teams turns it into Notifications. Core apps (Accounts, Audit, Notifications) may be imported by any Module. Accounts asks the Modules what a role change takes away through `apps/accounts/role_changes.py`: a Module registers a finder there (Teams: `apps/teams/leaving.py`). |
+| Between Modules | A Module never imports a Module that builds on it. It sends a signal instead, which the other Module connects to in its `AppConfig.ready()`: Worship sends `apps.worship.signals.lineup_changed`, and Teams turns it into Notifications. Core apps (Accounts, Audit, Notifications) may be imported by any Module. Accounts asks the Modules what a role change takes away through `apps/accounts/role_changes.py`: a Module registers a finder there (Teams: `apps/teams/leaving.py`). The Worship calendar shows other Modules' bookings through `apps/worship/bookings.py`: Occasions registers a source there. A Module's `view_permission` may be a tuple, any one of which opens it. |
 | Row locks      | When two people can race for one thing (taking a swap, or assigning someone while they add a blackout), lock the row with `select_for_update` inside `transaction.atomic()`, and re-check the rules after the lock. With `select_related` on a nullable foreign key, lock only the row itself: `select_for_update(of=("self",))`. When there is no one row to lock (booking a time on the calendar), take a transaction lock: `wait_for_transaction_lock(BOOKINGS)` (`apps/core/locks.py`). |
 | Dates and times | Stored in UTC and shown in the church's time zone, which the middleware activates for each request. Code that runs outside a request (rules, the worker) asks `scheduling.church_time_zone()`. |
 | Files          | Only the church logo is public (`media/church/`). Personal files use private storage (see below). |
@@ -170,9 +170,9 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
     directly, with service keys
   - `make_chord_sheet(song, chordpro=HYMN_SHEET, key="G", approved=True)`:
     a chord sheet; `HYMN_SHEET` is a public-domain hymn in ChordPro
-  - `make_occasion_template(**fields)`: an active occasion template
-    (120 minutes), sorted after the default template so `make_service`
-    keeps using that one
+  - `make_occasion_type(**fields)`: an active Occasion Type, 120 minutes
+  - `make_occasion(occasion_type=None, **fields)`: an Occasion two weeks
+    from now, stored directly (no clash check)
   - `make_team_part(name=None)`: a Team Part with a unique name (the
     seeded defaults exist too)
   - `make_team_profile(user, parts=())`

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}My occasion requests{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">My occasion requests</h1>
+    {% if can_request %}<a href="{% url 'occasions:request' %}" class="btn btn-primary">Request an occasion</a>{% endif %}
+  </div>
+
+  {% include "occasions/includes/nav.html" %}
+
+  <p class="text-body-secondary">Special services you asked for, such as a wedding, a baptism or a funeral. You get a notification when one is approved or declined.</p>
+
+  <div class="card shadow-sm">
+    <ul class="list-group list-group-flush">
+      {% for record in object_list %}
+        <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
+          <div class="me-auto">
+            <div class="fw-semibold">{{ record.occasion_type.name }} for {{ record.occasion_for }}</div>
+            <div class="small text-body-secondary">{% if record.occasion %}{{ record.occasion.starts_at|date:"l, F j, Y · g:i A" }}{% else %}{{ record.starts_at|date:"l, F j, Y · g:i A" }}{% endif %}</div>
+            {% if record.status == "declined" and record.decline_reason %}<div class="small">Reason: {{ record.decline_reason }}</div>{% endif %}
+          </div>
+          <span class="badge {% if record.status == 'approved' %}text-bg-success{% elif record.status == 'declined' %}text-bg-danger{% elif record.status == 'pending' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ record.get_status_display }}</span>
+          {% if record.is_pending %}
+            <form method="post" action="{% url 'occasions:withdraw' public_id=record.public_id %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
+            </form>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li class="list-group-item text-body-secondary">{% if can_request %}You haven't requested an occasion yet.{% else %}The church hasn't set up any occasions yet.{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% include "includes/pagination.html" %}
+{% endblock %}

@@ -31,7 +31,7 @@ confirmation, the song pool, chord sheets and keys, Spotify playback,
 teams and availability, announcements, song usage and headcounts, and the
 member directory. Since the adviser's comments of 2026-11-24 (Phase 9A):
 occasions such as weddings and funerals, requested by church members
-([[0012-occasion-services]]), a Church Member role, batch accounts, user
+([[0013-occasions-module]]), a Church Member role, batch accounts, user
 history and printable member reports.
 
 Out: giving and finance (including fees for occasions), church records and

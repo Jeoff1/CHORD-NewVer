@@ -137,7 +137,7 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
 | Module                                | In scope | Covers                                                        |
 | ------------------------------------- | -------- | ------------------------------------------------------------- |
 | Service scheduling                    | Yes      | Calendar, service templates, recurring schedules              |
-| Occasions (added 2026-11-24)          | Yes      | Weddings, funerals and the like, requested by members and approved; booked times on the calendar; no fees ([[0012-occasion-services]]) |
+| Occasions (added 2026-11-24)          | Yes      | Weddings, baptisms, funerals and the like, apart from worship services: booked by the pastor or requested by members and approved; booked times on the calendar; no fees ([[0013-occasions-module]]) |
 | Member reports (added 2026-11-24)     | Yes      | Filtered, printable member lists, such as by age group        |
 | User history (added 2026-11-24)       | Yes      | Sign-ins and changes per user, from the audit trail           |
 | Theme and sermon series               | Yes      | A theme per service, grouped into series                      |

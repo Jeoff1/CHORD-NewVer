@@ -192,17 +192,30 @@ def make_service(**fields):
     return WorshipService.objects.create(**fields)
 
 
-def make_occasion_template(**fields):
-    """An active occasion template (Phase 9A, A5) with a unique name, sorted
-    after the default template so ``make_service`` keeps using that one."""
-    from apps.worship.models import ServiceTemplate
+def make_occasion_type(**fields):
+    """An active Occasion Type (Phase 9A, A5) with a unique name, 120
+    minutes long."""
+    from apps.occasions.models import OccasionType
 
     n = next(_sequence)
-    fields.setdefault("name", f"Occasion {n}")
-    fields.setdefault("is_occasion", True)
+    fields.setdefault("name", f"Occasion type {n}")
     fields.setdefault("length_minutes", 120)
-    fields.setdefault("sort_order", 500)
-    return ServiceTemplate.objects.create(**fields)
+    return OccasionType.objects.create(**fields)
+
+
+def make_occasion(occasion_type=None, **fields):
+    """An Occasion two weeks from now, stored directly (no clash check)."""
+    import datetime
+
+    from django.utils import timezone
+
+    from apps.occasions.models import Occasion
+
+    occasion_type = occasion_type or make_occasion_type()
+    fields.setdefault("starts_at", timezone.now() + datetime.timedelta(days=14))
+    fields.setdefault("length_minutes", occasion_type.length_minutes)
+    fields.setdefault("occasion_for", "Ana and Ben")
+    return Occasion.objects.create(occasion_type=occasion_type, **fields)
 
 
 def make_theme(service=None, **fields):

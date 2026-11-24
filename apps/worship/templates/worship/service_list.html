@@ -8,7 +8,6 @@
     <h1 class="h3 mb-0">{% label "worship_service" plural=True %}</h1>
     <div class="d-flex flex-wrap gap-2">
       {% if settings_url %}<a href="{{ settings_url }}" class="btn btn-outline-secondary">Settings</a>{% endif %}
-      {% if perms.worship.request_occasion %}<a href="{% url 'worship:occasion_request' %}" class="btn btn-outline-primary">Request an occasion</a>{% endif %}
       {% if can_schedule_ahead %}<a href="{% url 'worship:schedule_ahead' %}" class="btn btn-outline-secondary">Schedule weeks ahead</a>{% endif %}
       {% if perms.worship.add_worshipservice %}<a href="{% url 'worship:service_create' %}" class="btn btn-primary">Add {{ labels.worship_service|lower }}</a>{% endif %}
     </div>
@@ -42,7 +41,6 @@
               <td class="text-nowrap">{{ service.starts_at|date:"D, M j, Y" }}<br><span class="small text-body-secondary">{{ service.starts_at|date:"g:i A" }}</span></td>
               <td>
                 <a href="{% url 'worship:service' public_id=service.public_id %}" class="fw-semibold text-decoration-none{% if service.is_cancelled %} text-decoration-line-through{% endif %}">{{ service.name }}</a>
-                {% if service.is_occasion %}<span class="badge text-bg-info ms-1">Occasion</span>{% endif %}
                 {% if service.is_cancelled %}<span class="badge text-bg-secondary ms-1">Cancelled</span>{% endif %}
               </td>
               <td>

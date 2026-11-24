@@ -1,0 +1,8 @@
+{# Tabs linking the Occasions pages; expects `nav_links` and the request. #}
+{% if nav_links|length > 1 %}
+  <ul class="nav nav-tabs mb-3">
+    {% for label, url in nav_links %}
+      <li class="nav-item"><a class="nav-link{% if url == request.path %} active" aria-current="page{% endif %}" href="{{ url }}">{{ label }}{% if label == "Requests" and pending_occasions %} <span class="badge rounded-pill text-bg-danger" aria-label="{{ pending_occasions }} pending">{{ pending_occasions }}</span>{% endif %}</a></li>
+    {% endfor %}
+  </ul>
+{% endif %}

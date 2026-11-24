@@ -20,8 +20,10 @@ Phase 9 is built only if time remains before the final presentation
 **Supporting church management stays minimal.** Build only what helps the
 worship workflow, in its smallest useful form:
 
-- Service scheduling and service templates, including occasions such as
-  weddings and funerals that church members request (decision 0012); no
+- Service scheduling and service templates
+- Occasions such as weddings, baptisms and funerals, as their own Module
+  apart from worship services: booked by the pastor or requested by church
+  members, sharing the calendar (decision 0013); no lineup or team, and no
   fees, requirements or church records
 - Church Member role, batch accounts, user history and printable member
   reports (Phase 9A)

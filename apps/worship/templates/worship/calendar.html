@@ -6,10 +6,7 @@
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0">{% label "worship_service" plural=True %}</h1>
-    <div class="d-flex flex-wrap gap-2">
-      {% if perms.worship.request_occasion %}<a href="{% url 'worship:occasion_request' %}" class="btn btn-outline-primary">Request an occasion</a>{% endif %}
-      {% if perms.worship.add_worshipservice %}<a href="{% url 'worship:service_create' %}" class="btn btn-primary">Add {{ labels.worship_service|lower }}</a>{% endif %}
-    </div>
+    {% if perms.worship.add_worshipservice %}<a href="{% url 'worship:service_create' %}" class="btn btn-primary">Add {{ labels.worship_service|lower }}</a>{% endif %}
   </div>
 
   {% include "worship/includes/nav.html" with active="calendar" %}
@@ -33,15 +30,18 @@
                 <td class="align-top p-1{% if not day.in_month %} bg-body-tertiary{% endif %}" style="height: 6.5rem">
                   <div class="small text-end{% if day.is_today %} fw-bold text-primary{% elif not day.in_month %} text-body-secondary{% endif %}">{{ day.date.day }}</div>
                   {% for service in day.services %}
-                    {% if service.is_occasion and not can_see_occasions %}
-                      {% comment %}Occasions show only as booked time to people who don't plan them (Phase 9A, A5); a cancelled one frees its time.{% endcomment %}
-                      {% if not service.is_cancelled %}<span class="d-block small rounded px-1 mb-1 text-bg-light border">{{ service.starts_at|date:"g:i A" }} to {{ service.ends_at|date:"g:i A" }} Booked</span>{% endif %}
+                    <a href="{% url 'worship:service' public_id=service.public_id %}"
+                       class="d-block small rounded px-1 mb-1 text-decoration-none {% if service.is_cancelled %}text-bg-secondary text-decoration-line-through{% else %}text-bg-primary{% endif %}"
+                       title="{{ service.name }}{% if service.posted_theme %}: {{ service.posted_theme.title }}{% endif %}">
+                      {{ service.starts_at|date:"g:i A" }} {{ service.name }}
+                    </a>
+                  {% endfor %}
+                  {% for booking in day.bookings %}
+                    {% comment %}Other Modules' bookings, such as Occasions (Phase 9A, A5). Without a link, only "Booked" shows.{% endcomment %}
+                    {% if booking.url %}
+                      <a href="{{ booking.url }}" class="d-block small rounded px-1 mb-1 text-decoration-none {% if booking.is_cancelled %}text-bg-secondary text-decoration-line-through{% else %}text-bg-info{% endif %}" title="{{ booking.label }}">{{ booking.starts_at|date:"g:i A" }} {{ booking.label }}</a>
                     {% else %}
-                      <a href="{% url 'worship:service' public_id=service.public_id %}"
-                         class="d-block small rounded px-1 mb-1 text-decoration-none {% if service.is_cancelled %}text-bg-secondary text-decoration-line-through{% elif service.is_occasion %}text-bg-info{% else %}text-bg-primary{% endif %}"
-                         title="{{ service.name }}{% if service.posted_theme %}: {{ service.posted_theme.title }}{% endif %}">
-                        {{ service.starts_at|date:"g:i A" }} {{ service.name }}
-                      </a>
+                      <span class="d-block small rounded px-1 mb-1 text-bg-light border">{{ booking.starts_at|date:"g:i A" }} to {{ booking.ends_at|date:"g:i A" }} Booked</span>
                     {% endif %}
                   {% endfor %}
                 </td>

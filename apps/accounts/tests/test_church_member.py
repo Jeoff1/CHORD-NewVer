@@ -37,11 +37,11 @@ class ChurchMemberRoleTests(TestCase):
                 f"{p.content_type.app_label}.{p.codename}"
                 for p in role.permissions.all()
             },
-            {"worship.view_worshipservice", "worship.request_occasion"},
+            {"worship.view_worshipservice", "occasions.request_occasion"},
         )
         self.assertEqual(
             roles.DEFAULT_ROLE_PERMISSIONS["church_member"],
-            ["worship.view_worshipservice", "worship.request_occasion"],
+            ["worship.view_worshipservice", "occasions.request_occasion"],
         )
 
     def test_role_is_editable_like_any_role(self):
@@ -80,7 +80,8 @@ class ChurchMemberPagesTests(TestCase):
         response = self.client.get(reverse("home"))
         self.assertEqual(response.status_code, 200)
         codes = [entry.code for entry in response.context["module_entries"]]
-        self.assertEqual(codes, ["worship", "announcements"])
+        # Occasions opens for them to ask for one (Phase 9A, A5).
+        self.assertEqual(codes, ["worship", "occasions", "announcements"])
         self.assertNotContains(response, f'href="{reverse("members:list")}"')
         self.assertNotContains(response, f'href="{reverse("teams:my_schedule")}"')
 
@@ -174,10 +175,22 @@ class ModuleNavigationTests(TestCase):
 
     def test_each_role_sees_the_modules_it_can_open(self):
         expected = {
-            "office_staff": ["members", "worship", "announcements"],
+            "office_staff": ["members", "worship", "occasions", "announcements"],
             "team_member": ["worship", "teams", "announcements"],
-            "worship_leader": ["members", "worship", "teams", "announcements"],
-            "administrator": ["members", "worship", "teams", "announcements"],
+            "worship_leader": [
+                "members",
+                "worship",
+                "teams",
+                "occasions",
+                "announcements",
+            ],
+            "administrator": [
+                "members",
+                "worship",
+                "teams",
+                "occasions",
+                "announcements",
+            ],
         }
         for role, codes in expected.items():
             with self.subTest(role):

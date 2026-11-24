@@ -12,7 +12,6 @@ from django.utils import timezone
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.church.models import ChurchProfile
-from apps.core.people import display_name
 
 from .models import WorshipService
 
@@ -40,11 +39,6 @@ SERVICE_AUDIT_FIELDS = {
     "Notes": "notes",
     "Headcount": "attendance",
     "Cancelled": "is_cancelled",
-    "For": "occasion_for",
-    "Officiant": lambda service: (
-        display_name(service.officiant) if service.officiant_id else ""
-    ),
-    "Venue": "venue",
 }
 THEME_AUDIT_FIELDS = {
     "Title": "title",
@@ -60,7 +54,6 @@ TEMPLATE_AUDIT_FIELDS = {
         f"{template.start_time:%H:%M}" if template.start_time else ""
     ),
     "Usual length (minutes)": "length_minutes",
-    "Occasion": "is_occasion",
     "Order": "sort_order",
     "Active": "is_active",
     "Song slots": lambda template: " / ".join(str(s) for s in template.slots.all()),
@@ -103,17 +96,22 @@ class CalendarDay:
     in_month: bool
     is_today: bool
     services: list = field(default_factory=list)
+    # Other Modules' bookings on this day (``bookings.Booking``).
+    bookings: list = field(default_factory=list)
 
 
-def month_grid(year, month, services, *, today=None):
+def month_grid(year, month, services, *, bookings=(), today=None):
     """Weeks of ``CalendarDay`` for one month, Sunday first, holding the
-    given services on their local dates."""
+    given services and other bookings on their local dates."""
     zone = church_time_zone()
     today = today or timezone.localdate(timezone=zone)
-    by_date = {}
+    by_date, others = {}, {}
     for service in services:
         local_date = timezone.localtime(service.starts_at, zone).date()
         by_date.setdefault(local_date, []).append(service)
+    for booking in sorted(bookings, key=lambda b: b.starts_at):
+        local_date = timezone.localtime(booking.starts_at, zone).date()
+        others.setdefault(local_date, []).append(booking)
     weeks = calendar.Calendar(firstweekday=calendar.SUNDAY).monthdatescalendar(
         year, month
     )
@@ -124,6 +122,7 @@ def month_grid(year, month, services, *, today=None):
                 in_month=day.month == month,
                 is_today=day == today,
                 services=by_date.get(day, []),
+                bookings=others.get(day, []),
             )
             for day in week
         ]

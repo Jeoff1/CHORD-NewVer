@@ -25,13 +25,18 @@ class Module:
     # Modules this one builds on: it counts as switched off while any of
     # them is switched off.
     requires: tuple[str, ...] = ()
-    # The permission the Module's main page needs; None when anyone signed
-    # in may open it. The navigation and the dashboard list a Module only
-    # for people who can open it (Phase 9A, A1).
-    view_permission: str | None = None
+    # The permission the Module's main page needs, or a tuple of which any
+    # one will do; None when anyone signed in may open it. The navigation
+    # and the dashboard list a Module only for people who can open it
+    # (Phase 9A, A1).
+    view_permission: str | tuple[str, ...] | None = None
 
     def can_open(self, user):
-        return self.view_permission is None or user.has_perm(self.view_permission)
+        if self.view_permission is None:
+            return True
+        if isinstance(self.view_permission, tuple):
+            return any(user.has_perm(p) for p in self.view_permission)
+        return user.has_perm(self.view_permission)
 
 
 MODULES = (
@@ -62,6 +67,18 @@ MODULES = (
         # My schedule is for the team. Notifications are core and have
         # their own link in the navigation.
         view_permission="teams.view_assignment",
+    ),
+    Module(
+        "occasions",
+        "Occasions",
+        "Weddings, baptisms, funerals and other special services: requests, "
+        "approval and booked times on the calendar.",
+        ("occasions",),
+        url_name="occasions:home",
+        # Booked times are shared with worship services on Worship's calendar.
+        requires=("worship",),
+        # People who see occasions, and people who may only ask for one.
+        view_permission=("occasions.view_occasion", "occasions.request_occasion"),
     ),
     Module(
         "announcements",

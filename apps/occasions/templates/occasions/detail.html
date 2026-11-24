@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load people %}
+
+{% block title %}{{ occasion }}{% endblock %}
+
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+      <a href="{% url 'occasions:list' %}" class="small text-decoration-none">← Occasions</a>
+      <h1 class="h3 mb-1{% if occasion.is_cancelled %} text-decoration-line-through{% endif %}">{{ occasion.occasion_type.name }}: {{ occasion.occasion_for }}</h1>
+      <div class="text-body-secondary">{{ occasion.starts_at|date:"l, F j, Y · g:i A" }} to {{ occasion.ends_at|date:"g:i A" }}</div>
+      {% if occasion.is_cancelled %}<span class="badge text-bg-secondary mt-1">Cancelled</span>{% endif %}
+    </div>
+    {% if perms.occasions.change_occasion %}<a href="{% url 'occasions:update' public_id=occasion.public_id %}" class="btn btn-outline-primary">Edit</a>{% endif %}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <dl class="mb-0">
+            <dt>Occasion</dt><dd>{{ occasion.occasion_type.name }}</dd>
+            <dt>For</dt><dd>{{ occasion.occasion_for }}</dd>
+            <dt>Officiant</dt><dd>{% if occasion.officiant %}{{ occasion.officiant|person_name }}{% else %}Not set{% endif %}</dd>
+            <dt>Venue</dt><dd>{{ occasion.venue|default:"The usual place" }}</dd>
+            <dt>Length</dt><dd>{{ occasion.length_minutes }} minutes</dd>
+            <dt>Notes</dt><dd class="mb-0">{{ occasion.notes|linebreaksbr|default:"None" }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    {% if request_record %}
+      <div class="col-lg-5">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h2 class="h5">Requested</h2>
+            <p class="mb-0">By {{ request_record.requester|person_name }} on {{ request_record.created_at|date:"M j, Y" }}{% if request_record.decided_by %}; approved by {{ request_record.decided_by|person_name }}{% endif %}.</p>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

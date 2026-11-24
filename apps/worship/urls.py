@@ -4,7 +4,7 @@ from apps.core.setting_lists import SettingList, setting_list_urls
 
 from .forms import SeasonForm
 from .models import Season, SermonSeries
-from .views import lineups, occasions, reports, schedule, suggestions
+from .views import lineups, reports, schedule, suggestions
 from .views.base import settings_nav
 
 app_name = "worship"
@@ -87,32 +87,6 @@ urlpatterns = [
         "services/<uuid:public_id>/attendance/",
         schedule.AttendanceView.as_view(),
         name="attendance",
-    ),
-    # Occasions (Phase 9A, A5)
-    path(
-        "occasions/",
-        occasions.MyOccasionsView.as_view(),
-        name="my_occasions",
-    ),
-    path(
-        "occasions/request/",
-        occasions.OccasionRequestCreateView.as_view(),
-        name="occasion_request",
-    ),
-    path(
-        "occasions/<uuid:public_id>/withdraw/",
-        occasions.OccasionWithdrawView.as_view(),
-        name="occasion_withdraw",
-    ),
-    path(
-        "occasions/requests/",
-        occasions.OccasionRequestListView.as_view(),
-        name="occasion_requests",
-    ),
-    path(
-        "occasions/requests/<uuid:public_id>/",
-        occasions.OccasionDecideView.as_view(),
-        name="occasion_decide",
     ),
     # Song suggestions
     path(

@@ -108,7 +108,9 @@ class SetupWizardTests(TestCase):
         self.assertEqual(profile.name, "Grace Community Church")
         self.assertEqual(profile.currency, "PHP")
         self.assertEqual(profile.label_set.get("sermon"), "Homily")
-        self.assertEqual(sorted(profile.disabled_modules), ["announcements", "teams"])
+        self.assertEqual(
+            sorted(profile.disabled_modules), ["announcements", "occasions", "teams"]
+        )
         self.assertEqual(AuditEvent.objects.count(), 3)
 
     def test_finished_wizard_redirects_to_settings(self):
@@ -148,8 +150,8 @@ class SettingsTests(TestCase):
         self.assertContains(labels, "e.g. Sermon, Homily, Message")
         self.assertContains(labels, 'name="sermon__plural"')
         modules = self.client.get(self.url("modules"))
-        self.assertContains(modules, 'role="switch"', count=4)
-        self.assertContains(modules, " checked", count=4)
+        self.assertContains(modules, 'role="switch"', count=5)
+        self.assertContains(modules, " checked", count=5)
         self.assertContains(modules, "Needs Worship switched on.")
 
     def test_settings_home_opens_details(self):
@@ -199,10 +201,10 @@ class SettingsTests(TestCase):
     def test_switching_modules_off_and_on(self):
         self.client.post(self.url("modules"), {"enabled": ["members"]})
         profile = ChurchProfile.load()
-        self.assertEqual(len(profile.disabled_modules), 3)
+        self.assertEqual(len(profile.disabled_modules), 4)
         self.assertNotContains(self.client.get(reverse("home")), "Worship")
 
-        everything = ["members", "worship", "teams", "announcements"]
+        everything = ["members", "worship", "teams", "occasions", "announcements"]
         self.client.post(self.url("modules"), {"enabled": everything})
         self.assertEqual(ChurchProfile.load().disabled_modules, [])
 
@@ -210,5 +212,6 @@ class SettingsTests(TestCase):
         ChurchProfile.objects.update(disabled_modules=["giving"])
         self.client.post(self.url("modules"), {"enabled": ["members", "worship"]})
         self.assertEqual(
-            sorted(ChurchProfile.load().disabled_modules), ["announcements", "teams"]
+            sorted(ChurchProfile.load().disabled_modules),
+            ["announcements", "occasions", "teams"],
         )

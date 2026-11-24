@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load church people %}
+{% load church %}
 
 {% block title %}{{ service }}{% endblock %}
 
@@ -63,14 +63,6 @@
           <dl class="mb-0">
             <dt>Template</dt><dd>{{ service.template }}</dd>
             <dt>Booked</dt><dd>{{ service.starts_at|date:"g:i A" }} to {{ service.ends_at|date:"g:i A" }}</dd>
-            {% if service.is_occasion %}
-              <dt>For</dt><dd>{{ service.occasion_for|default:"Not given" }}</dd>
-              <dt>Officiant</dt><dd>{% if service.officiant %}{{ service.officiant|person_name }}{% else %}Not set{% endif %}</dd>
-              <dt>Venue</dt><dd>{{ service.venue|default:"The usual place" }}</dd>
-              {% if occasion_request %}
-                <dt>Requested by</dt><dd>{{ occasion_request.requester|person_name }}{% if occasion_request.note %}<div class="small text-body-secondary">{{ occasion_request.note|linebreaksbr }}</div>{% endif %}</dd>
-              {% endif %}
-            {% endif %}
             <dt>Rehearsal</dt><dd class="mb-0">{{ service.rehearsal_at|date:"D, M j, Y · g:i A"|default:"Not set" }}</dd>
           </dl>
         </div>

@@ -3,6 +3,5 @@
   <li class="nav-item"><a class="nav-link{% if active == 'schedule' %} active{% endif %}" href="{% url 'worship:home' %}">Schedule</a></li>
   <li class="nav-item"><a class="nav-link{% if active == 'calendar' %} active{% endif %}" href="{% url 'worship:calendar' %}">Calendar</a></li>
   {% if perms.songs.view_song %}<li class="nav-item"><a class="nav-link{% if active == 'songs' %} active{% endif %}" href="{% url 'songs:list' %}">Songs</a></li>{% endif %}
-  {% if perms.worship.approve_occasion %}<li class="nav-item"><a class="nav-link{% if active == 'occasions' %} active{% endif %}" href="{% url 'worship:occasion_requests' %}">Occasions{% if pending_occasions %} <span class="badge rounded-pill text-bg-danger" aria-label="{{ pending_occasions }} pending">{{ pending_occasions }}</span>{% endif %}</a></li>{% elif perms.worship.request_occasion %}<li class="nav-item"><a class="nav-link{% if active == 'occasions' %} active{% endif %}" href="{% url 'worship:my_occasions' %}">Occasions</a></li>{% endif %}
   {% if perms.worship.view_song_usage or perms.worship.record_attendance %}<li class="nav-item"><a class="nav-link{% if active == 'reports' %} active{% endif %}" href="{% url 'worship:reports' %}">Reports</a></li>{% endif %}
 </ul>

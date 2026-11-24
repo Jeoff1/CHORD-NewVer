@@ -111,15 +111,21 @@ and time.
 _Avoid_: service type, event type
 
 **Occasion**:
-A Worship Service for a special event, such as a wedding or funeral, made
-from a Service Template the church marks as an occasion. It records who it
-is for, the officiant and the venue ([[0012-occasion-services]]; Phase 9A).
-_Avoid_: requested service, sacrament, rite
+A special service that is not a Worship Service, such as a wedding, a
+baptism or a funeral, of one Occasion Type. It records who it is for, the
+officiant and the venue, and books time on the calendar; it has no theme,
+lineup or team ([[0013-occasions-module]]; Phase 9A).
+_Avoid_: requested service, sacrament, rite, event
+
+**Occasion Type**:
+A church-edited kind of Occasion, such as Wedding, with how long it usually
+takes.
+_Avoid_: occasion template, service type
 
 **Occasion Request**:
 A signed-in person's request for an Occasion on a date and time: Pending,
-then Approved (which creates the Worship Service) or Declined, or withdrawn
-while Pending. Approving is the permission `worship.approve_occasion`.
+then Approved (which books the Occasion) or Declined, or withdrawn while
+Pending. Approving is the permission `occasions.approve_occasion`.
 _Avoid_: service request, booking
 
 **Booked Time**:

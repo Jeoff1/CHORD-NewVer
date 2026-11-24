@@ -34,7 +34,7 @@ def service_url(service, name="service"):
 
 
 def default_template():
-    return ServiceTemplate.objects.active().get()
+    return ServiceTemplate.objects.get()
 
 
 def service_data(**overrides):
@@ -421,6 +421,8 @@ class TemplateTests(WorshipTestCase):
         template = ServiceTemplate.objects.get(name="Youth night")
         self.assertTrue(template.repeats_weekly)
         self.assertEqual(template.slot_summary(), "Opener (Upbeat), Response")
+        # Saved without a length, it books the usual 90 minutes (Phase 9A).
+        self.assertEqual(template.length_minutes, 90)
         event = AuditEvent.objects.get()
         self.assertEqual(event.action, AuditEvent.Action.CREATED)
         self.assertEqual(
@@ -546,3 +548,36 @@ class DefaultRoleTests(WorshipTestCase):
             self.assertTrue(user.has_perm("worship.view_worshipservice"))
             self.assertFalse(user.has_perm("worship.add_worshipservice"))
             self.assertFalse(user.has_perm("worship.change_theme"))
+
+
+class BookedTimeTests(WorshipTestCase):
+    """Every service books its template's length (Phase 9A, A5)."""
+
+    def test_a_service_ends_after_its_templates_length(self):
+        template = default_template()
+        template.length_minutes = 120
+        template.save()
+        service = make_service(template=template)
+        self.assertEqual(
+            service.ends_at - service.starts_at, datetime.timedelta(hours=2)
+        )
+
+    def test_the_length_can_be_set_on_the_template(self):
+        self.client.force_login(make_administrator())
+        template = default_template()
+        self.client.post(
+            reverse("worship:template_update", kwargs={"pk": template.pk}),
+            {
+                "name": template.name,
+                "length_minutes": "75",
+                "sort_order": "10",
+                "is_active": "on",
+                "slots-TOTAL_FORMS": "0",
+                "slots-INITIAL_FORMS": "0",
+                "slots-MIN_NUM_FORMS": "0",
+                "slots-MAX_NUM_FORMS": "1000",
+            },
+        )
+        template.refresh_from_db()
+        self.assertEqual(template.length_minutes, 75)
+        self.assertContains(self.client.get(reverse("worship:template_list")), "75 min")

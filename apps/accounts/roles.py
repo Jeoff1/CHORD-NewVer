@@ -20,6 +20,8 @@ CORE_PERMISSION_APPS = ("church", "accounts", "audit")
 # later phase adds the permissions for its Module here.
 DEFAULT_ROLE_PERMISSIONS = {
     "office_staff": [
+        # Occasions (Phase 9A, A5): they see the bookings
+        "occasions.view_occasion",
         # Members (Phase 2)
         "members.view_member",
         "members.add_member",
@@ -77,9 +79,16 @@ DEFAULT_ROLE_PERMISSIONS = {
         "teams.view_assignment",
         # Announcements (Phase 8)
         "announcements.add_announcement",
-        # Occasions (Phase 9A, A5): approving is a permission, never a role
-        "worship.request_occasion",
-        "worship.approve_occasion",
+        # Occasions (Phase 9A, A5): they book occasions, keep the occasion
+        # types and approve requests (a permission, never a role name)
+        "occasions.view_occasion",
+        "occasions.add_occasion",
+        "occasions.change_occasion",
+        "occasions.view_occasiontype",
+        "occasions.add_occasiontype",
+        "occasions.change_occasiontype",
+        "occasions.request_occasion",
+        "occasions.approve_occasion",
     ],
     "worship_leader": [
         "members.view_member",
@@ -130,8 +139,9 @@ DEFAULT_ROLE_PERMISSIONS = {
         "teams.delete_assignment",
         # Announcements (Phase 8)
         "announcements.add_announcement",
-        # Occasions (Phase 9A, A5)
-        "worship.request_occasion",
+        # Occasions (Phase 9A, A5): they see the bookings, and may ask
+        "occasions.view_occasion",
+        "occasions.request_occasion",
     ],
     "team_member": [
         # Worship schedule (Phase 3)
@@ -153,8 +163,8 @@ DEFAULT_ROLE_PERMISSIONS = {
         # Announcements to everyone and their own member record need no
         # permission.
         "worship.view_worshipservice",
-        # Occasions (Phase 9A, A5): they ask; they see others only as "Booked"
-        "worship.request_occasion",
+        # Occasions (Phase 9A, A5): they ask; others' show only as "Booked"
+        "occasions.request_occasion",
     ],
 }
 

@@ -10,8 +10,8 @@ development task.
 
 **Phase 9A (adviser requests, 24 Nov) is in progress: A1 (Church Member
 role), A2 (a role change keeps history), A3 (user history), A4 (batch
-accounts) and A5 (occasions, with Notifications moved into a core app)
-done 2026-11-24; A6 (member reports) is next, after the owner decides
+accounts) and A5 (occasions, their own Module; Notifications moved into
+a core app) done 2026-11-24; A6 (member reports) is next, after the owner decides
 about "who attended a service".** Phase 8 done (2026-11-23). Updated
 2026-11-24.
 
@@ -22,7 +22,7 @@ about "who attended a service".** Phase 8 done (2026-11-23). Updated
 - **Phase 9A** ([[Development-Plan]]; rules in [[Design-Decisions]],
   "Adviser comments, 24 Nov"): A1 Church Member role, A2 a role change
   keeps history, A3 user history, A4 batch accounts, A5 occasions
-  ([[0012-occasion-services]]), A6 member reports, A7 UI pass (wireframes
+  ([[0013-occasions-module]]), A6 member reports, A7 UI pass (wireframes
   first). More adviser comments may come.
 - **Waiting on the user:** "who attended a service" (on hold, before A6);
   what to show at Progress Check 2 and put in the Progress Report; the
@@ -41,7 +41,7 @@ about "who attended a service".** Phase 8 done (2026-11-23). Updated
 - **Choices to confirm:** "Open questions" in [[Teams]] and
   [[Announcements]].
 - **Checks:** `scripts/check.ps1` (from `.venv`, about 10 minutes); on
-  2026-11-24, after A5, 954 tests passed with 97% coverage.
+  2026-11-24, after A5 (rebuilt), 961 tests passed with 97% coverage.
 - **Waiting on the user, too:** whether the pastor may create batch
   accounts (only the Administrator can today; see the plan's decisions).
 
@@ -102,7 +102,8 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
   - [[0009-transposition-on-the-server|0009 Chord sheets are transposed on the server, in Python]]
   - [[0010-store-own-playlist-id|0010 CHORD stores the ID of a playlist it created itself]]
   - [[0011-church-spotify-account|0011 An optional Church Spotify Account holds the Lineup Playlists]]
-  - [[0012-occasion-services|0012 Occasions: special services are scheduled and requested, without fees]]
+  - [[0012-occasion-services|0012 Occasions: special services are scheduled and requested, without fees]] (superseded by 0013)
+  - [[0013-occasions-module|0013 Occasions are their own Module, apart from worship services]]
 
 ## Modules
 
@@ -117,10 +118,11 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | Members             | Built       | [[Members]]      |
 | Worship             | In progress | [[Worship]]      |
 | Teams               | Built       | [[Teams]]        |
+| Occasions           | Built       | [[Occasions]]    |
 | Announcements       | Built       | [[Announcements]] |
 
 Out of scope: the old Services design with fees, requirements and records
-([[Services]]; occasions are in scope since [[0012-occasion-services]]),
+([[Services]]; occasions are in scope as the [[Occasions]] Module, [[0013-occasions-module]]),
 Giving, Records, Ministries, Events, leadership appointment and
 ordination, SMS messaging, check-in and follow-up, and per-person
 attendance (on hold).
