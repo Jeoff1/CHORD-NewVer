@@ -297,7 +297,7 @@ class SongPageTests(SheetTestCase):
         page = self.client.get(detail_url(self.song))
         self.assertContains(page, "Amazing ")
         self.assertContains(page, ">G/B<")
-        self.assertContains(page, "Edit the chord sheet")
+        self.assertContains(page, ">Edit sheet</a>")
         self.assertContains(page, "Practise along (Bb")
         transposed = self.client.get(
             detail_url(self.song), {"key": "A"}, HTTP_HX_REQUEST="true"
