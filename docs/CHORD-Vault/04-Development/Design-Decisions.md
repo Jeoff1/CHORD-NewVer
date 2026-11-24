@@ -519,6 +519,13 @@ Tests: a Church Member reaches each allowed page and is refused (403, or 404 whe
 - The user's page shows their **role history**, read from the Audit Trail (it already records each change to a user's roles).
 - **Leaving the team:** when a role change takes away `teams.view_assignment`, the save shows the person's assignments on future services that aren't cancelled (Pending or Accepted). The admin chooses to **end** them (each becomes an open place for the leader to fill, and the person's open Swap Requests are withdrawn) or to **keep** them. Past assignments are never touched. The choice is in the Audit Trail.
 
+How it was built (2026-11-24):
+- The role history and the warning are on the user's edit page (users have no other page), for people who may change users (`accounts.change_user`). The history lists every change to Roles or Active from the Audit Trail, newest first, with who made it.
+- Saving a change that takes someone off the team first shows the list and the choice; nothing is saved until the admin chooses. The Audit Trail records the choice on the user ("Assignments on coming services: Ended (2)" or "Kept (2)"), and each ended assignment is recorded as removed.
+- Deactivating someone takes them off the team too, so it shows the same list.
+- Accounts doesn't import Teams: Teams registers its check with `apps/accounts/role_changes.py` in `TeamsConfig.ready()`. While Teams is switched off, nothing is listed.
+- Not covered: taking `teams.view_assignment` away from a whole role in the permission matrix, or deleting a role. Their coming assignments then stay, as before; the leader removes them by hand.
+
 Tests: after a Worship Leader becomes a Church Member, their past lineups, marks, sheets and assignments still show their name; the role history lists both roles; the warning lists only future, not cancelled, Pending or Accepted assignments; ending them frees the places and withdraws open swaps; keeping them changes nothing; past assignments are never changed.
 
 ### A3: User history

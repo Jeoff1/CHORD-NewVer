@@ -90,6 +90,15 @@ Phase 8, parts A and B, built 2026-11-23:
   - the navigation shows **Notifications** with the unread count
     (`apps.teams.context_processors.notifications`); the page
     `/teams/notifications/` opens one (marking it read) or marks all read.
+- **Leaving the team** (`leaving.py`, Phase 9A, A2): when a change of
+  roles or active status on the user page takes away
+  `teams.view_assignment`, the page lists the person's Pending or Accepted
+  assignments on coming services that aren't cancelled, and the editor
+  ends them (removed as by the leader, open swap requests withdrawn) or
+  keeps them. Past ones are never touched. Registered with
+  `apps/accounts/role_changes.py` in `TeamsConfig.ready()`; nothing is
+  listed while Teams is off. Taking the permission from a whole role in the
+  matrix, or deleting a role, doesn't list them.
 - **Audit trail:** assignments (created, reply, removed, ended by a swap),
   Team Profiles, Blackout Dates and Swap Requests, by name, part and
   service.
@@ -114,7 +123,7 @@ user.
 Tests: `apps/teams/tests/test_rostering.py` (the rules),
 `test_views.py` (pages, permissions, module switching), `test_swaps.py`
 (including two people taking one swap at once, on two database
-connections) and `test_notifications.py`.
+connections), `test_notifications.py` and `test_leaving_team.py`.
 
 ## Church settings this module depends on
 

@@ -2,6 +2,47 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-24: Phase 9A, A2: a role change keeps history
+
+On branch `adviser-comments`. A2 of Phase 9A is done.
+
+- **Role history** on the user's edit page (`accounts/user_form.html`,
+  `views.role_history`): every change to Roles or Active from the Audit
+  Trail, newest first, with who made it.
+- **What a change takes away** (`apps/accounts/role_changes.py`): before
+  saving a change of roles or active status, the page works out the
+  permissions the user would lose (from the database, not the form's
+  instance) and asks each registered Module. Teams
+  (`apps/teams/leaving.py`, registered in `TeamsConfig.ready()`) answers
+  with the person's Pending or Accepted assignments on coming services
+  that aren't cancelled, when they leave the team. The page lists them and
+  saves nothing until the editor chooses **End** (each removed with
+  `rostering.remove`, open swap requests withdrawn) or **Keep**; the choice
+  is recorded on the user ("Ended (2)" or "Kept (2)"). Past assignments
+  are never touched; nothing is listed while Teams is off.
+- `templates/form_page.html` gained the `form_extra` and `after_form`
+  blocks.
+- **Left for now** (owner, 2026-11-24): taking the team permission from a
+  whole role in the matrix, or deleting a role, doesn't warn; recorded in
+  the [[Development-Plan]]'s decisions.
+- **Tests:** new `apps/accounts/tests/test_role_history.py` (a Worship
+  Leader made a Church Member keeps their confirmed and edited lineups,
+  chord sheets, approvals and past assignments; the history lists both
+  roles and deactivation; the permission) and
+  `apps/teams/tests/test_leaving_team.py` (the list shows only coming,
+  not cancelled, Pending or Accepted assignments and saves nothing; End
+  frees the places and withdraws open swaps, with the audit; Keep; asking
+  again without a choice; past assignments unchanged; deactivation;
+  staying on through another role or a direct permission; no assignments;
+  Teams off).
+- **Notes:** [[Design-Decisions]] (A2, how it was built), [[Accounts]],
+  [[Teams]], [[Code-Conventions]] (form page blocks; role changes between
+  Modules), [[Development-Plan]], [[00-Home]].
+- **Verified:** `scripts/check.ps1` passed. Ruff lint and format were
+  clean, `manage.py check` was clean, and no migrations were missing. 887
+  tests passed (15 new), with 97% coverage (`role_changes.py` 92%,
+  `accounts/views.py` 98%).
+
 ## 2026-11-24: Phase 9A, A1: the Church Member role
 
 On branch `adviser-comments`. A1 of Phase 9A is done.

@@ -56,7 +56,15 @@ the core; it can't be switched off. App: `apps/accounts`.
   - a list filtered by Active, Inactive or All, with search;
   - add a user with an initial password and roles;
   - edit details, active status and roles;
-  - set a new password for a user.
+  - set a new password for a user;
+  - **Role history** on the edit page (Phase 9A, A2): every change to the
+    user's Roles or Active status from the audit trail, newest first, with
+    who made it. Changing roles never deletes what the person did before.
+  - **What a change takes away** (`role_changes.py`): before saving a
+    change of roles or active status, the page asks each registered Module
+    what the user would lose (Teams: their coming assignments, when they
+    leave the team). If anything, it lists it and the editor chooses to end
+    or keep it; the choice is recorded on the user in the audit trail.
 - **Role management** (`/accounts/roles/`):
   - list roles with their user counts;
   - add, edit and delete roles;
@@ -66,7 +74,8 @@ the core; it can't be switched off. App: `apps/accounts`.
 - Every change to users, roles and permissions is in the audit trail.
   Passwords are recorded only as "(new password set)".
 - Tests: `apps/accounts/tests/` (sign in, own account, password reset,
-  users, roles, matrix, default-role syncing).
+  users, roles, matrix, default-role syncing, the Church Member role, role
+  history); leaving the team in `apps/teams/tests/test_leaving_team.py`.
 
 ## Permissions
 

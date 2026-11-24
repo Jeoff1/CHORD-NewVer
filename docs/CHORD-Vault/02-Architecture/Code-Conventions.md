@@ -13,7 +13,7 @@ yet.
 | UI             | Django templates, Bootstrap 5 and HTMX from `static/vendor/` ([[0002-server-rendered-ui]]). Pages extend `templates/base.html`.  |
 | Page titles    | Every page sets `{% block title %}`; the base adds " · " and the church name.                                                    |
 | Forms          | `{{ form }}` is enough. The project form renderer adds the Bootstrap classes and error markup (`apps/core/forms.py`).            |
-| Form pages     | Simple create and edit pages use `FormPageMixin` and `templates/form_page.html`, with no template of their own.                  |
+| Form pages     | Simple create and edit pages use `FormPageMixin` and `templates/form_page.html`, with no template of their own. A page that needs more extends `form_page.html` and fills `form_extra` (inside the form, above the buttons) or `after_form` (below the card), as `accounts/user_form.html` does. |
 | Lists          | `FilteredListView` (`apps/core/views.py`): pagination and `?q=` search over `search_fields`, plus the `includes/list_toolbar.html` and `includes/pagination.html` templates. |
 | Permissions    | Views use `LoginRequiredMixin` and `PermissionRequiredMixin`; a user without permission gets a 403 page. Templates check `perms.app.codename`. |
 | Module pages   | Every view of a Module puts `ModuleRequiredMixin` (with `module = "<code>"`) first, so a switched-off Module's pages return 404. A Module's `view_permission` (`apps/church/modules.py`) is the permission its main page needs; the navigation and dashboard list it only for people who hold it. |
@@ -23,7 +23,7 @@ yet.
 | HTMX requests  | `base.html` sends the CSRF token in every HTMX request header.                                                                   |
 | Page scripts   | A page's own script lives in `apps/<app>/static/<app>/` and is loaded with `defer` from its include (e.g. `songs/player.js`). It reads the CSRF token from the body's `hx-headers`. |
 | Deleting       | Users are deactivated and members archived, never deleted. Church-edited list items and Custom Fields are switched off. Worship services are cancelled, not deleted. |
-| Between Modules | A Module never imports a Module that builds on it. It sends a signal instead, which the other Module connects to in its `AppConfig.ready()`: Worship sends `apps.worship.signals.lineup_changed`, and Teams turns it into Notifications. |
+| Between Modules | A Module never imports a Module that builds on it. It sends a signal instead, which the other Module connects to in its `AppConfig.ready()`: Worship sends `apps.worship.signals.lineup_changed`, and Teams turns it into Notifications. Accounts asks the Modules what a role change takes away through `apps/accounts/role_changes.py`: a Module registers a finder there (Teams: `apps/teams/leaving.py`). |
 | Row locks      | When two people can race for one thing (taking a swap, or assigning someone while they add a blackout), lock the row with `select_for_update` inside `transaction.atomic()`, and re-check the rules after the lock. With `select_related` on a nullable foreign key, lock only the row itself: `select_for_update(of=("self",))`. |
 | Dates and times | Stored in UTC and shown in the church's time zone, which the middleware activates for each request. Code that runs outside a request (rules, the worker) asks `scheduling.church_time_zone()`. |
 | Files          | Only the church logo is public (`media/church/`). Personal files use private storage (see below). |

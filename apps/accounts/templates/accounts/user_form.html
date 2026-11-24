@@ -1,0 +1,53 @@
+{% extends "form_page.html" %}
+{% load people %}
+
+{% block form_extra %}
+  {% if consequences %}
+    <div class="alert alert-warning" role="alert">
+      <p class="fw-semibold mb-2">This change takes {{ object|person_name }} off the team. Nothing they did before is removed.</p>
+      {% for consequence in consequences %}
+        <p class="mb-1">{{ consequence.title }}:</p>
+        <ul class="mb-2">
+          {% for item in consequence.items %}<li>{{ item }}</li>{% endfor %}
+        </ul>
+      {% endfor %}
+      <input type="hidden" name="after_change_shown" value="1">
+      <fieldset>
+        <legend class="fs-6 mb-1">What should happen to them?</legend>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="after_change" id="after_change_end" value="end">
+          <label class="form-check-label" for="after_change_end">End them: each becomes an open place for the leader to fill, and any open swap request is withdrawn.</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="after_change" id="after_change_keep" value="keep">
+          <label class="form-check-label" for="after_change_keep">Keep them: they stay on those services' teams.</label>
+        </div>
+        {% if choice_missing %}<div class="text-danger small mt-1">Choose whether to end or keep them.</div>{% endif %}
+      </fieldset>
+      <p class="small text-body-secondary mt-2 mb-0">Past services are never changed.</p>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block after_form %}
+  <section class="card shadow-sm mt-4" aria-labelledby="role-history">
+    <div class="card-body p-4">
+      <h2 class="h5" id="role-history">Role history</h2>
+      {% if role_history %}
+        <ul class="list-unstyled mb-0">
+          {% for event, rows in role_history %}
+            <li class="mb-2">
+              <span class="text-body-secondary">{{ event.occurred_at|date:"M j, Y, g:i A" }}{% if event.actor %}, by {{ event.actor|person_name }}{% endif %}:</span>
+              {% for label, before, after in rows %}
+                <div>{{ label }}: {% if before %}{{ before }}{% else %}none{% endif %} → {% if after %}{{ after }}{% else %}none{% endif %}</div>
+              {% endfor %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-body-secondary mb-0">No role changes recorded yet.</p>
+      {% endif %}
+      <p class="small text-body-secondary mt-3 mb-0">Changing roles never removes what a person did before: their lineups, chord sheets, past assignments and history stay under their name.</p>
+    </div>
+  </section>
+{% endblock %}

@@ -6,7 +6,9 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
@@ -23,6 +25,7 @@ from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.core.views import FilteredListView, FormPageMixin
 
+from . import role_changes
 from .forms import ProfileForm, RoleForm, UserCreateForm, UserEditForm
 from .models import Role, User
 from .roles import managed_permissions
@@ -162,12 +165,41 @@ class UserCreateView(StaffMixin, FormPageMixin, CreateView):
         return response
 
 
+HISTORY_FIELDS = ("Roles", "Active")
+
+
+def role_history(user):
+    """The user's role and active-status changes from the Audit Trail,
+    newest first: (event, [(label, before, after), ...])."""
+    events = AuditEvent.objects.filter(
+        content_type=ContentType.objects.get_for_model(User), object_id=str(user.pk)
+    ).select_related("actor")
+    history = []
+    for event in events:
+        rows = [
+            (label, *event.changes[label])
+            for label in HISTORY_FIELDS
+            if label in event.changes
+        ]
+        if rows:
+            history.append((event, rows))
+    return history
+
+
 class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
+    """Edit a user. A change of roles or active status never deletes what
+    they did before. When it takes away something a Module ties to a
+    permission (such as their places on coming services' teams), the form
+    lists it first, and the editor chooses to end or keep it (Phase 9A, A2).
+    """
+
     permission_required = "accounts.change_user"
     model = User
     form_class = UserEditForm
+    template_name = "accounts/user_form.html"
     success_url = reverse_lazy("accounts:user_list")
     cancel_url = reverse_lazy("accounts:user_list")
+    CHOICES = {"end": "Ended", "keep": "Kept"}
 
     def get_page_title(self):
         return f"Edit user: {self.object.username}"
@@ -182,14 +214,40 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
         self.before = snapshot(self.object, USER_AUDIT_FIELDS)
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["role_history"] = role_history(self.object)
+        return context
+
     def form_valid(self, form):
-        response = super().form_valid(form)
-        record_change(
-            self.request.user,
-            self.object,
-            AuditEvent.Action.CHANGED,
-            diff(self.before, snapshot(self.object, USER_AUDIT_FIELDS)),
+        found = role_changes.consequences(
+            form.instance,
+            roles=list(form.cleaned_data["roles"]),
+            is_active=form.cleaned_data["is_active"],
         )
+        choice = self.request.POST.get("after_change")
+        if found and choice not in self.CHOICES:
+            # Show what the change takes away, and ask; nothing is saved yet.
+            return self.render_to_response(
+                self.get_context_data(
+                    form=form,
+                    consequences=found,
+                    choice_missing="after_change_shown" in self.request.POST,
+                )
+            )
+        with transaction.atomic():
+            response = super().form_valid(form)
+            changes = diff(self.before, snapshot(self.object, USER_AUDIT_FIELDS))
+            for consequence in found:
+                if choice == "end":
+                    consequence.end(self.request.user)
+                changes[consequence.title] = [
+                    "",
+                    f"{self.CHOICES[choice]} ({len(consequence.items)})",
+                ]
+            record_change(
+                self.request.user, self.object, AuditEvent.Action.CHANGED, changes
+            )
         messages.success(self.request, f"User {self.object.username} was saved.")
         return response
 
