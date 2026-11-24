@@ -8,13 +8,23 @@ development task.
 
 ## Current status
 
-**Phase 8 done (2026-11-23): parts A and B.** Phase 9 is next. Updated
-2026-11-23.
+**Phase 9A (adviser requests, 24 Nov) is next, before Phase 9.** Phase 8
+done (2026-11-23). Updated 2026-11-24.
 
 **Pick up here:**
-- **Branch:** `master` holds Phases 0 to 8: `phase-8-teams` was
-  fast-forwarded into it on 2026-11-23, at the user's request, before a
-  click-through. Start Phase 9 on a new branch from `master`.
+- **Branch:** `adviser-comments` (from `master`, not pushed) holds the
+  Phase 9A plan; build Phase 9A there. `master` holds Phases 0 to 8. Merge
+  nothing into `master` until the user says so.
+- **Phase 9A** ([[Development-Plan]]; rules in [[Design-Decisions]],
+  "Adviser comments, 24 Nov"): A1 Church Member role, A2 a role change
+  keeps history, A3 user history, A4 batch accounts, A5 occasions
+  ([[0012-occasion-services]]), A6 member reports, A7 UI pass (wireframes
+  first). More adviser comments may come.
+- **Waiting on the user:** "who attended a service" (on hold, before A6);
+  what to show at Progress Check 2 and put in the Progress Report; the
+  "five users or fewer" wording.
+- **Phase 9** is built only if time remains before the final presentation
+  (1–4 Dec 2026), an exception recorded in `AGENTS.md`.
 - **Progress Check 2 is on 25 Nov 2026.**
 - **Phase 8, part A:** [[Teams]]: Team Parts, Team Profiles (parts only),
   Assignments with replies, Blackout Dates, My schedule, the Team card on
@@ -60,7 +70,7 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
 - [[Teams]] and [[Announcements]] (Phase 8, 2026-11-23): the roster,
   availability, swaps, Notifications and announcements, as above.
 
-**Next:** Phase 9, then Phase 10.
+**Next:** Phase 9A, then Phase 10; Phase 9 if time remains.
 
 ## Project
 
@@ -86,6 +96,7 @@ Built so far (scope: the [[Concept-Brief]], [[0005-worship-planning-scope]]):
   - [[0009-transposition-on-the-server|0009 Chord sheets are transposed on the server, in Python]]
   - [[0010-store-own-playlist-id|0010 CHORD stores the ID of a playlist it created itself]]
   - [[0011-church-spotify-account|0011 An optional Church Spotify Account holds the Lineup Playlists]]
+  - [[0012-occasion-services|0012 Occasions: special services are scheduled and requested, without fees]]
 
 ## Modules
 
@@ -101,9 +112,11 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | Teams               | Built       | [[Teams]]        |
 | Announcements       | Built       | [[Announcements]] |
 
-Out of scope: Services ([[Services]] keeps the old design), Giving,
-Records, Ministries, Events, leadership appointment and ordination, SMS
-messaging, check-in and follow-up, and per-person attendance.
+Out of scope: the old Services design with fees, requirements and records
+([[Services]]; occasions are in scope since [[0012-occasion-services]]),
+Giving, Records, Ministries, Events, leadership appointment and
+ordination, SMS messaging, check-in and follow-up, and per-person
+attendance (on hold).
 
 ## Development
 

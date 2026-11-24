@@ -29,12 +29,15 @@ announcements and song history. The full description is the
 In: worship services and themes, song suggestions, lineups and their
 confirmation, the song pool, chord sheets and keys, Spotify playback,
 teams and availability, announcements, song usage and headcounts, and the
-member directory.
+member directory. Since the adviser's comments of 2026-11-24 (Phase 9A):
+occasions such as weddings and funerals, requested by church members
+([[0012-occasion-services]]), a Church Member role, batch accounts, user
+history and printable member reports.
 
-Out: giving and finance, church records and certificates, requested
-services such as weddings, ministries, events, leadership appointment and
-ordination, SMS messaging, check-in and follow-up, and per-person
-attendance ([[0005-worship-planning-scope]]).
+Out: giving and finance (including fees for occasions), church records and
+certificates, ministries, events, leadership appointment and ordination,
+SMS messaging, check-in and follow-up, and per-person attendance
+([[0005-worship-planning-scope]]; "who attended a service" is on hold).
 
 ## Relationship to the first CHORD
 

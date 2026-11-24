@@ -9,6 +9,11 @@ status: out of scope
 > worship planning scope ([[0005-worship-planning-scope]]). Nothing here
 > was built. The design is kept in case the scope widens again. In the
 > rest of the vault, "service" now means a Worship Service ([[Glossary]]).
+>
+> **2026-11-24:** weddings, funerals and similar occasions are back in
+> scope as part of scheduling, in a smaller form: occasion templates and
+> Occasion Requests, with no fees, requirements or records
+> ([[0012-occasion-services]]). The design below is still not being built.
 
 ## The design that was agreed
 

@@ -1,7 +1,8 @@
 # Concept Brief: Worship Planning System
 
 The brief that sets this project's scope, written 2026-11-16 and updated
-2026-11-18 with the decisions agreed since. This note records what it says;
+2026-11-18 with the decisions agreed since, and 2026-11-24 with the
+adviser's comments ([[Design-Decisions]], "Adviser comments, 24 Nov"). This note records what it says;
 [[0005-worship-planning-scope]] records how CHORD follows it, and where
 CHORD departs from its suggestions. Phase-by-phase detail and tests for
 these decisions are in [[Design-Decisions]].
@@ -36,6 +37,7 @@ whole team, with theme-based song suggestions as its core.
 | Team member             | Their part on the day   | View confirmed lineups; play tracks; read chord sheets in the service key; transpose a personal view (capo); paste a missing chord sheet for approval; mark availability. |
 | Admin                   | The church account      | Manage users and roles, and church settings. The Administrator role can't be deleted. Spotify has one connection per user: each user connects their own account. |
 | Office staff (optional) | The member directory    | Keep the member directory up to date: add and edit members and households, import and export them. |
+| Church member (added 2026-11-24) | Their own record and requests | See the schedule, announcements and their own member record; request occasions such as a wedding or funeral. No lineups, song pages or chord sheets. |
 
 A lineup is visible to the team only once it is confirmed. If the worship
 leader and the pastor disagree, the pastor's decision wins: the pastor
@@ -135,19 +137,22 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
 | Module                                | In scope | Covers                                                        |
 | ------------------------------------- | -------- | ------------------------------------------------------------- |
 | Service scheduling                    | Yes      | Calendar, service templates, recurring schedules              |
+| Occasions (added 2026-11-24)          | Yes      | Weddings, funerals and the like, requested by members and approved; booked times on the calendar; no fees ([[0012-occasion-services]]) |
+| Member reports (added 2026-11-24)     | Yes      | Filtered, printable member lists, such as by age group        |
+| User history (added 2026-11-24)       | Yes      | Sign-ins and changes per user, from the audit trail           |
 | Theme and sermon series               | Yes      | A theme per service, grouped into series                      |
 | Team roster and assignments           | Yes      | Who plays what, swap requests, availability and blackout dates |
 | Song library                          | Yes      | Songs found on Spotify, lyrics, tags, chord sheets, usage     |
 | Announcements                         | Yes      | Notes to the whole team or one service team                   |
 | Song usage report                     | Yes      | What was sung and when; overused songs                        |
-| Member directory                      | Basic    | Names, contact details, households, team and role; CSV import |
+| Member directory                      | Basic    | Names, contact details, households, team and role; CSV import; accounts for members in a batch (2026-11-24) |
 | Attendance                            | Basic    | Headcount per service                                         |
 | Leadership appointment and ordination | No       | Too complex for this system's purpose                         |
 | Finance, giving, tithes, payroll      | No       | Better served by dedicated software                           |
-| Records, requested services           | No       | Outside worship planning                                      |
+| Records; fees for occasions           | No       | Outside worship planning                                      |
 | Ministries and events                 | No       | Outside worship planning                                      |
 | SMS, check-in and follow-up           | No       | Beyond a minimal management system                            |
-| Per-person attendance                 | No       | A headcount per service is enough                             |
+| Per-person attendance                 | No       | A headcount per service is enough (the adviser's request is on hold, 2026-11-24) |
 
 ## Platform constraints
 

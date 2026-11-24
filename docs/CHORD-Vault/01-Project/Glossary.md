@@ -31,7 +31,8 @@ _Avoid_: user type, position
 
 **Audit Trail**:
 The permanent record of who changed what, and when. Entries are never
-edited or removed.
+edited or removed. From Phase 9A it also records sign-ins, sign-outs and
+failed sign-ins; a user's **History** is their part of it.
 _Avoid_: history, log (alone)
 
 **Church-edited List**:
@@ -72,6 +73,23 @@ A field the church adds to a kind of record, such as "Baptism date" on
 every Member. It can be required, and private.
 _Avoid_: extra field, user-defined field
 
+**Church Member** (role):
+The default Role for ordinary members who sign in (Phase 9A): they see the
+schedule, announcements and their own record, and request Occasions, but
+never lineups or song pages. Not the same as a Member record: a Member is a
+directory entry, with or without an account.
+_Avoid_: member user, congregant
+
+**Age Group**:
+A church-edited age range, such as Youth or Senior Citizens, worked out from
+a Member's birth date for reports (Phase 9A).
+_Avoid_: age bracket, category
+
+**Temporary Password**:
+The random password a batch-created account starts with. Shown once, never
+stored in plain text or logged, and changed at first sign-in (Phase 9A).
+_Avoid_: default password
+
 **Archive**:
 To take a record out of everyday lists without deleting it. Archiving can
 be undone.
@@ -90,6 +108,24 @@ A kind of Worship Service the church holds, such as its main weekly
 service or a youth night, with its Song Slots and an optional usual day
 and time.
 _Avoid_: service type, event type
+
+**Occasion**:
+A Worship Service for a special event, such as a wedding or funeral, made
+from a Service Template the church marks as an occasion. It records who it
+is for, the officiant and the venue ([[0012-occasion-services]]; Phase 9A).
+_Avoid_: requested service, sacrament, rite
+
+**Occasion Request**:
+A signed-in person's request for an Occasion on a date and time: Pending,
+then Approved (which creates the Worship Service) or Declined, or withdrawn
+while Pending. Approving is the permission `worship.approve_occasion`.
+_Avoid_: service request, booking
+
+**Booked Time**:
+The time a Worship Service takes, from its start for its template's length.
+Requests that overlap a booked time are refused; people who don't plan see
+only "Booked".
+_Avoid_: reservation, slot (a Song Slot is something else)
 
 **Song Slot**:
 A place in a Service Template where a song is sung, in order, such as

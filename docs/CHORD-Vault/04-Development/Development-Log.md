@@ -2,6 +2,35 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-24: Adviser comments recorded; Phase 9A planned
+
+On branch `adviser-comments` (from `master`, not pushed). Documentation
+only; no code changed.
+
+- **Adviser comments (24 Nov)** and the owner's answers recorded in
+  [[Design-Decisions]] ("Adviser comments, 24 Nov", A1 to A7): a Church
+  Member role; a role change keeps history; user history; batch accounts
+  from the Members list; occasions such as weddings and funerals, requested
+  by church members, with booked times on the calendar; printable member
+  reports with age groups; a UI pass, wireframes first.
+- **Scope changed** with the owner's approval: new decision
+  [[0012-occasion-services]] amends [[0005-worship-planning-scope]] (update
+  note added); `AGENTS.md` scope lists occasions and the Phase 9A items,
+  keeps fees and per-person attendance out, and records the exception that
+  Phase 9A comes before Phase 9. Also updated: the [[Concept-Brief]], the
+  [[workflow-spec]] (Church member role, OCCASIONS, ACCOUNTS, HISTORY AND
+  REPORTS), [[Project-Overview]], [[Services]] (note), the [[Glossary]]
+  (Church Member, Age Group, Temporary Password, Occasion, Occasion
+  Request, Booked Time; Audit Trail).
+- **[[Development-Plan]]:** Phase 9A added before Phase 9 (status Next),
+  with its tasks and "done when"; Phase 9 only if time remains; new
+  decisions to make (who attended a service, on hold; notifications
+  without Teams; the five-user wording; Progress Check 2 and the Progress
+  Report).
+- **[[00-Home]]** "Current status" updated.
+- Checks: documentation only, so `scripts/check.ps1` was not run; no code
+  changed since it last passed (858 tests, 97% coverage).
+
 ## 2026-11-23: Phase 8 merged into master
 
 - **Merged:** `phase-8-teams` fast-forwarded into `master`, at the user's

@@ -1,6 +1,7 @@
 === INTENDED WORKFLOW ===
 
-Updated 2026-11-23 with the decisions in [[Design-Decisions]] (Phase 8). Where this
+Updated 2026-11-24 with the adviser's comments ([[Design-Decisions]],
+"Adviser comments, 24 Nov"; Phase 9A, planned, not built yet). Where this
 spec and Design-Decisions.md disagree, Design-Decisions.md wins (AGENTS.md
 sets the order).
 
@@ -28,6 +29,14 @@ ROLES
   are set in .env when CHORD is installed.
 - Office staff (optional): keeps the member directory up to date. Doesn't
   see lineups.
+- Church member (Phase 9A): sees the dashboard, their own member record,
+  announcements to everyone and the service schedule with theme titles;
+  requests occasions and follows their requests. Never sees lineups, song
+  pages, chord sheets, lyrics or other members. Accounts made in a batch
+  from the Members list get this role by default.
+- Changing someone's role (for example, a worship leader who becomes a
+  church member) never removes what they did before; when they leave the
+  team, the admin ends or keeps their assignments on future services.
 
 People who can change lineups (the leader and the pastor) also see a theme's
 sermon notes; team members don't.
@@ -239,6 +248,28 @@ ANNOUNCEMENTS (Announcements module)
   Worship Leader by default. No expiry: the author archives an
   announcement, and then nobody sees it.
 
+OCCASIONS (Worship module; Phase 9A, planned; [[0012-occasion-services]])
+- A Service Template the church names (Wedding, Funeral, ...) can be marked
+  as an occasion, with a usual length. An occasion's service also records
+  who it is for, the officiant and the venue; its lineup works as usual.
+- A church member requests an occasion (template, date and start time, who
+  it is for, a note). The request is Pending, then Approved or Declined
+  (with a reason); the requester may withdraw it while Pending.
+- Approving is the permission worship.approve_occasion (Pastoral Staff by
+  default, never a role-name check) and creates the service.
+- The calendar shows booked times; people who don't plan see only
+  "Booked". A request or approval that overlaps a booked time is refused.
+- The requester is notified in the app. No fees, requirements or records.
+
+ACCOUNTS, HISTORY AND REPORTS (Phase 9A, planned)
+- Batch accounts from the Members list: temporary passwords shown once,
+  never stored in plain text or logged, changed at first sign-in.
+- The Audit Trail also records sign-in, sign-out and failed sign-in, and
+  each user's page has a History tab.
+- A Members report with filters (status, age group, sex, household, date
+  joined, Custom Fields), a print layout and CSV. Age groups are a
+  church-edited list. "Who attended a service" is on hold.
+
 SPOTIFY SAFEGUARDS (every server-side Spotify call: search, tracks, playlists)
 - Stop on the first 429: make no Spotify call until Retry-After has passed.
 - No web request waits on a Retry-After: a Spotify call made during a web
@@ -277,7 +308,7 @@ HARD RULES (must not be violated)
 EXPECTED DATABASE TABLES
 User, Spotify connection (one per user), Church Spotify account (at most
 one), Service, Theme, Team part, Team profile, Assignment, Blackout date,
-Swap request, Notification,
+Swap request, Notification, Occasion request and Age group (Phase 9A),
 Search run, Song, Song tag, Song embedding, Lineup, Lineup item,
 Suggestion feedback, Chord sheet, Song usage, Announcement, Attendance.
 
@@ -287,7 +318,8 @@ Some are stored as fields rather than tables of their own, or not stored:
 - Song tag: ThemeTag, linked by Song.tags; each tag's score is stored in
   Song.tag_scores (JSON).
 - Attendance: a headcount per service, stored as WorshipService.attendance.
-  There is no per-person attendance.
+  There is no per-person attendance (the adviser's request for it is on
+  hold, 2026-11-24).
 - Song usage: computed from confirmed lineups when needed, not stored;
   cancelled services never count. Ranking counts every confirmed lineup of a
   service before the one being ranked, even one not held yet; the song

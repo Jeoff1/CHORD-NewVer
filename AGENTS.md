@@ -12,21 +12,33 @@ Spotify, followed by review, confirmation, chord sheets, keys and playback.
 It comes first: when effort or time is limited, finish and polish this
 module before any supporting module, and never let supporting work delay it.
 
+**Exception (approved 2026-11-24):** the adviser's requests of 24 Nov
+(Phase 9A in the Development Plan) come before Phase 9, learning to rank.
+Phase 9 is built only if time remains before the final presentation
+(1–4 Dec 2026). The rest of the core-first rule still holds.
+
 **Supporting church management stays minimal.** Build only what helps the
 worship workflow, in its smallest useful form:
 
-- Service scheduling and service templates
+- Service scheduling and service templates, including occasions such as
+  weddings and funerals that church members request (decision 0012); no
+  fees, requirements or church records
+- Church Member role, batch accounts, user history and printable member
+  reports (Phase 9A)
 - Themes and sermon series
 - Team roster: assignments, availability and swap requests
 - Member directory: the Members module stays as built (households, CSV
-  import); don't extend it further without asking
+  import), plus the Phase 9A report, age groups and batch accounts; don't
+  extend it further without asking
 - Announcements to the whole team or one service team
 - Attendance as a headcount per service
 - Song usage report
 
-**Out of scope:** giving and finance, records, requested services,
-ministries, events, leadership appointment or ordination workflows, SMS
-messaging, check-in and follow-up, and per-person attendance. Raise it with
+**Out of scope:** giving and finance (including fees for occasions),
+records, ministries, events, leadership appointment or ordination
+workflows, SMS messaging, check-in and follow-up, and per-person attendance
+(the adviser's "who attended a service" is on hold until the user decides).
+Raise it with
 the user before building any of them. When unsure whether a feature is
 minimal enough, ask, and suggest the smallest version that serves worship
 planning.

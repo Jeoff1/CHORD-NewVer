@@ -22,10 +22,13 @@ flowchart LR
   P5 --> P6[6 Lineups and reports]
   P6 --> P7[7 Song pages]
   P6 --> P8[8 Teams and announcements]
-  P6 --> P9[9 Learning to rank]
+  P8 --> P9A[9A Adviser requests]
+  P9A --> P9[9 Learning to rank]
+  P6 --> P9
   P7 --> P10[10 Hardening and release]
   P8 --> P10
-  P9 --> P10
+  P9A --> P10
+  P9 -.-> P10
 ```
 
 | Phase | Name                          | Size | Depends on | Status            |
@@ -39,18 +42,21 @@ flowchart LR
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
 | 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
 | 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
-| 9     | Learning to rank              | S    | 6          | Not started       |
-| 10    | Hardening and release         | M    | 7, 8, 9    | Not started       |
+| 9A    | Adviser requests (24 Nov)     | L    | 8          | Next              |
+| 9     | Learning to rank              | S    | 6, after 9A | Not started (only if time remains) |
+| 10    | Hardening and release         | M    | 7, 8, 9A (9 if built) | Not started       |
 
 This **Status** column is the record of phase progress. Statuses: Done
 (with date), In progress, Next, Not started. Sizes are relative
-(S < M < L). Phases 7, 8 and 9 don't depend on each other and can go in any
-order.
+(S < M < L). Phase 9A comes before Phase 9 by the owner's choice
+(2026-11-24; the exception is recorded in `AGENTS.md`), and Phase 9 is
+built only if time remains before the final presentation (1–4 Dec 2026).
 
 Out of scope since [[0005-worship-planning-scope]]: Giving, Records,
-Services (Service Requests), Ministries, Events, leadership appointment and
-ordination, SMS messaging, check-in and follow-up, and per-person
-attendance.
+the old Services design (fees, requirements, records), Ministries, Events,
+leadership appointment and ordination, SMS messaging, check-in and
+follow-up, and per-person attendance (on hold since the adviser asked for
+it on 2026-11-24). Occasions are back in scope ([[0012-occasion-services]]).
 
 Each phase also builds its section of [[Design-Decisions]], with the tests
 listed there. Where the two disagree, Design-Decisions wins.
@@ -469,7 +475,52 @@ caused it, nothing for a cancelled or past service or a draft); a newly
 assigned person is notified; and an announcement to one service's team
 reaches only that team.
 
+## Phase 9A: Adviser requests (24 Nov)
+
+**Status: next.** On branch `adviser-comments`. The rules and tests are in
+[[Design-Decisions]], "Adviser comments, 24 Nov"; more comments or changes
+may come. Nothing is merged into `master` until the owner says so.
+
+Goal: what the adviser asked for on 2026-11-24, each in its smallest useful
+form. Order: A1 to A3 (small), then A4, A5 and A6; the A7 wireframes are
+drawn alongside, for the owner's review.
+
+- [ ] **A1 Church Member role**: a default role that sees the dashboard,
+  its own member record, announcements to everyone, the schedule with theme
+  titles, and its own Occasion Requests; no lineups, song pages, chord
+  sheets, lyrics or other members.
+- [ ] **A2 A role change keeps history**: proved by tests; a role history
+  on the user's page; when someone leaves the team, their future
+  assignments are listed and the admin ends or keeps them.
+- [ ] **A3 User history**: sign-in, sign-out and failed sign-in in the
+  Audit Trail; a History tab on each user's page.
+- [ ] **A4 Batch accounts** from the Members list: a chosen role (Church
+  Member by default), linked to the Member record, temporary passwords shown
+  once and never stored or logged, changed at first sign-in.
+- [ ] **A5 Occasions** ([[0012-occasion-services]]): occasion templates
+  with a length; who it's for, officiant and venue; Occasion Requests
+  (Pending, Approved, Declined, withdrawn) approved with
+  `worship.approve_occasion`; booked times on the calendar ("Booked" only
+  for people who don't plan); overlaps refused; the requester notified.
+- [ ] **A6 Reports**: a filtered Members report with a print layout and
+  CSV; age groups as a church-edited list. Ask the owner about "who
+  attended a service" first (on hold).
+- [ ] **A7 UI pass**: wireframes of the main screens for the owner's
+  approval, then button placement and layout; colours later.
+
+**Done when** the tests listed for A1 to A7 in [[Design-Decisions]] pass:
+a Church Member is refused on lineups, song pages and chord sheets; a
+Worship Leader made a Church Member keeps every past record under their
+name, and the admin's choice about future assignments holds; sign-ins are
+recorded without passwords; batch accounts never store or log a
+temporary password; an overlapping Occasion Request or approval is refused,
+and only `worship.approve_occasion` approves; the report's filters, age
+groups and private details are right; and every moved action is still
+permission-checked.
+
 ## Phase 9: Learning to rank
+
+**Built only if time remains after Phase 9A** (owner's choice, 2026-11-24).
 
 Goal: pipeline stage 11.
 
@@ -528,7 +579,11 @@ phase takes it on.
 
 | Phase | Decision                                                                 | Current leaning                                                                 |
 | ----- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| 9     | Must the proposal show a trained model? (the brief's open question)      | Build both: the rules pipeline works from day one, and training switches on once enough lineups are confirmed |
+| 9     | Must the proposal show a trained model? (the brief's open question)      | Build both: the rules pipeline works from day one, and training switches on once enough lineups are confirmed. Since 2026-11-24, Phase 9 is built only if time remains after 9A; worth asking the adviser |
+| 9A    | Who attended a service: optional per-person attendance, or who served from Assignments? | On hold; ask the owner before A6 |
+| 9A    | Where in-app notifications live when Teams is off (Occasion Requests need them) | Ask while building A5 |
+| 9A    | "Five users or fewer" in the brief, now that church members get accounts | Suggested: "five Spotify-connected users or fewer" |
+| 9A    | What is shown at Progress Check 2 (25 Nov), and what goes in the Progress Report | The owner decides later |
 
 Record each decision in `02-Architecture/Decisions/` once it is made.
 

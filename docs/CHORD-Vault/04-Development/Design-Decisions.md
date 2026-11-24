@@ -485,6 +485,95 @@ Tests: a 404 makes a new playlist; a 403 from another owner's playlist makes a n
 
 ---
 
+## Adviser comments, 24 Nov (Phase 9A)
+
+The adviser commented on CHORD on 2026-11-24. The project owner approved the plan below the same day, and said more comments or changes may come: treat this section as open to change. Phase 9A comes **before Phase 9**; AGENTS.md records this as an exception to "the theme-based lineup comes first", and Phase 9 is built only if time remains before the final presentation (1–4 Dec 2026).
+
+| # | Adviser comment | Decision | Size |
+| - | --------------- | -------- | ---- |
+| A1 | A church member role, and the screens it may see | A **Church Member** default role | S |
+| A2 | "What if X is no longer the Worship Leader next month?" | Changing a role keeps every record of the past; the admin decides about future assignments | S |
+| A3 | User logs or history | Sign-in events in the Audit Trail, and a per-user History page | S–M |
+| A4 | Admins add church members' accounts in a batch | Create accounts from the Members list | M |
+| A5 | Scheduling for special services such as weddings and funerals | **Occasions** are in scope, with requests from church members and a calendar that shows booked times ([[0012-occasion-services]]) | L |
+| A6 | Printable reports from the church's data (senior citizens, who attended a service, and so on) | A filtered Members report, printable and exported as CSV; per-person attendance **on hold** | M–L |
+| A7 | Improve the UI: button locations and wireframes | Wireframes first, for the owner's approval; colours later, from the owner | L |
+
+Not decided yet: what is shown at Progress Check 2 (25 Nov) and what goes in the Progress Report. The owner decides later. Nothing from Phase 9A is merged into `master` before the owner says so.
+
+### A1: Church Member role
+
+- A new default role, **Church Member** (key `church_member`), editable like every role ([[0003-editable-roles]]). Code checks its permissions, never its name.
+- It sees: the dashboard, the person's own member record, announcements to everyone, the service schedule and calendar with each service's date, time and theme title, and its own Occasion Requests (A5). It can request an Occasion.
+- It doesn't see: lineups (draft or confirmed), song pages, chord sheets, lyrics, suggestions, theme notes, the roster or other people's member records. These stay with the team and the people who plan.
+- Accounts created in a batch (A4) get this role by default.
+
+Tests: a Church Member reaches each allowed page and is refused (403, or 404 where the rules already hide a page) on lineups, song pages, chord sheets, the roster and other members' records.
+
+### A2: A role change keeps history
+
+- Changing a person's roles never deletes or changes what they did before: lineups they confirmed or edited, marks, chord sheets, approvals, Suggestion Feedback, past assignments and Audit Trail entries all stay, under their name. Users are deactivated, never deleted (as today).
+- The user's page shows their **role history**, read from the Audit Trail (it already records each change to a user's roles).
+- **Leaving the team:** when a role change takes away `teams.view_assignment`, the save shows the person's assignments on future services that aren't cancelled (Pending or Accepted). The admin chooses to **end** them (each becomes an open place for the leader to fill, and the person's open Swap Requests are withdrawn) or to **keep** them. Past assignments are never touched. The choice is in the Audit Trail.
+
+Tests: after a Worship Leader becomes a Church Member, their past lineups, marks, sheets and assignments still show their name; the role history lists both roles; the warning lists only future, not cancelled, Pending or Accepted assignments; ending them frees the places and withdraws open swaps; keeping them changes nothing; past assignments are never changed.
+
+### A3: User history
+
+- The Audit Trail also records **sign-in, sign-out and failed sign-in** (with the username tried and the time; never the password). These are new actions on `AuditEvent`.
+- Each user's page gets a **History** tab: their sign-ins and the changes they made, from the Audit Trail. It needs `audit.view_auditevent`, like the audit log.
+- Never recorded: passwords, temporary passwords (A4), Spotify tokens, lyrics or chord sheet text.
+- Phase 10's limit on repeated failed sign-ins will read these events.
+
+Tests: signing in, signing out and a failed sign-in are each recorded; no password appears in any event; the History tab shows only that user's events and is refused without the permission.
+
+### A4: Batch accounts from the Members list
+
+- On the Members list, a person who may add users (`accounts.add_user`) and view members ticks members without an account, or uses the list's filter, and presses **Create accounts**, choosing a role (Church Member by default).
+- Each account is linked to its Member record (`Member.user`). The username is made from the name and kept unique; the email comes from the Member record when it has one.
+- **Temporary passwords** are random, shown once on the result page, and offered as a CSV download from a never-cached page. They are never logged, audited, emailed or stored in plain text. The person must change it at first sign-in.
+- Members who already have an account, or are archived, are skipped, and the result says how many and why.
+- The Audit Trail records each account created, without its password.
+
+To confirm with the owner: the [[Concept-Brief]] and [[Project-Overview]] say "one church, five users or fewer". Accounts for church members go past that. Spotify's 5-user limit applies only to people who connect Spotify (and the Church Spotify Account), not to CHORD accounts, so the suggested wording is "five Spotify-connected users or fewer".
+
+Tests: accounts are created and linked; the chosen role is given; existing accounts and archived members are skipped with the count; no password appears in the Audit Trail or logs; the CSV page sends no-store headers and works only once; first sign-in forces a password change; only holders of the permission see the button or can post.
+
+### A5: Occasions (special services) ([[0012-occasion-services]])
+
+Special services such as weddings and funerals are now in scope, as part of scheduling. This amends [[0005-worship-planning-scope]] and the AGENTS.md scope.
+
+- **Occasion:** a Service Template can be marked as an occasion and has a usual length (for example 2 hours). The church names its own templates (Wedding, Funeral, Dedication, …). No template is named for one church's practice in seed data or code ([[0001-configure-behavior-not-identity]]).
+- An occasion's Worship Service also records: who it is for (names, each optionally linked to a Member), the officiant (a user), the venue and notes. The lineup pipeline works as for any service.
+- **Occasion Request:** a signed-in person who may request (Church Member and the planning roles by default; a permission, never a role name) asks for an occasion: the template, the preferred date and start time, who it is for, and a note. It is **Pending**, then **Approved** or **Declined** (with a reason); the requester may withdraw it while Pending.
+- **Approving is a permission**, `worship.approve_occasion`, held by Pastoral Staff by default (and by the Administrator, like every permission). Approving creates the Worship Service from the request. The approver may change the date and time first.
+- **Booked times:** every service takes the time from its start to its start plus its template's length. The calendar shows booked times to everyone who can see the schedule; people without planning permissions see only "Booked", never what or for whom. A request, or an approval, that overlaps a booked time of a service that isn't cancelled is refused, with the clash named for people who may see it.
+- The requester gets an in-app notification when the request is approved or declined; people who may approve see the number of Pending requests.
+- **Not built:** fees, payments, a requirements checklist, church records or certificates ([[Services]] keeps that old design for reference).
+
+Tests: marking a template as an occasion; a request is Pending, and approving creates the service with its details; declining needs a reason; withdrawing only while Pending; an overlapping request or approval is refused, and a cancelled service frees its time; a Church Member sees "Booked" and no details; only holders of `worship.approve_occasion` approve; the requester is notified; the Module-off case.
+
+To settle while building (ask the owner): where the in-app notifications live when Teams is off (they are in `apps/teams` today); whether Wedding and Funeral are seeded as switched-off example templates or not at all; whether the requester must have a Member record.
+
+### A6: Reports
+
+- A **Members report**: filters on Membership Status, age group, sex, Household, date joined and Custom Fields; the columns to show; a **print layout** (a print stylesheet, no PDF library) and CSV export. It reuses the Members permissions, and private details follow `members.view_private_details` as everywhere else.
+- **Age groups** (for example Children, Youth, Adults, Senior Citizens, with their age ranges) are a church-edited list with neutral defaults, worked out from `Member.birth_date` on the report's date. A member without a birth date is counted as "Age not given".
+- **Who attended a service: on hold.** Per-person attendance is still out of scope (AGENTS.md; Phase 8, question 6). Ask the owner before building A6, with the options: optional per-person attendance, off by default, keeping the headcount; or "who served" from Assignments only.
+- The existing song usage and attendance reports get the same print layout.
+
+Tests: each filter; age groups on the report's date, and "Age not given"; private details hidden without the permission; the CSV matches the screen; the permissions.
+
+### A7: UI pass
+
+- First, wireframes of the main screens (dashboard, schedule and calendar, service page, lineup, lineup song page, Members list, settings) showing button placement and page layout, for the owner's approval. No template changes before that.
+- Then the templates follow the approved wireframes, still Django templates with Bootstrap and HTMX ([[0002-server-rendered-ui]]). Colours and fonts come later, from the owner's instructions.
+- It overlaps Phase 10's mobile and accessibility pass; whatever A7 covers is ticked there too.
+
+Tests: the existing view tests keep passing; every action that moved is still permission-checked.
+
+---
+
 ## Phase 9: learning to rank
 
 ### Keep Spotify data out of training
