@@ -2,6 +2,17 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: "Sheet's key" label when a lineup song has no service key
+
+- On the lineup song page, the toolbar labelled the key "Service key"
+  even when the song had none and the sheet was shown in its own key. It
+  now reads "Sheet's key" in that case (`LineupSongView.sheet_context`
+  in `apps/worship/views/lineups.py`).
+- **Test:** `ViewerTests.test_without_a_service_key_the_sheets_own_key`
+  checks for "Sheet's key" and no "Service key".
+- **Checks:** Ruff lint and format, Django checks and migrations pass;
+  full test suite with coverage: 1046 tests, OK.
+
 ## 2026-11-25: The 5 lineup tests left from A7 part 3 pass again
 
 Tests only; the app is unchanged. Each test now checks the redesigned

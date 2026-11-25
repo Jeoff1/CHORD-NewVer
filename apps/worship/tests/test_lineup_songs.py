@@ -64,7 +64,9 @@ class ViewerTests(LineupSongTestCase):
         self.item.key = ""
         self.item.save()
         page = self.get(self.member)
-        self.assertContains(page, ">G</strong>")  # the sheet's own key
+        self.assertContains(page, "Sheet&#x27;s key</span>")
+        self.assertNotContains(page, "Service key")
+        self.assertContains(page, ">G</strong>")
         self.assertContains(page, "In G.")
         self.assertContains(page, ">G/B<")
 

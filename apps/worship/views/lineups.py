@@ -356,7 +356,8 @@ class LineupSongView(ItemMixin, TemplateView):
                 kwargs={"public_id": self.service.public_id, "pk": item.pk},
             ),
         )
-        context["key_label"] = "Service key"
+        # Without a service key, the sheet is shown in its own key.
+        context["key_label"] = "Service key" if item.key else "Sheet's key"
         return context
 
     def get(self, request, *args, **kwargs):

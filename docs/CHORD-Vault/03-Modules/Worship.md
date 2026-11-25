@@ -558,7 +558,8 @@ wireframes** ([[Design-Decisions]], A7):
   Lock and a "More for this song" menu.
 - **Lineup song page:** Previous and Next song, "song N of M", the sheet's
   one toolbar (Service key, My key, Capo), and the Listen card, Notes for
-  the team and This lineup on the right.
+  the team and This lineup on the right. A song with no service key is
+  shown in the sheet's own key, labelled "Sheet's key".
 - **Settings:** in the Settings hub's Worship category (Services; Songs
   and suggestions), from `views/base.py`, `SETTINGS_PAGES` and
   `SETTINGS_GROUPS`.
