@@ -50,6 +50,17 @@ of the core and can't be switched off. App: `apps/church`.
   active Membership is 404 (a superuser may choose any). A church whose
   Membership was removed or switched off is dropped at the next request;
   signing out clears the choice.
+- **Public homepage** settings section (also the setup wizard's last
+  step): "Show the church publicly" (directory and homepage), About (plain
+  text, line breaks kept, 2,000 characters), "Show upcoming services" and
+  "Accept requests from people outside the church". The church from before
+  Phase 9B starts private ([[Design-Decisions]], Phase 9B).
+- **Logo**: an image only (PNG, JPEG, GIF or WebP, checked with Pillow), 2
+  MB at most, saved under a random name (`church/<random>.<ext>`).
+- **Setup wizard** (details, Labels, Modules, Public homepage): a church
+  whose setup isn't finished sends its Administrator role holders there
+  from the dashboard, such as whoever just registered it; not a superuser
+  looking in, nor anyone else holding the permission.
 - **Locked Modules**: on the Modules settings page, Members and Teams show
   "Not available yet" for a church without `members_teams_unlocked`, with
   no switch, and can't be posted on.

@@ -365,9 +365,19 @@ class UserHistoryView(StaffMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         person = get_object_or_404(church_users(self.request), pk=self.kwargs["pk"])
+        # Owner, 2026-11-26 (option a): sign-ins belong to the account, so a
+        # church sees them only for an account that is its alone, by the
+        # same test as editing it. A shared or superuser account's sign-ins
+        # aren't even read.
+        shows_sign_ins = may_manage_account(person, self.request.church)
         context.update(
             person=person,
-            sign_ins=SignInEvent.objects.filter(user=person)[:HISTORY_LENGTH],
+            shows_sign_ins=shows_sign_ins,
+            sign_ins=(
+                SignInEvent.objects.filter(user=person)[:HISTORY_LENGTH]
+                if shows_sign_ins
+                else []
+            ),
             changes=AuditEvent.objects.for_church(self.request.church)
             .filter(actor=person)
             .select_related("content_type")[:HISTORY_LENGTH],

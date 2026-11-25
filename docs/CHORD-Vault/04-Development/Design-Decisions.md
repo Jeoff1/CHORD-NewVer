@@ -711,6 +711,28 @@ these are the rules every slice keeps, and the tests that prove them.
   every existing user, active or not, gets a Membership there with exactly
   the roles in their `user.groups`, which is left in place so the
   migration can be reversed.
+- **A church manages an account only when it is the church's alone**
+  (slice c, must-do 1): username, names, email, Active and password; its
+  roles there are always the church's to change.
+- **Sign-in history of shared accounts** (owner, 2026-11-26, option a):
+  sign-ins belong to the account, not to a church. A church sees an
+  account's sign-ins only when the account belongs to that church alone and
+  isn't a superuser's: the same test as editing the account and setting its
+  password (`memberships.may_manage_account`). For any other account, the
+  user's History page in that church still lists every change the person
+  made in that church, from its own Audit Trail, but its Sign-ins section
+  reads "Shared account: sign-ins not shown", and no sign-in rows are read.
+- **Nothing public until the church chooses** (owner, 2026-11-26): the
+  church from before 9B starts with "Show the church publicly" off, every
+  Occasion Type starts not offered publicly (existing and seeded), "Show
+  upcoming services" starts off, and "Accept requests from people outside
+  the church" starts on. A newly registered church is public from the
+  start, with its name only, as the plan said.
+- **About** is plain text: stored as typed (trimmed), shown escaped with
+  its line breaks (`church/includes/about.html`).
+- **The logo** is an image only (Pillow, PNG, JPEG, GIF or WebP), 2 MB at
+  most, saved as `church/<random>.<ext>` in the public media folder, so
+  its address names neither the file chosen nor any private folder.
 
 ### Tests
 
@@ -732,6 +754,10 @@ these are the rules every slice keeps, and the tests that prove them.
 - The worker and notifications use each row's church: analysis uses that
   church's tags and trusted artists, and only that church's approvers are
   notified.
+- Sign-in history: an account of this church alone shows its sign-ins;
+  an account also in another church shows the changes made here but no
+  sign-ins, which aren't read; a superuser's account shows none
+  (`apps/church/tests/test_public_settings.py`).
 - Public pages: anonymous visitors, people from other churches and members
   see only the published fields; a request from outside the church is
   refused when the church turns the setting off.

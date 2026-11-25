@@ -16,11 +16,19 @@ TYPES_LIST = SettingList(
     "or a funeral, each with how long it usually takes. People may request the "
     "active ones.",
     module="occasions",
-    fields=["name", "description", "length_minutes", "sort_order", "is_active"],
+    fields=[
+        "name",
+        "description",
+        "length_minutes",
+        "offered_publicly",
+        "sort_order",
+        "is_active",
+    ],
     columns=[
         ("Name", "name"),
         ("Usual length", lambda item: f"{item.length_minutes} min"),
         ("Description", "description"),
+        ("Offered publicly", lambda item: "Yes" if item.offered_publicly else "No"),
         ("Active", "is_active"),
     ],
     nav=views.occasions_nav,

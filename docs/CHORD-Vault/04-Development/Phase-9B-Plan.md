@@ -102,6 +102,16 @@ this church (never the last administrator), and Members and Teams "Not
 available yet". `teams_church()` is the church with
 `members_teams_unlocked`, whatever its pk or name (tested).
 
+**Slice d (done 2026-11-26).** The Public homepage settings section and
+wizard step; About as plain text; the logo saved under a random name;
+"Offered publicly" on Occasion Types; the wizard redirect only for the
+church's Administrator role holders; the denomination guard now also reads
+the new fields, forms, pages and seeded rows as they run. Owner's rules:
+nothing about the church from before 9B is public until its Administrator
+chooses (so "Show the church publicly" is switched off for it, though a
+newly registered church starts public, as planned), and sign-in history of
+a shared account isn't shown (option a).
+
 **For slice c, found while building a:** an administrator may set the
 password of any user in their church. Once "Add an existing account"
 exists, that user may belong to other churches too, so Set password (and

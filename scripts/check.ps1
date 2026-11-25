@@ -17,6 +17,11 @@ param(
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 $python = ".\.venv\Scripts\python.exe"
+# One maths thread per test process: numpy's OpenBLAS otherwise sets aside
+# memory for every CPU core in each of the parallel processes, which can run
+# Windows out of memory when the C: drive is nearly full.
+$env:OPENBLAS_NUM_THREADS = "1"
+$env:OMP_NUM_THREADS = "1"
 
 # --noinput: a test database left by an interrupted run is replaced instead
 # of stopping at Django's "delete it?" prompt.

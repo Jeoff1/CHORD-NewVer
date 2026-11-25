@@ -138,6 +138,14 @@ class ChurchPlatformMigrationTests(TransactionTestCase):
         church = get("church", "ChurchProfile").objects.get(pk=church_pk)
         self.assertTrue(church.members_teams_unlocked)
         self.assertTrue(church.slug)
+        # Nothing about it is public until its Administrator chooses.
+        self.assertFalse(church.show_in_directory)
+        self.assertFalse(church.show_upcoming_services)
+        self.assertFalse(
+            get("occasions", "OccasionType")
+            .objects.filter(offered_publicly=True)
+            .exists()
+        )
 
         # Every user, active or not, has a Membership there with exactly the
         # roles they held; role names are kept as titles.

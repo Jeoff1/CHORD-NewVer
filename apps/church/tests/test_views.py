@@ -3,6 +3,7 @@ import shutil
 import tempfile
 from io import BytesIO
 
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -102,7 +103,7 @@ class SetupWizardTests(TestCase):
 
     def test_full_wizard(self):
         response = self.client.get(self.url("details"))
-        self.assertContains(response, "Step 1 of 3")
+        self.assertContains(response, "Step 1 of 4")
 
         response = self.client.post(self.url("details"), details_data())
         self.assertRedirects(response, self.url("labels"))
@@ -110,6 +111,11 @@ class SetupWizardTests(TestCase):
         self.assertRedirects(response, self.url("modules"))
         response = self.client.post(
             self.url("modules"), {"enabled": ["members", "worship"]}
+        )
+        self.assertRedirects(response, self.url("homepage"))
+        response = self.client.post(
+            self.url("homepage"),
+            {"about": "We meet on Sundays.", "show_in_directory": ""},
         )
         self.assertRedirects(response, reverse("home"))
 
@@ -121,7 +127,9 @@ class SetupWizardTests(TestCase):
         self.assertEqual(
             sorted(profile.disabled_modules), ["announcements", "occasions", "teams"]
         )
-        self.assertEqual(AuditEvent.objects.count(), 3)
+        self.assertEqual(profile.about, "We meet on Sundays.")
+        self.assertFalse(profile.show_in_directory)
+        self.assertEqual(AuditEvent.objects.count(), 4)
 
     def test_finished_wizard_redirects_to_settings(self):
         complete_setup()
@@ -187,7 +195,12 @@ class SettingsTests(TestCase):
         data = details_data(logo=image_file())
         self.client.post(self.url("details"), data)
         profile = first_church()
-        self.assertTrue(profile.logo.name.startswith("church/logo"))
+        # A random name in the public church folder: nothing of the file
+        # the person chose, nor any private path (Phase 9B).
+        self.assertRegex(profile.logo.name, r"^church/[0-9a-f]{32}\.png$")
+        self.assertTrue(profile.logo.url.startswith(settings.MEDIA_URL + "church/"))
+        self.assertNotIn("logo", profile.logo.url)
+        self.assertNotIn("protected", profile.logo.url)
         self.assertContains(self.client.get(reverse("home")), profile.logo.url)
 
     def test_logo_over_2_mb_is_rejected(self):

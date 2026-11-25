@@ -38,6 +38,13 @@ class OccasionType(ChurchChoiceItem):
         help_text="How long it usually takes. The calendar books this much "
         "time from its start.",
     )
+    # Phase 9B: shown on the church's homepage. Off for every type until
+    # the church chooses, including the seeded examples.
+    offered_publicly = models.BooleanField(
+        "Offered publicly",
+        default=False,
+        help_text="Shown on the church's homepage, where people may request it.",
+    )
 
     class Meta(ChurchChoiceItem.Meta):
         pass

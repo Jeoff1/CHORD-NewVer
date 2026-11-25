@@ -35,6 +35,14 @@ the core; it can't be switched off. App: `apps/accounts`.
   password is refused (403); the church still manages the roles.
 - **Last administrator**: per church (`memberships.is_last_administrator`),
   whether by roles, Active or removal.
+- **Sign-in history of shared accounts** (owner, 2026-11-26, option a):
+  sign-ins belong to the account, not to a church. A church sees an
+  account's sign-ins only when the account belongs to that church alone and
+  isn't a superuser's: the same test as editing the account and setting its
+  password (`memberships.may_manage_account`). For any other account, the
+  user's History page in that church still lists every change the person
+  made in that church, from its own Audit Trail, but its Sign-ins section
+  reads "Shared account: sign-ins not shown", and no sign-in rows are read.
 - **Permissions per church** (`backends.ChurchRoleBackend`, replacing
   Django's `ModelBackend`): a user holds the permissions of the roles in
   their active Membership in the Current Church, and nothing else

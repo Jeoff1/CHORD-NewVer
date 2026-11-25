@@ -2,6 +2,35 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9B, slice d: what a church shows publicly
+
+- **Public homepage** settings section and last wizard step: show the
+  church publicly, About (plain text), upcoming services, requests from
+  outside the church. Migration `church/0004` keeps the church from before
+  9B private; Occasion Types gain **Offered publicly**, off for all
+  (`occasions/0005`).
+- **Logo**: image only (Pillow; PNG, JPEG, GIF or WebP), 2 MB, saved as
+  `church/<random>.<ext>`.
+- **Setup wizard** opens from the dashboard only for the church's
+  Administrator role holders (such as whoever registered it).
+- **Sign-in history** (owner's option a): shown only for an account that
+  is the church's alone; otherwise "Shared account: sign-ins not shown"
+  and no sign-in rows are read; changes made in the church still show.
+- **Denomination guard** also checks the new model fields, forms (names,
+  labels, help texts, choices), the new pages as rendered, and a new
+  church's seeded rows.
+- **Checks script**: one OpenBLAS thread per test process, after a test
+  run stopped with "OpenBLAS: memory allocation failed" while Windows'
+  free commit memory was down to 0.1 GB (C: drive 0.8 GB free).
+- **Tests:** `apps/church/tests/test_public_settings.py` (defaults, the
+  settings, About escaping, logo names and non-images, the wizard for a
+  new church, sign-in history); the guard's new `PlatformFieldsAndFormsTests`;
+  the 9B migration test checks the first church comes out private. The
+  sign-in history and guard tests were checked by breaking the code: each
+  failed, and passes with it restored.
+- **Checks:** quick check passes (1144 tests); the full check runs in the
+  pre-commit hook.
+
 ## 2026-11-25: Phase 9B, slice c: registering churches and accounts
 
 - **Register a church** (`/churches/register/`): name only; for a visitor

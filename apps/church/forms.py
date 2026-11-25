@@ -1,15 +1,19 @@
-"""Forms for the three Church Profile sections: details, Labels and Modules.
+"""Forms for the Church Profile sections: details, Labels, Modules and the
+public homepage.
 
-All three take ``instance`` (the Church Profile) and have ``save()``, so the
+All of them take ``instance`` (the Church Profile) and have ``save()``, so the
 settings pages and the setup wizard share one view.
 """
 
 from django import forms
+from django.core.validators import MaxLengthValidator
 
 from .context_processors import module_entries
 from .labels import LABEL_DEFINITIONS
 from .models import ChurchProfile
 from .modules import MODULE_CHOICES, MODULES, MODULES_BY_CODE, is_available
+
+ABOUT_MAX_LENGTH = 2000
 
 
 class ChurchDetailsForm(forms.ModelForm):
@@ -30,6 +34,30 @@ class ChurchDetailsForm(forms.ModelForm):
 
     def clean_currency(self):
         return self.cleaned_data["currency"].strip().upper()
+
+
+class ChurchHomepageForm(forms.ModelForm):
+    """What the church shows publicly (Phase 9B). Nothing shows until the
+    church switches it on, except what a new church chose at registration."""
+
+    class Meta:
+        model = ChurchProfile
+        fields = [
+            "show_in_directory",
+            "about",
+            "show_upcoming_services",
+            "accept_outside_requests",
+        ]
+        widgets = {"about": forms.Textarea(attrs={"rows": 5})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["about"].max_length = ABOUT_MAX_LENGTH
+        self.fields["about"].validators.append(MaxLengthValidator(ABOUT_MAX_LENGTH))
+
+    def clean_about(self):
+        # Plain text: stored as typed, shown escaped with its line breaks.
+        return self.cleaned_data["about"].strip()
 
 
 class LabelsForm(forms.Form):
@@ -117,6 +145,7 @@ SECTIONS = {
     "details": ("Church details", ChurchDetailsForm),
     "labels": ("Labels", LabelsForm),
     "modules": ("Modules", ModulesForm),
+    "homepage": ("Public homepage", ChurchHomepageForm),
 }
 SECTION_ORDER = list(SECTIONS)
 

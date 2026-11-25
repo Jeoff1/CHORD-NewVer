@@ -538,7 +538,7 @@ permission-checked.
 
 ## Phase 9B: Church Platform (multi-church)
 
-**Status: in progress (approved 2026-11-25; docs and slices a to c done).** On branch
+**Status: in progress (approved 2026-11-25; docs and slices a to d done).** On branch
 `phase-9b-church-platform`; merged into `master` only when the full check,
 isolation tests included, passes, so `master` stays presentable. The
 design, slices and risks are in [[Phase-9B-Plan]]; the decision is
@@ -570,7 +570,7 @@ offered Occasion. People can belong to several churches.
     b by the middleware (`church/no_church.html`); slice c replaces that
     page with their home and must keep the test
     (`accounts/tests/test_church_platform.py`, `NoChurchTests`).
-- [ ] **d. Church profile**: About, directory and upcoming-services
+- [x] **d. Church profile** (done 2026-11-26): About, directory and upcoming-services
   settings, the setup wizard for new churches, Occasion Types offered
   publicly.
 - [ ] **e. Public pages**: Directory, Church Homepage, Request this

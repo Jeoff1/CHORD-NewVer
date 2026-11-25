@@ -14,6 +14,9 @@
     <section class="col-lg-5" aria-labelledby="sign-ins">
       <h2 class="h5" id="sign-ins">Sign-ins</h2>
       <div class="card shadow-sm">
+        {% if not shows_sign_ins %}
+          <p class="card-body text-body-secondary mb-0">Shared account: sign-ins not shown. This account also belongs to another church, or is a platform account, so its sign-ins aren't this church's to see.</p>
+        {% else %}
         <ul class="list-group list-group-flush">
           {% for event in sign_ins %}
             <li class="list-group-item d-flex justify-content-between gap-2">
@@ -24,6 +27,7 @@
             <li class="list-group-item text-body-secondary">No sign-ins recorded yet.</li>
           {% endfor %}
         </ul>
+        {% endif %}
       </div>
     </section>
 

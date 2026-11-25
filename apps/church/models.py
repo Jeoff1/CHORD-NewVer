@@ -1,7 +1,8 @@
+import uuid
 import zoneinfo
 
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -13,9 +14,21 @@ TIME_ZONE_CHOICES = [(tz, tz) for tz in sorted(zoneinfo.available_timezones())]
 MAX_LOGO_BYTES = 2 * 1024 * 1024
 
 
+LOGO_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp"]
+
+
 def validate_logo_size(file):
     if file.size > MAX_LOGO_BYTES:
         raise ValidationError("The logo must be 2 MB or smaller.")
+
+
+def logo_path(instance, filename):
+    """``church/<random>.<ext>``: the logo is public, so its address says
+    nothing about the church, the uploader or the file they chose."""
+    extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if extension not in LOGO_EXTENSIONS:
+        extension = "png"
+    return f"church/{uuid.uuid4().hex}.{extension}"
 
 
 # Words that are, or may become, pages under /churches/ (Phase 9B): a
@@ -92,17 +105,30 @@ class ChurchProfile(TimeStampedModel):
         editable=False,
         help_text="The church's address on the platform: /churches/<slug>/.",
     )
-    about = models.TextField(blank=True, help_text="Shown on the church's homepage.")
+    about = models.TextField(
+        blank=True,
+        help_text="A few words about the church for its homepage. Plain text; "
+        "line breaks are kept.",
+    )
+    # A church that existed before Phase 9B starts with this off, so nothing
+    # about it is public until its Administrator chooses (migration 0004).
     show_in_directory = models.BooleanField(
-        "Show in the directory",
+        "Show the church publicly",
         default=True,
-        help_text="List the church on the platform's public list of churches.",
+        help_text="Lists it in the directory of churches and opens its "
+        "homepage to everyone.",
     )
     show_upcoming_services = models.BooleanField(
         "Show upcoming services",
         default=False,
         help_text="Show the next worship services on the homepage: date, time "
         "and kind only.",
+    )
+    accept_outside_requests = models.BooleanField(
+        "Accept requests from people outside the church",
+        default=True,
+        help_text="Anyone signed in may request an occasion type you offer "
+        "publicly, from your homepage.",
     )
     # The Members and Teams Modules aren't separated per church yet, so only
     # the first church, migrated from before Phase 9B, may use them.
@@ -111,8 +137,15 @@ class ChurchProfile(TimeStampedModel):
     phone = models.CharField(max_length=40, blank=True)
     email = models.EmailField(blank=True)
     website = models.URLField(blank=True)
+    # An image only (Pillow opens it when the form is checked), 2 MB at
+    # most, saved under a random name in the public media folder.
     logo = models.ImageField(
-        upload_to="church/", blank=True, validators=[validate_logo_size]
+        upload_to=logo_path,
+        blank=True,
+        validators=[
+            validate_logo_size,
+            FileExtensionValidator(allowed_extensions=LOGO_EXTENSIONS),
+        ],
     )
     currency = models.CharField(
         max_length=3,

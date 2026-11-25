@@ -139,6 +139,9 @@ working:
 ```
 
 Use `-Quick` after each change; run the full check before every commit.
+The script runs numpy's OpenBLAS with one thread per test process
+(`OPENBLAS_NUM_THREADS=1`), so the parallel processes don't run Windows
+out of memory when the C: drive is nearly full.
 The Git hook `scripts/git-hooks/pre-commit` does that automatically once
 turned on (step 7 of the setup below): it runs the full check before each
 commit and stops the commit if anything fails. A commit that changes only

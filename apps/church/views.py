@@ -86,11 +86,18 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
     def get(self, request, *args, **kwargs):
-        if not request.church.setup_completed and request.user.has_perm(
-            MANAGE_PERMISSION
-        ):
+        if not request.church.setup_completed and self.sets_up(request):
             return redirect("church:setup", section=SECTION_ORDER[0])
         return super().get(request, *args, **kwargs)
+
+    @staticmethod
+    def sets_up(request):
+        """Whether the person finishes this church's setup: a holder of its
+        Administrator role, such as whoever registered it. Not a superuser
+        looking in for support, nor anyone else with the permission."""
+        from apps.accounts.roles import ADMINISTRATOR
+
+        return request.user.roles_in(request.church).filter(key=ADMINISTRATOR).exists()
 
 
 class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
