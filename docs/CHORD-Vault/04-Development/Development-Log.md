@@ -2,6 +2,33 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Faster checks (about 11 minutes down to about 70 seconds)
+
+Tooling only; the app is unchanged.
+
+- Tests run in 4 parallel processes (`--parallel 4`), each with its own
+  copy of the test database. On Windows each worker starts fresh, so the
+  test setup (network blocked, keyword ML engine, Spotify unset) moved to
+  `apps/core/test_environment.py`, which `ChordParallelTestSuite` runs in
+  every worker. Without this, workers would have run with the network
+  open.
+- Tests hash passwords with MD5 (tests only; production hashers
+  unchanged).
+- Coverage collects from every worker (`parallel`, `concurrency` in
+  `pyproject.toml`) and `scripts/check.ps1` combines it before the report.
+- `scripts/check.ps1 -Quick` runs every check and test without coverage;
+  `-Tests <labels>` narrows the tests while working; `-Workers N` sets the
+  process count.
+- **Test:** `apps/core/tests/test_test_environment.py` checks the network
+  block, ML engine, Spotify settings and hasher; it runs inside a worker.
+- **Checks:** before: 1046 tests in 634 s. After: `-Quick` passes in 66 s
+  (1049 tests in 28.5 s); full check passes in 72 s (1049 tests in 32 s,
+  97% coverage).
+- **Seen once:** one test run before these changes stopped with PostgreSQL
+  "out of memory"; the rerun passed. C: had 2.7 GB free, which can stop
+  Windows from growing its page file. The worker count stays at 4 for this
+  reason.
+
 ## 2026-11-25: "Sheet's key" label when a lineup song has no service key
 
 - On the lineup song page, the toolbar labelled the key "Service key"

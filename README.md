@@ -75,12 +75,13 @@ everything else still works.
 ## Checks
 
 ```powershell
-.\scripts\check.ps1
+.\scripts\check.ps1          # full check with coverage, before committing
+.\scripts\check.ps1 -Quick   # the same without coverage, after each change
 ```
 
 It runs Ruff (lint and format), Django's checks, a missing-migrations check,
-and the full test suite with coverage. The tests never use the network or
-load a real model.
+and the full test suite in 4 parallel processes, with coverage. The tests
+never use the network or load a real model.
 
 ## Project layout
 

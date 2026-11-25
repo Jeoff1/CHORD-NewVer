@@ -127,12 +127,26 @@ It runs, in order and stopping at the first failure:
 1. Ruff lint and format check.
 2. `manage.py check`.
 3. A check for missing migrations.
-4. The tests, under coverage.
-5. The coverage report.
+4. The tests, under coverage, in 4 parallel processes.
+5. The coverage report, combined from every process.
+
+The full check takes about 70 seconds. Two lighter forms help while
+working:
+
+```powershell
+.\scripts\check.ps1 -Quick                          # every test, no coverage (~65 s)
+.\scripts\check.ps1 -Quick -Tests apps.songs        # one app's tests only
+```
+
+Use `-Quick` after each change; run the full check before every commit.
+A `-Tests` run never counts as done on its own. `-Workers N` changes the
+number of test processes (default 4; each opens its own database
+connection, and memory is tight while C: is nearly full).
 
 The tests create and remove a temporary database, `test_chord_newver_db`,
-which `chord_user` is allowed to create. They run with `--noinput`, so one
-left behind by an interrupted run (for example when the disk filled up) is
+plus one copy per process (`test_chord_newver_db_1` to `_4`), which
+`chord_user` is allowed to create. They run with `--noinput`, so one left
+behind by an interrupted run (for example when the disk filled up) is
 replaced without a prompt.
 
 ## Setting up on a new machine

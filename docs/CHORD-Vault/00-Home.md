@@ -43,8 +43,9 @@ day.** Phase 8 done (2026-11-23). Updated
   service's team.
 - **Choices to confirm:** "Open questions" in [[Teams]] and
   [[Announcements]].
-- **Checks:** `scripts/check.ps1` (from `.venv`, about 10 minutes); on
-  2026-11-25, on `ui-design-system`, 968 tests passed with 97% coverage.
+- **Checks:** `scripts/check.ps1` (from `.venv`, about 70 seconds;
+  `-Quick` skips coverage); on 2026-11-25, on `tooling-fast-checks`,
+  1049 tests passed with 97% coverage.
 - **Waiting on the user, too:** whether the pastor may create batch
   accounts (only the Administrator can today; see the plan's decisions).
 

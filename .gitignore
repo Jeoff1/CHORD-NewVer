@@ -21,6 +21,7 @@ protected_media/
 .ruff_cache/
 .mypy_cache/
 .coverage
+.coverage.*
 htmlcov/
 
 # Logs, temporary files, and editors

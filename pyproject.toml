@@ -9,6 +9,10 @@ select = ["E4", "E7", "E9", "F", "I"]
 source = ["apps", "config"]
 omit = ["*/migrations/*", "*/tests/*", "config/asgi.py", "config/wsgi.py"]
 branch = true
+# Tests run in parallel worker processes: each writes its own .coverage.*
+# file, and scripts/check.ps1 combines them before the report.
+parallel = true
+concurrency = ["thread", "multiprocessing"]
 
 [tool.coverage.report]
 show_missing = true

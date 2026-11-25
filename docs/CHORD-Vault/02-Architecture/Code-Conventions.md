@@ -200,8 +200,12 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   opens a second connection with `connections.create_connection("default")`
   and closes it at the end.
 - The test runner (`ChordTestRunner`, `TEST_RUNNER` in settings) blocks the
-  network, sets `ML_ENGINE` to "keyword" and clears the Spotify
-  credentials. A test that needs an outside service wraps the code in
+  network, sets `ML_ENGINE` to "keyword", clears the Spotify credentials
+  and uses the fast MD5 password hasher (tests only). The setup lives in
+  `apps/core/test_environment.py` so that each parallel worker runs it
+  too; `apps/core/tests/test_test_environment.py` checks it. Tests run in
+  parallel processes, each with its own database copy and in-memory cache,
+  so a test must not depend on another test's state. A test that needs an outside service wraps the code in
   `FakeHttp()`, replies with `web.reply(method, url_prefix, data)` (or a
   function of the call), and checks `web.calls`. Lyrics in tests are
   invented or public domain.

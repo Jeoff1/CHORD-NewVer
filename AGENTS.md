@@ -182,5 +182,7 @@ Secrets stay out of the vault.
   docs. That includes the Spotify client secret and the token encryption
   key. Users' Spotify tokens are stored in the database **encrypted**
   (Fernet, key from `.env`), and never shown or logged.
-- Run `.\scripts\check.ps1` (lint, format, Django checks, migrations,
-  tests with coverage) before calling work done; it must pass.
+- Run `.\scripts\check.ps1 -Quick` (lint, format, Django checks,
+  migrations, every test in parallel; about a minute) after each change.
+  Run the full `.\scripts\check.ps1` (the same, with coverage) before
+  committing or calling work done; it must pass.

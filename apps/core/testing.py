@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test.runner import DiscoverRunner
 
-from . import http
+from . import http, test_environment
 
 TEST_PASSWORD = "test-only-Pass-8472"
 
@@ -27,27 +27,16 @@ def quiet_logger(test, name="apps.songs.spotify"):
     logger.disabled = True
 
 
-def _no_network(method, url, **kwargs):
-    raise AssertionError(
-        f"A test tried to reach {url}. Tests must not use the network: wrap "
-        "the code in FakeHttp (apps/core/testing.py)."
-    )
-
-
 class ChordTestRunner(DiscoverRunner):
     """Runs the tests with the network blocked and the keyword ML engine,
-    so no test depends on Spotify, LRCLIB or downloaded model files."""
+    so no test depends on Spotify, LRCLIB or downloaded model files. Parallel
+    workers get the same setup (see ``apps/core/test_environment.py``)."""
+
+    parallel_test_suite = test_environment.ChordParallelTestSuite
 
     def setup_test_environment(self, **kwargs):
-        from django.conf import settings
-
         super().setup_test_environment(**kwargs)
-        settings.ML_ENGINE = "keyword"
-        settings.SPOTIFY_CLIENT_ID = ""
-        settings.SPOTIFY_CLIENT_SECRET = ""
-        settings.SPOTIFY_TOKEN_KEY = ""
-        settings.SPOTIFY_REDIRECT_URI = ""
-        self._real_transport = http.set_transport(_no_network)
+        self._real_transport = test_environment.install()
 
     def teardown_test_environment(self, **kwargs):
         http.set_transport(self._real_transport)
