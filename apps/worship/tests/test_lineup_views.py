@@ -203,14 +203,14 @@ class VisibilityTests(LineupViewTestCase):
         self.login(self.team_member)
         page = self.client.get(url(self.service, "service"))
         self.assertContains(page, "Song A")
-        self.assertContains(page, "(G)")
+        self.assertContains(page, "Song A</a> · key of G")
         response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "Song D")
         self.assertContains(response, "Start with the chorus")
         self.assertContains(response, "Confirmed by")
         self.assertNotContains(response, "Reason for Song A.")  # suggestion reasons
         self.assertNotContains(response, "Swap")
-        self.assertNotContains(response, ">Confirm<")
+        self.assertNotContains(response, ">Confirm lineup<")
         self.assertNotContains(response, "Send back")
 
     def test_a_reopened_lineup_shows_the_team_a_note_instead(self):
@@ -395,7 +395,7 @@ class ConfirmationViewTests(LineupViewTestCase):
     def test_the_leader_confirms(self):
         self.login(self.leader)
         page = self.client.get(url(self.service, "lineup"))
-        self.assertContains(page, ">Confirm<")
+        self.assertContains(page, ">Confirm lineup<")
         self.assertNotContains(page, "Send back")
         self.assertNotContains(page, ">Reopen<")
         self.client.post(url(self.service, "lineup_confirm"))

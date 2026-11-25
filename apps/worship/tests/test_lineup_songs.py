@@ -54,7 +54,8 @@ class ViewerTests(LineupSongTestCase):
     def test_everyone_who_sees_the_lineup_gets_the_sheet_in_the_service_key(self):
         for user in (self.member, self.leader, self.pastor):
             page = self.get(user)
-            self.assertContains(page, "Service key A")
+            self.assertContains(page, "Service key</span>")
+            self.assertContains(page, ">A</strong>")  # the key for everyone
             self.assertContains(page, ">A/C#<")  # G/B in G, shown in A
             self.assertNotContains(page, ">G/B<")
             self.assertContains(page, "In A.")
@@ -63,7 +64,8 @@ class ViewerTests(LineupSongTestCase):
         self.item.key = ""
         self.item.save()
         page = self.get(self.member)
-        self.assertContains(page, "shown in the sheet's key, G")
+        self.assertContains(page, ">G</strong>")  # the sheet's own key
+        self.assertContains(page, "In G.")
         self.assertContains(page, ">G/B<")
 
     def test_a_key_change_rerenders_only_the_sheet_on_the_server(self):
@@ -149,7 +151,8 @@ class PendingSheetTests(LineupSongTestCase):
         )
         hidden = self.get(self.other_member, other_item)
         self.assertNotContains(hidden, "waiting for approval")
-        self.assertNotContains(hidden, "Amazing ")
+        # The pending sheet's lyrics, not the "Amazing Grace" song title.
+        self.assertNotContains(hidden, "sweet the")
         self.assertContains(hidden, "No chord sheet yet.")
         leader_page = self.get(self.leader, other_item)
         self.assertContains(leader_page, "is waiting for approval")

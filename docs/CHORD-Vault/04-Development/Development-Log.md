@@ -2,6 +2,29 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: The 5 lineup tests left from A7 part 3 pass again
+
+Tests only; the app is unchanged. Each test now checks the redesigned
+pages' wording instead of the wording from before A7 part 3.
+
+- `test_lineup_songs`, `ViewerTests`: the toolbar shows the label
+  ("Service key") and the key in separate elements, so the key tests
+  look for each one. Without a service key, the test checks for the
+  sheet's own key (G) in the toolbar and "In G." under it, because the
+  sentence "shown in the sheet's key, G" is no longer used.
+- `test_lineup_songs`, `test_a_team_member_pastes_and_only_they_and_planners_see_it_waiting`:
+  **not a leak.** "Amazing " matched the "Amazing Grace" title in the
+  page's song list, not the pending sheet. The check now looks for a
+  lyric from the sheet ("sweet the"). A probe confirmed that the leader's
+  page contains that lyric and the other team member's page doesn't, so
+  the check would catch a real leak.
+- `test_lineup_views`: the button now reads "Confirm {lineup label}", so
+  both tests look for ">Confirm lineup<". (The team member's "no Confirm
+  button" check was passing only because the old wording was gone.) The
+  service page shows a song's key as "Song A · key of G" instead of "(G)".
+- **Checks:** Ruff lint and format, Django checks and migrations pass;
+  full test suite with coverage: 1046 tests, OK.
+
 ## 2026-11-25: Active switch on settings lists; Settings menu always open
 
 - **Active switch:** on every church-edited list (Occasion types, Membership
