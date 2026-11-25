@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Sign in your church{% endblock %}
+
+{% block content %}
+  {# Phase 9B (decision 0014): a church registers with its name only. #}
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+      <h1 class="h3 mb-2">Sign in your church</h1>
+      <p class="text-body-secondary">Give your church's name{% if account_form %} and make your account{% endif %}. You become its first administrator, and set up the rest next: its details, wording and which parts of CHORD it uses.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="card shadow-sm mb-3">
+          <div class="card-body">
+            <h2 class="h5 mb-3">Your church</h2>
+            {{ church_form }}
+          </div>
+        </div>
+        {% if account_form %}
+          <div class="card shadow-sm mb-3">
+            <div class="card-body">
+              <h2 class="h5 mb-3">Your account</h2>
+              <p class="small text-body-secondary">Already have one? <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Sign in first</a>.</p>
+              {{ account_form }}
+            </div>
+          </div>
+        {% endif %}
+        <div class="d-flex gap-2 mb-4">
+          <button type="submit" class="btn btn-primary">Register the church</button>
+          <a href="{% url 'home' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

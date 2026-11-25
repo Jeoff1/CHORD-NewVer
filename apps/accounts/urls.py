@@ -29,6 +29,7 @@ urlpatterns = [
         name="login",
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("signup/", views.SignUpView.as_view(), name="signup"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("appearance/", views.AppearanceView.as_view(), name="appearance"),
     path(
@@ -66,6 +67,16 @@ urlpatterns = [
     # Users
     path("users/", views.UserListView.as_view(), name="user_list"),
     path("users/new/", views.UserCreateView.as_view(), name="user_create"),
+    path(
+        "users/add-existing/",
+        views.AddExistingAccountView.as_view(),
+        name="user_add_existing",
+    ),
+    path(
+        "users/<int:pk>/remove/",
+        views.RemoveMembershipView.as_view(),
+        name="user_remove",
+    ),
     path("users/<int:pk>/", views.UserUpdateView.as_view(), name="user_update"),
     path(
         "users/<int:pk>/history/",

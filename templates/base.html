@@ -47,6 +47,19 @@
                 {% with name=user.get_full_name|default:user.get_username %}<span class="chord-avatar" aria-hidden="true">{{ name|first|upper }}</span>{{ name }}{% endwith %}
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
+                {% if my_churches|length > 1 %}
+                  {# The church switcher (Phase 9B): a POST with the CSRF token. #}
+                  <li><h6 class="dropdown-header">Working in</h6></li>
+                  {% for other in my_churches %}
+                    <li>
+                      <form method="post" action="{% url 'church:switch' slug=other.slug %}">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item{% if other.pk == church.pk %} active{% endif %}"{% if other.pk == church.pk %} aria-current="true"{% endif %}>{{ other.name }}</button>
+                      </form>
+                    </li>
+                  {% endfor %}
+                  <li><hr class="dropdown-divider"></li>
+                {% endif %}
                 <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My profile</a></li>
                 {% if "members" in enabled_modules and user.member %}<li><a class="dropdown-item" href="{% url 'members:me' %}">My {{ labels.member|lower }} record</a></li>{% endif %}
                 <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}">Change password</a></li>

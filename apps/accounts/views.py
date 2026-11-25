@@ -1,8 +1,9 @@
 from itertools import groupby
 
 from django.apps import apps as django_apps
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth import login, update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -12,6 +13,7 @@ from django.db import transaction
 from django.db.models import Count, Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -26,7 +28,16 @@ from apps.audit.services import diff, record_change, snapshot
 from apps.core.views import FilteredListView, FormPageMixin
 
 from . import role_changes
-from .forms import AppearanceForm, ProfileForm, RoleForm, UserCreateForm, UserEditForm
+from .forms import (
+    AddExistingAccountForm,
+    AppearanceForm,
+    ProfileForm,
+    RoleForm,
+    SignUpForm,
+    UserCreateForm,
+    UserEditForm,
+)
+from .memberships import is_last_administrator, may_manage_account
 from .models import Membership, Role, User
 from .roles import managed_permissions
 
@@ -278,8 +289,10 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
         return f"Edit user: {self.object.username}"
 
     def get_links(self):
-        url = reverse("accounts:user_password", kwargs={"pk": self.object.pk})
-        links = [("Set a new password", url)]
+        links = []
+        if may_manage_account(self.object, self.request.church):
+            url = reverse("accounts:user_password", kwargs={"pk": self.object.pk})
+            links.append(("Set a new password", url))
         if self.request.user.has_perm(HISTORY_PERMISSION):
             history = reverse("accounts:user_history", kwargs={"pk": self.object.pk})
             links.append(("History", history))
@@ -374,6 +387,13 @@ class UserSetPasswordView(StaffMixin, FormPageMixin, FormView):
     def dispatch(self, request, *args, **kwargs):
         self.target = get_object_or_404(church_users(request), pk=kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
+
+    def has_permission(self):
+        # Phase 9B: never the password of an account another church (or a
+        # superuser) relies on; its owner changes it.
+        return super().has_permission() and may_manage_account(
+            self.target, self.request.church
+        )
 
     def get_page_title(self):
         return f"Set a new password for {self.target.username}"
@@ -568,3 +588,110 @@ class PermissionMatrixView(StaffMixin, TemplateView):
         else:
             messages.info(request, "No permissions changed.")
         return redirect("accounts:permission_matrix")
+
+
+# --- Accounts and churches (Phase 9B, decision 0014) ---------------------------
+
+
+class SignUpView(FormPageMixin, FormView):
+    """Create an account: the person's own, with no church yet."""
+
+    form_class = SignUpForm
+    page_title = "Create an account"
+    intro = (
+        "Your account is yours. To plan worship, register your church, or ask "
+        "your church's administrator to add you by your username or email."
+    )
+    submit_label = "Create account"
+    cancel_url = reverse_lazy("home")
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect("home")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        user = form.save()
+        record_change(user, user, AuditEvent.Action.CREATED, church=None)
+        login(self.request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+        messages.success(self.request, "Your account is ready.")
+        return redirect("home")
+
+
+class AddExistingAccountView(StaffMixin, FormPageMixin, FormView):
+    """Add someone who already has an account to this church, by their
+    exact username or email, with the roles they get here."""
+
+    permission_required = "accounts.add_user"
+    form_class = AddExistingAccountForm
+    page_title = "Add an existing account"
+    intro = (
+        "For someone who already has a CHORD account, for example one they "
+        "made themselves or use in another church. They keep their own "
+        "password; this church gives them roles."
+    )
+    submit_label = "Add to this church"
+    success_url = reverse_lazy("accounts:user_list")
+    cancel_url = reverse_lazy("accounts:user_list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["church"] = self.request.church
+        return kwargs
+
+    def form_valid(self, form):
+        membership = form.save()
+        user = membership.user
+        record_change(
+            self.request.user,
+            user,
+            AuditEvent.Action.CHANGED,
+            {
+                "Membership": ["", "Added to this church"],
+                "Roles": ["", [role.title for role in membership.roles.all()]],
+            },
+            church=self.request.church,
+        )
+        messages.success(self.request, f"{user.username} was added to this church.")
+        return super().form_valid(form)
+
+
+class RemoveMembershipView(StaffMixin, View):
+    """Take someone out of this church (POST). Their account and history
+    stay; only their place and roles here go. Never the last
+    administrator, and never yourself."""
+
+    permission_required = "accounts.change_user"
+
+    def post(self, request, pk):
+        person = get_object_or_404(church_users(request), pk=pk)
+        back = redirect("accounts:user_update", pk=person.pk)
+        church = request.church
+        if person.pk == request.user.pk:
+            messages.error(request, "You can't remove yourself from the church.")
+            return back
+        if is_last_administrator(person, church):
+            messages.error(
+                request,
+                "This is the only active administrator. Make someone else an "
+                "administrator first.",
+            )
+            return back
+        if role_changes.consequences(person, church=church, roles=[], is_active=False):
+            messages.error(
+                request,
+                "They still hold places on coming services. Take away their "
+                "roles first; that page lets you end or keep those places.",
+            )
+            return back
+        roles = [role.title for role in person.roles_in(church)]
+        person.memberships.filter(church=church).delete()
+        record_change(
+            request.user,
+            person,
+            AuditEvent.Action.CHANGED,
+            {"Membership": ["In this church", "Removed"], "Roles": [roles, []]},
+            church=church,
+        )
+        messages.success(request, f"{person.username} was removed from this church.")
+        return redirect("accounts:user_list")

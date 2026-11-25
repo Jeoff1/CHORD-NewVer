@@ -49,6 +49,8 @@ OBJECT_URLS = {
     "accounts:user_update": lambda o: {"pk": o["admin"].pk},
     "accounts:user_history": lambda o: {"pk": o["admin"].pk},
     "accounts:user_password": lambda o: {"pk": o["admin"].pk},
+    "accounts:user_remove": lambda o: {"pk": o["admin"].pk},
+    "church:switch": lambda o: {"slug": o["church"].slug},
     "accounts:role_update": lambda o: {"pk": o["role"].pk},
     "accounts:role_delete": lambda o: {"pk": o["role"].pk},
     "notifications:open": lambda o: {"pk": o["notification"].pk},
@@ -192,6 +194,7 @@ def build(church, marker):
     occasion_type = OccasionType.objects.for_church(church).first()
     soon = timezone.now() + datetime.timedelta(days=30)
     return {
+        "church": church,
         "admin": admin,
         "role": Role.objects.create(church=church, title=f"{marker} Ushers"),
         "notification": Notification.objects.create(

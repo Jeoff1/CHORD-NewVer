@@ -18,10 +18,43 @@ def validate_logo_size(file):
         raise ValidationError("The logo must be 2 MB or smaller.")
 
 
+# Words that are, or may become, pages under /churches/ (Phase 9B): a
+# church may not take them as its slug.
+RESERVED_SLUGS = frozenset(
+    {
+        "add",
+        "admin",
+        "api",
+        "churches",
+        "create",
+        "delete",
+        "directory",
+        "edit",
+        "login",
+        "logout",
+        "me",
+        "my-requests",
+        "new",
+        "register",
+        "request",
+        "requests",
+        "search",
+        "settings",
+        "signup",
+        "static",
+        "media",
+        "switch",
+    }
+)
+
+
 def unique_slug(name, *, exclude_pk=None):
-    """A slug made from ``name`` that no other church uses: "grace-chapel",
-    then "grace-chapel-2" and so on."""
-    base = slugify(name)[:70] or "church"
+    """A slug made from ``name`` that no other church uses and that isn't a
+    reserved word: "grace-chapel", then "grace-chapel-2" and so on; a
+    church named "Register" gets "register-church"."""
+    base = slugify(name)[:70].strip("-") or "church"
+    if base in RESERVED_SLUGS:
+        base = f"{base}-church"
     taken = set(
         ChurchProfile.objects.exclude(pk=exclude_pk)
         .filter(slug__startswith=base)

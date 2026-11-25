@@ -16,6 +16,25 @@ the core; it can't be switched off. App: `apps/accounts`.
   church, with their roles there and whether it is active. At most one per
   church. Users, Add user and Edit user work on the Current Church's
   memberships; a user from another church gives 404.
+- **Create an account** (`/accounts/signup/`, Phase 9B): anyone may make
+  their own account (username, name, email, password). It belongs to no
+  church; its home says so and offers "Sign in your church".
+- **Add an existing account** (`/accounts/users/add-existing/`, needs
+  `accounts.add_user`): finds one account by its exact username, or its
+  exact email ignoring case (`memberships.find_account`); never a partial
+  match, and an email two accounts share is refused. It gives the account
+  a Membership here with the chosen roles.
+- **Remove from this church** (on Edit user, `accounts.change_user`):
+  deletes the Membership; the account and its history stay. Refused for
+  yourself, for the church's last active administrator, and while they
+  still hold coming places on a team (take their roles away first).
+- **Accounts of other churches** (`memberships.may_manage_account`): a
+  church's administrator changes the account itself (username, names,
+  email, Active, password) only when it belongs to that church alone and
+  isn't a superuser's. Otherwise those fields are read-only and Set
+  password is refused (403); the church still manages the roles.
+- **Last administrator**: per church (`memberships.is_last_administrator`),
+  whether by roles, Active or removal.
 - **Permissions per church** (`backends.ChurchRoleBackend`, replacing
   Django's `ModelBackend`): a user holds the permissions of the roles in
   their active Membership in the Current Church, and nothing else

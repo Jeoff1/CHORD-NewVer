@@ -1,8 +1,13 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
+from .memberships import (
+    AccountNotFound,
+    find_account,
+    is_last_administrator,
+    may_manage_account,
+)
 from .models import Membership, Role, User
-from .roles import administrators
 
 
 def role_field():
@@ -77,11 +82,23 @@ class UserEditForm(RolesMixin, forms.ModelForm):
             "never deleted, so their history stays.",
         }
 
+    ACCOUNT_FIELDS = ("username", "first_name", "last_name", "email", "is_active")
+
     def __init__(self, *args, editor, church, **kwargs):
         super().__init__(*args, **kwargs)
         self.editor = editor
         self.setup_roles(church)
         self.fields["roles"].initial = list(self.instance.roles_in(church))
+        # Phase 9B: an account that also belongs to another church (or a
+        # superuser's) is its owner's; this church manages only its roles.
+        self.manages_account = may_manage_account(self.instance, church)
+        if not self.manages_account:
+            for name in self.ACCOUNT_FIELDS:
+                self.fields[name].disabled = True
+            self.fields["username"].help_text = (
+                "This account also belongs to another church, so only its owner "
+                "changes these details."
+            )
 
     def clean(self):
         cleaned = super().clean()
@@ -93,12 +110,7 @@ class UserEditForm(RolesMixin, forms.ModelForm):
         stays_administrator = is_active and (
             user.is_superuser or any(role.is_administrator for role in roles)
         )
-        admins = administrators(self.church)
-        is_last_administrator = (
-            admins.filter(pk=user.pk).exists()
-            and not admins.exclude(pk=user.pk).exists()
-        )
-        if is_last_administrator and not stays_administrator:
+        if is_last_administrator(user, self.church) and not stays_administrator:
             raise forms.ValidationError(
                 "This is the only active administrator. Make someone else an "
                 "administrator first."
@@ -131,3 +143,50 @@ class RoleForm(forms.ModelForm):
         if taken.exists():
             raise forms.ValidationError("A role with this name already exists.")
         return title
+
+
+class SignUpForm(UserCreationForm):
+    """Create an account (Phase 9B): a person's own, with no church yet. A
+    church's administrator adds it to their church later."""
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ["username", "first_name", "last_name", "email"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["email"].required = True
+        self.fields["email"].help_text = "For resetting your password."
+
+
+class AddExistingAccountForm(forms.Form):
+    """Add someone who already has an account to this church (Phase 9B),
+    found by their exact username or email."""
+
+    account = forms.CharField(
+        label="Username or email",
+        max_length=254,
+        help_text="Exactly as the person gives it to you. Nothing is searched.",
+    )
+    roles = role_field()
+
+    def __init__(self, *args, church, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.church = church
+        self.fields["roles"].queryset = Role.objects.filter(church=church)
+
+    def clean_account(self):
+        try:
+            user = find_account(self.cleaned_data["account"])
+        except AccountNotFound as problem:
+            raise forms.ValidationError(str(problem)) from problem
+        if Membership.objects.filter(user=user, church=self.church).exists():
+            raise forms.ValidationError("That person is already in this church.")
+        return user
+
+    def save(self):
+        membership = Membership.objects.create(
+            user=self.cleaned_data["account"], church=self.church
+        )
+        membership.roles.set(self.cleaned_data["roles"])
+        return membership

@@ -36,6 +36,23 @@ of the core and can't be switched off. App: `apps/church`.
 - **Scoping** (`scoping.py`): `for_church`, `get_in_church`,
   `ChurchScopedMixin`, `ChurchFormMixin` and `ChurchFormKwargsMixin`
   ([[Code-Conventions]], "One church's records").
+- **Registering a church** (`/churches/register/`,
+  `registration.register_church`): the church's name only, plus a new
+  account for a visitor who isn't signed in. In one transaction it creates
+  the account, the church and slug, its defaults and the person's
+  Administrator Membership; any failure leaves nothing. The person then
+  works in the new church and goes on to the setup wizard.
+- **Slugs** (`models.unique_slug`): made from the name, never shared
+  ("grace", "grace-2"), never a reserved word (`RESERVED_SLUGS`, such as
+  `register`: a church named "Register" gets `register-church`).
+- **Church switcher** (navbar, when a person has more than one church;
+  `/church/switch/<slug>/`): POST with the CSRF token. A church without an
+  active Membership is 404 (a superuser may choose any). A church whose
+  Membership was removed or switched off is dropped at the next request;
+  signing out clears the choice.
+- **Locked Modules**: on the Modules settings page, Members and Teams show
+  "Not available yet" for a church without `members_teams_unlocked`, with
+  no switch, and can't be posted on.
 - **Seeding** (`seeding.py`): `seed_church(church)` gives a new church its
   defaults. Each app registers a seeder in `AppConfig.ready()`: roles
   (Accounts), Theme Tags and Worship Check settings (`songs/defaults.py`),

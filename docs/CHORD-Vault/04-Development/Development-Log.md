@@ -2,6 +2,38 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Phase 9B, slice c: registering churches and accounts
+
+- **Register a church** (`/churches/register/`): name only; for a visitor
+  also a new account. One transaction: account, church, slug, defaults,
+  Administrator Membership; then the setup wizard. The landing page's main
+  button is now "Sign in your church", and its call to action "Already
+  part of a church's team? Sign in with your account."
+- **Slugs**: never shared, never a reserved word (`RESERVED_SLUGS`).
+- **Create an account** (`/accounts/signup/`), with no church; the sign-in
+  page links to it and to registering a church.
+- **Home for people with no church** replaces the slice b stopgap.
+- **Add an existing account**: exact username, or exact email ignoring
+  case; never partial; a shared email is refused.
+- **Remove from this church**, never yourself or the last administrator.
+- **Must-do 1**: account details and password of an account another church
+  (or a superuser) relies on are read-only to a church; its roles aren't.
+- **Church switcher**: POST with CSRF; refuses churches without an active
+  Membership; drops one whose Membership was removed or switched off;
+  cleared at sign-out.
+- **Locked Modules**: "Not available yet" in Modules settings, with no
+  switch; every Members and Teams URL is 404 for other churches.
+- **Tests:** `apps/church/tests/test_platform_accounts.py` (slugs,
+  registration including a failure halfway that leaves nothing, sign-up,
+  adding accounts and partial matches, shared accounts, last
+  administrator, the switcher including CSRF and mid-session changes,
+  locked Modules by URL and by view class, `teams_church()` by its
+  setting); the isolation test now covers Remove and the switcher. The
+  switcher and atomicity tests were checked by breaking the code: each
+  failed, and passes again with the code restored.
+- **Checks:** quick check passes (1123 tests); the full check runs in the
+  pre-commit hook.
+
 ## 2026-11-25: Phase 9B, slice b: every record stays in its church
 
 First the temporary fallbacks went (no `church` default, no

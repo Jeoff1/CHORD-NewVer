@@ -1,19 +1,27 @@
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView
 
+from apps.accounts.forms import SignUpForm
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 
 from . import dashboard
-from .forms import SECTION_ORDER, SECTIONS
+from .forms import SECTION_ORDER, SECTIONS, ChurchRegistrationForm
 from .labels import LABEL_DEFINITIONS
+from .middleware import SESSION_KEY
 from .models import ChurchProfile
 from .modules import MODULES_BY_CODE
+from .registration import register_church
 
 MANAGE_PERMISSION = "church.change_churchprofile"
 
@@ -162,3 +170,64 @@ class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
                 "church:setup", kwargs={"section": previous}
             )
         return context
+
+
+# --- Churches on the platform (Phase 9B, decision 0014) ------------------------
+
+
+class RegisterChurchView(TemplateView):
+    """Sign in your church: its name, plus a new account for a visitor who
+    isn't signed in. The person becomes its first Administrator and goes
+    on to the setup wizard."""
+
+    template_name = "church/register.html"
+
+    def forms(self, data=None):
+        church_form = ChurchRegistrationForm(data, prefix="church")
+        account_form = None if self.request.user.is_authenticated else SignUpForm(data)
+        return church_form, account_form
+
+    def get(self, request, *args, **kwargs):
+        church_form, account_form = self.forms()
+        return self.render_to_response(
+            self.get_context_data(church_form=church_form, account_form=account_form)
+        )
+
+    def post(self, request, *args, **kwargs):
+        church_form, account_form = self.forms(request.POST)
+        valid = church_form.is_valid()
+        valid = (account_form is None or account_form.is_valid()) and valid
+        if not valid:
+            return self.render_to_response(
+                self.get_context_data(
+                    church_form=church_form, account_form=account_form
+                )
+            )
+        church, user = register_church(
+            church_form.cleaned_data["name"],
+            user=request.user if request.user.is_authenticated else None,
+            account_form=account_form,
+        )
+        if not request.user.is_authenticated:
+            login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
+        request.session[SESSION_KEY] = church.pk
+        messages.success(request, f"{church.name} is registered. Let's set it up.")
+        return redirect("church:setup", section=SECTION_ORDER[0])
+
+
+@method_decorator(require_POST, name="dispatch")
+class SwitchChurchView(LoginRequiredMixin, View):
+    """Work in another of the person's churches (POST only, with the CSRF
+    token). A church they have no active Membership in is 404; a superuser
+    may switch to any church, for support."""
+
+    def post(self, request, slug):
+        churches = ChurchProfile.objects.all()
+        if not request.user.is_superuser:
+            churches = churches.filter(
+                memberships__user=request.user, memberships__is_active=True
+            )
+        church = get_object_or_404(churches.distinct(), slug=slug)
+        request.session[SESSION_KEY] = church.pk
+        messages.info(request, f"You're now working in {church.name}.")
+        return redirect("home")

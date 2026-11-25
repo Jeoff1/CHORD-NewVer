@@ -32,7 +32,7 @@
           <h1 class="chord-landing__title">From a {{ labels.sermon|lower }}'s theme to the songs you sing.</h1>
           <p class="chord-landing__lead">CHORD reads the theme of your {{ labels.worship_service|lower }} and suggests a song {{ labels.lineup|lower }} that fits it. Your {{ labels.pastor|lower }} reviews and confirms it, and the whole team rehearses from the same chord sheets, keys and playback.</p>
           <div class="chord-landing__actions">
-            <a class="chord-landing__btn chord-landing__btn--gold" href="{% url 'accounts:login' %}">Sign in to your church</a>
+            <a class="chord-landing__btn chord-landing__btn--gold" href="{% url 'churches:register' %}">Sign in your church</a>
             <a class="chord-landing__btn chord-landing__btn--outline" href="#how-it-works">See how it works</a>
           </div>
         </div>
@@ -184,7 +184,7 @@ That saved a wretch like me</pre>
       <div class="container d-flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
           <h2 class="chord-landing__h2 mb-1" id="cta-title">Plan your next {{ labels.worship_service|lower }} with CHORD.</h2>
-          <p class="mb-0">Sign in with the account your church gave you.</p>
+          <p class="mb-0">Already part of a church's team? Sign in with your account.</p>
         </div>
         <a class="chord-landing__btn chord-landing__btn--green" href="{% url 'accounts:login' %}">Sign in</a>
       </div>

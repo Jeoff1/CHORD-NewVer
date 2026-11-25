@@ -10,8 +10,8 @@ development task.
 
 **Phase 9B (Church Platform: many churches on one installation) is in
 progress since 2026-11-25 ([[0014-church-platform]], [[Phase-9B-Plan]]);
-docs and slices a (foundations) and b (scoping) done; slice c
-(accounts and sign-up) next.** Phase 9A is paused for it: A1 (Church Member
+docs and slices a (foundations), b (scoping) and c (accounts and
+sign-up) done; slice d (church profile) next.** Phase 9A is paused for it: A1 (Church Member
 role), A2 (a role change keeps history), A3 (user history), A4 (batch
 accounts) and A5 (occasions, their own Module; Notifications moved into
 a core app) done 2026-11-24; A6 (member reports) is next, after the owner decides

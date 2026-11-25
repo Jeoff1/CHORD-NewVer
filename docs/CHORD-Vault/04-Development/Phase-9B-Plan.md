@@ -93,6 +93,15 @@ scoped, and the tests found the places that forgot their church.
 - **Announcements** have `visibility` (Internal/Public); public ones show
   on the homepage in slice e.
 
+**Slice c (done 2026-11-25).** Both must-dos are done: a church manages
+an account itself only when it belongs to that church alone (and isn't a
+superuser's); people with no church see only their own pages and a home
+offering to register a church. Also: reserved slugs, atomic registration,
+the POST-only switcher, exact-match "Add an existing account", Remove from
+this church (never the last administrator), and Members and Teams "Not
+available yet". `teams_church()` is the church with
+`members_teams_unlocked`, whatever its pk or name (tested).
+
 **For slice c, found while building a:** an administrator may set the
 password of any user in their church. Once "Add an existing account"
 exists, that user may belong to other churches too, so Set password (and

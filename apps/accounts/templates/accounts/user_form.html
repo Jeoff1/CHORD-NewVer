@@ -30,6 +30,18 @@
 {% endblock %}
 
 {% block after_form %}
+  {% if object.pk != user.pk %}
+    <section class="card shadow-sm mt-4" aria-labelledby="leave-church">
+      <div class="card-body p-4">
+        <h2 class="h5" id="leave-church">Remove from this church</h2>
+        <p class="small text-body-secondary">Takes away their place and roles in {{ church.name }}. Their account, and everything they did, stays.</p>
+        <form method="post" action="{% url 'accounts:user_remove' pk=object.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger">Remove from this church</button>
+        </form>
+      </div>
+    </section>
+  {% endif %}
   <section class="card shadow-sm mt-4" aria-labelledby="role-history">
     <div class="card-body p-4">
       <h2 class="h5" id="role-history">Role history</h2>

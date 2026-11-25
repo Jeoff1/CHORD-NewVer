@@ -1,18 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %}Not part of a church yet{% endblock %}
+{% block title %}Home{% endblock %}
 
 {% block content %}
-  {# A signed-in person with no active Membership (decision 0014). #}
+  {# The home of a signed-in person with no active Membership (decision 0014). #}
   <div class="chord-page-header">
     <div class="chord-page-header__text">
       <h1 class="h3 mb-0">You're not part of a church yet</h1>
     </div>
   </div>
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <p>Your account isn't linked to any church, so there's nothing to plan here yet.</p>
-      <p class="mb-0">Ask a church's administrator to add your account to their church.</p>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5">Join your church</h2>
+          <p class="mb-0">Ask your church's administrator to add your account. They need your username, <strong>{{ user.get_username }}</strong>{% if user.email %}, or your email{% endif %}.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5">Plan worship for your church</h2>
+          <p>Register your church and set it up; you become its first administrator.</p>
+          <a class="btn btn-primary" href="{% url 'churches:register' %}">Sign in your church</a>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

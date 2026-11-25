@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from django.urls import reverse
 
 from .labels import Labels
+from .models import ChurchProfile
 from .modules import MODULES_BY_CODE, enabled_modules
 
 
@@ -60,4 +61,16 @@ def church(request):
         ],
         "modules_switched_on": bool(entries),
         "enabled_modules": {entry.code for entry in entries},
+        "my_churches": my_churches(user),
     }
+
+
+def my_churches(user):
+    """The churches the church switcher offers: the person's active
+    memberships (every church for a superuser, for support)."""
+    if user is None or not user.is_authenticated:
+        return []
+    churches = ChurchProfile.objects.all()
+    if not user.is_superuser:
+        churches = churches.filter(memberships__user=user, memberships__is_active=True)
+    return list(churches.distinct().order_by("name"))

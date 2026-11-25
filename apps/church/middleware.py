@@ -8,8 +8,9 @@ from .models import ChurchProfile
 SESSION_KEY = "church_id"
 
 # URL namespaces a signed-in person with no church may still open: their
-# own account and their notifications (decision 0014).
-OPEN_WITHOUT_CHURCH = {"accounts", "notifications", "admin"}
+# own account, their notifications, and the platform's church pages, such
+# as registering a church (decision 0014).
+OPEN_WITHOUT_CHURCH = {"accounts", "notifications", "admin", "churches"}
 
 
 def current_church_for(request):
@@ -29,6 +30,9 @@ def current_church_for(request):
     may_choose = ChurchProfile.objects.all() if user.is_superuser else member_of
     chosen = request.session.get(SESSION_KEY)
     church = may_choose.filter(pk=chosen).first() if chosen else None
+    if chosen and church is None:
+        # The membership was removed or deactivated since it was chosen.
+        del request.session[SESSION_KEY]
     return church or member_of.order_by("memberships__created_at", "pk").first()
 
 

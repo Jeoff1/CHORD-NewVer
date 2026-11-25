@@ -6,6 +6,7 @@ from . import views
 app_name = "church"
 
 urlpatterns = [
+    path("switch/<slug:slug>/", views.SwitchChurchView.as_view(), name="switch"),
     path(
         "settings/",
         RedirectView.as_view(pattern_name="church:settings"),
