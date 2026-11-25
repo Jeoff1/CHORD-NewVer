@@ -139,6 +139,26 @@ of the core and can't be switched off. App: `apps/church`.
   ([[Design-System]], "Landing page".)
 - Tests: `apps/church/tests/test_landing.py`.
 
+## Public pages (Phase 9B)
+
+Only churches with "Show the church publicly" on have public pages; for
+any other church (and an unknown address) every public page is 404, to
+everyone, its own people too.
+
+- **Directory** (`/churches/`): the public churches, searched on name and
+  address (ignoring case), 20 to a page.
+- **Church Homepage** (`/churches/<slug>/`, `ChurchHomepageView`): name,
+  logo, contact details and About, then the sections the Modules register
+  in `homepage.py` (each only while its Module is on): upcoming services
+  if switched on, date, time and kind only (Worship); the Occasion Types
+  offered publicly with **Request this service** (Occasions); Public
+  announcements to everyone that aren't archived (Announcements). Never
+  lyrics, chord sheets, songs, lineups, themes, members or teams.
+- Request this service and My requests at every church are Occasions'
+  ([[Occasions]]).
+- The landing page links the Directory ("Churches"); so do the user menu
+  and the home of people with no church.
+
 ## Church settings this module depends on
 
 This module *is* the church's settings: Church Profile details, switched-off

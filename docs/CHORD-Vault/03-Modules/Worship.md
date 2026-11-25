@@ -198,6 +198,9 @@ Spotify safeguards in `apps/songs`):
   holds a PostgreSQL advisory lock (`apps/core/locks.py`) while it runs,
   so a second worker, or `process_songs`, refuses to start. Runs left
   "running" by a stopped worker are marked failed when it starts.
+- **Upcoming services on the homepage** (Phase 9B, `public.py`): when the
+  church switches it on, the next five services that aren't cancelled, as
+  date, time and kind (the template's name) only.
 - **`manage.py seed_hymns --church <slug>`** adds 23 public-domain
   hymns to that church's pool:
   general hymns, eight Christmas carols, four slow hymns and two Easter

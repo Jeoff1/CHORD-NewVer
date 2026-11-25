@@ -45,7 +45,7 @@ flowchart LR
 | 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
 | 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
 | 9A    | Adviser requests (24 Nov)     | L    | 8          | Paused for 9B (A1–A5 done) |
-| 9B    | Church Platform (multi-church) | L   | 9A (A1–A5) | In progress       |
+| 9B    | Church Platform (multi-church) | L   | 9A (A1–A5) | Done (2026-11-26), not merged into `master` yet |
 | 9     | Learning to rank              | S    | 6, after 9A | Not started (only if time remains) |
 | 10    | Hardening and release         | M    | 7, 8, 9A, 9B (9 if built) | Not started   |
 
@@ -538,7 +538,8 @@ permission-checked.
 
 ## Phase 9B: Church Platform (multi-church)
 
-**Status: in progress (approved 2026-11-25; docs and slices a to d done).** On branch
+**Status: done (2026-11-26) on `phase-9b-church-platform`; merged into
+`master` only when the owner says so, after the click-through.** On branch
 `phase-9b-church-platform`; merged into `master` only when the full check,
 isolation tests included, passes, so `master` stays presentable. The
 design, slices and risks are in [[Phase-9B-Plan]]; the decision is
@@ -573,8 +574,10 @@ offered Occasion. People can belong to several churches.
 - [x] **d. Church profile** (done 2026-11-26): About, directory and upcoming-services
   settings, the setup wizard for new churches, Occasion Types offered
   publicly.
-- [ ] **e. Public pages**: Directory, Church Homepage, Request this
-  service, My requests.
+- [x] **e. Public pages** (done 2026-11-26): Directory, Church Homepage,
+  Request this service, My requests.
+- [ ] **Click-through** ([[Phase-9B-Click-Through]]) and merging into
+  `master`: when the owner says so.
 
 If time runs short, drop in this order: upcoming services on the
 homepage, directory search, the cross-church My requests page. Slices a

@@ -10,7 +10,13 @@ SESSION_KEY = "church_id"
 # URL namespaces a signed-in person with no church may still open: their
 # own account, their notifications, and the platform's church pages, such
 # as registering a church (decision 0014).
-OPEN_WITHOUT_CHURCH = {"accounts", "notifications", "admin", "churches"}
+OPEN_WITHOUT_CHURCH = {
+    "accounts",
+    "notifications",
+    "admin",
+    "churches",
+    "public_requests",
+}
 
 
 def current_church_for(request):

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Requests from its own people only{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <h1 class="h3">Requests from its own people only</h1>
+      <p>{{ public_church.name }} takes requests only from people in the church just now. Contact the church to ask.</p>
+      <a href="{% url 'churches:home' slug=public_church.slug %}" class="btn btn-outline-secondary">Back to {{ public_church.name }}</a>
+    </div>
+  </div>
+{% endblock %}

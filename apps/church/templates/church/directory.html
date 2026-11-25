@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Churches{% endblock %}
+
+{% block content %}
+  {# Phase 9B: only churches that chose to show themselves publicly. #}
+  <h1 class="h3 mb-2">Churches</h1>
+  <p class="text-body-secondary">Churches that plan worship with CHORD and show themselves here.</p>
+  {% include "includes/list_toolbar.html" with placeholder="Search by name or address" %}
+  <div class="list-group shadow-sm">
+    {% for listed in object_list %}
+      <a class="list-group-item list-group-item-action" href="{% url 'churches:home' slug=listed.slug %}">
+        <span class="fw-semibold d-block">{{ listed.name }}</span>
+        {% if listed.address %}<span class="small text-body-secondary">{{ listed.address|linebreaksbr }}</span>{% endif %}
+      </a>
+    {% empty %}
+      <div class="list-group-item text-body-secondary">{% if q %}No church matches “{{ q }}”.{% else %}No churches are listed yet.{% endif %}</div>
+    {% endfor %}
+  </div>
+  {% include "includes/pagination.html" %}
+{% endblock %}

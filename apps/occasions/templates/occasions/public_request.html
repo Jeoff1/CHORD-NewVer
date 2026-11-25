@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Request: {{ occasion_type.name }}{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+      <a class="small" href="{% url 'churches:home' slug=public_church.slug %}">{{ public_church.name }}</a>
+      <h1 class="h3 mb-2">Request: {{ occasion_type.name }}</h1>
+      <p class="text-body-secondary">{{ public_church.name }} decides on your request, and you get a notification either way. It usually takes {{ occasion_type.length_minutes }} minutes. Times are in the church's time zone.</p>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {{ form }}
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">Send request</button>
+              <a href="{% url 'churches:home' slug=public_church.slug %}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

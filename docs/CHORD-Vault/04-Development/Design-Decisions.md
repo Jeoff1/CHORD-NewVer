@@ -760,7 +760,26 @@ these are the rules every slice keeps, and the tests that prove them.
   (`apps/church/tests/test_public_settings.py`).
 - Public pages: anonymous visitors, people from other churches and members
   see only the published fields; a request from outside the church is
-  refused when the church turns the setting off.
+  refused when the church turns the setting off
+  (`apps/church/tests/test_public_pages.py`).
+
+### Public pages (slice e, owner, 2026-11-26)
+
+- A church with "Show the church publicly" off has no public page: it is
+  absent from the Directory, and its homepage and request addresses are
+  404 to everyone; unknown addresses too.
+- Only Public announcements to everyone that aren't archived; only
+  active Occasion Types offered publicly (any other is 404 on its request
+  address); upcoming services, if switched on, only as date, time and
+  kind; no request buttons, and 404 request addresses, while Occasions is
+  off.
+- Request this service: a visitor signs in and returns to the same form
+  (a safe `next` only); someone outside the church only while it accepts
+  requests from outside; the usual overlap check; the church's approvers
+  are notified; anyone outside the church reads others' bookings only as
+  "Booked", worship services included.
+- My requests: one's own requests at every church; withdraw one's own
+  Pending ones only.
 
 ---
 

@@ -8,10 +8,11 @@ development task.
 
 ## Current status
 
-**Phase 9B (Church Platform: many churches on one installation) is in
-progress since 2026-11-25 ([[0014-church-platform]], [[Phase-9B-Plan]]);
-docs and slices a (foundations), b (scoping), c (accounts and
-sign-up) and d (church profile) done; slice e (public pages) next.** Phase 9A is paused for it: A1 (Church Member
+**Phase 9B (Church Platform: many churches on one installation) is
+done (2026-11-26) on branch `phase-9b-church-platform`
+([[0014-church-platform]], [[Phase-9B-Plan]]), not merged into `master`
+yet: the owner runs the [[Phase-9B-Click-Through]] and says when to
+merge.** Phase 9A is paused for it: A1 (Church Member
 role), A2 (a role change keeps history), A3 (user history), A4 (batch
 accounts) and A5 (occasions, their own Module; Notifications moved into
 a core app) done 2026-11-24; A6 (member reports) is next, after the owner decides
@@ -22,12 +23,14 @@ day.** Phase 8 done (2026-11-23). Updated
 2026-11-25.
 
 **Pick up here:**
-- **Branch:** build Phase 9B on `phase-9b-church-platform`, from
-  `master`; merge into `master` only when the full check, isolation tests
-  included, passes. 9A's A1 to A5 are already in `master`.
+- **Branch:** Phase 9B is on `phase-9b-church-platform` (pushed). Merge
+  it into `master` only when the owner says so, after the
+  [[Phase-9B-Click-Through]]. 9A's A1 to A5 are already in `master`.
 - **Phase 9B** ([[Development-Plan]]; rules and tests in
-  [[Design-Decisions]], "Phase 9B"; design in [[Phase-9B-Plan]]): docs,
-  then slices a (foundations) to e (public pages).
+  [[Design-Decisions]], "Phase 9B"; design and progress notes in
+  [[Phase-9B-Plan]]): slices a (foundations) to e (public pages) done.
+- **Next after the merge:** the rest of Phase 9A (A6 member reports, A7
+  UI pass), then Phase 10.
 - **Phase 9A** ([[Development-Plan]]; rules in [[Design-Decisions]],
   "Adviser comments, 24 Nov"): A1 Church Member role, A2 a role change
   keeps history, A3 user history, A4 batch accounts, A5 occasions

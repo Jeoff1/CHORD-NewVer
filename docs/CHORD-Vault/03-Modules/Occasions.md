@@ -21,8 +21,22 @@ Built in Phase 9A, A5 (2026-11-24):
   **switched off** (migration `0002_seed_occasion_types`). Switched off,
   never deleted; the list's Active switch turns a type on or off without
   opening it. **Offered publicly** (Phase 9B, off for every type until the
-  church chooses) shows it on the church's homepage, where people may
-  request it from slice e.
+  church chooses) shows an active type on the church's homepage.
+- **Request this service** (Phase 9B, `public_views.py`,
+  `/churches/<slug>/request/<type>/`): for a public church's active,
+  publicly offered type while Occasions is on; anything else is 404 to
+  everyone. A visitor signs in first and comes back to the form (Django
+  follows only a safe `next`). The church's own people may always ask;
+  anyone else only while the church accepts requests from outside (403
+  otherwise). Times are in that church's time zone, the usual overlap
+  check applies, and the church's approvers get a notification.
+- **My requests at every church** (`/churches/my-requests/`): the
+  person's own requests, with the church's name; Withdraw (POST) only
+  while Pending, and only one's own. Decision notifications link here.
+- **Who sees what of a clash**: an Occasion by name only for people
+  holding `occasions.view_occasion` in its church, a worship service by
+  name only for the church's own people; anyone else reads "That time is
+  already booked"
 - **Occasion** (`Occasion`): its type, date and time, length (the type's
   usual length unless changed), **For** (who it is for, as text),
   **Officiant** (a user), **Venue**, notes and **Cancelled**. No theme,
@@ -45,7 +59,8 @@ Built in Phase 9A, A5 (2026-11-24):
     reason; only the requester withdraws, while Pending; a decided request
     can't be decided again;
   - the requester gets a **Notification** (core, [[Accounts]]) when it is
-    approved or declined, linking to My requests.
+    approved or declined, linking to My requests at every church; the
+    church's approvers get one when a request arrives (Phase 9B).
 - **The calendar** (Worship's, `/worship/calendar/`) shows occasions
   through `apps/worship/bookings.py`: with their name and a link for
   holders of `occasions.view_occasion`; as "<start> to <end> Booked" for

@@ -9,6 +9,12 @@ class AnnouncementsConfig(AppConfig):
     verbose_name = "Announcements"
 
     def ready(self):
+        from apps.church import homepage
+
+        from . import public as public_section
+
+        # The church's public homepage (Phase 9B).
+        homepage.register(public_section.homepage_section)
         from apps.church import dashboard as church_dashboard
 
         from .dashboard import latest

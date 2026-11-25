@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ public_church.name }}{% endblock %}
+
+{% block content %}
+  {# A church's public homepage (Phase 9B): only what it chose to publish. #}
+  <div class="d-flex align-items-center gap-3 mb-3">
+    {% if public_church.logo %}<img src="{{ public_church.logo.url }}" alt="" height="64" class="rounded">{% endif %}
+    <div>
+      <h1 class="h3 mb-0">{{ public_church.name }}</h1>
+      <a class="small" href="{% url 'churches:directory' %}">All churches</a>
+    </div>
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-8">
+      {% if public_church.about %}
+        <section class="card shadow-sm mb-4" aria-labelledby="about-title">
+          <div class="card-body">
+            <h2 class="h5" id="about-title">About</h2>
+            {% include "church/includes/about.html" with church=public_church %}
+          </div>
+        </section>
+      {% endif %}
+      {% for section in sections %}
+        {% include section.template with public_church=public_church section=section.context %}
+      {% endfor %}
+    </div>
+    <aside class="col-lg-4">
+      <section class="card shadow-sm" aria-labelledby="contact-title">
+        <div class="card-body">
+          <h2 class="h5" id="contact-title">Contact</h2>
+          {% if public_church.address %}<p class="mb-2">{{ public_church.address|linebreaksbr }}</p>{% endif %}
+          {% if public_church.phone %}<p class="mb-1">{{ public_church.phone }}</p>{% endif %}
+          {% if public_church.email %}<p class="mb-1"><a href="mailto:{{ public_church.email }}">{{ public_church.email }}</a></p>{% endif %}
+          {% if public_church.website %}<p class="mb-0"><a href="{{ public_church.website }}" rel="nofollow noopener">{{ public_church.website }}</a></p>{% endif %}
+          {% if not public_church.address and not public_church.phone and not public_church.email and not public_church.website %}<p class="text-body-secondary mb-0">No contact details given.</p>{% endif %}
+        </div>
+      </section>
+    </aside>
+  </div>
+{% endblock %}

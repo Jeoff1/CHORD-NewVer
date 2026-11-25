@@ -192,7 +192,8 @@ class RequestRuleTests(OccasionTestCase):
         self.assertFalse(hasattr(occasion, "lineup"))
         note = Notification.objects.get(recipient=self.member)
         self.assertIn("was approved by Pat Pastor", note.text)
-        self.assertEqual(note.url, reverse("occasions:my_requests"))
+        # My requests at every church: the requester may be from elsewhere.
+        self.assertEqual(note.url, reverse("public_requests:my_requests"))
 
     def test_the_approver_may_move_the_time(self):
         occasion = rules.approve(self.ask(), self.pastor, starts_at=soon(hour=15))
@@ -206,7 +207,8 @@ class RequestRuleTests(OccasionTestCase):
         record.refresh_from_db()
         self.assertTrue(record.is_pending)
         self.assertFalse(Occasion.objects.exists())
-        self.assertFalse(Notification.objects.exists())
+        # Nobody is told of a decision (the approvers heard of the request).
+        self.assertFalse(Notification.objects.filter(recipient=self.member).exists())
 
     def test_two_requests_for_one_time_only_the_first_approval_holds(self):
         first, second = self.ask(), self.ask(who="Cy and Di")

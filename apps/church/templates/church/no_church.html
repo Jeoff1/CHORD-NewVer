@@ -14,6 +14,7 @@
       <div class="card shadow-sm h-100">
         <div class="card-body">
           <h2 class="h5">Join your church</h2>
+          <p>Find it among the <a href="{% url 'churches:directory' %}">churches</a>, where you can also request a service such as a wedding; your requests are under <a href="{% url 'public_requests:my_requests' %}">My requests</a>.</p>
           <p class="mb-0">Ask your church's administrator to add your account. They need your username, <strong>{{ user.get_username }}</strong>{% if user.email %}, or your email{% endif %}.</p>
         </div>
       </div>

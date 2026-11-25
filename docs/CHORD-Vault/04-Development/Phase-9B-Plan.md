@@ -112,6 +112,16 @@ chooses (so "Show the church publicly" is switched off for it, though a
 newly registered church starts public, as planned), and sign-in history of
 a shared account isn't shown (option a).
 
+**Slice e (done 2026-11-26).** The Directory, Church Homepage (with
+sections registered by Worship, Occasions and Announcements in
+`apps/church/homepage.py`), Request this service and My requests at every
+church. Found while building it: the overlap message named a clashing
+worship service to anyone, and whether someone saw an Occasion by name
+was asked of their own Current Church; both now follow the booking's
+church, and anyone outside it reads only "Booked". Approvers are now
+notified of each new request. The manual test is
+[[Phase-9B-Click-Through]].
+
 **For slice c, found while building a:** an administrator may set the
 password of any user in their church. Once "Add an existing account"
 exists, that user may belong to other churches too, so Set password (and

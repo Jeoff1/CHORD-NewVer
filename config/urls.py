@@ -11,6 +11,7 @@ urlpatterns = [
     path("audit/", include("apps.audit.urls")),
     path("notifications/", include("apps.notifications.urls")),
     path("church/", include("apps.church.urls")),
+    path("churches/", include("apps.occasions.public_urls")),
     path("churches/", include("apps.church.public_urls")),
     path("members/", include("apps.members.urls")),
     path("worship/songs/", include("apps.songs.urls")),

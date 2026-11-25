@@ -14,8 +14,9 @@ from django.views.generic import FormView, TemplateView
 from apps.accounts.forms import SignUpForm
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.core.views import FilteredListView
 
-from . import dashboard
+from . import dashboard, homepage
 from .forms import SECTION_ORDER, SECTIONS, ChurchRegistrationForm
 from .labels import LABEL_DEFINITIONS
 from .middleware import SESSION_KEY
@@ -238,3 +239,36 @@ class SwitchChurchView(LoginRequiredMixin, View):
         request.session[SESSION_KEY] = church.pk
         messages.info(request, f"You're now working in {church.name}.")
         return redirect("home")
+
+
+def public_churches():
+    """The churches that chose to be public: in the directory, with a
+    homepage. Every other church is absent, and its pages are 404."""
+    return ChurchProfile.objects.filter(show_in_directory=True)
+
+
+class DirectoryView(FilteredListView):
+    """The public list of churches, searchable by name and address."""
+
+    template_name = "church/directory.html"
+    search_fields = ("name", "address")
+    paginate_by = 20
+
+    def get_queryset(self):
+        self.queryset = public_churches().order_by("name", "pk")
+        return super().get_queryset()
+
+
+class ChurchHomepageView(TemplateView):
+    """A church's public page: only what it chose to publish."""
+
+    template_name = "church/homepage.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        public_church = get_object_or_404(public_churches(), slug=self.kwargs["slug"])
+        context.update(
+            public_church=public_church,
+            sections=homepage.sections(public_church, self.request),
+        )
+        return context

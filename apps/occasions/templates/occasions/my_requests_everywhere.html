@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}My requests{% endblock %}
+
+{% block content %}
+  {# A person's own Occasion Requests at every church (Phase 9B). #}
+  <h1 class="h3 mb-2">My requests</h1>
+  <p class="text-body-secondary">Your requests for special services, at every church.</p>
+  <div class="list-group shadow-sm">
+    {% for record in object_list %}
+      <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>
+          <span class="fw-semibold d-block">{{ record.occasion_type.name }} for {{ record.occasion_for }}</span>
+          <span class="small text-body-secondary">{{ record.church.name }} · {{ record.starts_at|date:"M j, Y g:i A" }} · {{ record.get_status_display }}</span>
+        </span>
+        {% if record.is_pending %}
+          <form method="post" action="{% url 'public_requests:withdraw' public_id=record.public_id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
+          </form>
+        {% endif %}
+      </div>
+    {% empty %}
+      <div class="list-group-item text-body-secondary">You haven't requested anything yet. <a href="{% url 'churches:directory' %}">Find a church</a>.</div>
+    {% endfor %}
+  </div>
+  {% include "includes/pagination.html" %}
+{% endblock %}

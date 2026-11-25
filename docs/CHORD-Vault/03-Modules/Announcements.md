@@ -15,8 +15,9 @@ Built 2026-11-23 (Phase 8, part B):
 - **Announcement** (`Announcement`, public UUID): its church, title,
   message, audience, an optional service, author, when it was archived,
   and `visibility`: Internal, or Public ("Also show it on the church's
-  homepage", for an announcement to everyone only; shown on the homepage
-  from Phase 9B slice e). A check
+  homepage", for an announcement to everyone only). The homepage shows
+  the five latest Public announcements to everyone that aren't archived,
+  while Announcements is on (`public.py`). A check
   constraint keeps a service only on a service-team announcement.
 - **Audiences** (`services.visible_to`):
   - **Everyone**: everyone working in the church;

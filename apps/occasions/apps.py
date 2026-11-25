@@ -10,6 +10,12 @@ class OccasionsConfig(AppConfig):
     verbose_name = "Occasions"
 
     def ready(self):
+        from apps.church import homepage
+
+        from . import public_views as public_section
+
+        # The church's public homepage (Phase 9B).
+        homepage.register(public_section.homepage_section)
         from apps.church import seeding
 
         from . import defaults

@@ -18,6 +18,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.accounts.roles import users_with_perm
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.church.modules import is_enabled
@@ -27,7 +28,7 @@ from apps.notifications.services import notify
 from apps.worship.bookings import Booking
 from apps.worship.models import WorshipService
 from apps.worship.models.schedule import MAX_LENGTH_MINUTES
-from apps.worship.scheduling import format_moment
+from apps.worship.scheduling import church_time_zone, format_moment
 
 from .models import Occasion, OccasionRequest, OccasionType
 
@@ -66,8 +67,15 @@ class OccasionRefused(Exception):
     """Something the rules don't allow; the message says why."""
 
 
-def can_see(user):
-    return user.has_perm(VIEW)
+def can_see(user, church):
+    """Whether ``user`` sees ``church``'s Occasions in full. Asked of the
+    booking's own church, never the person's Current Church: someone from
+    another church sees only "Booked" (Phase 9B)."""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return user.is_active
+    return users_with_perm(church, VIEW).filter(pk=user.pk).exists()
 
 
 def requestable_types(church):
@@ -100,26 +108,45 @@ def clashes(church, starts_at, ends_at, *, exclude=None):
     )
 
 
-def _clock(value):
-    local = timezone.localtime(value)
+def _clock(value, church):
+    local = timezone.localtime(value, church_time_zone(church))
     return f"{local.hour % 12 or 12}:{local:%M %p}"
 
 
+def in_church(user, church):
+    """Whether ``user`` is one of ``church``'s people (an active Membership,
+    or a superuser)."""
+    if not user.is_authenticated:
+        return False
+    return (
+        user.is_superuser
+        or user.memberships.filter(church=church, is_active=True).exists()
+    )
+
+
 def clash_message(found, user):
-    """Why a time can't be booked. A worship service is named; an Occasion
-    only for people who may see Occasions."""
+    """Why a time can't be booked. A worship service is named for the
+    church's own people; an Occasion only for those who may see Occasions.
+    Anyone else, such as someone requesting from the church's homepage,
+    reads only "already booked" (Phase 9B)."""
     booking = found[0]
-    if isinstance(booking, Occasion) and not can_see(user):
+    hidden = (
+        not can_see(user, booking.church)
+        if isinstance(booking, Occasion)
+        else not in_church(user, booking.church)
+    )
+    if hidden:
         return "That time is already booked. Choose another date or time."
     name = (
         booking.name
         if isinstance(booking, WorshipService)
         else str(booking.occasion_type.name)
     )
-    start = timezone.localtime(booking.starts_at)
+    start = timezone.localtime(booking.starts_at, church_time_zone(booking.church))
     return (
         f"That time overlaps {name}, booked on {start:%b} {start.day} from "
-        f"{_clock(booking.starts_at)} to {_clock(booking.ends_at)}. Choose "
+        f"{_clock(booking.starts_at, booking.church)} to "
+        f"{_clock(booking.ends_at, booking.church)}. Choose "
         "another date or time."
     )
 
@@ -172,7 +199,7 @@ def calendar_source(start, end, church, user):
         .filter(starts_at__gte=start, starts_at__lt=end)
         .select_related("occasion_type")
     )
-    if not can_see(user):
+    if not can_see(user, church):
         return [
             Booking(occasion.starts_at, occasion.ends_at)
             for occasion in occasions
@@ -216,8 +243,26 @@ def request_occasion(requester, occasion_type, starts_at, occasion_for, note="")
         request,
         AuditEvent.Action.CREATED,
         diff({}, snapshot(request, REQUEST_AUDIT_FIELDS)),
+        church=church,
     )
+    _tell_approvers(request)
     return request
+
+
+def _tell_approvers(request):
+    """The church's people who approve requests hear of a new one."""
+    approvers = users_with_perm(request.church, APPROVE).exclude(
+        pk=request.requester_id
+    )
+    notify(
+        approvers,
+        f"{display_name(request.requester)} asked for "
+        f"{request.occasion_type.name} on {_day(request.starts_at, request.church)}."[
+            :300
+        ],
+        reverse("occasions:decide", kwargs={"public_id": request.public_id}),
+        church=request.church,
+    )
 
 
 def _locked_pending(request):
@@ -229,16 +274,18 @@ def _locked_pending(request):
     return locked
 
 
-def _day(value):
-    local = timezone.localtime(value)
+def _day(value, church):
+    local = timezone.localtime(value, church_time_zone(church))
     return f"{local:%b} {local.day}, {local.year}"
 
 
 def _tell_requester(request, text):
+    # My requests across every church: the requester may belong to another
+    # church, or to none (Phase 9B).
     notify(
         [request.requester],
         text[:300],
-        reverse("occasions:my_requests"),
+        reverse("public_requests:my_requests"),
         church=request.church,
     )
 
@@ -284,7 +331,8 @@ def approve(request, actor, *, starts_at=None, officiant=None, venue=""):
         )
         _tell_requester(
             locked,
-            f"Your request for {locked.occasion_type.name} on {_day(starts_at)} "
+            f"Your request for {locked.occasion_type.name} at {locked.church.name} "
+            f"on {_day(starts_at, locked.church)} "
             f"was approved by {display_name(actor)}.",
         )
     return occasion
@@ -311,8 +359,8 @@ def decline(request, actor, reason):
         )
         _tell_requester(
             locked,
-            f"Your request for {locked.occasion_type.name} on "
-            f"{_day(locked.starts_at)} was declined: {reason}",
+            f"Your request for {locked.occasion_type.name} at {locked.church.name} "
+            f"on {_day(locked.starts_at, locked.church)} was declined: {reason}",
         )
     return locked
 

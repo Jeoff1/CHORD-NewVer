@@ -115,6 +115,8 @@ OBJECT_URLS = {
     "occasions:types_update": lambda o: {"pk": o["occasion_type"].pk},
     "occasions:types_switch": lambda o: {"pk": o["occasion_type"].pk},
     "announcements:archive": lambda o: {"public_id": o["announcement"].public_id},
+    # Withdrawing from My requests at every church: only one's own.
+    "public_requests:withdraw": lambda o: {"public_id": o["request"].public_id},
     # Teams pages for one service: the service lookup is the church's.
     "teams:assign": lambda o: {"public_id": o["service"].public_id},
     "teams:assignment_remove": lambda o: {
@@ -130,6 +132,10 @@ EXEMPT = {
     "accounts:password_reset_confirm": "A token for one account, not a record.",
     "church:settings": "A section of the Current Church's own settings.",
     "church:setup": "A step of the Current Church's own setup.",
+    "churches:home": "A church's public homepage: public by design "
+    "(apps/church/tests/test_public_pages.py).",
+    "public_requests:request": "Request this service from a public homepage: "
+    "public by design (apps/church/tests/test_public_pages.py).",
     "members": "Members is locked to the church from before Phase 9B (§5).",
     "teams:blackout_delete": "A person's own Blackout Date; Teams is locked (§5).",
     "teams:reply": "A person's own assignment; Teams is locked (§5).",
@@ -142,7 +148,13 @@ EXEMPT = {
 }
 
 # Pages without arguments that aren't church pages.
-CRAWL_SKIP = {"accounts:logout", "accounts:login"}
+CRAWL_SKIP = {
+    "accounts:logout",
+    "accounts:login",
+    # Lists every public church, the other one too, by design
+    # (apps/church/tests/test_public_pages.py).
+    "churches:directory",
+}
 
 
 def url_patterns(patterns=None, namespace=None):

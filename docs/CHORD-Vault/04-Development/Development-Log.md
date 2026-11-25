@@ -2,6 +2,38 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9B, slice e: the public pages; Phase 9B done
+
+- **Directory** (`/churches/`): public churches only, searched on name and
+  address ignoring case, 20 to a page.
+- **Church Homepage** (`/churches/<slug>/`): name, logo, contact details,
+  About, and sections the Modules register (`apps/church/homepage.py`):
+  upcoming services (date, time, kind), Occasion Types offered publicly,
+  Public announcements. A hidden church, or an unknown address, is 404.
+- **Request this service** and **My requests at every church**
+  (`apps/occasions/public_views.py`, `/churches/...`).
+- **Fixed while building it:** a clash named a worship service to
+  anyone, and seeing an Occasion by name was asked of the person's own
+  Current Church; both now follow the booking's church ("Booked" for
+  anyone outside it). Approvers are now notified of each new request, and
+  decision notifications link to My requests at every church.
+- **Tests:** `apps/church/tests/test_public_pages.py`: each public page
+  for a visitor, someone from another church, a member and a hidden
+  church; the sign-in round trip and an unsafe `next`; outside requests
+  on and off; "Booked"; what isn't offered is 404; My requests and
+  Withdraw; and a check that no lyrics, chord sheets, songs, lineups,
+  themes, members or teams reach any public page. Breaking three rules on
+  purpose (internal announcements, service names, the outside-requests
+  setting) failed eight of these tests; they pass with the code restored.
+  The isolation test covers Withdraw and lists the public pages as public
+  by design.
+- **End of Phase 9B:** module notes ([[Church-Setup]], [[Accounts]],
+  [[Occasions]], [[Announcements]], [[Worship]]), [[Design-Decisions]],
+  [[Development-Plan]], [[00-Home]] and the manual test
+  [[Phase-9B-Click-Through]]. Not merged into `master`: the owner decides.
+- **Checks:** quick check passes (1164 tests); the full check runs in the
+  pre-commit hook.
+
 ## 2026-11-26: Phase 9B, slice d: what a church shows publicly
 
 - **Public homepage** settings section and last wizard step: show the

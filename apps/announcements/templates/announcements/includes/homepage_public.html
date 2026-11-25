@@ -1,0 +1,13 @@
+{# Public announcements of a church (Phase 9B). #}
+<section class="card shadow-sm mb-4" aria-labelledby="news-title">
+  <div class="card-body">
+    <h2 class="h5" id="news-title">Announcements</h2>
+    {% for note in section.public_announcements %}
+      <article class="{% if not forloop.last %}mb-3{% endif %}">
+        <h3 class="h6 mb-1">{{ note.title }}</h3>
+        <p class="small text-body-secondary mb-1">{{ note.created_at|date:"M j, Y" }}</p>
+        <p class="mb-0">{{ note.body|linebreaksbr }}</p>
+      </article>
+    {% endfor %}
+  </div>
+</section>

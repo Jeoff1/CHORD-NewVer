@@ -11,5 +11,7 @@ from . import views
 app_name = "churches"
 
 urlpatterns = [
+    path("", views.DirectoryView.as_view(), name="directory"),
     path("register/", views.RegisterChurchView.as_view(), name="register"),
+    path("<slug:slug>/", views.ChurchHomepageView.as_view(), name="home"),
 ]
