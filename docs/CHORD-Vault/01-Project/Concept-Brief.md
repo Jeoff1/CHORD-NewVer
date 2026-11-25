@@ -173,7 +173,9 @@ score = w1·relevance + w2·familiarity + w3·season − w4·recency
 ## Decisions and open question
 
 - **Scope**: a personal project for a Software Engineering proposal; one
-  church, five users or fewer.
+  church, five users or fewer. *(Changed 2026-11-25: many churches on one
+  installation, [[0014-church-platform]]. Spotify's five-user limit still
+  applies to Spotify-connected accounts.)*
 - **Song source**: all of Spotify, searched per theme, as the adviser
   requested.
 - **Language**: English only.

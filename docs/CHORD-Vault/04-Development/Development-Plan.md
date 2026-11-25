@@ -23,6 +23,8 @@ flowchart LR
   P6 --> P7[7 Song pages]
   P6 --> P8[8 Teams and announcements]
   P8 --> P9A[9A Adviser requests]
+  P9A --> P9B[9B Church Platform]
+  P9B --> P10
   P9A --> P9[9 Learning to rank]
   P6 --> P9
   P7 --> P10[10 Hardening and release]
@@ -42,15 +44,18 @@ flowchart LR
 | 6     | Lineups and reports           | L    | 5          | Done (2026-11-19) |
 | 7     | Song pages: chords and playback | L  | 6          | Done (2026-11-22) |
 | 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
-| 9A    | Adviser requests (24 Nov)     | L    | 8          | In progress (A1–A5 done) |
+| 9A    | Adviser requests (24 Nov)     | L    | 8          | Paused for 9B (A1–A5 done) |
+| 9B    | Church Platform (multi-church) | L   | 9A (A1–A5) | In progress       |
 | 9     | Learning to rank              | S    | 6, after 9A | Not started (only if time remains) |
-| 10    | Hardening and release         | M    | 7, 8, 9A (9 if built) | Not started       |
+| 10    | Hardening and release         | M    | 7, 8, 9A, 9B (9 if built) | Not started   |
 
 This **Status** column is the record of phase progress. Statuses: Done
 (with date), In progress, Next, Not started. Sizes are relative
 (S < M < L). Phase 9A comes before Phase 9 by the owner's choice
 (2026-11-24; the exception is recorded in `AGENTS.md`), and Phase 9 is
 built only if time remains before the final presentation (1–4 Dec 2026).
+Phase 9B, the Church Platform, comes before the rest of 9A (owner,
+2026-11-25; [[0014-church-platform]]).
 
 Out of scope since [[0005-worship-planning-scope]]: Giving, Records,
 the old Services design (fees, requirements, records), Ministries, Events,
@@ -477,7 +482,8 @@ reaches only that team.
 
 ## Phase 9A: Adviser requests (24 Nov)
 
-**Status: in progress (A1 to A5 done 2026-11-24).** On branch `adviser-comments`. The rules and tests are in
+**Status: paused for Phase 9B (A1 to A5 done 2026-11-24 and merged into
+`master`).** A6 and A7 continue after 9B. The rules and tests are in
 [[Design-Decisions]], "Adviser comments, 24 Nov"; more comments or changes
 may come. Nothing is merged into `master` until the owner says so.
 
@@ -529,6 +535,48 @@ temporary password; an overlapping Occasion Request or approval is refused,
 and only `occasions.approve_occasion` approves; the report's filters, age
 groups and private details are right; and every moved action is still
 permission-checked.
+
+## Phase 9B: Church Platform (multi-church)
+
+**Status: in progress (approved 2026-11-25; docs done).** On branch
+`phase-9b-church-platform`; merged into `master` only when the full check,
+isolation tests included, passes, so `master` stays presentable. The
+design, slices and risks are in [[Phase-9B-Plan]]; the decision is
+[[0014-church-platform]].
+
+Goal: one installation serves many churches. Each church registers itself
+(name only, never a denomination), has its own data, roles, settings and
+Modules, and a public Church Homepage where people can request an
+offered Occasion. People can belong to several churches.
+
+- [x] **Docs** (done 2026-11-25): decision 0014, AGENTS.md, this plan, Glossary,
+  Design-Decisions, workflow-spec, Project Overview.
+- [ ] **a. Foundations**: church fields, Membership, Role per church,
+  `ChurchRoleBackend`, `CurrentChurchMiddleware`, `seed_church`, test
+  builders, the data migration and its test. Nothing changes on screen.
+- [ ] **b. Scoping**: the worship pipeline, song library, worker,
+  Occasions, Announcements (visibility), Notifications, Audit and settings,
+  with isolation tests.
+- [ ] **c. Accounts**: Register a church, Create an account, Add an
+  existing account, the church switcher, locked Modules, a home page for
+  people with no church.
+- [ ] **d. Church profile**: About, directory and upcoming-services
+  settings, the setup wizard for new churches, Occasion Types offered
+  publicly.
+- [ ] **e. Public pages**: Directory, Church Homepage, Request this
+  service, My requests.
+
+If time runs short, drop in this order: upcoming services on the
+homepage, directory search, the cross-church My requests page. Slices a
+and b are not optional.
+
+**Done when** the tests in [[Design-Decisions]], "Phase 9B", pass: every
+existing test still passes; a user in Church A gets 404 on every detail,
+edit and action page for Church B's records, and Church B's rows are
+missing from every list and form; permissions come only from the roles in
+the Current Church; the migration keeps every row and gives each existing
+user a Membership with exactly their roles; and the public pages never
+show lineups, songs, chord sheets, lyrics, members or teams.
 
 ## Phase 9: Learning to rank
 
@@ -597,7 +645,7 @@ phase takes it on.
 | 9     | Must the proposal show a trained model? (the brief's open question)      | Build both: the rules pipeline works from day one, and training switches on once enough lineups are confirmed. Since 2026-11-24, Phase 9 is built only if time remains after 9A; worth asking the adviser |
 | 9A    | Who attended a service: optional per-person attendance, or who served from Assignments? | On hold; ask the owner before A6 |
 | 9A    | Where in-app notifications live when Teams is off (Occasion Requests need them) | Decided 2026-11-24: moved out of Teams into the core `notifications` app |
-| 9A    | "Five users or fewer" in the brief, now that church members get accounts | Suggested: "five Spotify-connected users or fewer" |
+| 9A    | "Five users or fewer" in the brief, now that church members get accounts | Decided 2026-11-25 ([[0014-church-platform]]): many churches and users; Spotify's 5-user limit applies to Spotify-connected accounts across the platform |
 | 9A    | What is shown at Progress Check 2 (25 Nov), and what goes in the Progress Report | The owner decides later |
 | 9A    | Should the pastor also create batch accounts? Today only the Administrator holds `accounts.add_user`. Granting it as it is would let the holder give any role, Administrator included (on Add user too) | Waiting on the owner. Suggested: a separate `members.create_accounts` permission for Pastoral Staff that can give only roles without user or settings permissions |
 | 9A    | Warn about coming assignments when the team permission is taken from a whole role (matrix) or a role is deleted | Left for now (owner, 2026-11-24); only a change to one user's roles or status warns. Revisit if the adviser asks |

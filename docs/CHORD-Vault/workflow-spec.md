@@ -1,5 +1,12 @@
 === INTENDED WORKFLOW ===
 
+Since 2026-11-25 (Phase 9B, [[0014-church-platform]]): one installation
+serves many churches. Everything below happens inside one church, the
+person's Current Church; their roles are those of their Membership there.
+A church registers itself with its name only; anyone may create an
+account, find a church in the Directory, and request an Occasion Type the
+church offers publicly from its Church Homepage.
+
 Updated 2026-11-24 with the adviser's comments ([[Design-Decisions]],
 "Adviser comments, 24 Nov"; Phase 9A, planned, not built yet). Where this
 spec and Design-Decisions.md disagree, Design-Decisions.md wins (AGENTS.md

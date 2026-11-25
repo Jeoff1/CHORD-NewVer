@@ -2,6 +2,29 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Phase 9B approved; docs
+
+The owner approved the Church Platform plan ([[Phase-9B-Plan]], moved into
+the vault from the cloud session's branch) with the recommended answer to
+each question: lyrics another church fetched are reused; requests from
+outside a church are a church setting, on by default; superusers may
+switch into any church; AGENTS.md says 9B comes before the rest of 9A.
+
+- New decision [[0014-church-platform]]; update sections in
+  [[0003-editable-roles]] and [[0011-church-spotify-account]].
+- [[Development-Plan]]: Phase 9B row and section; 9A paused (A1 to A5 in
+  `master`); the "five users" question closed.
+- [[Design-Decisions]]: "Phase 9B" rules and tests.
+- [[Glossary]]: Church Profile reworded; Church Platform, Membership,
+  Current Church, Church Homepage and Directory added.
+- [[Project-Overview]], [[Concept-Brief]] (a dated note on the scope line)
+  and `workflow-spec.md` no longer say one church per installation.
+  Module notes ([[Church-Setup]], [[Worship]], [[Announcements]],
+  [[Occasions]]) change with the slices that change their code.
+- `AGENTS.md`: 9B comes before the rest of 9A; lyrics stay inside the
+  church's installation.
+- **Checks:** docs only; no code changed.
+
 ## 2026-11-25: Checks run automatically before each commit; tblib
 
 Tooling only; the app is unchanged.

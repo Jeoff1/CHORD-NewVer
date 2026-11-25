@@ -8,9 +8,36 @@ configure what they do; the system never asks what denomination they are.
 ### The church and its configuration
 
 **Church Profile**:
-The single record describing this installation's church: its name, enabled
-Modules and Labels.
+The record describing one church on the platform: its name, slug, contact
+details, About, enabled Modules and Labels. One installation holds many
+([[0014-church-platform]]).
 _Avoid_: tenant, organization
+
+**Church Platform**:
+One CHORD installation serving many churches, each with its own data,
+roles and settings.
+_Avoid_: multi-tenant, SaaS
+
+**Membership**:
+A user's place in one church: which church, which roles, and whether it is
+active. A user has at most one Membership per church and may belong to
+several churches.
+_Avoid_: tenant user, seat
+
+**Current Church**:
+The church a signed-in person is working in right now, chosen with the
+church switcher and kept for their session. Permissions and every staff
+page follow it.
+_Avoid_: active tenant, workspace
+
+**Church Homepage**:
+A church's public page (`/churches/<slug>/`): what the church chose to
+publish, and Occasion Types anyone signed in may request.
+_Avoid_: profile page, landing page
+
+**Directory**:
+The public list of churches that chose to appear in it (`/churches/`).
+_Avoid_: marketplace
 
 **Module**:
 A feature area (Members, Worship, Teams, Announcements) that ships in every

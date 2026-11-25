@@ -15,7 +15,9 @@ module before any supporting module, and never let supporting work delay it.
 **Exception (approved 2026-11-24):** the adviser's requests of 24 Nov
 (Phase 9A in the Development Plan) come before Phase 9, learning to rank.
 Phase 9 is built only if time remains before the final presentation
-(1–4 Dec 2026). The rest of the core-first rule still holds.
+(1–4 Dec 2026). Phase 9B, the Church Platform (approved 2026-11-25,
+decision 0014), comes before the rest of Phase 9A. The rest of the
+core-first rule still holds.
 
 **Supporting church management stays minimal.** Build only what helps the
 worship workflow, in its smallest useful form:
@@ -100,7 +102,7 @@ condition against this rule.
   project provides; a test that needs Spotify, LRCLIB or a real model is
   wrong.
 - Lyrics and chord sheets are copyrighted: keep them inside the
-  installation, and never put them in fixtures, seed data, the vault or
+  church's installation, and never put them in fixtures, seed data, the vault or
   logs. Seed data may use public-domain hymns only.
 
 ## Documentation: the Obsidian vault

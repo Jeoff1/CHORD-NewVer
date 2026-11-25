@@ -49,3 +49,9 @@ optional setting, and the step disappears when unused.
   is connected, a lineup whose playlist is still on a personal account is
   offered "Save to Spotify" again, which makes its playlist on the church
   account.
+
+## Update (2026-11-25): one per church
+
+Since [[0014-church-platform]], each church has at most one Church Spotify
+Account. Every account, across all churches, takes one of the Spotify
+app's five Development Mode slots.

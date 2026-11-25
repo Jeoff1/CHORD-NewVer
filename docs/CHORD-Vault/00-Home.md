@@ -8,7 +8,9 @@ development task.
 
 ## Current status
 
-**Phase 9A (adviser requests, 24 Nov) is in progress: A1 (Church Member
+**Phase 9B (Church Platform: many churches on one installation) is in
+progress since 2026-11-25 ([[0014-church-platform]], [[Phase-9B-Plan]]);
+docs done, slice a (foundations) next.** Phase 9A is paused for it: A1 (Church Member
 role), A2 (a role change keeps history), A3 (user history), A4 (batch
 accounts) and A5 (occasions, their own Module; Notifications moved into
 a core app) done 2026-11-24; A6 (member reports) is next, after the owner decides
@@ -19,17 +21,19 @@ day.** Phase 8 done (2026-11-23). Updated
 2026-11-25.
 
 **Pick up here:**
-- **Branch:** build Phase 9A on `adviser-comments`. A1 to A4 were merged
-  into `master` and pushed on 2026-11-24; merge the rest when the user
-  says so.
+- **Branch:** build Phase 9B on `phase-9b-church-platform`, from
+  `master`; merge into `master` only when the full check, isolation tests
+  included, passes. 9A's A1 to A5 are already in `master`.
+- **Phase 9B** ([[Development-Plan]]; rules and tests in
+  [[Design-Decisions]], "Phase 9B"; design in [[Phase-9B-Plan]]): docs,
+  then slices a (foundations) to e (public pages).
 - **Phase 9A** ([[Development-Plan]]; rules in [[Design-Decisions]],
   "Adviser comments, 24 Nov"): A1 Church Member role, A2 a role change
   keeps history, A3 user history, A4 batch accounts, A5 occasions
   ([[0013-occasions-module]]), A6 member reports, A7 UI pass (wireframes
   first). More adviser comments may come.
 - **Waiting on the user:** "who attended a service" (on hold, before A6);
-  what to show at Progress Check 2 and put in the Progress Report; the
-  "five users or fewer" wording.
+  what to show at Progress Check 2 and put in the Progress Report.
 - **Phase 9** is built only if time remains before the final presentation
   (1–4 Dec 2026), an exception recorded in `AGENTS.md`.
 - **Progress Check 2 is on 25 Nov 2026.**

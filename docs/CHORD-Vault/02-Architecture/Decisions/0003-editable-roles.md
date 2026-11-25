@@ -38,3 +38,15 @@ There are now five default roles: Administrator, Office Staff, Pastoral
 Staff, Worship Leader and Team Member ([[0005-worship-planning-scope]]).
 The finance and records examples above are out of scope; the reasoning for
 editable roles still holds.
+
+## Update (2026-11-25): roles per church
+
+Since [[0014-church-platform]], each church has its own roles. A Role
+belongs to a church, its shown name is `title` (unique per church), and
+the underlying Django Group keeps a hidden internal name. Roles are given
+through a **Membership** in a church, not `user.groups`, and
+`ChurchRoleBackend` replaces Django's `ModelBackend`, so a user's
+permissions are those of their roles in the Current Church. Permission
+checks in views and templates stay Django's own. Each new church gets its
+own copy of the default roles, and the last active Administrator rule
+applies per church.

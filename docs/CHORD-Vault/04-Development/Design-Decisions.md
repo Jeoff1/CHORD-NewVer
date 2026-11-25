@@ -659,6 +659,85 @@ Tests: `apps/core/tests/test_ui_patterns.py`, `test_settings_hub.py`; `apps/wors
 
 ---
 
+## Phase 9B: Church Platform ([[0014-church-platform]])
+
+Approved by the owner on 2026-11-25. The full design is [[Phase-9B-Plan]];
+these are the rules every slice keeps, and the tests that prove them.
+
+### Rules
+
+- **The core rule holds.** Registering a church asks for its name only.
+  No denomination, tradition or religion field in any new model, form,
+  seed row or page; `test_denomination_free.py` covers the new forms.
+- **Permissions come only from the Current Church.** `ChurchRoleBackend`
+  returns the permissions of the user's roles in their Membership in the
+  Current Church, and nothing else: not `user.groups`, not permissions
+  granted straight to a user. With no Current Church, a user holds no
+  permissions. Active superusers hold every permission (Django's own
+  rule) and may switch into any church.
+- **The Current Church** is kept in the session and checked on every
+  request against an active Membership; without a valid choice it is the
+  person's first membership (oldest first).
+- **Every scoped query goes through the church.** Root models carry a
+  `church` foreign key; children are reached through their parent.
+  `for_church(church)` and `get_in_church()` are the only ways views read
+  scoped records. A record from another church gives **404**, never 403.
+- **The church is never taken from a form.** New records get it from
+  `request.church`. Every ModelChoiceField on a scoped model lists only the
+  Current Church's rows.
+- **Code without a request** (the worker, notifications, approvers) works
+  through each row's own church and `users_with_perm(church, perm)`.
+- **Global on purpose:** `User`, `SpotifyConnection`, `SpotifyLimit` (the
+  shared 429 block, one for every church), `SignInEvent`. The worker stays
+  one process with one advisory lock.
+- **LRCLIB lyrics are shared as a cache** (owner, question 1): a church
+  adding a track whose lyrics another church already fetched copies them
+  instead of asking LRCLIB. Lyrics are never shown across churches;
+  analysis, tags and chord sheets stay per church.
+- **Members and Teams are locked** for every church without
+  `members_teams_unlocked` (only the migrated first church has it); they
+  show as "Not available yet". This branches on a church setting, not on
+  which church it is.
+- **Public pages** (Directory, Church Homepage) show only what the church
+  chose to publish: name, logo, contact details, About, Public
+  announcements, Occasion Types offered publicly and, if switched on,
+  upcoming services as date, time and kind. Never lineups, songs, chord
+  sheets, lyrics, members or teams.
+- **Requests from outside the church** (owner, question 2): a church
+  setting, "Accept requests from people outside the church", on by
+  default. Any signed-in account may then request an Occasion Type the
+  church offers publicly; the overlap check and approval are as in A5.
+- **Nothing is lost in the migration.** The first church keeps every row;
+  every existing user, active or not, gets a Membership there with exactly
+  the roles in their `user.groups`, which is left in place so the
+  migration can be reversed.
+
+### Tests
+
+- Every test from before 9B still passes after slice a, before any
+  scoping.
+- The backend: permissions follow the Current Church; a user with roles in
+  Church A holds none of them while working in Church B; switching to a
+  church without a Membership is refused; `user.groups` grants nothing.
+- The migration (`MigrationExecutor`): back to before 9B, build data,
+  forward again; every row has the first church, row counts are unchanged,
+  and each user's Membership roles equal their old groups.
+- Isolation: a user in Church A gets 404 on every detail, edit and action
+  page for Church B's records, found automatically from the URL patterns
+  that take an object ID; Church B's rows are missing from every list and
+  every form's choices.
+- `seed_church` gives a new church its own default roles, theme tags,
+  template, settings rows and switched-off Occasion Types, and leaves the
+  other churches unchanged.
+- The worker and notifications use each row's church: analysis uses that
+  church's tags and trusted artists, and only that church's approvers are
+  notified.
+- Public pages: anonymous visitors, people from other churches and members
+  see only the published fields; a request from outside the church is
+  refused when the church turns the setting off.
+
+---
+
 ## Phase 9: learning to rank
 
 ### Keep Spotify data out of training

@@ -19,10 +19,13 @@ announcements and song history. The full description is the
 - **Songs come from Spotify, searched per theme** (adviser request).
   Spotify data is never model input: the models read only lyrics from
   LRCLIB, the church's theme text and the church's own tags.
-- **Small scale.** One church per installation and five users or fewer,
-  which is also what Spotify's Development Mode allows.
+- **Many churches, one installation** (since 2026-11-25,
+  [[0014-church-platform]]). Each church registers itself and keeps its
+  own data, roles and settings. Spotify's Development Mode allows five
+  Spotify-connected users across the whole platform, the main scaling
+  limit.
 - **Lyrics and chord sheets are copyrighted.** They stay private to the
-  installation's users.
+  church's users.
 
 ## Scope
 
