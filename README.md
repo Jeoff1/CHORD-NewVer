@@ -48,6 +48,7 @@ Copy-Item .env.example .env      # then fill in DJANGO_SECRET_KEY and DB_PASSWOR
 python manage.py migrate
 python manage.py download_models # the song analysis models, about 120 MB
 python manage.py createsuperuser
+git config core.hooksPath scripts/git-hooks  # run the checks before every commit
 ```
 
 The database is `chord_newver_db`, owned by `chord_user` with permission to
@@ -81,7 +82,9 @@ everything else still works.
 
 It runs Ruff (lint and format), Django's checks, a missing-migrations check,
 and the full test suite in 4 parallel processes, with coverage. The tests
-never use the network or load a real model.
+never use the network or load a real model. With the Git hook turned on
+(last line of Getting started), the full check runs before every commit
+that changes more than docs, and a failure stops the commit.
 
 ## Project layout
 

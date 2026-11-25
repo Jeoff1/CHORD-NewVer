@@ -185,4 +185,6 @@ Secrets stay out of the vault.
 - Run `.\scripts\check.ps1 -Quick` (lint, format, Django checks,
   migrations, every test in parallel; about a minute) after each change.
   Run the full `.\scripts\check.ps1` (the same, with coverage) before
-  committing or calling work done; it must pass.
+  committing or calling work done; it must pass. The Git pre-commit hook
+  (`scripts/git-hooks/`) runs it on every commit that changes more than
+  docs; never bypass it with `--no-verify`.

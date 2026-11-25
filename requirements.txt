@@ -27,6 +27,7 @@ python-dotenv==1.2.4
 PyYAML==6.0.3
 ruff==0.17.4
 sqlparse==0.6.1
+tblib==3.2.2
 tokenizers==0.23.3
 tqdm==4.70.1
 truststore==0.10.5

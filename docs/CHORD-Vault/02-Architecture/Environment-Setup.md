@@ -139,6 +139,12 @@ working:
 ```
 
 Use `-Quick` after each change; run the full check before every commit.
+The Git hook `scripts/git-hooks/pre-commit` does that automatically once
+turned on (step 7 of the setup below): it runs the full check before each
+commit and stops the commit if anything fails. A commit that changes only
+`docs/` or `*.md` files skips it. The hook checks the files on disk, so
+unstaged changes count too. Git never copies hooks between clones, so each
+clone turns it on once.
 A `-Tests` run never counts as done on its own. `-Workers N` changes the
 number of test processes (default 4; each opens its own database
 connection, and memory is tight while C: is nearly full).
@@ -158,3 +164,5 @@ replaced without a prompt.
    `DB_PASSWORD` (and the Spotify keys, when available).
 5. `python manage.py migrate`.
 6. `python manage.py download_models`.
+7. `git config core.hooksPath scripts/git-hooks`, so the full check runs
+   before every commit.

@@ -2,6 +2,21 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Checks run automatically before each commit; tblib
+
+Tooling only; the app is unchanged.
+
+- `scripts/git-hooks/pre-commit` runs `scripts/check.ps1` (the full check)
+  before every commit and stops the commit on a failure. Commits that
+  change only `docs/` or `*.md` files skip it. Each clone turns it on once
+  with `git config core.hooksPath scripts/git-hooks` (README and
+  [[Environment-Setup]] step 7). `.gitattributes` keeps the hook's line
+  endings LF so it runs on every system.
+- `tblib==3.2.2` added to `requirements.txt`. Without it, a test that
+  fails inside a parallel worker stopped the whole run and showed no line
+  number or other failures (tried with a throwaway failing test).
+- **Checks:** the hook ran the full check on this commit (see below).
+
 ## 2026-11-25: Faster checks (about 11 minutes down to about 70 seconds)
 
 Tooling only; the app is unchanged.
