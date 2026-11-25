@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from apps.accounts.models import Role, User
 from apps.audit.models import AuditEvent
-from apps.core.testing import TEST_PASSWORD, make_administrator, make_user
+from apps.core.testing import TEST_PASSWORD, first_church, make_administrator, make_user
 
 
 def edit_data(user, **overrides):
@@ -14,7 +14,7 @@ def edit_data(user, **overrides):
         "last_name": user.last_name,
         "email": user.email,
         "is_active": "on" if user.is_active else "",
-        "roles": [role.pk for role in user.roles],
+        "roles": [role.pk for role in user.roles_in(first_church())],
     }
     data.update(overrides)
     return {key: value for key, value in data.items() if value != ""}
@@ -79,7 +79,7 @@ class UserCreateTests(TestCase):
         )
         self.assertRedirects(response, reverse("accounts:user_list"))
         user = User.objects.get(username="treasurer")
-        self.assertEqual(list(user.roles), [team])
+        self.assertEqual(list(user.roles_in(first_church())), [team])
         self.assertTrue(user.check_password(TEST_PASSWORD))
         event = AuditEvent.objects.get(action=AuditEvent.Action.CREATED)
         self.assertEqual(event.changes["Roles"], ["", "Team Member"])
@@ -101,7 +101,7 @@ class UserUpdateTests(TestCase):
         office = Role.objects.get(key="office_staff")
         response = self.client.post(self.url(user), edit_data(user, roles=[office.pk]))
         self.assertRedirects(response, reverse("accounts:user_list"))
-        self.assertEqual(list(user.roles), [office])
+        self.assertEqual(list(user.roles_in(first_church())), [office])
         self.assertIn(other_group, user.groups.all())
         event = AuditEvent.objects.get()
         self.assertEqual(event.changes["Roles"], ["Team Member", "Office Staff"])
@@ -126,7 +126,9 @@ class UserUpdateTests(TestCase):
             self.url(self.admin), edit_data(self.admin, roles=[])
         )
         self.assertContains(response, "only active administrator")
-        self.assertEqual(list(self.admin.roles)[0].key, "administrator")
+        self.assertEqual(
+            list(self.admin.roles_in(first_church()))[0].key, "administrator"
+        )
 
     def test_administrator_role_can_move_when_another_exists(self):
         make_administrator()
@@ -137,7 +139,7 @@ class UserUpdateTests(TestCase):
         self.assertRedirects(
             response, reverse("accounts:user_list"), fetch_redirect_response=False
         )
-        self.assertEqual(list(self.admin.roles), [])
+        self.assertEqual(list(self.admin.roles_in(first_church())), [])
 
 
 class UserSetPasswordTests(TestCase):

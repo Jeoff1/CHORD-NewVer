@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -15,8 +15,12 @@ from django.views.generic import DetailView, TemplateView, UpdateView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
-from apps.church.models import ChurchProfile
 from apps.church.modules import ModuleRequiredMixin
+from apps.church.scoping import (
+    ChurchFormKwargsMixin,
+    ChurchScopedMixin,
+    get_in_church,
+)
 from apps.core.music import Feel
 from apps.core.views import FilteredListView, FormPageMixin
 
@@ -59,7 +63,7 @@ def _percent(score):
     return None if score is None else round(score * 100)
 
 
-class SongListView(SongsMixin, FilteredListView):
+class SongListView(ChurchScopedMixin, SongsMixin, FilteredListView):
     permission_required = "songs.view_song"
     model = Song
     template_name = "songs/song_list.html"
@@ -99,7 +103,7 @@ class SongListView(SongsMixin, FilteredListView):
             feel_choices=Feel.choices,
             lyrics_choices=Song.LyricsStatus.choices,
             known_choices=self.KNOWN.items(),
-            tags=ThemeTag.objects.active(),
+            tags=ThemeTag.objects.for_church(self.request.church).active(),
         )
         return context
 
@@ -112,7 +116,9 @@ class SongDetailView(SongsMixin, DetailView):
     template_name = "songs/song_detail.html"
 
     def get_queryset(self):
-        return Song.objects.select_related("reviewed_by")
+        return Song.objects.for_church(self.request.church).select_related(
+            "reviewed_by"
+        )
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -180,7 +186,9 @@ def song_sheet_context(song, request, *, base_key="", sheet_url=None):
     return context
 
 
-class SongUpdateView(SongsMixin, FormPageMixin, UpdateView):
+class SongUpdateView(
+    ChurchScopedMixin, ChurchFormKwargsMixin, SongsMixin, FormPageMixin, UpdateView
+):
     permission_required = "songs.change_song"
     model = Song
     form_class = SongForm
@@ -225,7 +233,7 @@ class SongCheckAgainView(SongsMixin, View):
     permission_required = "songs.change_song"
 
     def post(self, request, public_id):
-        song = get_object_or_404(Song, public_id=public_id)
+        song = get_in_church(Song, request.church, public_id=public_id)
         before = snapshot(song, pool.SONG_AUDIT_FIELDS)
         pool.check_again(song)
         record_change(
@@ -266,9 +274,9 @@ class SpotifySearchView(SongsMixin, TemplateView):
             context["problem"] = str(error)
             return context
         in_pool = dict(
-            Song.objects.filter(
-                spotify_id__in=[track.spotify_id for track in tracks]
-            ).values_list("spotify_id", "public_id")
+            Song.objects.for_church(self.request.church)
+            .filter(spotify_id__in=[track.spotify_id for track in tracks])
+            .values_list("spotify_id", "public_id")
         )
         context["tracks"] = [(track, in_pool.get(track.spotify_id)) for track in tracks]
         return context
@@ -284,7 +292,11 @@ class SpotifyAddView(SongsMixin, View):
             return redirect("songs:spotify_search")
         spotify_id = form.cleaned_data["spotify_id"]
         # A Spotify safeguard: never fetch a track the pool already has.
-        known = Song.objects.filter(spotify_id=spotify_id).first()
+        known = (
+            Song.objects.for_church(request.church)
+            .filter(spotify_id=spotify_id)
+            .first()
+        )
         if known is not None:
             messages.info(request, f"{known} is already in the song pool.")
             return redirect(song_url(known))
@@ -293,7 +305,7 @@ class SpotifyAddView(SongsMixin, View):
         except SpotifyError as error:
             messages.error(request, str(error))
             return redirect("songs:spotify_search")
-        song, created = pool.add_from_spotify(track)
+        song, created = pool.add_from_spotify(track, request.church)
         if created:
             record_change(
                 request.user,
@@ -326,7 +338,7 @@ class WorshipCheckSettingsView(SongsMixin, FormPageMixin, UpdateView):
     )
 
     def get_object(self, queryset=None):
-        return WorshipCheckSettings.load()
+        return WorshipCheckSettings.load(self.request.church)
 
     def get_success_url(self):
         return reverse("songs:check_settings")
@@ -344,7 +356,7 @@ class WorshipCheckSettingsView(SongsMixin, FormPageMixin, UpdateView):
             AuditEvent.Action.CHANGED,
             diff(self.before, snapshot(self.object, CHECK_SETTINGS_AUDIT_FIELDS)),
         )
-        changed = apply_check_rules()
+        changed = apply_check_rules(self.request.church)
         messages.success(
             self.request,
             f"The worship check settings were saved; {changed} "
@@ -365,7 +377,11 @@ class ChordSheetFormView(SongsMixin, View):
     template_name = "songs/chordsheet_form.html"
 
     def dispatch(self, request, *args, **kwargs):
-        self.song = get_object_or_404(Song, public_id=kwargs.get("public_id"))
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        self.song = get_in_church(
+            Song, request.church, public_id=kwargs.get("public_id")
+        )
         return super().dispatch(request, *args, **kwargs)
 
     def has_permission(self):
@@ -480,7 +496,9 @@ class _SheetDecisionView(SongsMixin, View):
     permission_required = sheets.APPROVE
 
     def post(self, request, pk):
-        sheet = get_object_or_404(ChordSheet.objects.select_related("song"), pk=pk)
+        sheet = get_in_church(
+            ChordSheet.objects.select_related("song"), request.church, pk=pk
+        )
         fallback = reverse("songs:detail", kwargs={"public_id": sheet.song.public_id})
         before = snapshot(sheet, sheets.SHEET_AUDIT_FIELDS)
         try:
@@ -611,6 +629,14 @@ class SpotifyCallbackView(SpotifyAccountMixin, View):
         next_url = pending["next"] or home
         if church and not request.user.has_perm(CHURCH_SETTINGS):
             raise PermissionDenied
+        if church and pending["church_id"] != request.church.pk:
+            # Started in another church: never connect it to this one.
+            messages.error(
+                request,
+                "That Spotify sign-in was started in another church. Connect "
+                "again from this church's settings.",
+            )
+            return redirect(home)
         code = request.GET.get("code", "")
         if request.GET.get("error") or not code:
             messages.info(request, "Spotify wasn't connected.")
@@ -639,18 +665,21 @@ class SpotifyCallbackView(SpotifyAccountMixin, View):
         return redirect(next_url)
 
     def finish_church(self, request, code, next_url):
-        had_account = connections.church_account() is not None
+        had_account = connections.church_account(request.church) is not None
         try:
             connections.finish_church(
                 request.user,
                 code,
                 connections.redirect_uri(request),
                 SpotifyClient.from_settings(),
+                request.church,
             )
         except SpotifyError as error:
             messages.error(request, f"Spotify wasn't connected: {error}")
             return redirect(church_spotify_url())
-        _audit_church_account(request.user, connected=True, before=had_account)
+        _audit_church_account(
+            request.user, request.church, connected=True, before=had_account
+        )
         messages.success(
             request,
             "The church's Spotify account is connected. Lineup playlists are "
@@ -659,14 +688,14 @@ class SpotifyCallbackView(SpotifyAccountMixin, View):
         return redirect(next_url)
 
 
-def _audit_church_account(user, *, connected, before):
+def _audit_church_account(user, church, *, connected, before):
     """The audit trail records only whether it is connected, never tokens."""
     if before == connected:
         return
     states = ["Not connected", "Connected"]
     record_change(
         user,
-        ChurchProfile.load(),
+        church,
         AuditEvent.Action.CHANGED,
         {"Church Spotify account": [states[before], states[connected]]},
     )
@@ -738,7 +767,7 @@ class ChurchSpotifyView(ChurchSpotifyMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(
             configured=connections.is_configured(),
-            account=connections.church_account(),
+            account=connections.church_account(self.request.church),
             sections=[(key, SECTIONS[key][0]) for key in SECTION_ORDER],
             section="spotify",
         )
@@ -761,8 +790,10 @@ class ChurchSpotifyConnectView(ChurchSpotifyMixin, View):
 
 class ChurchSpotifyDisconnectView(ChurchSpotifyMixin, View):
     def post(self, request):
-        if connections.disconnect_church():
-            _audit_church_account(request.user, connected=False, before=True)
+        if connections.disconnect_church(request.church):
+            _audit_church_account(
+                request.user, request.church, connected=False, before=True
+            )
             messages.success(
                 request,
                 "The church's Spotify account was disconnected. Lineup "

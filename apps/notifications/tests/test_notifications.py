@@ -4,7 +4,7 @@ signed in sees their own, whichever Modules are switched on."""
 from django.test import TestCase
 from django.urls import reverse
 
-from apps.core.testing import complete_setup, make_user
+from apps.core.testing import complete_setup, first_church, make_user
 from apps.notifications.models import Notification
 from apps.notifications.services import notify, unread_count
 
@@ -17,11 +17,11 @@ class NotificationPageTests(TestCase):
         complete_setup()
         self.person = make_user(roles=["church_member"])
         self.other = make_user(roles=["church_member"])
-        notify([self.person], "Your request was approved.", LINK)
+        notify([self.person], "Your request was approved.", LINK, church=first_church())
         self.note = Notification.objects.get(recipient=self.person)
 
     def test_the_navigation_shows_the_unread_count(self):
-        notify([self.person], "Another note")
+        notify([self.person], "Another note", church=first_church())
         self.client.force_login(self.person)
         page = self.client.get(reverse("home"))
         self.assertContains(page, 'aria-label="2 unread"')
@@ -29,7 +29,7 @@ class NotificationPageTests(TestCase):
         self.assertNotContains(self.client.get(reverse("home")), "unread")
 
     def test_the_list_shows_only_your_own(self):
-        notify([self.other], "Someone else's note")
+        notify([self.other], "Someone else's note", church=first_church())
         self.client.force_login(self.person)
         page = self.client.get(NOTIFICATIONS)
         self.assertContains(page, "Your request was approved.")
@@ -45,7 +45,12 @@ class NotificationPageTests(TestCase):
         self.assertTrue(self.note.is_read)
 
     def test_an_outside_link_is_never_followed(self):
-        notify([self.person], "Odd note", "https://example.com/elsewhere")
+        notify(
+            [self.person],
+            "Odd note",
+            "https://example.com/elsewhere",
+            church=first_church(),
+        )
         odd = Notification.objects.get(text="Odd note")
         self.client.force_login(self.person)
         response = self.client.post(
@@ -54,7 +59,7 @@ class NotificationPageTests(TestCase):
         self.assertRedirects(response, NOTIFICATIONS)
 
     def test_mark_all_as_read(self):
-        notify([self.person], "Another note")
+        notify([self.person], "Another note", church=first_church())
         self.client.force_login(self.person)
         page = self.client.get(NOTIFICATIONS)
         self.assertContains(page, "Mark all as read")
@@ -73,7 +78,7 @@ class NotificationPageTests(TestCase):
         self.assertFalse(self.note.is_read)
 
     def test_a_note_without_a_link_just_marks_read(self):
-        notify([self.person], "Plain note")
+        notify([self.person], "Plain note", church=first_church())
         plain = Notification.objects.get(text="Plain note")
         self.client.force_login(self.person)
         response = self.client.post(
@@ -82,8 +87,8 @@ class NotificationPageTests(TestCase):
         self.assertRedirects(response, NOTIFICATIONS)
 
     def test_a_key_updates_the_unread_note_instead_of_adding_one(self):
-        notify([self.person], "First", key="k")
-        notify([self.person], "Second", key="k")
+        notify([self.person], "First", key="k", church=first_church())
+        notify([self.person], "Second", key="k", church=first_church())
         self.assertEqual(
             list(Notification.objects.filter(key="k").values_list("text", flat=True)),
             ["Second"],

@@ -30,14 +30,20 @@ from .forms import AppearanceForm, ProfileForm, RoleForm, UserCreateForm, UserEd
 from .models import Membership, Role, User
 from .roles import managed_permissions
 
-USER_AUDIT_FIELDS = {
-    "Username": "username",
-    "First name": "first_name",
-    "Last name": "last_name",
-    "Email": "email",
-    "Active": "is_active",
-    "Roles": lambda user: [role.title for role in user.roles],
-}
+
+def user_audit_fields(church):
+    """What the audit trail records about a user; their roles are those in
+    ``church`` (decision 0014)."""
+    return {
+        "Username": "username",
+        "First name": "first_name",
+        "Last name": "last_name",
+        "Email": "email",
+        "Active": "is_active",
+        "Roles": lambda user: [role.title for role in user.roles_in(church)],
+    }
+
+
 ROLE_AUDIT_FIELDS = {
     "Name": "title",
     "Description": "description",
@@ -83,7 +89,7 @@ class ProfileView(LoginRequiredMixin, FormPageMixin, UpdateView):
 
     def get_object(self, queryset=None):
         user = self.request.user
-        self.before = snapshot(user, USER_AUDIT_FIELDS)
+        self.before = snapshot(user, user_audit_fields(self.request.church))
         return user
 
     def get_links(self):
@@ -95,7 +101,10 @@ class ProfileView(LoginRequiredMixin, FormPageMixin, UpdateView):
             self.request.user,
             self.object,
             AuditEvent.Action.CHANGED,
-            diff(self.before, snapshot(self.object, USER_AUDIT_FIELDS)),
+            diff(
+                self.before,
+                snapshot(self.object, user_audit_fields(self.request.church)),
+            ),
         )
         messages.success(self.request, "Your profile was saved.")
         return response
@@ -218,7 +227,7 @@ class UserCreateView(StaffMixin, FormPageMixin, CreateView):
             self.request.user,
             self.object,
             AuditEvent.Action.CREATED,
-            diff({}, snapshot(self.object, USER_AUDIT_FIELDS)),
+            diff({}, snapshot(self.object, user_audit_fields(self.request.church))),
         )
         messages.success(self.request, f"User {self.object.username} was added.")
         return response
@@ -227,12 +236,17 @@ class UserCreateView(StaffMixin, FormPageMixin, CreateView):
 HISTORY_FIELDS = ("Roles", "Active")
 
 
-def role_history(user):
-    """The user's role and active-status changes from the Audit Trail,
-    newest first: (event, [(label, before, after), ...])."""
-    events = AuditEvent.objects.filter(
-        content_type=ContentType.objects.get_for_model(User), object_id=str(user.pk)
-    ).select_related("actor")
+def role_history(user, church):
+    """The user's role and active-status changes in ``church`` from the
+    Audit Trail, newest first: (event, [(label, before, after), ...])."""
+    events = (
+        AuditEvent.objects.for_church(church)
+        .filter(
+            content_type=ContentType.objects.get_for_model(User),
+            object_id=str(user.pk),
+        )
+        .select_related("actor")
+    )
     history = []
     for event in events:
         rows = [
@@ -278,12 +292,12 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs["editor"] = self.request.user
         kwargs["church"] = self.request.church
-        self.before = snapshot(self.object, USER_AUDIT_FIELDS)
+        self.before = snapshot(self.object, user_audit_fields(self.request.church))
         return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["role_history"] = role_history(self.object)
+        context["role_history"] = role_history(self.object, self.request.church)
         return context
 
     def form_valid(self, form):
@@ -305,7 +319,10 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
             )
         with transaction.atomic():
             response = super().form_valid(form)
-            changes = diff(self.before, snapshot(self.object, USER_AUDIT_FIELDS))
+            changes = diff(
+                self.before,
+                snapshot(self.object, user_audit_fields(self.request.church)),
+            )
             for consequence in found:
                 if choice == "end":
                     consequence.end(self.request.user)
@@ -338,9 +355,9 @@ class UserHistoryView(StaffMixin, TemplateView):
         context.update(
             person=person,
             sign_ins=SignInEvent.objects.filter(user=person)[:HISTORY_LENGTH],
-            changes=AuditEvent.objects.filter(actor=person).select_related(
-                "content_type"
-            )[:HISTORY_LENGTH],
+            changes=AuditEvent.objects.for_church(self.request.church)
+            .filter(actor=person)
+            .select_related("content_type")[:HISTORY_LENGTH],
             history_length=HISTORY_LENGTH,
             can_edit=self.request.user.has_perm("accounts.change_user"),
         )

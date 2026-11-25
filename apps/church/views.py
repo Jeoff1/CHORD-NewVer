@@ -108,7 +108,11 @@ class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["instance"] = profile = ChurchProfile.load()
+        # A fresh copy: a form that doesn't validate mustn't change
+        # request.church for the rest of the request.
+        kwargs["instance"] = profile = ChurchProfile.objects.get(
+            pk=self.request.church.pk
+        )
         self.before = snapshot(profile, profile_audit_fields())
         return kwargs
 

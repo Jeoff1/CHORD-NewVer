@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.urls import reverse
 
 from apps.core.custom_fields import CustomFieldsFormMixin, FieldType
@@ -53,7 +54,12 @@ class MemberForm(CustomFieldsFormMixin, forms.ModelForm):
         }
         field_classes = {"user": UserChoiceField}
 
-    def __init__(self, *args, can_view_private=True, for_import=False, **kwargs):
+    def __init__(
+        self, *args, church, can_view_private=True, for_import=False, **kwargs
+    ):
+        """``church`` is the Current Church: only its people's accounts can
+        be linked (decision 0014). An import has no account field, and
+        passes None."""
         super().__init__(*args, **kwargs)
         member = self.instance
         if not can_view_private:
@@ -69,9 +75,15 @@ class MemberForm(CustomFieldsFormMixin, forms.ModelForm):
             member.relationship_id
         )
         self.fields["household"].queryset = Household.objects.all()
-        self.fields["user"].queryset = get_user_model().objects.filter(
-            is_active=True, member__isnull=True
-        ) | get_user_model().objects.filter(pk=member.user_id)
+        linkable = Q(
+            is_active=True,
+            member__isnull=True,
+            memberships__church=church,
+            memberships__is_active=True,
+        )
+        self.fields["user"].queryset = (
+            get_user_model().objects.filter(linkable | Q(pk=member.user_id)).distinct()
+        )
         if member.pk:
             self.fields["photo"].widget = PrivateFileInput(
                 url=reverse("members:photo", kwargs={"public_id": member.public_id})
@@ -148,14 +160,11 @@ class MemberAccountsForm(forms.Form):
         "on each user's page.",
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, church, **kwargs):
         from apps.accounts.models import Role
 
         super().__init__(*args, **kwargs)
-        from apps.church.models import ChurchProfile
-
-        # Members is open only to the first church for now (Phase 9B).
-        roles = Role.objects.filter(church=ChurchProfile.load()).order_by("title")
+        roles = Role.objects.filter(church=church).order_by("title")
         self.fields["role"].queryset = roles
         default = roles.filter(key="church_member").first()
         if default:

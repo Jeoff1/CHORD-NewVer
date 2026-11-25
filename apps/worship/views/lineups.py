@@ -19,6 +19,7 @@ from django.views.generic import FormView, TemplateView, UpdateView
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.church.scoping import get_in_church
 from apps.core.views import FormPageMixin
 from apps.songs import connections
 from apps.songs.models import ChordSheet, Song
@@ -93,7 +94,9 @@ def playlist_context(lineup, user, tracks):
     personal one is private, so only its owner does (Design-Decisions,
     Phase 7; decision 0011)."""
     configured = connections.is_configured()
-    church = configured and connections.church_account() is not None
+    church = (
+        configured and connections.church_account(lineup.service.church) is not None
+    )
     may_save = playlists.may_save(user)
     on_church = bool(lineup.spotify_playlist_id) and (
         lineup.spotify_playlist_on_church_account
@@ -251,7 +254,9 @@ class SwapView(ItemMixin, TemplateView):
         return context
 
     def post(self, request, public_id, pk):
-        song = get_object_or_404(Song, public_id=request.POST.get("song") or None)
+        song = get_in_church(
+            Song, request.church, public_id=request.POST.get("song") or None
+        )
         if self.audited(lineups.swap, self.item, song):
             messages.success(request, f"{song.title} took its place.")
         return redirect(self.lineup_url())
@@ -281,7 +286,9 @@ class AddSongView(LineupMixin, TemplateView):
         return context
 
     def post(self, request, public_id):
-        song = get_object_or_404(Song, public_id=request.POST.get("song") or None)
+        song = get_in_church(
+            Song, request.church, public_id=request.POST.get("song") or None
+        )
         slot = None
         if request.POST.get("slot"):
             slot = get_object_or_404(
@@ -445,9 +452,9 @@ class SavePlaylistView(LineupMixin, View):
         if not lineup.is_confirmed:
             word = request.church.label_set.get("lineup").lower()
             messages.error(request, f"Confirm the {word} before saving it to Spotify.")
-        elif connections.church_account() is None and not connections.is_connected(
-            request.user
-        ):
+        elif connections.church_account(
+            request.church
+        ) is None and not connections.is_connected(request.user):
             messages.info(
                 request, "Connect your Spotify account first, then save again."
             )

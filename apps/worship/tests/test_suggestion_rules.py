@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from apps.church.models import ChurchProfile
 from apps.core.music import Feel
-from apps.core.testing import make_service, make_song
+from apps.core.testing import first_church, make_service, make_song
 from apps.songs.ml.keyword import KeywordEngine
 from apps.songs.models import Song, ThemeTag
 from apps.worship import ranking, sequencing, versions
@@ -178,6 +178,7 @@ class RankingTests(TestCase):
         grace = ThemeTag.objects.get(name="Grace")
         hope = ThemeTag.objects.get(name="Hope")
         season = Season.objects.create(
+            church=first_church(),
             name="Harvest time",
             starts_on=datetime.date(2026, 11, 1),
             ends_on=datetime.date(2026, 12, 31),
@@ -321,7 +322,9 @@ class SequencingTests(TestCase):
         self.assertEqual(self.placed(ranked, praise)["Praise"][0], "Mid")
 
     def test_a_slot_without_a_feel_charges_nothing_for_an_unknown_feel(self):
-        template = ServiceTemplate.objects.create(name="Prayer night")
+        template = ServiceTemplate.objects.create(
+            church=first_church(), name="Prayer night"
+        )
         any_slot = TemplateSlot.objects.create(template=template, name="Song")
         ranked = [item("Unknown", "", 0.5), item("Slow", Feel.SLOW, 0.49)]
         self.assertEqual(self.placed(ranked, [any_slot]), {"Song": ("Unknown", "")})
@@ -342,7 +345,9 @@ class SequencingTests(TestCase):
         self.assertEqual(list(placed), ["Opening"])
 
     def test_a_slot_without_a_feel_takes_any_song(self):
-        template = ServiceTemplate.objects.create(name="Prayer night")
+        template = ServiceTemplate.objects.create(
+            church=first_church(), name="Prayer night"
+        )
         any_slot = TemplateSlot.objects.create(template=template, name="Song")
         placed = self.placed([item("Any", Feel.SLOW)], slots=[any_slot])
         self.assertEqual(placed, {"Song": ("Any", "")})

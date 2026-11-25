@@ -27,10 +27,11 @@ SONG_AUDIT_FIELDS = {
 }
 
 
-def add_from_spotify(track):
-    """The pool's song for a Spotify track, added if new.
+def add_from_spotify(track, church):
+    """The church's song for a Spotify track, added to its pool if new.
     Returns ``(song, created)``."""
     return Song.objects.get_or_create(
+        church=church,
         spotify_id=track.spotify_id,
         defaults={
             "title": track.title[:300],
@@ -45,16 +46,48 @@ def primary_artist(artist):
     return artist.split(",")[0].strip()
 
 
+# Lookups whose answer another church may reuse (decision 0014, question 1).
+SETTLED_LOOKUPS = (
+    Song.LyricsStatus.FOUND,
+    Song.LyricsStatus.MISSING,
+    Song.LyricsStatus.INSTRUMENTAL,
+)
+
+
+def earlier_lookup(song):
+    """Another church's settled LRCLIB lookup of the same Spotify track, or
+    None. LRCLIB asks for every result to be cached, so CHORD asks it once
+    per track across the platform (decision 0014): the copy stays inside
+    the installation, and is never shown to the other church."""
+    if not song.spotify_id:
+        return None
+    return (
+        Song.objects.exclude(church_id=song.church_id)
+        .filter(spotify_id=song.spotify_id, lyrics_status__in=SETTLED_LOOKUPS)
+        .exclude(lyrics_checked_at=None)
+        .order_by("-lyrics_checked_at")
+        .first()
+    )
+
+
 def fetch_lyrics(song, client):
-    """Look up the song's lyrics and save what was found. A song whose
-    lyrics change is analysed again."""
-    try:
-        result = client.lookup(
-            song.title, primary_artist(song.artist), song.album, song.length_seconds
-        )
-        status, lyrics = result.status, result.lyrics
-    except LyricsError:
-        status, lyrics = Song.LyricsStatus.FAILED, song.lyrics
+    """Look up the song's lyrics and save what was found. A track another
+    church already looked up reuses that answer instead of asking LRCLIB
+    again. A song whose lyrics change is analysed again."""
+    earlier = earlier_lookup(song)
+    if earlier is not None:
+        status, lyrics = earlier.lyrics_status, earlier.lyrics
+    else:
+        try:
+            result = client.lookup(
+                song.title,
+                primary_artist(song.artist),
+                song.album,
+                song.length_seconds,
+            )
+            status, lyrics = result.status, result.lyrics
+        except LyricsError:
+            status, lyrics = Song.LyricsStatus.FAILED, song.lyrics
     if lyrics != song.lyrics:
         song.analysed_at = None
     song.lyrics, song.lyrics_status = lyrics, status

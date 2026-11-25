@@ -12,6 +12,7 @@ from apps.accounts.models import Role, User
 from apps.audit.models import AuditEvent, SignInEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_administrator,
     make_member,
     make_user,
@@ -91,7 +92,7 @@ class BatchAccountsTests(TestCase):
         rosa = User.objects.get(username="rosa.lim")
         self.assertEqual((rosa.first_name, rosa.last_name), ("Rosa", "Lim"))
         self.assertEqual(rosa.email, "rosa@example.com")
-        self.assertEqual(list(rosa.roles), [self.church_member])
+        self.assertEqual(list(rosa.roles_in(first_church())), [self.church_member])
         self.assertTrue(rosa.must_change_password)
         self.rosa.refresh_from_db()
         self.assertEqual(self.rosa.user, rosa)
@@ -100,7 +101,9 @@ class BatchAccountsTests(TestCase):
     def test_the_chosen_role_is_given(self):
         team = Role.objects.get(key="team_member")
         self.create(self.rosa, role=team)
-        self.assertEqual(list(User.objects.get(username="rosa.lim").roles), [team])
+        self.assertEqual(
+            list(User.objects.get(username="rosa.lim").roles_in(first_church())), [team]
+        )
 
     def test_usernames_stay_unique(self):
         twin = make_member(first_name="Rosa", last_name="Lim")
@@ -178,6 +181,7 @@ class FirstSignInTests(TestCase):
             Member.objects.filter(pk=member.pk),
             Role.objects.get(key="church_member"),
             make_administrator(),
+            first_church(),
         )
         self.user, self.password = row.user, row.password
         self.client.post(

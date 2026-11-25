@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 
+from apps.church.scoping import church_scoped_manager
 from apps.core.models import TimeStampedModel
 
 
@@ -29,6 +30,9 @@ class Notification(TimeStampedModel):
     # A repeat with the same key replaces an unread one instead of piling up.
     key = models.CharField(max_length=100, blank=True)
     read_at = models.DateTimeField(null=True, blank=True)
+
+    objects = church_scoped_manager()
+    church_path = "church"
 
     class Meta:
         ordering = ["-created_at", "-pk"]

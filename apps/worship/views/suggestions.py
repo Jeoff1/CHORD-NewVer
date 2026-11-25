@@ -188,7 +188,7 @@ class SuggestionSettingsView(WorshipMixin, FormPageMixin, UpdateView):
     success_url = reverse_lazy("worship:suggestion_settings")
 
     def get_object(self, queryset=None):
-        return SuggestionSettings.load()
+        return SuggestionSettings.load(self.request.church)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

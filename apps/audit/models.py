@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from apps.church.scoping import church_scoped_manager
+
 
 class AuditEvent(models.Model):
     """One change to one object, written by ``apps.audit.services``.
@@ -38,6 +40,9 @@ class AuditEvent(models.Model):
     # {"field label": [old value, new value]}, values as display strings.
     changes = models.JSONField(default=dict, blank=True)
     occurred_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    objects = church_scoped_manager()
+    church_path = "church"
 
     class Meta:
         ordering = ["-occurred_at", "-pk"]

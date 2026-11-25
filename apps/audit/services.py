@@ -65,11 +65,34 @@ def diff(before, after):
     }
 
 
-def record_change(actor, obj, action, changes=None):
-    """Write one audit event. Returns it, or None for a change with no edits."""
+def church_of(obj):
+    """The church a record belongs to, or None (decision 0014): the church
+    itself, its own ``church``, or its parent's through ``church_path``."""
+    from apps.church.models import ChurchProfile
+
+    if isinstance(obj, ChurchProfile):
+        return obj
+    path = getattr(obj, "church_path", None)
+    if path is None:
+        return getattr(obj, "church", None) if hasattr(obj, "church_id") else None
+    for name in path.split("__"):
+        obj = getattr(obj, name, None)
+        if obj is None:
+            return None
+    return obj
+
+
+def record_change(actor, obj, action, changes=None, *, church=None):
+    """Write one audit event. Returns it, or None for a change with no edits.
+
+    The event belongs to ``church``, else the record's own church, else the
+    church the actor is working in (for records with none of their own,
+    such as an account or a member)."""
     if action == AuditEvent.Action.CHANGED and not changes:
         return None
+    church = church or church_of(obj) or getattr(actor, "current_church", None)
     return AuditEvent.objects.create(
+        church=church,
         actor=actor if getattr(actor, "is_authenticated", False) else None,
         action=action,
         content_type=ContentType.objects.get_for_model(obj),

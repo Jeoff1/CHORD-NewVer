@@ -23,12 +23,13 @@ class Use:
     day: datetime.date  # the service's date, in the church's time zone
 
 
-def uses(*, before=None, until=None, start=None, end=None):
-    """Every song in a confirmed lineup of a service that isn't cancelled,
-    oldest first. ``before`` and ``until`` are moments: services starting
-    before ``before``, or at or before ``until``. ``start`` and ``end`` are
-    dates in the church's time zone, both included."""
-    items = LineupItem.objects.filter(
+def uses(church, *, before=None, until=None, start=None, end=None):
+    """Every song in a confirmed lineup of a service of ``church`` that
+    isn't cancelled, oldest first. ``before`` and ``until`` are moments:
+    services starting before ``before``, or at or before ``until``.
+    ``start`` and ``end`` are dates in the church's time zone, both
+    included."""
+    items = LineupItem.objects.for_church(church).filter(
         lineup__status=Lineup.Status.CONFIRMED,
         lineup__service__is_cancelled=False,
     )
@@ -39,7 +40,7 @@ def uses(*, before=None, until=None, start=None, end=None):
     rows = items.values_list(
         "song_id", "lineup__service_id", "lineup__service__starts_at"
     ).order_by("lineup__service__starts_at", "lineup__service_id", "position")
-    zone = scheduling.church_time_zone()
+    zone = scheduling.church_time_zone(church)
     found = [
         Use(song_id, service_id, timezone.localtime(starts_at, zone).date())
         for song_id, service_id, starts_at in rows

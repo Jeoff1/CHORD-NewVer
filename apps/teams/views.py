@@ -11,6 +11,7 @@ from django.views import View
 from django.views.generic import FormView, ListView, TemplateView
 
 from apps.church.modules import ModuleRequiredMixin, is_enabled
+from apps.church.scoping import get_in_church
 from apps.core.people import display_name
 from apps.core.views import FormPageMixin
 from apps.worship.models import WorshipService
@@ -261,8 +262,9 @@ class SwapActionView(TeamMemberMixin, View):
 class ServiceTeamMixin(TeamsMixin, PermissionRequiredMixin):
     @cached_property
     def service(self):
-        return get_object_or_404(
+        return get_in_church(
             WorshipService.objects.select_related("template"),
+            self.request.church,
             public_id=self.kwargs["public_id"],
         )
 
@@ -346,7 +348,9 @@ class RemoveAssignmentView(ServiceTeamMixin, View):
 def service_team_context(service, user):
     """What the service page shows of the team: for people who may see the
     team, while Teams is switched on."""
-    if not is_enabled("teams") or not user.has_perm("teams.view_assignment"):
+    if not is_enabled("teams", service.church) or not user.has_perm(
+        "teams.view_assignment"
+    ):
         return {}
     team = list(rostering.service_team(service))
     serving = [a for a in team if a.reply in rostering.SERVING]

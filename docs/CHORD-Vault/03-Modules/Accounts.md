@@ -22,8 +22,8 @@ the core; it can't be switched off. App: `apps/accounts`.
   (`user.groups` and permissions given straight to a user count for
   nothing). Code without a request asks `roles.users_with_perm(church,
   perm)`; `roles.administrators(church)` lists a church's administrators.
-  *Phase 9B, slice a only:* a user object with no `current_church` (not
-  loaded through a request) is answered for the first church.
+  A user object with no `current_church` (loaded outside a request)
+  holds no permissions.
 - **Role** (`accounts.Role`, built on Django's Group;
   [[0003-editable-roles]]): belongs to one church
   ([[0014-church-platform]]), with a `title` (the name people see, unique

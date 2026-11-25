@@ -11,22 +11,22 @@ from django.utils import timezone
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
-from apps.church.models import ChurchProfile
 
 from .models import WorshipService
 
 MAX_WEEKS_AHEAD = 26
 
 
-def church_time_zone():
-    return zoneinfo.ZoneInfo(ChurchProfile.load().time_zone)
+def church_time_zone(church):
+    return zoneinfo.ZoneInfo(church.time_zone)
 
 
-def format_moment(value):
-    """A date and time in the church's wording style: Nov 22, 2026 9:00 AM."""
+def format_moment(value, church):
+    """A date and time in the church's wording style and time zone:
+    Nov 22, 2026 9:00 AM."""
     if value is None:
         return ""
-    local = timezone.localtime(value, church_time_zone())
+    local = timezone.localtime(value, church_time_zone(church))
     hour = local.hour % 12 or 12
     return f"{local:%b} {local.day}, {local.year} {hour}:{local:%M %p}"
 
@@ -34,8 +34,8 @@ def format_moment(value):
 SERVICE_AUDIT_FIELDS = {
     "Name": "name",
     "Template": "template",
-    "Date and time": lambda service: format_moment(service.starts_at),
-    "Rehearsal": lambda service: format_moment(service.rehearsal_at),
+    "Date and time": lambda service: format_moment(service.starts_at, service.church),
+    "Rehearsal": lambda service: format_moment(service.rehearsal_at, service.church),
     "Notes": "notes",
     "Headcount": "attendance",
     "Cancelled": "is_cancelled",
@@ -69,7 +69,7 @@ def schedule_ahead(template, weeks, actor, *, today=None):
     """
     if not template.repeats_weekly:
         raise ValueError("The template has no usual day and time.")
-    zone = church_time_zone()
+    zone = church_time_zone(template.church)
     today = today or timezone.localdate(timezone=zone)
     first = today + datetime.timedelta(days=(template.weekday - today.weekday()) % 7)
     created = []
@@ -77,7 +77,9 @@ def schedule_ahead(template, weeks, actor, *, today=None):
         day = first + datetime.timedelta(weeks=week)
         starts_at = datetime.datetime.combine(day, template.start_time, tzinfo=zone)
         service, is_new = WorshipService.objects.get_or_create(
-            template=template, starts_at=starts_at, defaults={"name": template.name}
+            template=template,
+            starts_at=starts_at,
+            defaults={"name": template.name, "church": template.church},
         )
         if is_new:
             record_change(
@@ -100,10 +102,10 @@ class CalendarDay:
     bookings: list = field(default_factory=list)
 
 
-def month_grid(year, month, services, *, bookings=(), today=None):
+def month_grid(year, month, services, church, *, bookings=(), today=None):
     """Weeks of ``CalendarDay`` for one month, Sunday first, holding the
-    given services and other bookings on their local dates."""
-    zone = church_time_zone()
+    given services and other bookings on the church's local dates."""
+    zone = church_time_zone(church)
     today = today or timezone.localdate(timezone=zone)
     by_date, others = {}, {}
     for service in services:
@@ -130,9 +132,9 @@ def month_grid(year, month, services, *, bookings=(), today=None):
     ]
 
 
-def month_bounds(year, month):
+def month_bounds(year, month, church):
     """The aware datetimes covering every day the month's grid shows."""
-    zone = church_time_zone()
+    zone = church_time_zone(church)
     weeks = calendar.Calendar(firstweekday=calendar.SUNDAY).monthdatescalendar(
         year, month
     )

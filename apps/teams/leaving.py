@@ -58,7 +58,10 @@ def end_assignments(person, actor):
 def leaving_team(user, lost_permissions):
     """The Consequence for the user form, or None when the person stays on
     the team, Teams is off, or they have no coming assignments."""
-    if rostering.TEAM_PERMISSION not in lost_permissions or not is_enabled("teams"):
+    church = rostering.teams_church()
+    if rostering.TEAM_PERMISSION not in lost_permissions or not is_enabled(
+        "teams", church
+    ):
         return None
     items = [describe(assignment) for assignment in coming_assignments(user)]
     if not items:

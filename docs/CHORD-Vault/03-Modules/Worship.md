@@ -198,7 +198,8 @@ Spotify safeguards in `apps/songs`):
   holds a PostgreSQL advisory lock (`apps/core/locks.py`) while it runs,
   so a second worker, or `process_songs`, refuses to start. Runs left
   "running" by a stopped worker are marked failed when it starts.
-- **`manage.py seed_hymns`** adds 23 public-domain hymns to the pool:
+- **`manage.py seed_hymns --church <slug>`** adds 23 public-domain
+  hymns to that church's pool:
   general hymns, eight Christmas carols, four slow hymns and two Easter
   hymns. Every text was first published before 1913, and every author and
   translator died more than 70 years ago. Running it again adds only

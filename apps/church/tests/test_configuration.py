@@ -10,20 +10,21 @@ from apps.church.labels import Labels
 from apps.church.middleware import CurrentChurchMiddleware
 from apps.church.models import ChurchProfile
 from apps.church.modules import MODULES, ModuleRequiredMixin, is_enabled
+from apps.core.testing import first_church, make_user
 
 
 class ChurchProfileTests(TestCase):
     def test_an_installation_starts_with_one_church(self):
         self.assertEqual(ChurchProfile.objects.count(), 1)
         first = ChurchProfile.objects.get()
-        self.assertEqual(ChurchProfile.load().pk, first.pk)
+        self.assertEqual(first_church().pk, first.pk)
         self.assertTrue(first.members_teams_unlocked)
 
     def test_a_second_church_is_its_own_record(self):
-        first = ChurchProfile.load()
+        first = first_church()
         other = ChurchProfile.objects.create(name="Grace Chapel")
         self.assertEqual(ChurchProfile.objects.count(), 2)
-        self.assertEqual(ChurchProfile.load().pk, first.pk)
+        self.assertEqual(first_church().pk, first.pk)
         self.assertEqual(other.slug, "grace-chapel")
         self.assertFalse(other.members_teams_unlocked)
 
@@ -33,7 +34,7 @@ class ChurchProfileTests(TestCase):
         self.assertEqual(again.slug, "grace-chapel-2")
 
     def test_defaults_are_neutral(self):
-        profile = ChurchProfile.load()
+        profile = first_church()
         self.assertEqual(profile.disabled_modules, [])
         self.assertEqual(profile.labels, {})
         self.assertFalse(profile.setup_completed)
@@ -52,7 +53,7 @@ class LabelsTests(TestCase):
         self.assertEqual(labels.get("member", plural=True), "Members")
 
     def test_template_tag(self):
-        profile = ChurchProfile.load()
+        profile = first_church()
         profile.labels = {"sermon": {"singular": "Message", "plural": "Messages"}}
         profile.save()
         template = Template(
@@ -60,7 +61,10 @@ class LabelsTests(TestCase):
             "{% label 'sermon' plural=True %}|"
             "{% label 'sermon' as word %}{{ word|lower }}"
         )
-        self.assertEqual(template.render(Context()), "Message|Messages|message")
+        context = Context({"labels": profile.label_set})
+        self.assertEqual(template.render(context), "Message|Messages|message")
+        # Without a church (a visitor), the neutral defaults.
+        self.assertEqual(template.render(Context()), "Sermon|Sermons|sermon")
 
 
 class SampleModuleView(ModuleRequiredMixin, View):
@@ -72,16 +76,16 @@ class SampleModuleView(ModuleRequiredMixin, View):
 
 class ModuleSwitchingTests(TestCase):
     def setUp(self):
-        self.profile = ChurchProfile.load()
+        self.profile = first_church()
         self.request = RequestFactory().get("/announcements/")
         self.request.church = self.profile
 
     def test_every_module_starts_switched_on(self):
-        self.assertTrue(all(is_enabled(m.code) for m in MODULES))
+        self.assertTrue(all(is_enabled(m.code, self.profile) for m in MODULES))
 
     def test_unknown_module_is_an_error(self):
         with self.assertRaises(ValueError):
-            is_enabled("unknown_module")
+            is_enabled("unknown_module", first_church())
 
     def test_switched_on_module_page_opens(self):
         response = SampleModuleView.as_view()(self.request)
@@ -119,7 +123,7 @@ class ModuleSwitchingTests(TestCase):
 
 class TimeZoneMiddlewareTests(TestCase):
     def test_uses_the_church_time_zone(self):
-        profile = ChurchProfile.load()
+        profile = first_church()
         profile.time_zone = "America/New_York"
         profile.save()
         seen = {}
@@ -130,8 +134,21 @@ class TimeZoneMiddlewareTests(TestCase):
             return HttpResponse()
 
         request = RequestFactory().get("/")
-        request.user = AnonymousUser()
+        request.user = make_user()
         request.session = {}
         CurrentChurchMiddleware(view)(request)
         self.assertEqual(seen["tz"], "America/New_York")
         self.assertEqual(seen["church"].pk, profile.pk)
+
+    def test_a_visitor_has_no_church(self):
+        seen = {}
+
+        def view(request):
+            seen["church"] = request.church
+            return HttpResponse()
+
+        request = RequestFactory().get("/")
+        request.user = AnonymousUser()
+        request.session = {}
+        CurrentChurchMiddleware(view)(request)
+        self.assertIsNone(seen["church"])

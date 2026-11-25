@@ -1,8 +1,11 @@
 """Rules for Announcements (Design-Decisions, Phase 8, decided 2026-11-23).
 
-- "Everyone" means everyone signed in. "One service's team" means that
+- Everything is inside one church (decision 0014). "Everyone" means
+  everyone working in that church. "One service's team" means that
   service's assigned people whose reply is Pending or Accepted, and is
   offered (and shown) only while Teams is switched on.
+- An announcement to everyone may be Public: it then also shows on the
+  church's homepage.
 - Posting is the permission ``announcements.add_announcement``. Reading
   needs none.
 - No expiry: only the author archives an announcement, which hides it.
@@ -13,7 +16,6 @@ from django.utils import timezone
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
-from apps.church.models import ChurchProfile
 from apps.church.modules import is_enabled
 from apps.core.people import display_name
 from apps.worship.models import WorshipService
@@ -29,6 +31,9 @@ AUDIT_FIELDS = {
     "To": lambda announcement: audience_label(announcement),
     "Author": lambda announcement: display_name(announcement.author),
     "Archived": "is_archived",
+    "Shown on the homepage": lambda announcement: (
+        announcement.visibility == Announcement.Visibility.PUBLIC
+    ),
 }
 
 
@@ -36,8 +41,8 @@ class AnnouncementRefused(Exception):
     """An announcement the rules don't allow; the message is for the person."""
 
 
-def teams_on():
-    return is_enabled("teams")
+def teams_on(church):
+    return is_enabled("teams", church)
 
 
 def audience_label(announcement):
@@ -46,19 +51,22 @@ def audience_label(announcement):
     return "Everyone"
 
 
-def team_services():
-    """Services whose team can be written to: coming and not cancelled."""
-    return WorshipService.objects.filter(
-        is_cancelled=False, starts_at__gt=timezone.now()
-    ).order_by("starts_at")
+def team_services(church):
+    """The church's services whose team can be written to: coming and not
+    cancelled."""
+    return (
+        WorshipService.objects.for_church(church)
+        .filter(is_cancelled=False, starts_at__gt=timezone.now())
+        .order_by("starts_at")
+    )
 
 
-def visible_to(user):
-    """The announcements ``user`` sees, newest first: every unarchived one
-    for everyone, and, while Teams is on, those for the teams they are on
-    (Pending or Accepted) or wrote."""
+def visible_to(user, church):
+    """The announcements of ``church`` that ``user`` sees, newest first:
+    every unarchived one for everyone, and, while Teams is on, those for
+    the teams they are on (Pending or Accepted) or wrote."""
     shown = Q(audience=Audience.EVERYONE)
-    if teams_on():
+    if teams_on(church):
         shown |= Q(audience=Audience.SERVICE_TEAM) & (
             Q(
                 service__assignments__person=user,
@@ -67,26 +75,44 @@ def visible_to(user):
             | Q(author=user)
         )
     return (
-        Announcement.objects.filter(archived_at__isnull=True)
+        Announcement.objects.for_church(church)
+        .filter(archived_at__isnull=True)
         .filter(shown)
         .select_related("author", "service")
         .distinct()
     )
 
 
-def post(author, *, title, body, audience, service=None):
+def post(
+    author,
+    church,
+    *,
+    title,
+    body,
+    audience,
+    service=None,
+    visibility=Announcement.Visibility.INTERNAL,
+):
     if audience == Audience.SERVICE_TEAM:
-        word = ChurchProfile.load().label_set.get("worship_service").lower()
-        if not teams_on():
+        word = church.label_set.get("worship_service").lower()
+        if not teams_on(church):
             raise AnnouncementRefused(
                 f"Announcements to one {word}'s team need the Teams module."
             )
-        if service is None or not team_services().filter(pk=service.pk).exists():
+        if service is None or not team_services(church).filter(pk=service.pk).exists():
             raise AnnouncementRefused(f"Choose a coming {word} that isn't cancelled.")
+        # Only an announcement to everyone may show on the homepage.
+        visibility = Announcement.Visibility.INTERNAL
     else:
         service = None
     announcement = Announcement.objects.create(
-        title=title, body=body, audience=audience, service=service, author=author
+        church=church,
+        title=title,
+        body=body,
+        audience=audience,
+        service=service,
+        author=author,
+        visibility=visibility,
     )
     record_change(
         author,

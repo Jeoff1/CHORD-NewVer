@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db import models
 
 from apps.church.models import church_foreign_key
+from apps.church.scoping import church_scoped_manager
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.worship.models import WorshipService
 
@@ -16,6 +17,10 @@ class Announcement(PublicIdModel, TimeStampedModel):
     class Audience(models.TextChoices):
         EVERYONE = "everyone", "Everyone"
         SERVICE_TEAM = "service_team", "One service's team"
+
+    class Visibility(models.TextChoices):
+        INTERNAL = "internal", "The church only"
+        PUBLIC = "public", "Also on the church's homepage"
 
     church = church_foreign_key()
     title = models.CharField(max_length=120)
@@ -34,6 +39,14 @@ class Announcement(PublicIdModel, TimeStampedModel):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="+"
     )
     archived_at = models.DateTimeField(null=True, blank=True)
+    # Phase 9B (decision 0014): a Public announcement to everyone also shows
+    # on the church's public homepage.
+    visibility = models.CharField(
+        max_length=10, choices=Visibility.choices, default=Visibility.INTERNAL
+    )
+
+    objects = church_scoped_manager()
+    church_path = "church"
 
     class Meta:
         ordering = ["-created_at", "-pk"]

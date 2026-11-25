@@ -12,6 +12,7 @@ from apps.accounts.models import Role
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_administrator,
     make_service,
     make_song,
@@ -268,7 +269,7 @@ class SuggestionSettingsTests(SuggestionViewTestCase):
         return data
 
     def test_the_recalibrated_defaults(self):
-        options = SuggestionSettings.load()
+        options = SuggestionSettings.load(first_church())
         self.assertEqual(
             options.weights(),
             {
@@ -285,7 +286,7 @@ class SuggestionSettingsTests(SuggestionViewTestCase):
         self.assertEqual(self.client.get(SETTINGS).status_code, 200)
         response = self.client.post(SETTINGS, self.data())
         self.assertRedirects(response, SETTINGS)
-        options = SuggestionSettings.load()
+        options = SuggestionSettings.load(first_church())
         self.assertEqual(options.search_genres, "worship, gospel")
         self.assertEqual(options.genres(), ["worship", "gospel"])
         self.assertEqual(options.market, "PH")
@@ -300,7 +301,7 @@ class SuggestionSettingsTests(SuggestionViewTestCase):
         response = self.client.post(SETTINGS, self.data(market="P1", weight_season=11))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "two-letter country code")
-        self.assertEqual(SuggestionSettings.load().market, "")
+        self.assertEqual(SuggestionSettings.load(first_church()).market, "")
 
     def test_others_may_not_change_them(self):
         for user in (self.pastor, self.team_member):

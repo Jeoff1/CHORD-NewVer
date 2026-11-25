@@ -38,7 +38,13 @@ import logging
 from django.db import transaction
 from django.utils import timezone
 
-from apps.songs.analysis import MAX_TAGS, TAG_THRESHOLD, analyse_song, tag_label
+from apps.songs.analysis import (
+    MAX_TAGS,
+    TAG_THRESHOLD,
+    analyse_song,
+    tag_label,
+    trusted_names,
+)
 from apps.songs.cleanup import clean_tracks
 from apps.songs.lyrics import LrclibClient
 from apps.songs.ml import EngineUnavailable, get_engine
@@ -71,11 +77,9 @@ def planning_closed(service):
     """Why songs can't be planned for ``service`` any more, or "" when they
     can: a cancelled or past service gets no suggestions and no new lineup
     (workflow review F7)."""
-    from apps.church.models import ChurchProfile
-
     if not (service.is_cancelled or service.has_started):
         return ""
-    word = ChurchProfile.load().label_set.get("worship_service").lower()
+    word = service.church.label_set.get("worship_service").lower()
     if service.is_cancelled:
         return f"This {word} is cancelled, so no songs are planned for it."
     return f"This {word} has already taken place, so no songs are planned for it."
@@ -153,8 +157,11 @@ class _Progress:
 
 def execute(run, *, spotify=None, lyrics_client=None, engine=None):
     """Carry out a claimed run to the end; it finishes done or failed.
-    Times in its messages are in the church's time zone."""
-    with timezone.override(scheduling.church_time_zone()):
+    Everything it reads and adds belongs to the service's church: its
+    Suggestion Settings, Theme Tags, songs and seasons. Times in its
+    messages are in that church's time zone."""
+    church = run.service.church
+    with timezone.override(scheduling.church_time_zone(church)):
         try:
             _execute(run, spotify, lyrics_client, engine)
         except (RunFailed, SpotifyError, EngineUnavailable) as error:
@@ -187,7 +194,8 @@ def _execute(run, spotify, lyrics_client, engine):
         raise RunFailed(
             "The service's theme was removed, so there is nothing to match."
         )
-    options = SuggestionSettings.load()
+    church = service.church
+    options = SuggestionSettings.load(church)
     run.weights = options.weights()
     run.save(update_fields=["weights"])
 
@@ -195,7 +203,7 @@ def _execute(run, spotify, lyrics_client, engine):
     engine = engine or get_engine()
     text = theme.text()
     theme_vector = engine.embed([text])[0]
-    progress(5, "Reading the theme", theme_tags=theme_tag_ids(text, engine))
+    progress(5, "Reading the theme", theme_tags=theme_tag_ids(text, engine, church))
 
     note = ""
     if run.use_spotify:
@@ -212,7 +220,7 @@ def _execute(run, spotify, lyrics_client, engine):
             _record_spotify_usage(run, spotify)
         _fetch_lyrics(new_songs, lyrics_client or LrclibClient(), progress)
 
-    _analyse_pool(engine, progress)
+    _analyse_pool(church, engine, progress)
 
     progress(92, "Ranking the songs")
     suggestions = _rank(run, theme_vector, options, engine)
@@ -245,9 +253,9 @@ def _record_spotify_usage(run, spotify):
     run.save(update_fields=["spotify_calls", "spotify_limits"])
 
 
-def theme_tag_ids(text, engine):
-    """The Theme Tags a theme is about, best first."""
-    tags = list(ThemeTag.objects.active())
+def theme_tag_ids(text, engine, church):
+    """The church's Theme Tags a theme is about, best first."""
+    tags = list(ThemeTag.objects.for_church(church).active())
     if not tags:
         return []
     scores = engine.score(text, [tag_label(tag) for tag in tags])
@@ -294,7 +302,7 @@ def _find_on_spotify(run, theme, options, spotify, engine, progress):
     cleaned = clean_tracks(tracks)
     added, new_songs = 0, []
     for track in cleaned:
-        song, created = add_from_spotify(track)
+        song, created = add_from_spotify(track, run.service.church)
         added += created
         if song.lyrics_status == Song.LyricsStatus.PENDING:
             new_songs.append(song)
@@ -314,11 +322,13 @@ def _fetch_lyrics(songs, client, progress):
         fetch_lyrics(song, client)
 
 
-def _analyse_pool(engine, progress):
-    """Analyse every song with lyrics whose analysis is missing or from
-    another engine (embeddings from different engines don't compare)."""
+def _analyse_pool(church, engine, progress):
+    """Analyse every song of the church with lyrics whose analysis is
+    missing or from another engine (embeddings from different engines don't
+    compare)."""
     stale = list(
-        Song.objects.filter(lyrics_status=Song.LyricsStatus.FOUND)
+        Song.objects.for_church(church)
+        .filter(lyrics_status=Song.LyricsStatus.FOUND)
         .exclude(analysed_with=engine.name, analysed_at__isnull=False)
         .order_by("pk")
     )
@@ -332,14 +342,17 @@ def _rank(run, theme_vector, options, engine):
     service = run.service
     day = service.local_date
     songs = (
-        Song.objects.accepted()
+        Song.objects.for_church(service.church)
+        .accepted()
         .filter(analysed_with=engine.name)
         .exclude(embedding=[])
         .prefetch_related("tags")
     )
     seasons = [
         season
-        for season in Season.objects.active().prefetch_related("tags")
+        for season in Season.objects.for_church(service.church)
+        .active()
+        .prefetch_related("tags")
         if season.contains(day)
     ]
     ranked = ranking.rank(
@@ -353,7 +366,7 @@ def _rank(run, theme_vector, options, engine):
         window_weeks=options.repeat_window_weeks,
         similarity_range=getattr(engine, "similarity_range", (0.0, 1.0)),
     )
-    distinct = versions.group(ranked)
+    distinct = versions.group(ranked, trusted_names(service.church))
     kept = distinct[: options.suggestions_kept]
     placements = {
         p.index: p

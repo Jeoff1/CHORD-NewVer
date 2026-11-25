@@ -90,8 +90,8 @@ class CheckRules:
     unlisted_pass_mark: float = 0.9
 
     @classmethod
-    def load(cls):
-        row = WorshipCheckSettings.load()
+    def load(cls, church):
+        row = WorshipCheckSettings.load(church)
         return cls(row.pass_mark, row.unlisted_rule, row.unlisted_pass_mark)
 
 
@@ -202,31 +202,35 @@ def analyse(lyrics, *, tags, trusted=False, engine=None, rules=None):
     )
 
 
-def trusted_names():
+def trusted_names(church):
     return {
         name.strip().lower()
-        for name in TrustedArtist.objects.active().values_list("name", flat=True)
+        for name in TrustedArtist.objects.for_church(church)
+        .active()
+        .values_list("name", flat=True)
     }
 
 
-def is_trusted(artist, names=None):
-    """Whether any of the song's artists is on the church's active list."""
-    names = trusted_names() if names is None else names
+def is_trusted(artist, names):
+    """Whether any of the song's artists is in ``names``, the church's
+    active list (``trusted_names``)."""
     credited = {name.strip().lower() for name in artist.split(",") if name.strip()}
     return bool(credited & names)
 
 
 def analyse_song(song, engine=None):
-    """Analyse a song's lyrics and save the result. Returns the Analysis,
-    or None when the song has no lyrics to read."""
+    """Analyse a song's lyrics with its own church's Theme Tags, Trusted
+    Artists and check rules, and save the result. Returns the Analysis, or
+    None when the song has no lyrics to read."""
     if song.lyrics_status != Song.LyricsStatus.FOUND or not song.lyrics.strip():
         return None
+    church = song.church
     result = analyse(
         song.lyrics,
-        tags=ThemeTag.objects.active(),
-        trusted=is_trusted(song.artist),
+        tags=ThemeTag.objects.for_church(church).active(),
+        trusted=is_trusted(song.artist, trusted_names(church)),
         engine=engine,
-        rules=CheckRules.load(),
+        rules=CheckRules.load(church),
     )
     # The analysis took a while: lock the row and re-read whether a person
     # reviewed the song meanwhile, and save only the analysis fields, so a
@@ -259,17 +263,20 @@ def analyse_song(song, engine=None):
     return result
 
 
-def apply_check_rules():
-    """Decide the Worship Check again for every analysed song nobody has
-    reviewed, from its stored model score, after the church changes its
-    rules or its Trusted Artists. No model runs. Returns how many songs
-    changed."""
-    rules = CheckRules.load()
-    names = trusted_names()
-    active_tags = set(ThemeTag.objects.active().values_list("pk", flat=True))
+def apply_check_rules(church):
+    """Decide the Worship Check again for every analysed song of ``church``
+    nobody has reviewed, from its stored model score, after the church
+    changes its rules or its Trusted Artists. No model runs. Returns how
+    many songs changed."""
+    rules = CheckRules.load(church)
+    names = trusted_names(church)
+    active_tags = set(
+        ThemeTag.objects.for_church(church).active().values_list("pk", flat=True)
+    )
     changed = 0
     songs = (
-        Song.objects.filter(reviewed_at=None)
+        Song.objects.for_church(church)
+        .filter(reviewed_at=None)
         .exclude(worship_model_score=None)
         .exclude(analysed_at=None)
     )

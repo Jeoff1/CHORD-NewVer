@@ -13,10 +13,11 @@ There are general hymns, Christmas carols, slow hymns and Easter hymns, so
 themes across the year find something.
 """
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
+from apps.church.models import ChurchProfile
 from apps.songs.models import Song
 
 # (title, author and year, words)
@@ -334,13 +335,15 @@ Hallelujah! Christ arose!""",
 ]
 
 
-def seed_hymns():
-    """Add the hymns the pool doesn't have yet; returns how many were added."""
+def seed_hymns(church):
+    """Add the hymns the church's pool doesn't have yet; returns how many
+    were added."""
     added = 0
     now = timezone.now()
     with transaction.atomic():
         for title, author, words in HYMNS:
             _, created = Song.objects.get_or_create(
+                church=church,
                 title=title,
                 artist=author,
                 spotify_id="",
@@ -356,12 +359,25 @@ def seed_hymns():
 
 class Command(BaseCommand):
     help = (
-        "Add public-domain hymns to the song pool, to try suggestions without "
-        "Spotify. Running it again adds only hymns that are missing."
+        "Add public-domain hymns to one church's song pool, to try suggestions "
+        "without Spotify. Running it again adds only hymns that are missing."
     )
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--church",
+            required=True,
+            help="The church's slug, as in /churches/<slug>/.",
+        )
+
     def handle(self, *args, **options):
-        added = seed_hymns()
+        church = ChurchProfile.objects.filter(slug=options["church"]).first()
+        if church is None:
+            slugs = ", ".join(ChurchProfile.objects.values_list("slug", flat=True))
+            raise CommandError(
+                f"No church with the slug {options['church']!r}. Churches: {slugs}."
+            )
+        added = seed_hymns(church)
         self.stdout.write(
             self.style.SUCCESS(
                 f"Added {added} of {len(HYMNS)} public-domain hymns. Run the search "

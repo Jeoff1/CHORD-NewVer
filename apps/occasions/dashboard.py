@@ -20,7 +20,8 @@ def attention(request):
     ):
         return []
     pending = list(
-        OccasionRequest.objects.filter(status=OccasionRequest.Status.PENDING)
+        OccasionRequest.objects.for_church(request.church)
+        .filter(status=OccasionRequest.Status.PENDING)
         .select_related("occasion_type")
         .order_by("starts_at")
     )
@@ -47,7 +48,8 @@ def coming_up(request):
     ):
         return []
     occasions = (
-        Occasion.objects.filter(starts_at__gte=timezone.now())
+        Occasion.objects.for_church(request.church)
+        .filter(starts_at__gte=timezone.now())
         .select_related("occasion_type")
         .order_by("starts_at")[:5]
     )

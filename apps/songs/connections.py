@@ -29,8 +29,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_variables
 
-from apps.church.models import first_church_id
-
 from .models import ChurchSpotifyAccount, SpotifyConnection
 from .spotify import SpotifyConnectionLost, SpotifyError, SpotifyUnauthorized
 
@@ -103,13 +101,14 @@ def redirect_uri(request):
 
 def start(request, client, next_url, *, purpose=PERSONAL):
     """Remember a new ``state``, what is being connected (the person's own
-    account or the church's) and where to go afterwards in the session, and
-    return the Spotify page where the person agrees."""
+    account or the church's, and which church) and where to go afterwards
+    in the session, and return the Spotify page where the person agrees."""
     state = secrets.token_urlsafe(32)
     request.session[SESSION_KEY] = {
         "state": state,
         "next": next_url,
         "purpose": purpose,
+        "church_id": request.church.pk if purpose == CHURCH else None,
     }
     scopes = CHURCH_SCOPES if purpose == CHURCH else SCOPES
     return client.authorize_url(redirect_uri(request), state, scopes)
@@ -126,6 +125,7 @@ def take_pending(request, state):
     return {
         "next": pending.get("next") or "",
         "purpose": CHURCH if pending.get("purpose") == CHURCH else PERSONAL,
+        "church_id": pending.get("church_id"),
     }
 
 
@@ -160,41 +160,33 @@ def disconnect(user):
 # --- The Church Spotify Account ---------------------------------------------------
 
 
-def _church_id(church):
-    # Without a church, the first church (Phase 9B, slice a only).
-    return church.pk if church is not None else first_church_id()
-
-
-def church_account(church=None):
+def church_account(church):
     """The church's Church Spotify Account, or None when it isn't connected
     (or connecting isn't set up)."""
     if not is_configured():
         return None
-    return ChurchSpotifyAccount.objects.filter(church_id=_church_id(church)).first()
+    return ChurchSpotifyAccount.objects.filter(church=church).first()
 
 
 @sensitive_variables("tokens", "code")
-def finish_church(user, code, uri, client, church=None):
+def finish_church(user, code, uri, client, church):
     """Save the tokens, encrypted, as the church's Church Spotify Account
     (replacing any earlier one); ``user`` connected it."""
     tokens = client.exchange_code(code, uri)
     if not tokens.refresh_token:
         raise SpotifyError("Spotify sent no refresh token; try connecting again.")
-    church_id = _church_id(church)
     account = ChurchSpotifyAccount.objects.filter(
-        church_id=church_id
-    ).first() or ChurchSpotifyAccount(church_id=church_id)
+        church=church
+    ).first() or ChurchSpotifyAccount(church=church)
     _store(account, tokens, timezone.now())
     account.connected_by = user
     account.save()
     return account
 
 
-def disconnect_church(church=None):
+def disconnect_church(church):
     """Forget the church's Church Spotify Account; True when there was one."""
-    deleted, _ = ChurchSpotifyAccount.objects.filter(
-        church_id=_church_id(church)
-    ).delete()
+    deleted, _ = ChurchSpotifyAccount.objects.filter(church=church).delete()
     return bool(deleted)
 
 

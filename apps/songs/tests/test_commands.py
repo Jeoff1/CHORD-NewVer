@@ -8,6 +8,7 @@ from django.db import connections
 from django.test import TestCase
 
 from apps.core.locks import SEARCH_WORKER, LockHeld, advisory_lock
+from apps.core.testing import first_church
 from apps.songs.management.commands.seed_hymns import HYMNS
 from apps.songs.models import Song
 
@@ -21,8 +22,8 @@ def other_session():
 class SeedHymnsTests(TestCase):
     def test_seeds_each_hymn_once_with_its_lyrics_found(self):
         out = StringIO()
-        call_command("seed_hymns", stdout=out)
-        call_command("seed_hymns", stdout=out)
+        call_command("seed_hymns", church=first_church().slug, stdout=out)
+        call_command("seed_hymns", church=first_church().slug, stdout=out)
         hymns = Song.objects.filter(spotify_id="")
         self.assertEqual(hymns.count(), len(HYMNS))
         self.assertIn(f"Added {len(HYMNS)} of {len(HYMNS)}", out.getvalue())
@@ -33,7 +34,7 @@ class SeedHymnsTests(TestCase):
         self.assertIsNone(amazing.analysed_at)
 
     def test_seeded_hymns_are_analysed_like_any_song(self):
-        call_command("seed_hymns", stdout=StringIO())
+        call_command("seed_hymns", church=first_church().slug, stdout=StringIO())
         call_command("process_songs", stdout=StringIO())
         hymns = Song.objects.filter(spotify_id="")
         self.assertFalse(hymns.filter(analysed_at=None).exists())

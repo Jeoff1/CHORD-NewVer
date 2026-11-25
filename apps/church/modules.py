@@ -30,6 +30,10 @@ class Module:
     # and the dashboard list a Module only for people who can open it
     # (Phase 9A, A1).
     view_permission: str | tuple[str, ...] | None = None
+    # False while the Module's records aren't kept apart per church yet
+    # (Phase 9B, decision 0014): only a church with
+    # ``members_teams_unlocked`` may switch it on.
+    platform_ready: bool = True
 
     def can_open(self, user):
         if self.view_permission is None:
@@ -48,6 +52,7 @@ MODULES = (
         url_name="members:list",
         label_key="member",
         view_permission="members.view_member",
+        platform_ready=False,
     ),
     Module(
         "worship",
@@ -67,6 +72,7 @@ MODULES = (
         # My schedule is for the team. Notifications are core and have
         # their own link in the navigation.
         view_permission="teams.view_assignment",
+        platform_ready=False,
     ),
     Module(
         "occasions",
@@ -93,20 +99,29 @@ MODULES_BY_CODE = {module.code: module for module in MODULES}
 MODULE_CHOICES = [(module.code, module.name) for module in MODULES]
 
 
-def is_enabled(code, profile=None):
-    """Whether the Module ``code`` is switched on for this church."""
+def is_available(module, profile):
+    """Whether ``profile``'s church may use ``module`` at all."""
+    return module.platform_ready or profile.members_teams_unlocked
+
+
+def is_enabled(code, profile):
+    """Whether the Module ``code`` is switched on for the church
+    ``profile``. Without a church, no Module is."""
     if code not in MODULES_BY_CODE:
         raise ValueError(f"Unknown module: {code}")
     if profile is None:
-        from .models import ChurchProfile
-
-        profile = ChurchProfile.load()
+        return False
     switched_off = set(profile.disabled_modules)
+    switched_off.update(m.code for m in MODULES if not is_available(m, profile))
     module = MODULES_BY_CODE[code]
     return code not in switched_off and not switched_off.intersection(module.requires)
 
 
 def enabled_modules(profile):
+    """The Modules switched on for ``profile``. Without a church (the public
+    landing page), every Module, to show what CHORD offers."""
+    if profile is None:
+        return list(MODULES)
     return [m for m in MODULES if is_enabled(m.code, profile)]
 
 
@@ -120,6 +135,8 @@ class ModuleRequiredMixin:
     module = None
 
     def dispatch(self, request, *args, **kwargs):
-        if not is_enabled(self.module, getattr(request, "church", None)):
+        church = getattr(request, "church", None)
+        signing_in_first = church is None and not request.user.is_authenticated
+        if not signing_in_first and not is_enabled(self.module, church):
             raise Http404("This module is switched off.")
         return super().dispatch(request, *args, **kwargs)

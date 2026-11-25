@@ -8,9 +8,8 @@ own, and now answers for the Current Church. Active superusers hold every
 permission (Django checks that before asking any backend).
 
 ``CurrentChurchMiddleware`` sets ``user.current_church`` on each request.
-A user object loaded outside a request has none yet; until Phase 9B slice b
-moves that code to ``users_with_perm(church, ...)``, it is answered for the
-first church.
+A user object loaded outside a request has none, so it holds no
+permissions: code without a request asks ``users_with_perm(church, ...)``.
 """
 
 from django.contrib.auth.backends import ModelBackend
@@ -18,13 +17,7 @@ from django.contrib.auth.models import Permission
 
 
 def church_of(user):
-    church = getattr(user, "current_church", None)
-    if church is None and not hasattr(user, "current_church"):
-        # Phase 9B, slice a only: no request set it (see the module note).
-        from apps.church.models import ChurchProfile
-
-        church = ChurchProfile.load()
-    return church
+    return getattr(user, "current_church", None)
 
 
 class ChurchRoleBackend(ModelBackend):

@@ -5,13 +5,17 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from apps.core.settings_menu import SettingsMenu
-from apps.core.testing import complete_setup, make_administrator, make_user
+from apps.core.testing import (
+    complete_setup,
+    make_administrator,
+    make_user,
+)
 
 
 def menu_for(user, path="/"):
     request = RequestFactory().get(path)
     request.user = user
-    request.church = None
+    request.church = user.current_church
     return SettingsMenu(request)
 
 

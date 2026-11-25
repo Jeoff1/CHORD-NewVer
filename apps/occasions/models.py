@@ -15,6 +15,7 @@ from django.db import models
 from django.utils import timezone
 
 from apps.church.models import church_foreign_key
+from apps.church.scoping import church_scoped_manager
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.setting_lists import ChurchChoiceItem
 from apps.worship.models.schedule import MAX_LENGTH_MINUTES
@@ -78,6 +79,9 @@ class Occasion(PublicIdModel, TimeStampedModel):
     is_cancelled = models.BooleanField(
         "Cancelled", default=False, help_text="A cancelled occasion frees its time."
     )
+
+    objects = church_scoped_manager()
+    church_path = "church"
 
     class Meta:
         ordering = ["starts_at", "pk"]
@@ -153,6 +157,9 @@ class OccasionRequest(PublicIdModel, TimeStampedModel):
         blank=True,
         related_name="request",
     )
+
+    objects = church_scoped_manager()
+    church_path = "church"
 
     class Meta:
         ordering = ["-created_at", "-pk"]

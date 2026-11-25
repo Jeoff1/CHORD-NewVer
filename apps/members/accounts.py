@@ -23,10 +23,9 @@ from django.utils.crypto import get_random_string
 from django.utils.text import slugify
 
 from apps.accounts.models import Membership
-from apps.accounts.views import USER_AUDIT_FIELDS
+from apps.accounts.views import user_audit_fields
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
-from apps.church.models import ChurchProfile
 
 from .models import Member
 from .services import member_audit_fields
@@ -72,9 +71,9 @@ def temporary_password():
     return get_random_string(PASSWORD_LENGTH, PASSWORD_CHARACTERS)
 
 
-def create_accounts(members, role, actor):
-    """Make an account with ``role`` for each of ``members`` that may get
-    one. Returns ``(created, skipped)``; each Created holds the Temporary
+def create_accounts(members, role, actor, church):
+    """Make an account with ``role`` in ``church`` for each of ``members``
+    that may get one. Returns ``(created, skipped)``; each Created holds the Temporary
     Password, which exists nowhere else."""
     User = get_user_model()
     created, skipped = [], []
@@ -97,18 +96,14 @@ def create_accounts(members, role, actor):
             )
             user.must_change_password = True
             user.save(update_fields=["must_change_password"])
-            # Members is open only to the first church for now (Phase 9B,
-            # decision 0014), so batch accounts join that church.
-            membership = Membership.objects.create(
-                user=user, church=ChurchProfile.load()
-            )
+            membership = Membership.objects.create(user=user, church=church)
             if role is not None:
                 membership.roles.add(role)
             record_change(
                 actor,
                 user,
                 AuditEvent.Action.CREATED,
-                diff({}, snapshot(user, USER_AUDIT_FIELDS)),
+                diff({}, snapshot(user, user_audit_fields(church))),
             )
             before = snapshot(locked, member_audit_fields())
             locked.user = user

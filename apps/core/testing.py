@@ -121,9 +121,13 @@ def make_user(*, roles=(), perms=(), church=None, **fields):
     roles; ``perms`` takes "app_label.codename" strings, put on a role of the
     user's own in that church (permissions come only from roles, decision
     0014). ``church=False`` makes a user with no membership.
+
+    The user comes back as a request in that church would see them: with
+    ``current_church`` set, so tests may call the rules with it directly. A
+    user loaded again from the database has no Current Church, and so no
+    permissions, as outside any request.
     """
     from apps.accounts.models import Membership, Role
-    from apps.church.models import ChurchProfile
 
     n = next(_sequence)
     fields.setdefault("username", f"user{n}")
@@ -131,8 +135,10 @@ def make_user(*, roles=(), perms=(), church=None, **fields):
     password = fields.pop("password", TEST_PASSWORD)
     user = get_user_model().objects.create_user(password=password, **fields)
     if church is False:
+        user.current_church = None
         return user
-    church = church or ChurchProfile.load()
+    church = church or first_church()
+    user.current_church = church
     membership = Membership.objects.create(user=user, church=church)
     if roles:
         membership.roles.add(*Role.objects.filter(church=church, key__in=roles))
@@ -147,6 +153,16 @@ def make_user(*, roles=(), perms=(), church=None, **fields):
             )
         membership.roles.add(own_role)
     return user
+
+
+def first_church():
+    """The church every installation starts with, which the builders use
+    unless given another. Tests about other churches make one with
+    ``make_church`` and pass it explicitly; the app itself never falls back
+    to any church."""
+    from apps.church.models import ChurchProfile
+
+    return ChurchProfile.objects.order_by("pk").first()
 
 
 def make_church(name="Other Church", **fields):
@@ -164,11 +180,10 @@ def make_administrator(**fields):
     return make_user(roles=["administrator"], **fields)
 
 
-def complete_setup(**profile_fields):
-    """Mark church setup as finished, optionally changing profile fields."""
-    from apps.church.models import ChurchProfile
-
-    profile = ChurchProfile.load()
+def complete_setup(church=None, **profile_fields):
+    """Mark church setup as finished (the first church's, unless given),
+    optionally changing profile fields."""
+    profile = church or first_church()
     profile.setup_completed = True
     for name, value in profile_fields.items():
         setattr(profile, name, value)
@@ -187,8 +202,9 @@ def make_member(**fields):
     return Member.objects.create(**fields)
 
 
-def make_service(**fields):
-    """Create a worship service a week from now, on the default template."""
+def make_service(*, church=None, **fields):
+    """Create a worship service a week from now, on the church's default
+    template (the template's church when a template is given)."""
     import datetime
 
     from django.utils import timezone
@@ -196,8 +212,12 @@ def make_service(**fields):
     from apps.worship.models import ServiceTemplate, WorshipService
 
     n = next(_sequence)
-    if "template" not in fields:
-        fields["template"] = ServiceTemplate.objects.active().first()
+    if "template" in fields:
+        church = church or fields["template"].church
+    else:
+        church = church or first_church()
+        fields["template"] = ServiceTemplate.objects.for_church(church).active().first()
+    fields["church"] = church
     fields.setdefault("name", fields["template"].name)
     fields.setdefault(
         "starts_at", timezone.now() + datetime.timedelta(days=7, minutes=n)
@@ -205,12 +225,13 @@ def make_service(**fields):
     return WorshipService.objects.create(**fields)
 
 
-def make_occasion_type(**fields):
+def make_occasion_type(*, church=None, **fields):
     """An active Occasion Type (Phase 9A, A5) with a unique name, 120
     minutes long."""
     from apps.occasions.models import OccasionType
 
     n = next(_sequence)
+    fields["church"] = church or first_church()
     fields.setdefault("name", f"Occasion type {n}")
     fields.setdefault("length_minutes", 120)
     return OccasionType.objects.create(**fields)
@@ -224,7 +245,10 @@ def make_occasion(occasion_type=None, **fields):
 
     from apps.occasions.models import Occasion
 
-    occasion_type = occasion_type or make_occasion_type()
+    occasion_type = occasion_type or make_occasion_type(
+        church=fields.pop("church", None)
+    )
+    fields["church"] = occasion_type.church
     fields.setdefault("starts_at", timezone.now() + datetime.timedelta(days=14))
     fields.setdefault("length_minutes", occasion_type.length_minutes)
     fields.setdefault("occasion_for", "Ana and Ben")
@@ -239,14 +263,16 @@ def make_theme(service=None, **fields):
     return Theme.objects.create(service=service or make_service(), **fields)
 
 
-def make_song(*, tags=(), **fields):
-    """Create a song in the pool with a unique Spotify ID.
+def make_song(*, tags=(), church=None, **fields):
+    """Create a song in the church's pool (the first church's by default)
+    with a unique Spotify ID.
 
     Lyrics in tests must be invented or public domain (AGENTS.md).
     """
     from apps.songs.models import Song
 
     n = next(_sequence)
+    fields["church"] = church or first_church()
     fields.setdefault("title", f"Song {n}")
     fields.setdefault("artist", "Test Artist")
     fields.setdefault("spotify_id", f"track{n:017d}")

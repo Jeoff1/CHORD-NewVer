@@ -12,6 +12,7 @@ from apps.core.music import Feel
 from apps.core.testing import (
     FakeHttp,
     complete_setup,
+    first_church,
     make_administrator,
     make_song,
     make_user,
@@ -190,7 +191,9 @@ class SongEditTests(SongsTestCase):
         self.assertEqual(event.changes["Feel"], ["", "Slow"])
 
     def test_switched_off_tag_stays_on_a_song_that_has_it(self):
-        old = ThemeTag.objects.create(name="Old theme", is_active=False)
+        old = ThemeTag.objects.create(
+            church=first_church(), name="Old theme", is_active=False
+        )
         song = make_song(tags=[old])
         self.client.force_login(make_user(perms=EDITOR))
         response = self.client.get(url(song, "update"))
@@ -410,7 +413,7 @@ class WorshipCheckSettingsTests(SongsTestCase):
         self.client.force_login(make_user(roles=["worship_leader"]))
         response = self.client.post(CHECK_SETTINGS, self.data(pass_mark=1.5))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(WorshipCheckSettings.load().pass_mark, 0.5)
+        self.assertEqual(WorshipCheckSettings.load(first_church()).pass_mark, 0.5)
 
     def test_others_may_not_change_it(self):
         for role in ("pastoral_staff", "team_member"):

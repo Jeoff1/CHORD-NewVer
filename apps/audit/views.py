@@ -16,7 +16,12 @@ class AuditLogView(LoginRequiredMixin, PermissionRequiredMixin, FilteredListView
         return self.request.GET.get("type", "")
 
     def get_queryset(self):
-        queryset = super().get_queryset().select_related("actor", "content_type")
+        queryset = (
+            super()
+            .get_queryset()
+            .for_church(self.request.church)
+            .select_related("actor", "content_type")
+        )
         type_filter = self.get_type_filter()
         if type_filter.isdigit():
             queryset = queryset.filter(content_type_id=int(type_filter))
@@ -24,7 +29,11 @@ class AuditLogView(LoginRequiredMixin, PermissionRequiredMixin, FilteredListView
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        used = AuditEvent.objects.values_list("content_type", flat=True).distinct()
+        used = (
+            AuditEvent.objects.for_church(self.request.church)
+            .values_list("content_type", flat=True)
+            .distinct()
+        )
         context["type_choices"] = sorted(
             ContentType.objects.filter(pk__in=used),
             key=lambda ct: ct.name,

@@ -33,7 +33,7 @@ def report_links(user):
     links = []
     if user.has_perm(USAGE):
         links.append(("Song usage", reverse("worship:report_song_usage")))
-    if user.has_perm(ATTENDANCE) and reports.has_attendance():
+    if user.has_perm(ATTENDANCE) and reports.has_attendance(user.current_church):
         links.append(("Attendance", reverse("worship:report_attendance")))
     return links
 
@@ -60,8 +60,8 @@ class SongUsageReportView(WorshipMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         form = PeriodForm(request.GET or None)
         start, end = form.period()
-        window = SuggestionSettings.load().repeat_window_weeks
-        rows = reports.song_usage(start, end, window_weeks=window)
+        window = SuggestionSettings.load(request.church).repeat_window_weeks
+        rows = reports.song_usage(request.church, start, end, window_weeks=window)
         if request.GET.get("format") == "csv":
             response = HttpResponse(
                 reports.song_usage_csv(rows, window), content_type="text/csv"
@@ -84,11 +84,11 @@ class AttendanceReportView(WorshipMixin, TemplateView):
     template_name = "worship/report_attendance.html"
 
     def get(self, request, *args, **kwargs):
-        if not reports.has_attendance():
+        if not reports.has_attendance(request.church):
             # A church that never records a headcount has no such report.
             raise Http404("No headcount has been recorded yet.")
         form = PeriodForm(request.GET or None)
-        services = reports.attendance(*form.period())
+        services = reports.attendance(request.church, *form.period())
         counts = [service.attendance for service in services]
         context = self.get_context_data(
             form=form,

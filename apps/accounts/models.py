@@ -37,15 +37,6 @@ class User(AbstractUser):
             memberships__is_active=True,
         )
 
-    @property
-    def roles(self):
-        """The roles held in the Current Church (the first church when there
-        is none, outside a request; Phase 9B, slice a only)."""
-        from apps.church.models import ChurchProfile
-
-        church = getattr(self, "current_church", None) or ChurchProfile.load()
-        return self.roles_in(church)
-
 
 class Role(Group):
     """A named set of permissions given to users in one church; each church

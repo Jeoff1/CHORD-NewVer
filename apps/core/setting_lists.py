@@ -19,8 +19,8 @@ from django.views.generic import CreateView, ListView, UpdateView, View
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
-from apps.church.models import first_church_id
 from apps.church.modules import is_enabled
+from apps.church.scoping import ChurchFormMixin, church_scoped_manager
 
 from .models import TimeStampedModel
 from .views import FormPageMixin
@@ -72,10 +72,11 @@ class ChurchChoiceItem(ChoiceItem):
         "church.ChurchProfile",
         on_delete=models.CASCADE,
         related_name="+",
-        # Phase 9B, slice a only; slice b sets the church everywhere.
-        default=first_church_id,
     )
     name = models.CharField(max_length=100)
+
+    objects = church_scoped_manager(ChoiceItemQuerySet)
+    church_path = "church"
 
     class Meta(ChoiceItem.Meta):
         abstract = True
@@ -154,9 +155,21 @@ class SettingListMixin(LoginRequiredMixin, PermissionRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         module = self.setting_list.module
-        if module and not is_enabled(module, getattr(request, "church", None)):
+        church = getattr(request, "church", None)
+        signing_in_first = church is None and not request.user.is_authenticated
+        if module and not signing_in_first and not is_enabled(module, church):
             raise Http404("This module is switched off.")
         return super().dispatch(request, *args, **kwargs)
+
+    @property
+    def scoped(self):
+        """Whether the list's items belong to a church (decision 0014)."""
+        return hasattr(self.setting_list.model, "church_path")
+
+    def items(self):
+        """The list's items: the Current Church's, for a church's own list."""
+        items = self.setting_list.model.objects.all()
+        return items.for_church(self.request.church) if self.scoped else items
 
     def get_permission_required(self):
         return [self.setting_list.permission(self.action)]
@@ -175,7 +188,7 @@ class SettingListView(SettingListMixin, ListView):
     template_name = "core/setting_list.html"
 
     def get_queryset(self):
-        return self.setting_list.model.objects.all()
+        return self.items()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -235,7 +248,7 @@ class SettingSwitchView(SettingListMixin, View):
         config = self.setting_list
         if not config.can_switch:
             raise Http404("This list has no Active switch.")
-        item = get_object_or_404(config.model, pk=pk)
+        item = get_object_or_404(self.items(), pk=pk)
         fields = {"Active": "is_active"}
         before = snapshot(item, fields)
         wanted = "is_active" in request.POST
@@ -268,6 +281,18 @@ class SettingSwitchView(SettingListMixin, View):
 class _SettingFormView(SettingListMixin, FormPageMixin):
     def get_form_class(self):
         return self.setting_list.get_form_class()
+
+    def get_form_kwargs(self):
+        """A church's list item gets the Current Church, never one from the
+        form: a church-aware form is given it, any other form's new item
+        starts with it."""
+        kwargs = super().get_form_kwargs()
+        if self.scoped:
+            if issubclass(self.get_form_class(), ChurchFormMixin):
+                kwargs["church"] = self.request.church
+            elif kwargs.get("instance") is None:
+                kwargs["instance"] = self.setting_list.model(church=self.request.church)
+        return kwargs
 
     def get_success_url(self):
         return self.url("list")
@@ -304,7 +329,7 @@ class SettingUpdateView(_SettingFormView, UpdateView):
     audit_action = AuditEvent.Action.CHANGED
 
     def get_queryset(self):
-        return self.setting_list.model.objects.all()
+        return self.items()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

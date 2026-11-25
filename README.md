@@ -66,7 +66,7 @@ python manage.py run_worker  # the search worker (run only one)
 ```
 
 Sign in with the superuser account; the setup wizard runs the first time.
-To try suggestions without Spotify, run `python manage.py seed_hymns` to
+To try suggestions without Spotify, run `python manage.py seed_hymns --church <slug>` to
 add public-domain hymns, then use "Rank the song pool only" on a service.
 
 Spotify search needs `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` in

@@ -280,16 +280,6 @@ def sync_default_role_permissions(church=None):
         role.save(update_fields=["granted_defaults"])
 
 
-def _church_or_first(church):
-    if church is None:
-        # Phase 9B, slice a only: callers without a church yet mean the
-        # first church; slice b passes the church everywhere.
-        from apps.church.models import ChurchProfile
-
-        church = ChurchProfile.load()
-    return church
-
-
 def _holders(church, roles_condition):
     """A condition on User: an active Membership in ``church`` with a role
     matching ``roles_condition`` (a Q on Role)."""
@@ -318,13 +308,12 @@ def users_with_perm(church, perm, *, include_superusers=False):
     return get_user_model().objects.filter(condition, is_active=True).distinct()
 
 
-def administrators(church=None):
+def administrators(church):
     """Active users with full access in ``church``: superusers and holders of
     its Administrator role."""
-    church = _church_or_first(church)
     condition = Q(is_superuser=True) | _holders(church, Q(key=ADMINISTRATOR))
     return get_user_model().objects.filter(condition, is_active=True).distinct()
 
 
-def is_administrator(user, church=None):
+def is_administrator(user, church):
     return administrators(church).filter(pk=user.pk).exists()

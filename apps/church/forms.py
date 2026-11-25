@@ -87,7 +87,10 @@ class ModulesForm(forms.Form):
     def rows(self):
         """(module entry in the church's words, is switched on) per Module."""
         checked = set(self["enabled"].value() or [])
-        everything_on = ChurchProfile(labels=self.instance.labels)
+        everything_on = ChurchProfile(
+            labels=self.instance.labels,
+            members_teams_unlocked=self.instance.members_teams_unlocked,
+        )
         return [(e, e.code in checked) for e in module_entries(everything_on)]
 
     def save(self):

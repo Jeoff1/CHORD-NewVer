@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from apps.accounts import roles
 from apps.accounts.models import Role
-from apps.core.testing import make_user
+from apps.core.testing import first_church, make_user
 
 
 class DefaultRolesTests(TestCase):
@@ -71,10 +71,10 @@ class AdministratorTests(TestCase):
         superuser = make_user(is_superuser=True)
         inactive = make_user(roles=["administrator"], is_active=False)
         plain = make_user(roles=["team_member"])
-        self.assertTrue(roles.is_administrator(holder))
-        self.assertTrue(roles.is_administrator(superuser))
-        self.assertFalse(roles.is_administrator(inactive))
-        self.assertFalse(roles.is_administrator(plain))
+        self.assertTrue(roles.is_administrator(holder, first_church()))
+        self.assertTrue(roles.is_administrator(superuser, first_church()))
+        self.assertFalse(roles.is_administrator(inactive, first_church()))
+        self.assertFalse(roles.is_administrator(plain, first_church()))
 
     def test_role_permissions_reach_the_user(self):
         user = make_user(roles=["administrator"])

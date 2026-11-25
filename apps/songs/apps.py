@@ -2,11 +2,12 @@ from django.apps import AppConfig
 from django.db.models.signals import post_save
 
 
-def recheck_after_trusted_artist_change(sender, **kwargs):
-    """A change to the Trusted Artists list changes Worship Checks."""
+def recheck_after_trusted_artist_change(sender, instance, **kwargs):
+    """A change to a church's Trusted Artists list changes its Worship
+    Checks."""
     from .analysis import apply_check_rules
 
-    apply_check_rules()
+    apply_check_rules(instance.church)
 
 
 class SongsConfig(AppConfig):

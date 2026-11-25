@@ -11,6 +11,7 @@ from apps.audit.models import AuditEvent
 from apps.church.modules import MODULES_BY_CODE
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_occasion,
     make_occasion_type,
     make_service,
@@ -33,7 +34,9 @@ def soon(days=14, hour=10, minute=0):
 
 
 def form_moment(value):
-    return timezone.localtime(value, church_time_zone()).strftime(MOMENT_FORMAT)
+    return timezone.localtime(value, church_time_zone(first_church())).strftime(
+        MOMENT_FORMAT
+    )
 
 
 class OccasionTestCase(TestCase):
@@ -62,7 +65,7 @@ class SetupTests(TestCase):
     def test_wedding_baptism_and_funeral_are_seeded_switched_off(self):
         for name in ("Wedding", "Baptism", "Funeral"):
             self.assertFalse(OccasionType.objects.get(name=name).is_active, name)
-        self.assertFalse(rules.requestable_types().exists())
+        self.assertFalse(rules.requestable_types(first_church()).exists())
 
     def test_default_permissions(self):
         defaults = roles.DEFAULT_ROLE_PERMISSIONS
@@ -96,6 +99,7 @@ class SetupTests(TestCase):
 class BookingRuleTests(OccasionTestCase):
     def test_adding_an_occasion_is_audited(self):
         occasion = Occasion(
+            church=first_church(),
             occasion_type=self.wedding,
             starts_at=soon(),
             length_minutes=120,
@@ -109,6 +113,7 @@ class BookingRuleTests(OccasionTestCase):
     def test_an_occasion_over_a_worship_service_is_refused(self):
         make_service(starts_at=soon(hour=9))  # 90 minutes: until 10:30
         occasion = Occasion(
+            church=first_church(),
             occasion_type=self.wedding,
             starts_at=soon(hour=10),
             length_minutes=60,
@@ -145,11 +150,11 @@ class BookingRuleTests(OccasionTestCase):
 
     def test_the_clash_is_named_only_for_people_who_may_see_it(self):
         make_occasion(self.wedding, starts_at=soon(hour=10), occasion_for="Secret")
-        found = rules.clashes(soon(hour=11), soon(hour=12))
+        found = rules.clashes(first_church(), soon(hour=11), soon(hour=12))
         self.assertNotIn("Garden wedding", rules.clash_message(found, self.member))
         self.assertIn("Garden wedding", rules.clash_message(found, self.pastor))
         service = make_service(name="Morning prayer", starts_at=soon(days=20))
-        found = rules.clashes(service.starts_at, service.ends_at)
+        found = rules.clashes(first_church(), service.starts_at, service.ends_at)
         self.assertIn("Morning prayer", rules.clash_message(found, self.member))
 
 
@@ -476,7 +481,9 @@ class CalendarTests(OccasionTestCase):
             self.wedding, starts_at=soon(hour=14), occasion_for="Ana and Ben"
         )
         make_service(name="Sunday gathering", starts_at=soon(hour=9))
-        local = timezone.localtime(self.occasion.starts_at, church_time_zone())
+        local = timezone.localtime(
+            self.occasion.starts_at, church_time_zone(first_church())
+        )
         self.calendar = reverse("worship:calendar") + f"?month={local:%Y-%m}"
 
     def test_a_church_member_sees_only_booked(self):

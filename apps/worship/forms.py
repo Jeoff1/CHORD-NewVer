@@ -4,6 +4,7 @@ from django import forms
 from django.db.models import Q
 from django.forms import inlineformset_factory
 
+from apps.church.scoping import ChurchFormMixin
 from apps.songs.models import ThemeTag
 
 from .models import (
@@ -32,7 +33,7 @@ def moment_field(**kwargs):
     )
 
 
-class ServiceForm(forms.ModelForm):
+class ServiceForm(ChurchFormMixin, forms.ModelForm):
     starts_at = moment_field(label="Date and time")
     rehearsal_at = moment_field(label="Rehearsal", required=False)
 
@@ -55,9 +56,9 @@ class ServiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["name"].required = False
-        self.fields["template"].queryset = ServiceTemplate.objects.usable(
-            self.instance.template_id
-        )
+        self.fields["template"].queryset = ServiceTemplate.objects.for_church(
+            self.church
+        ).usable(self.instance.template_id)
         if not self.instance.pk:
             del self.fields["is_cancelled"]
             templates = list(self.fields["template"].queryset[:2])
@@ -75,7 +76,7 @@ class ServiceForm(forms.ModelForm):
         return cleaned
 
 
-class ThemeForm(forms.ModelForm):
+class ThemeForm(ChurchFormMixin, forms.ModelForm):
     class Meta:
         model = Theme
         fields = ["title", "scripture", "series", "notes"]
@@ -84,9 +85,9 @@ class ThemeForm(forms.ModelForm):
     def __init__(self, *args, labels, **kwargs):
         super().__init__(*args, **kwargs)
         sermon = labels.get("sermon")
-        self.fields["series"].queryset = SermonSeries.objects.usable(
-            self.instance.series_id
-        )
+        self.fields["series"].queryset = SermonSeries.objects.for_church(
+            self.church
+        ).usable(self.instance.series_id)
         self.fields["series"].label = f"{sermon} series"
         self.fields["notes"].label = f"{sermon} notes"
 
@@ -97,7 +98,7 @@ class AttendanceForm(forms.ModelForm):
         fields = ["attendance"]
 
 
-class TemplateForm(forms.ModelForm):
+class TemplateForm(ChurchFormMixin, forms.ModelForm):
     class Meta:
         model = ServiceTemplate
         fields = [
@@ -152,7 +153,7 @@ SlotFormSet = inlineformset_factory(
 )
 
 
-class ScheduleAheadForm(forms.Form):
+class ScheduleAheadForm(ChurchFormMixin, forms.Form):
     template = forms.ModelChoiceField(queryset=ServiceTemplate.objects.none())
     weeks = forms.IntegerField(
         min_value=1,
@@ -163,8 +164,10 @@ class ScheduleAheadForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["template"].queryset = ServiceTemplate.objects.active().filter(
-            weekday__isnull=False, start_time__isnull=False
+        self.fields["template"].queryset = (
+            ServiceTemplate.objects.for_church(self.church)
+            .active()
+            .filter(weekday__isnull=False, start_time__isnull=False)
         )
 
 
@@ -199,7 +202,7 @@ class SuggestionSettingsForm(forms.ModelForm):
         return ", ".join(g for g in genres if g)
 
 
-class SeasonForm(forms.ModelForm):
+class SeasonForm(ChurchFormMixin, forms.ModelForm):
     class Meta:
         model = Season
         fields = [
@@ -225,7 +228,7 @@ class SeasonForm(forms.ModelForm):
             if self.instance.pk
             else []
         )
-        self.fields["tags"].queryset = ThemeTag.objects.filter(
+        self.fields["tags"].queryset = ThemeTag.objects.for_church(self.church).filter(
             Q(is_active=True) | Q(pk__in=current)
         )
 

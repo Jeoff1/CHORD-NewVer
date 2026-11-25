@@ -4,7 +4,7 @@ adding and editing one, requests, and the church's occasion types."""
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -13,6 +13,11 @@ from django.views.generic import CreateView, DetailView, FormView, UpdateView
 
 from apps.audit.services import snapshot
 from apps.church.modules import ModuleRequiredMixin
+from apps.church.scoping import (
+    ChurchFormKwargsMixin,
+    ChurchScopedMixin,
+    get_in_church,
+)
 from apps.core.views import FilteredListView, FormPageMixin
 
 from . import rules
@@ -65,7 +70,7 @@ class HomeView(ModuleRequiredMixin, LoginRequiredMixin, View):
 # --- Occasions ------------------------------------------------------------------
 
 
-class OccasionListView(OccasionsMixin, FilteredListView):
+class OccasionListView(ChurchScopedMixin, OccasionsMixin, FilteredListView):
     permission_required = rules.VIEW
     model = Occasion
     template_name = "occasions/list.html"
@@ -92,8 +97,9 @@ class OccasionListView(OccasionsMixin, FilteredListView):
 class OccasionMixin(OccasionsMixin):
     @cached_property
     def occasion(self):
-        return get_object_or_404(
+        return get_in_church(
             Occasion.objects.select_related("occasion_type", "officiant"),
+            self.request.church,
             public_id=self.kwargs["public_id"],
         )
 
@@ -111,7 +117,9 @@ class OccasionDetailView(OccasionMixin, DetailView):
         return context
 
 
-class OccasionFormMixin(OccasionsMixin, FormPageMixin):
+class OccasionFormMixin(
+    ChurchScopedMixin, ChurchFormKwargsMixin, OccasionsMixin, FormPageMixin
+):
     model = Occasion
     form_class = OccasionForm
 
@@ -159,7 +167,7 @@ class OccasionUpdateView(OccasionFormMixin, UpdateView):
 # --- Requests -------------------------------------------------------------------
 
 
-class RequestCreateView(OccasionsMixin, FormPageMixin, FormView):
+class RequestCreateView(ChurchFormKwargsMixin, OccasionsMixin, FormPageMixin, FormView):
     permission_required = rules.REQUEST
     form_class = OccasionRequestForm
     page_title = "Request an occasion"
@@ -172,7 +180,7 @@ class RequestCreateView(OccasionsMixin, FormPageMixin, FormView):
     cancel_url = MY_REQUESTS
 
     def get(self, request, *args, **kwargs):
-        if not rules.requestable_types().exists():
+        if not rules.requestable_types(request.church).exists():
             messages.info(request, "The church hasn't set up any occasions yet.")
             return redirect(MY_REQUESTS)
         return super().get(request, *args, **kwargs)
@@ -200,13 +208,15 @@ class MyRequestsView(OccasionsMixin, FilteredListView):
     template_name = "occasions/my_requests.html"
 
     def get_queryset(self):
-        return OccasionRequest.objects.filter(
-            requester=self.request.user
-        ).select_related("occasion_type", "occasion")
+        return (
+            OccasionRequest.objects.for_church(self.request.church)
+            .filter(requester=self.request.user)
+            .select_related("occasion_type", "occasion")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["can_request"] = rules.requestable_types().exists()
+        context["can_request"] = rules.requestable_types(self.request.church).exists()
         return context
 
 
@@ -214,8 +224,10 @@ class WithdrawView(OccasionsMixin, View):
     permission_required = rules.REQUEST
 
     def post(self, request, public_id):
-        record = get_object_or_404(
-            OccasionRequest, public_id=public_id, requester=request.user
+        record = get_in_church(
+            OccasionRequest.objects.filter(requester=request.user),
+            request.church,
+            public_id=public_id,
         )
         try:
             rules.withdraw(record, request.user)
@@ -236,7 +248,8 @@ class RequestListView(OccasionsMixin, FilteredListView):
 
     def get_queryset(self):
         return (
-            OccasionRequest.objects.filter(status=Status.PENDING)
+            OccasionRequest.objects.for_church(self.request.church)
+            .filter(status=Status.PENDING)
             .select_related("occasion_type", "requester")
             .order_by("starts_at", "pk")
         )
@@ -244,7 +257,8 @@ class RequestListView(OccasionsMixin, FilteredListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
-            decided=OccasionRequest.objects.exclude(status=Status.PENDING)
+            decided=OccasionRequest.objects.for_church(self.request.church)
+            .exclude(status=Status.PENDING)
             .select_related("occasion_type", "requester", "decided_by", "occasion")
             .order_by("-updated_at")[: self.DECIDED_SHOWN],
             decided_shown=self.DECIDED_SHOWN,
@@ -259,17 +273,18 @@ class DecideView(OccasionsMixin, View):
     template_name = "occasions/decide.html"
 
     def get_record(self):
-        return get_object_or_404(
+        return get_in_church(
             OccasionRequest.objects.select_related(
                 "occasion_type", "requester", "occasion"
             ),
+            self.request.church,
             public_id=self.kwargs["public_id"],
         )
 
     def render_page(self, record, approve_form=None, decline_form=None, error=""):
         clash = ""
         if record.is_pending:
-            found = rules.clashes(record.starts_at, record.ends_at)
+            found = rules.clashes(record.church, record.starts_at, record.ends_at)
             clash = rules.clash_message(found, self.request.user) if found else ""
         return render(
             self.request,
@@ -277,7 +292,9 @@ class DecideView(OccasionsMixin, View):
             {
                 "record": record,
                 "approve_form": approve_form
-                or ApproveForm(initial={"starts_at": record.starts_at}),
+                or ApproveForm(
+                    initial={"starts_at": record.starts_at}, church=self.request.church
+                ),
                 "decline_form": decline_form or DeclineForm(),
                 "clash": clash,
                 "error": error,
@@ -295,7 +312,7 @@ class DecideView(OccasionsMixin, View):
         return self.approve(record)
 
     def approve(self, record):
-        form = ApproveForm(self.request.POST)
+        form = ApproveForm(self.request.POST, church=self.request.church)
         if not form.is_valid():
             return self.render_page(record, approve_form=form)
         try:

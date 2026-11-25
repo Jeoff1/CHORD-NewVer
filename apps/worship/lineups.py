@@ -36,7 +36,6 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from apps.church.models import ChurchProfile
 from apps.songs.cleanup import base_title
 from apps.songs.models import Song
 
@@ -52,8 +51,14 @@ class LineupRefused(Exception):
     """The action isn't allowed; the message says why."""
 
 
-def _labels():
-    return ChurchProfile.load().label_set
+def _labels(church):
+    return church.label_set
+
+
+def _check_same_church(lineup, song):
+    """A lineup holds only songs of its own church's pool (decision 0014)."""
+    if song.church_id != lineup.service.church_id:
+        raise LineupRefused("That song isn't in this church's song library.")
 
 
 # --- Who may do what ---------------------------------------------------------
@@ -88,7 +93,7 @@ def may_confirm(lineup, user):
 def check_change(lineup, user):
     if may_change(lineup, user):
         return
-    labels = _labels()
+    labels = _labels(lineup.service.church)
     if lineup.pastor_locked:
         raise LineupRefused(
             f"The {labels.get('pastor').lower()} has the final say on this "
@@ -211,7 +216,8 @@ def addable_songs(lineup, query=""):
     song" by a person, not in the lineup, and not sharing a title with one
     of its songs."""
     taken = _titles(_items(lineup))
-    songs = Song.objects.exclude(lineup_items__lineup=lineup).exclude(
+    songs = Song.objects.for_church(lineup.service.church)
+    songs = songs.exclude(lineup_items__lineup=lineup).exclude(
         worship_check=Song.WorshipCheck.REJECTED, reviewed_at__isnull=False
     )
     if query:
@@ -235,7 +241,7 @@ def create_from_run(service, user, run=None):
     closed = suggesting.planning_closed(service)
     if closed:
         raise LineupRefused(closed)
-    labels = _labels()
+    labels = _labels(service.church)
     lineup_word = labels.get("lineup").lower()
     if Lineup.objects.filter(service=service).exists():
         raise LineupRefused(
@@ -283,13 +289,14 @@ def _check_title(items, song, exclude=None):
     if base_title(song.title) in _titles(items, exclude=exclude):
         raise LineupRefused(
             f"A song called {song.title} is already in the "
-            f"{_labels().get('lineup').lower()}."
+            f"{_labels(song.church).get('lineup').lower()}."
         )
 
 
 def swap(lineup, item, song, user):
     """Put a ranked alternative in place of ``item``'s song. The slot and
     position stay; the key and notes, which were about the old song, go."""
+    _check_same_church(lineup, song)
     with transaction.atomic():
         lineup = _locked_lineup(lineup)
         check_change(lineup, user)
@@ -394,6 +401,7 @@ def add_from_pool(lineup, song, slot, user):
     with no slot, at the end. Any song may be added except one a person
     marked "Not a worship song"; one that failed the Worship Check or was
     never checked shows a warning in the review (``check_warning``)."""
+    _check_same_church(lineup, song)
     with transaction.atomic():
         lineup = _locked_lineup(lineup)
         check_change(lineup, user)
@@ -501,7 +509,7 @@ def confirm(lineup, user):
     lock; the leader's doesn't."""
     with transaction.atomic():
         lineup = _locked_lineup(lineup)
-        lineup_word = _labels().get("lineup").lower()
+        lineup_word = _labels(lineup.service.church).get("lineup").lower()
         if lineup.is_confirmed:
             raise LineupRefused(f"This {lineup_word} is already confirmed.")
         if not may_confirm(lineup, user):
@@ -536,7 +544,8 @@ def reopen(lineup, user):
         _check_final_say(user)
         if not lineup.is_confirmed:
             raise LineupRefused(
-                f"This {_labels().get('lineup').lower()} isn't confirmed."
+                f"This {_labels(lineup.service.church).get('lineup').lower()} "
+                "isn't confirmed."
             )
         _back_to_draft(lineup)
         lineup.save()

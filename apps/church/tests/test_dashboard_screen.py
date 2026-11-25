@@ -9,6 +9,7 @@ from django.utils import timezone
 
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_assignment,
     make_lineup,
     make_occasion,
@@ -66,6 +67,7 @@ class DashboardScreenTests(TestCase):
 
     def test_occasion_requests_are_for_approvers(self):
         OccasionRequest.objects.create(
+            church=first_church(),
             requester=self.church_member,
             occasion_type=make_occasion_type(name="Garden wedding"),
             starts_at=timezone.now() + datetime.timedelta(days=20),

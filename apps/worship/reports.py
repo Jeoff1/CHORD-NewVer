@@ -36,14 +36,14 @@ class UsageRow:
         return self.days[-1]
 
 
-def song_usage(start=None, end=None, window_weeks=None):
-    """Rows for the song usage report, most used first. ``start`` and
-    ``end`` are dates (both included); ``window_weeks`` defaults to the
+def song_usage(church, start=None, end=None, window_weeks=None):
+    """Rows for the church's song usage report, most used first. ``start``
+    and ``end`` are dates (both included); ``window_weeks`` defaults to the
     church's repeat window."""
     if window_weeks is None:
-        window_weeks = SuggestionSettings.load().repeat_window_weeks
-    found = by_song(uses(until=timezone.now(), start=start, end=end))
-    songs = Song.objects.in_bulk(list(found))
+        window_weeks = SuggestionSettings.load(church).repeat_window_weeks
+    found = by_song(uses(church, until=timezone.now(), start=start, end=end))
+    songs = Song.objects.for_church(church).in_bulk(list(found))
     rows = [
         UsageRow(songs[pk], usage.days, usage.sung_again_within(window_weeks))
         for pk, usage in found.items()
@@ -80,16 +80,18 @@ def song_usage_csv(rows, window_weeks):
     return out.getvalue()
 
 
-def has_attendance():
-    """Whether any headcount was ever recorded: without one, the attendance
-    report doesn't exist."""
-    return WorshipService.objects.exclude(attendance=None).exists()
+def has_attendance(church):
+    """Whether the church ever recorded a headcount: without one, the
+    attendance report doesn't exist."""
+    return WorshipService.objects.for_church(church).exclude(attendance=None).exists()
 
 
-def attendance(start=None, end=None):
-    """Services held with a headcount, newest first, between two dates."""
+def attendance(church, start=None, end=None):
+    """The church's services held with a headcount, newest first, between
+    two dates."""
     services = (
-        WorshipService.objects.held()
+        WorshipService.objects.for_church(church)
+        .held()
         .exclude(attendance=None)
         .select_related("template")
         .order_by("-starts_at")

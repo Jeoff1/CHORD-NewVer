@@ -8,6 +8,7 @@ from django.db import models
 from django.utils import timezone
 
 from apps.church.models import church_foreign_key
+from apps.church.scoping import church_scoped_manager
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.music import Feel
 from apps.core.setting_lists import ChurchChoiceItem
@@ -77,6 +78,9 @@ class TemplateSlot(models.Model):
     )
     position = models.PositiveSmallIntegerField(default=0)
 
+    objects = church_scoped_manager()
+    church_path = "template__church"
+
     class Meta:
         ordering = ["position", "pk"]
         default_permissions = ()
@@ -127,7 +131,8 @@ class WorshipService(PublicIdModel, TimeStampedModel):
     )
     is_cancelled = models.BooleanField("Cancelled", default=False)
 
-    objects = WorshipServiceQuerySet.as_manager()
+    objects = church_scoped_manager(WorshipServiceQuerySet)
+    church_path = "church"
 
     class Meta:
         ordering = ["starts_at", "pk"]
@@ -197,6 +202,9 @@ class Theme(TimeStampedModel):
         editable=False,
         related_name="+",
     )
+
+    objects = church_scoped_manager()
+    church_path = "service__church"
 
     class Meta:
         default_permissions = ("change",)

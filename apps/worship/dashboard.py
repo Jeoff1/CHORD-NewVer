@@ -29,7 +29,8 @@ def attention(request):
     lineup_word = _labels(request).get("lineup")
     if user.has_perm("worship.change_lineup"):
         drafts = (
-            Lineup.objects.filter(
+            Lineup.objects.for_church(request.church)
+            .filter(
                 status=Lineup.Status.DRAFT,
                 service__is_cancelled=False,
                 service__starts_at__gte=now,
@@ -53,9 +54,11 @@ def attention(request):
                 )
             )
     if user.has_perm("worship.change_theme"):
-        waiting = WorshipService.objects.filter(
-            is_cancelled=False, starts_at__gte=now, theme__isnull=True
-        ).order_by("starts_at")[:THEMES_SHOWN]
+        waiting = (
+            WorshipService.objects.for_church(request.church)
+            .filter(is_cancelled=False, starts_at__gte=now, theme__isnull=True)
+            .order_by("starts_at")[:THEMES_SHOWN]
+        )
         for service in waiting:
             items.append(
                 Attention(
@@ -72,7 +75,10 @@ def attention(request):
         from apps.songs.models import ChordSheet
 
         pending = list(
-            ChordSheet.objects.pending().select_related("song").order_by("created_at")
+            ChordSheet.objects.for_church(request.church)
+            .pending()
+            .select_related("song")
+            .order_by("created_at")
         )
         if pending:
             count = len(pending)
@@ -101,13 +107,16 @@ def coming_up(request):
     ):
         return []
     services = (
-        WorshipService.objects.filter(starts_at__gte=timezone.now())
+        WorshipService.objects.for_church(request.church)
+        .filter(starts_at__gte=timezone.now())
         .select_related("theme", "lineup", "template")
         .order_by("starts_at")
     )
     show_lineup = user.has_perm("worship.view_lineup")
     plans = can_plan(user)
-    show_team = is_enabled("teams") and user.has_perm("teams.view_assignment")
+    show_team = is_enabled("teams", request.church) and user.has_perm(
+        "teams.view_assignment"
+    )
     if show_team:
         services = services.annotate(
             team_assigned=Count(

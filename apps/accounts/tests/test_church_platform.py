@@ -10,8 +10,7 @@ from apps.accounts.forms import RoleForm
 from apps.accounts.models import Membership, Role
 from apps.accounts.roles import DEFAULT_ROLES, administrators, users_with_perm
 from apps.church.middleware import SESSION_KEY, CurrentChurchMiddleware
-from apps.church.models import ChurchProfile
-from apps.core.testing import make_administrator, make_church, make_user
+from apps.core.testing import first_church, make_administrator, make_church, make_user
 from apps.occasions.models import OccasionType
 from apps.songs.models import ThemeTag, WorshipCheckSettings
 from apps.worship.models import ServiceTemplate, SuggestionSettings
@@ -28,7 +27,7 @@ def working_in(user, church):
 
 class PermissionsFollowTheCurrentChurchTests(TestCase):
     def setUp(self):
-        self.first = ChurchProfile.load()
+        self.first = first_church()
         self.other = make_church("Grace Chapel")
 
     def test_roles_in_one_church_give_nothing_in_another(self):
@@ -82,7 +81,7 @@ class PermissionsFollowTheCurrentChurchTests(TestCase):
 
 class CurrentChurchMiddlewareTests(TestCase):
     def setUp(self):
-        self.first = ChurchProfile.load()
+        self.first = first_church()
         self.other = make_church("Grace Chapel")
 
     def church_for(self, user, chosen=None):
@@ -125,7 +124,7 @@ class CurrentChurchMiddlewareTests(TestCase):
 
 class SeedChurchTests(TestCase):
     def test_a_new_church_gets_its_own_defaults(self):
-        first_roles = Role.objects.filter(church=ChurchProfile.load()).count()
+        first_roles = Role.objects.filter(church=first_church()).count()
         church = make_church("Grace Chapel")
         roles = Role.objects.filter(church=church)
         self.assertEqual(
@@ -151,13 +150,13 @@ class SeedChurchTests(TestCase):
         self.assertTrue(WorshipCheckSettings.objects.filter(church=church).exists())
         # The first church is left as it was.
         self.assertEqual(
-            Role.objects.filter(church=ChurchProfile.load()).count(), first_roles
+            Role.objects.filter(church=first_church()).count(), first_roles
         )
 
 
 class NamesArePerChurchTests(TestCase):
     def setUp(self):
-        self.first = ChurchProfile.load()
+        self.first = first_church()
         self.other = make_church("Grace Chapel")
 
     def test_two_churches_may_use_the_same_names(self):
@@ -210,7 +209,7 @@ class AccountsPagesShowOneChurchTests(TestCase):
             self.assertEqual(self.client.get(url).status_code, 404, name)
 
     def test_adding_a_user_makes_a_membership_here(self):
-        role = Role.objects.get(church=ChurchProfile.load(), key="team_member")
+        role = Role.objects.get(church=first_church(), key="team_member")
         self.client.post(
             reverse("accounts:user_create"),
             {
@@ -221,5 +220,23 @@ class AccountsPagesShowOneChurchTests(TestCase):
             },
         )
         membership = Membership.objects.get(user__username="newbie")
-        self.assertEqual(membership.church, ChurchProfile.load())
+        self.assertEqual(membership.church, first_church())
         self.assertEqual(list(membership.roles.all()), [role])
+
+
+class NoChurchTests(TestCase):
+    """A signed-in person with no active Membership (decision 0014)."""
+
+    def test_church_pages_say_so_and_own_account_pages_open(self):
+        self.client.force_login(make_user(church=False))
+        for url in (reverse("home"), reverse("worship:home")):
+            response = self.client.get(url)
+            self.assertTemplateUsed(response, "church/no_church.html")
+        self.assertEqual(self.client.get(reverse("accounts:profile")).status_code, 200)
+
+    def test_an_inactive_membership_counts_as_none(self):
+        user = make_user()
+        user.memberships.update(is_active=False)
+        self.client.force_login(user)
+        response = self.client.get(reverse("home"))
+        self.assertTemplateUsed(response, "church/no_church.html")

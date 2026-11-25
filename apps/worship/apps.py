@@ -48,9 +48,10 @@ def _settings_label(label):
         return label
 
     def with_sermon(request):
-        from apps.church.models import ChurchProfile
+        from apps.church.labels import Labels
 
-        church = getattr(request, "church", None) or ChurchProfile.load()
-        return label.format(sermon=church.label_set.get("sermon"))
+        church = getattr(request, "church", None)
+        labels = church.label_set if church is not None else Labels({})
+        return label.format(sermon=labels.get("sermon"))
 
     return with_sermon

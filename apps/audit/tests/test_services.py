@@ -4,13 +4,12 @@ from django.test import TestCase
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, display_value, record_change, snapshot
-from apps.church.models import ChurchProfile
-from apps.core.testing import make_user
+from apps.core.testing import first_church, make_user
 
 
 class DisplayValueTests(TestCase):
     def test_values_become_short_strings(self):
-        profile = ChurchProfile.load()
+        profile = first_church()
         self.assertEqual(display_value(None), "")
         self.assertEqual(display_value(True), "Yes")
         self.assertEqual(display_value(False), "No")

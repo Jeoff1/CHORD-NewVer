@@ -13,4 +13,4 @@ def pending_requests(request):
         return {}
     from .rules import pending_count
 
-    return {"pending_occasions": pending_count()}
+    return {"pending_occasions": pending_count(request.church)}

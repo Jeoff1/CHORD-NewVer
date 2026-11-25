@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from django.urls import reverse
 
-from .models import ChurchProfile
+from .labels import Labels
 from .modules import MODULES_BY_CODE, enabled_modules
 
 
@@ -25,7 +25,7 @@ def module_name(module, labels):
 
 
 def module_entries(profile):
-    labels = profile.label_set
+    labels = profile.label_set if profile is not None else Labels({})
     return [
         ModuleEntry(
             code=module.code,
@@ -47,12 +47,12 @@ def church(request):
     ``enabled_modules`` names every switched-on Module, for templates that
     link to a Module's other pages.
     """
-    profile = getattr(request, "church", None) or ChurchProfile.load()
+    profile = getattr(request, "church", None)
     entries = module_entries(profile)
     user = getattr(request, "user", None)
     return {
         "church": profile,
-        "labels": profile.label_set,
+        "labels": profile.label_set if profile is not None else Labels({}),
         "module_entries": [
             entry
             for entry in entries

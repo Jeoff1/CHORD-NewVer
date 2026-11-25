@@ -73,7 +73,7 @@ administrators are users given the Administrator role under
   one at a time and analyses new songs. It refuses to run while the worker
   runs. Set `LRCLIB_USER_AGENT` to name the installation and a contact
   page.
-- **Trying suggestions without Spotify:** `python manage.py seed_hymns`
+- **Trying suggestions without Spotify:** `python manage.py seed_hymns --church <slug>`
   adds 23 public-domain hymns and carols to the song pool. Once the worker has
   analysed them, a service with a theme can use "Rank the song pool only".
 
@@ -108,7 +108,7 @@ virtual environment:
   by the worker, since embeddings from different engines don't compare.
 - With `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET` set, "Find songs"
   calls Spotify for real. To try the pipeline without it, run
-  `.\.venv\Scripts\python.exe manage.py seed_hymns` and use "Rank the song
+  `.\.venv\Scripts\python.exe manage.py seed_hymns --church <slug>` and use "Rank the song
   pool only".
 
 ## Email

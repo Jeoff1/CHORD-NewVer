@@ -13,6 +13,7 @@ from django.utils import timezone
 from apps.accounts.models import Role
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_administrator,
     make_search_run,
     make_service,
@@ -38,8 +39,11 @@ def accepted_song(title, **fields):
 
 
 def fresh(user):
-    """The user again, without cached permissions."""
-    return get_user_model().objects.get(pk=user.pk)
+    """The user again, without cached permissions, working in the church
+    they were in."""
+    again = get_user_model().objects.get(pk=user.pk)
+    again.current_church = user.current_church
+    return again
 
 
 class LineupTestCase(TestCase):
@@ -139,6 +143,7 @@ class ClosedServiceTests(LineupTestCase):
         complete_setup(
             labels={"worship_service": {"singular": "Gathering", "plural": "x"}}
         )
+        self.service.refresh_from_db()
         self.service.is_cancelled = True
         self.assertEqual(
             suggesting.planning_closed(self.service),
@@ -179,10 +184,10 @@ class StoredCopyTests(LineupTestCase):
         lineup = self.make_lineup()
         before = self.snapshot(lineup)
         Song.objects.update(reviewed_at=None)
-        check = WorshipCheckSettings.load()
+        check = WorshipCheckSettings.load(first_church())
         check.pass_mark = 0.95  # every song now fails
         check.save()
-        self.assertTrue(apply_check_rules())
+        self.assertTrue(apply_check_rules(first_church()))
         self.assertFalse(Song.objects.accepted().exists())
         self.assertEqual(self.snapshot(lineup), before)
 

@@ -15,6 +15,7 @@ from apps.core.locks import SEARCH_WORKER, advisory_lock
 from apps.core.testing import (
     FakeHttp,
     complete_setup,
+    first_church,
     make_service,
     make_theme,
     make_user,
@@ -178,6 +179,7 @@ class SpotifyRunTests(SuggestingTestCase):
 
     def test_songs_already_in_the_pool_skip_the_lyrics_lookup(self):
         Song.objects.create(
+            church=first_church(),
             spotify_id="id-holy",
             title="Holy, Holy, Holy",
             artist="Choir One",
@@ -232,7 +234,7 @@ class SpotifyRunTests(SuggestingTestCase):
         self.assertEqual(again.spotify_calls, 0)
 
     def test_quota_exceeded_pauses_spotify_and_ranks_the_pool(self):
-        seed_hymns()
+        seed_hymns(first_church())
         run = self.queue()
         with outside_world() as web:
             web.reply("GET", SEARCH, {"reason": "QUOTA_EXCEEDED"}, status=429)
@@ -261,7 +263,7 @@ class SpotifyRunTests(SuggestingTestCase):
 class PoolRunTests(SuggestingTestCase):
     def test_a_run_on_a_seeded_pool_is_ranked_and_explained_without_spotify(self):
         # The Phase 5 "done when": no outside service at all.
-        seed_hymns()
+        seed_hymns(first_church())
         run = self.queue(use_spotify=False)
         with FakeHttp() as web:
             self.execute(run)
@@ -318,12 +320,12 @@ class PoolRunTests(SuggestingTestCase):
 
     def test_theme_tags_are_found_from_the_theme(self):
         tags = suggesting.theme_tag_ids(
-            "Grace and favor, undeserved kindness", KeywordEngine()
+            "Grace and favor, undeserved kindness", KeywordEngine(), first_church()
         )
         self.assertTrue(tags)
 
     def test_results_keep_slot_order(self):
-        seed_hymns()
+        seed_hymns(first_church())
         run = self.queue(use_spotify=False)
         self.execute(run)
         placed, others = suggesting.results(run)
@@ -338,7 +340,7 @@ class PoolRunTests(SuggestingTestCase):
 
 class WorkerTests(SuggestingTestCase):
     def test_the_worker_carries_out_a_queued_run(self):
-        seed_hymns()
+        seed_hymns(first_church())
         run = suggesting.request_run(self.service, self.leader, use_spotify=False)
         out = StringIO()
         call_command("run_worker", "--once", stdout=out)
@@ -366,7 +368,7 @@ class WorkerTests(SuggestingTestCase):
         call_command("run_worker", "--once", stdout=StringIO())
 
     def test_the_worker_works_through_the_song_backlog_between_runs(self):
-        seed_hymns()
+        seed_hymns(first_church())
         out = StringIO()
         call_command("run_worker", "--once", stdout=out)
         self.assertFalse(Song.objects.filter(analysed_at=None).exists())
@@ -377,8 +379,9 @@ class SmokeTestFixTests(SuggestingTestCase):
     """Fixes from the smoke test of 2026-11-18."""
 
     def test_a_run_keeps_one_version_of_each_song(self):
-        seed_hymns()
+        seed_hymns(first_church())
         cover = Song.objects.create(
+            church=first_church(),
             spotify_id="id-silent",
             title="Silent Night (Live)",
             artist="Cover Band",
@@ -399,7 +402,7 @@ class SmokeTestFixTests(SuggestingTestCase):
         )
 
     def test_suggestions_keep_the_raw_match_and_their_slot_reason_apart(self):
-        seed_hymns()
+        seed_hymns(first_church())
         run = self.queue(use_spotify=False)
         self.execute(run)
         for suggestion in run.suggestions.all():
@@ -428,7 +431,7 @@ class SmokeTestFixTests(SuggestingTestCase):
         self.assertEqual(holy.worship_check, Song.WorshipCheck.ACCEPTED)
 
     def test_place_again_follows_corrected_feels_and_checks(self):
-        seed_hymns()
+        seed_hymns(first_church())
         run = self.queue(use_spotify=False)
         self.execute(run)
         placed, others = suggesting.results(run)

@@ -16,6 +16,7 @@ from apps.accounts.models import Role
 from apps.announcements.models import Announcement
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_chord_sheet,
     make_lineup,
     make_member,
@@ -106,6 +107,7 @@ class ChurchMemberPagesTests(TestCase):
 
     def test_announcements_to_everyone(self):
         Announcement.objects.create(
+            church=first_church(),
             title="Picnic on Saturday",
             body="Bring a dish.",
             author=make_user(roles=["pastoral_staff"]),

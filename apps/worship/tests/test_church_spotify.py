@@ -13,13 +13,16 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.accounts.models import Membership, Role
 from apps.audit.models import AuditEvent
-from apps.church.models import ChurchProfile
+from apps.church.middleware import SESSION_KEY
 from apps.core.testing import (
     SPOTIFY_TEST_SETTINGS,
     FakeHttp,
     complete_setup,
+    first_church,
     make_administrator,
+    make_church,
     make_lineup,
     make_service,
     make_song,
@@ -42,7 +45,7 @@ CALLBACK = reverse("songs:spotify_callback")
 
 def make_church_account(access="church-access", refresh="church-refresh", **fields):
     return ChurchSpotifyAccount.objects.create(
-        church=ChurchProfile.load(),
+        church=first_church(),
         access_token_encrypted=connections.encrypt(access),
         refresh_token_encrypted=connections.encrypt(refresh),
         expires_at=timezone.now() + datetime.timedelta(hours=1),
@@ -437,6 +440,27 @@ class ChurchAccountSettingTests(ChurchAccountTestCase):
             event.changes, {"Church Spotify account": ["Not connected", "Connected"]}
         )
         self.assertNotIn("made-up", json.dumps(event.changes))
+
+    def test_a_connection_started_in_another_church_isnt_finished_here(self):
+        # Decision 0014: the account joins the church that asked for it.
+        other = make_church("Grace Chapel")
+        Membership.objects.create(user=self.admin, church=other).roles.add(
+            Role.objects.get(church=other, key="administrator")
+        )
+        self.client.force_login(self.admin)
+        response = self.client.post(CONNECT)
+        state = urllib.parse.parse_qs(
+            urllib.parse.urlsplit(response["Location"]).query
+        )["state"][0]
+        session = self.client.session
+        session[SESSION_KEY] = other.pk
+        session.save()
+        with FakeHttp() as web:
+            response = self.client.get(CALLBACK, {"code": "c", "state": state})
+        self.assertEqual(web.calls, [])
+        self.assertFalse(ChurchSpotifyAccount.objects.exists())
+        page = self.client.get(response["Location"])
+        self.assertContains(page, "started in another church")
 
     def test_someone_who_lost_the_permission_cant_finish_connecting(self):
         holder = make_user(perms=["church.change_churchprofile"])

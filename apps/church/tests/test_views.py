@@ -10,7 +10,12 @@ from PIL import Image
 
 from apps.audit.models import AuditEvent
 from apps.church.models import ChurchProfile
-from apps.core.testing import complete_setup, make_administrator, make_user
+from apps.core.testing import (
+    complete_setup,
+    first_church,
+    make_administrator,
+    make_user,
+)
 
 TEMP_MEDIA = tempfile.mkdtemp()
 
@@ -108,7 +113,7 @@ class SetupWizardTests(TestCase):
         )
         self.assertRedirects(response, reverse("home"))
 
-        profile = ChurchProfile.load()
+        profile = first_church()
         self.assertTrue(profile.setup_completed)
         self.assertEqual(profile.name, "Grace Community Church")
         self.assertEqual(profile.currency, "PHP")
@@ -176,12 +181,12 @@ class SettingsTests(TestCase):
     def test_invalid_currency_is_rejected(self):
         response = self.client.post(self.url("details"), details_data(currency="PESO"))
         self.assertContains(response, "is-invalid")
-        self.assertEqual(ChurchProfile.load().currency, "PHP")
+        self.assertEqual(first_church().currency, "PHP")
 
     def test_logo_upload(self):
         data = details_data(logo=image_file())
         self.client.post(self.url("details"), data)
-        profile = ChurchProfile.load()
+        profile = first_church()
         self.assertTrue(profile.logo.name.startswith("church/logo"))
         self.assertContains(self.client.get(reverse("home")), profile.logo.url)
 
@@ -205,18 +210,18 @@ class SettingsTests(TestCase):
 
     def test_switching_modules_off_and_on(self):
         self.client.post(self.url("modules"), {"enabled": ["members"]})
-        profile = ChurchProfile.load()
+        profile = first_church()
         self.assertEqual(len(profile.disabled_modules), 4)
         self.assertNotContains(self.client.get(reverse("home")), "Worship")
 
         everything = ["members", "worship", "teams", "occasions", "announcements"]
         self.client.post(self.url("modules"), {"enabled": everything})
-        self.assertEqual(ChurchProfile.load().disabled_modules, [])
+        self.assertEqual(first_church().disabled_modules, [])
 
     def test_stale_module_codes_do_not_break_the_audit_trail(self):
         ChurchProfile.objects.update(disabled_modules=["giving"])
         self.client.post(self.url("modules"), {"enabled": ["members", "worship"]})
         self.assertEqual(
-            sorted(ChurchProfile.load().disabled_modules),
+            sorted(first_church().disabled_modules),
             ["announcements", "occasions", "teams"],
         )

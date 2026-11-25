@@ -11,6 +11,7 @@ from apps.announcements.models import Announcement
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_assignment,
     make_service,
     make_team_part,
@@ -45,13 +46,17 @@ class AnnouncementTestCase(TestCase):
         make_assignment(self.service, self.declined, part, reply="declined")
 
     def titles(self, user):
-        return [a.title for a in services.visible_to(user)]
+        return [a.title for a in services.visible_to(user, first_church())]
 
 
 class AudienceTests(AnnouncementTestCase):
     def test_everyone_means_everyone_signed_in(self):
         services.post(
-            self.leader, title="Picnic", body="Bring food.", audience=Audience.EVERYONE
+            self.leader,
+            first_church(),
+            title="Picnic",
+            body="Bring food.",
+            audience=Audience.EVERYONE,
         )
         for user in (self.leader, self.member, self.office, self.declined):
             self.assertEqual(self.titles(user), ["Picnic"], user)
@@ -59,6 +64,7 @@ class AudienceTests(AnnouncementTestCase):
     def test_one_services_team_means_its_pending_and_accepted_people(self):
         services.post(
             self.pastor,
+            first_church(),
             title="Rehearsal moved",
             body="Now at 6.",
             audience=Audience.SERVICE_TEAM,
@@ -76,6 +82,7 @@ class AudienceTests(AnnouncementTestCase):
             with self.assertRaises(services.AnnouncementRefused):
                 services.post(
                     self.leader,
+                    first_church(),
                     title="X",
                     body="Y",
                     audience=Audience.SERVICE_TEAM,
@@ -86,6 +93,7 @@ class AudienceTests(AnnouncementTestCase):
     def test_while_teams_is_off_only_everyone_is_offered_and_shown(self):
         services.post(
             self.leader,
+            first_church(),
             title="Team note",
             body="Y",
             audience=Audience.SERVICE_TEAM,
@@ -96,6 +104,7 @@ class AudienceTests(AnnouncementTestCase):
         with self.assertRaises(services.AnnouncementRefused):
             services.post(
                 self.leader,
+                first_church(),
                 title="X",
                 body="Y",
                 audience=Audience.SERVICE_TEAM,
@@ -107,7 +116,13 @@ class AudienceTests(AnnouncementTestCase):
         self.assertNotContains(page, "team")
 
     def test_posting_is_in_the_audit_trail(self):
-        services.post(self.leader, title="Picnic", body="B", audience=Audience.EVERYONE)
+        services.post(
+            self.leader,
+            first_church(),
+            title="Picnic",
+            body="B",
+            audience=Audience.EVERYONE,
+        )
         event = AuditEvent.objects.get(content_type__model="announcement")
         self.assertEqual(event.changes["To"], ["", "Everyone"])
 
@@ -116,7 +131,11 @@ class ArchiveTests(AnnouncementTestCase):
     def setUp(self):
         super().setUp()
         self.note = services.post(
-            self.leader, title="Picnic", body="B", audience=Audience.EVERYONE
+            self.leader,
+            first_church(),
+            title="Picnic",
+            body="B",
+            audience=Audience.EVERYONE,
         )
 
     def test_only_the_author_archives_and_then_nobody_sees_it(self):
@@ -160,6 +179,41 @@ class AnnouncementPageTests(AnnouncementTestCase):
             self.assertEqual(response.status_code, 403)
         self.assertEqual(Announcement.objects.count(), 2)
 
+    def test_an_announcement_to_everyone_may_be_public(self):
+        self.client.force_login(self.leader)
+        self.client.post(
+            CREATE,
+            {
+                "title": "Picnic",
+                "body": "Sunday",
+                "audience": "everyone",
+                "public": "on",
+            },
+        )
+        self.client.post(
+            CREATE, {"title": "Rota", "body": "Inside only", "audience": "everyone"}
+        )
+        visibility = dict(Announcement.objects.values_list("title", "visibility"))
+        self.assertEqual(
+            visibility,
+            {
+                "Picnic": Announcement.Visibility.PUBLIC,
+                "Rota": Announcement.Visibility.INTERNAL,
+            },
+        )
+
+    def test_a_service_teams_announcement_is_never_public(self):
+        note = services.post(
+            self.leader,
+            first_church(),
+            title="Team only",
+            body="B",
+            audience=Audience.SERVICE_TEAM,
+            service=self.service,
+            visibility=Announcement.Visibility.PUBLIC,
+        )
+        self.assertEqual(note.visibility, Announcement.Visibility.INTERNAL)
+
     def test_posting_to_a_services_team(self):
         self.client.force_login(self.leader)
         page = self.client.get(CREATE)
@@ -192,7 +246,7 @@ class AnnouncementPageTests(AnnouncementTestCase):
 
     def test_switched_off_announcements_returns_404(self):
         note = services.post(
-            self.leader, title="P", body="B", audience=Audience.EVERYONE
+            self.leader, first_church(), title="P", body="B", audience=Audience.EVERYONE
         )
         complete_setup(disabled_modules=["announcements"])
         self.client.force_login(self.leader)

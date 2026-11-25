@@ -37,9 +37,9 @@ def unique_slug(name, *, exclude_pk=None):
 def first_church_id():
     """The pk of the first church, created if there is none.
 
-    Phase 9B, slice a only: the default of every new ``church`` foreign key,
-    so code not yet scoped keeps working. Slice b removes these defaults and
-    sets the church explicitly everywhere.
+    Used only by the Phase 9B migrations, which gave every existing record
+    to the first church. Code never falls back to it: every record gets its
+    church explicitly (decision 0014).
     """
     pk = ChurchProfile.objects.order_by("pk").values_list("pk", flat=True).first()
     return pk if pk is not None else ChurchProfile.objects.create().pk
@@ -108,13 +108,6 @@ class ChurchProfile(TimeStampedModel):
             self.slug = unique_slug(self.name, exclude_pk=self.pk)
         super().save(*args, **kwargs)
 
-    @classmethod
-    def load(cls):
-        """The first church. Phase 9B, slice a only: code not yet scoped
-        still calls this; slice b replaces every call with the request's or
-        the record's church and removes it."""
-        return cls.objects.get(pk=first_church_id())
-
     @property
     def label_set(self):
         return Labels(self.labels)
@@ -122,20 +115,14 @@ class ChurchProfile(TimeStampedModel):
 
 def church_foreign_key(**kwargs):
     """The ``church`` field of a record that belongs to one church
-    (decision 0014). Phase 9B, slice a: it defaults to the first church so
-    code not yet scoped keeps working; slice b removes the default."""
+    (decision 0014). It has no default: whoever creates the record sets it,
+    from the request or from the record it belongs to."""
     kwargs.setdefault("related_name", "+")
-    kwargs.setdefault("default", first_church_id)
     return models.ForeignKey("church.ChurchProfile", on_delete=models.CASCADE, **kwargs)
 
 
 def church_settings_field():
-    """The ``church`` of a settings row, one per church (decision 0014).
-    Phase 9B, slice a: defaults to the first church, like
-    ``church_foreign_key``."""
+    """The ``church`` of a settings row, one per church (decision 0014)."""
     return models.OneToOneField(
-        "church.ChurchProfile",
-        on_delete=models.CASCADE,
-        related_name="+",
-        default=first_church_id,
+        "church.ChurchProfile", on_delete=models.CASCADE, related_name="+"
     )

@@ -538,7 +538,7 @@ permission-checked.
 
 ## Phase 9B: Church Platform (multi-church)
 
-**Status: in progress (approved 2026-11-25; docs and slice a done).** On branch
+**Status: in progress (approved 2026-11-25; docs, slices a and b done).** On branch
 `phase-9b-church-platform`; merged into `master` only when the full check,
 isolation tests included, passes, so `master` stays presentable. The
 design, slices and risks are in [[Phase-9B-Plan]]; the decision is
@@ -554,12 +554,22 @@ offered Occasion. People can belong to several churches.
 - [x] **a. Foundations** (done 2026-11-25): church fields, Membership, Role per church,
   `ChurchRoleBackend`, `CurrentChurchMiddleware`, `seed_church`, test
   builders, the data migration and its test. Nothing changes on screen.
-- [ ] **b. Scoping**: the worship pipeline, song library, worker,
+- [x] **b. Scoping** (done 2026-11-25): the worship pipeline, song library, worker,
   Occasions, Announcements (visibility), Notifications, Audit and settings,
   with isolation tests.
 - [ ] **c. Accounts**: Register a church, Create an account, Add an
   existing account, the church switcher, locked Modules, a home page for
-  people with no church.
+  people with no church. **Must be done before sign-up opens** (found in
+  slice a; owner, 2026-11-25):
+  - [ ] **Set password across churches.** An administrator may set the
+    password (and change the username or email) only of an account that
+    belongs to no other church; otherwise the person changes their own.
+    Without this, one church's administrator could take over an account
+    another church relies on, once "Add an existing account" exists.
+  - [ ] **People with no membership** see no church's pages. Done in slice
+    b by the middleware (`church/no_church.html`); slice c replaces that
+    page with their home and must keep the test
+    (`accounts/tests/test_church_platform.py`, `NoChurchTests`).
 - [ ] **d. Church profile**: About, directory and upcoming-services
   settings, the setup wizard for new churches, Occasion Types offered
   publicly.

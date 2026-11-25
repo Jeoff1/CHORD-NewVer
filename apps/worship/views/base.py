@@ -1,11 +1,11 @@
 """Shared pieces for the worship views."""
 
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.functional import cached_property
 
 from apps.church.modules import ModuleRequiredMixin
+from apps.church.scoping import get_in_church
 
 from ..models import WorshipService
 
@@ -45,8 +45,9 @@ class ServiceMixin(WorshipMixin):
 
     @cached_property
     def service(self):
-        return get_object_or_404(
+        return get_in_church(
             WorshipService.objects.select_related("template"),
+            self.request.church,
             public_id=self.kwargs["public_id"],
         )
 

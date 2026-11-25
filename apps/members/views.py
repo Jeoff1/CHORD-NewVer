@@ -127,10 +127,14 @@ def member_detail_context(member, user, *, own_record=False):
         ),
     }
     if not own_record and user.has_perm("audit.view_auditevent"):
-        context["history"] = AuditEvent.objects.filter(
-            content_type=ContentType.objects.get_for_model(Member),
-            object_id=str(member.pk),
-        ).select_related("actor")[:10]
+        context["history"] = (
+            AuditEvent.objects.for_church(user.current_church)
+            .filter(
+                content_type=ContentType.objects.get_for_model(Member),
+                object_id=str(member.pk),
+            )
+            .select_related("actor")[:10]
+        )
     return context
 
 
@@ -196,16 +200,17 @@ class MemberAccountsView(MembersMixin, View):
         )
 
     def get(self, request):
-        return self.render_form(MemberAccountsForm())
+        return self.render_form(MemberAccountsForm(church=request.church))
 
     def post(self, request):
-        form = MemberAccountsForm(request.POST)
+        form = MemberAccountsForm(request.POST, church=request.church)
         if not form.is_valid():
             return self.render_form(form)
         created, skipped = member_accounts.create_accounts(
             form.cleaned_data["members"].order_by("last_name", "first_name"),
             form.cleaned_data["role"],
             request.user,
+            request.church,
         )
         sign_in_url = request.build_absolute_uri(reverse("accounts:login"))
         csv_text = member_accounts.accounts_csv(created, sign_in_url)
@@ -247,6 +252,7 @@ class MemberFormMixin(MembersMixin, FormPageMixin):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["can_view_private"] = can_view_private(self.request.user)
+        kwargs["church"] = self.request.church
         return kwargs
 
     def get_success_url(self):

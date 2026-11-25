@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_search_run,
     make_service,
     make_song,
@@ -222,7 +223,7 @@ class SongUsageTests(TestCase):
         self.assertEqual(ranking.song_usage(self.first), {})
 
     def test_ranking_changes_once_a_lineup_is_confirmed(self):
-        weights = SuggestionSettings.load().weights()
+        weights = SuggestionSettings.load(first_church()).weights()
 
         def score():
             ranked = ranking.rank(
@@ -250,7 +251,9 @@ class SongUsageTests(TestCase):
 
     def test_a_song_counts_once_per_service(self):
         confirmed_lineup(self.first, [self.song])
-        found = usage.by_song(usage.uses() + usage.uses())  # each use twice
+        found = usage.by_song(
+            usage.uses(first_church()) + usage.uses(first_church())
+        )  # each use twice
         self.assertEqual(found[self.song.pk].times, 1)
 
     def test_sung_again_within_the_window(self):
@@ -293,7 +296,7 @@ class SongUsageReportTests(ReportTestCase):
     URL = reverse("worship:report_song_usage")
 
     def test_the_report_matches_the_confirmed_lineups(self):
-        rows = reports.song_usage(window_weeks=4)
+        rows = reports.song_usage(first_church(), window_weeks=4)
         self.assertEqual([r.song.title for r in rows], ["Every Week", "Once"])
         every = rows[0]
         self.assertEqual(every.times, 2)
@@ -302,10 +305,14 @@ class SongUsageReportTests(ReportTestCase):
         )
         self.assertTrue(every.sung_again)  # a week apart, window of 4
         self.assertFalse(rows[1].sung_again)
-        self.assertFalse(reports.song_usage(window_weeks=1)[0].sung_again)
+        self.assertFalse(
+            reports.song_usage(first_church(), window_weeks=1)[0].sung_again
+        )
 
     def test_a_period_narrows_it(self):
-        rows = reports.song_usage(start=self.last_week.local_date, window_weeks=4)
+        rows = reports.song_usage(
+            first_church(), start=self.last_week.local_date, window_weeks=4
+        )
         self.assertEqual([(r.song.title, r.times) for r in rows], [("Every Week", 1)])
 
     def test_the_page_highlights_songs_sung_again(self):

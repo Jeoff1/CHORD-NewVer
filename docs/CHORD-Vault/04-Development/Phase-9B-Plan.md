@@ -69,6 +69,30 @@ version; final presentation 1–4 Dec 2026).
   it, the team is its holders of `teams.view_assignment`), matching the
   lock in section 5.
 
+**Slice b (done 2026-11-25).** Every temporary fallback is gone: no
+`church` field has a default, `ChurchProfile.load()` is removed, settings
+`load()` and the Church Spotify Account helpers need the church, and a
+user without `current_church` holds no permissions. Then each area was
+scoped, and the tests found the places that forgot their church.
+
+- **Teams** gets `rostering.teams_church()`: the one church with
+  `members_teams_unlocked`, explicit rather than "the first church".
+  `may_serve` asks that church's roles, so it works for other people too.
+- **The landing page** is the platform's: no church name, every Module,
+  neutral wording.
+- **People with no church** (no active Membership) see only their account
+  pages and notifications; other pages say "You're not part of a church
+  yet". This is the second security point below, done early.
+- **The Church Spotify Account** connection remembers the church that
+  started it; a callback in another church is refused.
+- **Officiants** and Members' **Linked account** list only the church's
+  active people. The isolation crawl found the Linked account leak: it
+  listed every account on the platform.
+- **Each church has its own calendar**: clashes are checked within it.
+- **`seed_hymns`** needs `--church <slug>`.
+- **Announcements** have `visibility` (Internal/Public); public ones show
+  on the homepage in slice e.
+
 **For slice c, found while building a:** an administrator may set the
 password of any user in their church. Once "Add an existing account"
 exists, that user may belong to other churches too, so Set password (and

@@ -17,7 +17,6 @@ gets it updated, not another one.
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from apps.church.models import ChurchProfile
 from apps.church.modules import is_enabled
 from apps.core.people import display_name
 from apps.notifications.services import notify
@@ -29,7 +28,9 @@ SERVING = (Assignment.Reply.PENDING, Assignment.Reply.ACCEPTED)
 
 
 def _open(service):
-    return is_enabled("teams") and not (service.is_cancelled or service.has_started)
+    return is_enabled("teams", service.church) and not (
+        service.is_cancelled or service.has_started
+    )
 
 
 def serving_people(service, *, exclude=None):
@@ -54,11 +55,12 @@ def assigned(assignment, actor):
         [assignment.person],
         f"You were assigned to {assignment.part} at {assignment.service}.",
         reverse("teams:my_schedule"),
+        church=assignment.service.church,
     )
 
 
 def lineup_text(lineup, user, event):
-    labels = ChurchProfile.load().label_set
+    labels = lineup.service.church.label_set
     word = labels.get("lineup").lower()
     service = lineup.service
     if event == signals.CONFIRMED:
@@ -80,5 +82,6 @@ def on_lineup_changed(sender, lineup, user, event, **kwargs):
         serving_people(service, exclude=user),
         lineup_text(lineup, user, event),
         reverse("worship:lineup", kwargs={"public_id": service.public_id}),
+        church=service.church,
         key=key,
     )

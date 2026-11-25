@@ -19,22 +19,33 @@ of the core and can't be switched off. App: `apps/church`.
   `about`, `show_in_directory` (on), `show_upcoming_services` (off) and
   `members_teams_unlocked` (only the church migrated from before 9B). A
   new installation starts with one church.
-  - *Phase 9B, slice a only:* `ChurchProfile.load()` and the default of
-    every `church` field mean "the first church" (`first_church_id()`), so
-    code not yet scoped keeps working. Slice b replaces them.
+  - Nothing falls back to a church: `load()` is gone, and no `church`
+    field has a default. `first_church_id()` is kept only because the 9B
+    migrations name it.
 - **Current Church middleware** (`middleware.py`,
   `CurrentChurchMiddleware`): puts the church a request works in on
   `request.church` and `request.user.current_church`, and activates its
   time zone. A signed-in person works in the church kept in the session
   (`church_id`) while they have an active Membership there (a superuser
   may choose any church); otherwise in their oldest membership's church.
+  Visitors and people with no active Membership have no church
+  (`request.church` is None): a signed-in person without one sees only
+  their own account pages and notifications, and "You're not part of a
+  church yet" everywhere else (`church/no_church.html`). The landing page
+  is the platform's, with every Module and the neutral wording.
+- **Scoping** (`scoping.py`): `for_church`, `get_in_church`,
+  `ChurchScopedMixin`, `ChurchFormMixin` and `ChurchFormKwargsMixin`
+  ([[Code-Conventions]], "One church's records").
 - **Seeding** (`seeding.py`): `seed_church(church)` gives a new church its
   defaults. Each app registers a seeder in `AppConfig.ready()`: roles
   (Accounts), Theme Tags and Worship Check settings (`songs/defaults.py`),
   the default template and Suggestion Settings (`worship/defaults.py`),
   and the example Occasion Types, switched off (`occasions/defaults.py`).
-- **Modules** (`modules.py`): the registry of the four Modules (Members,
-  Worship, Teams, Announcements; [[0005-worship-planning-scope]]).
+- **Modules** (`modules.py`): the registry of the Modules (Members,
+  Worship, Teams, Occasions, Announcements; [[0005-worship-planning-scope]]).
+  `is_enabled(code, church)` needs the church; without one no Module is
+  on. Members and Teams have `platform_ready=False`: only a church with
+  `members_teams_unlocked` may use them (Phase 9B, §5).
   - Each entry has a code, the Django apps that hold its models, a main
     URL (none until the Module is built) and an optional Label key for
     its name.

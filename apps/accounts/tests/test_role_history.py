@@ -13,6 +13,7 @@ from apps.accounts.tests.test_user_management import edit_data
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_administrator,
     make_assignment,
     make_chord_sheet,
@@ -54,7 +55,9 @@ class RoleChangeKeepsHistoryTests(TestCase):
         response = self.make_church_member()
         self.assertRedirects(response, reverse("accounts:user_list"))
         self.leader.refresh_from_db()
-        self.assertEqual(list(self.leader.roles), [self.church_member])
+        self.assertEqual(
+            list(self.leader.roles_in(first_church())), [self.church_member]
+        )
 
         self.lineup.refresh_from_db()
         self.sheet.refresh_from_db()

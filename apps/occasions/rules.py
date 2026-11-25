@@ -39,7 +39,9 @@ Status = OccasionRequest.Status
 
 OCCASION_AUDIT_FIELDS = {
     "Occasion": "occasion_type",
-    "Date and time": lambda occasion: format_moment(occasion.starts_at),
+    "Date and time": lambda occasion: format_moment(
+        occasion.starts_at, occasion.church
+    ),
     "Length (minutes)": "length_minutes",
     "For": "occasion_for",
     "Officiant": lambda occasion: (
@@ -51,7 +53,7 @@ OCCASION_AUDIT_FIELDS = {
 }
 REQUEST_AUDIT_FIELDS = {
     "Occasion": "occasion_type",
-    "Date and time": lambda request: format_moment(request.starts_at),
+    "Date and time": lambda request: format_moment(request.starts_at, request.church),
     "For": "occasion_for",
     "Note": "note",
     "Status": lambda request: request.get_status_display(),
@@ -68,21 +70,24 @@ def can_see(user):
     return user.has_perm(VIEW)
 
 
-def requestable_types():
-    return OccasionType.objects.active()
+def requestable_types(church):
+    return OccasionType.objects.for_church(church).active()
 
 
 # --- Booked time --------------------------------------------------------------
 
 
-def clashes(starts_at, ends_at, *, exclude=None):
-    """Bookings that aren't cancelled and overlap ``starts_at`` to
-    ``ends_at``: worship services and Occasions, soonest first.
-    ``exclude`` is an Occasion being moved."""
+def clashes(church, starts_at, ends_at, *, exclude=None):
+    """The church's bookings that aren't cancelled and overlap
+    ``starts_at`` to ``ends_at``: worship services and Occasions, soonest
+    first. Each church has its own calendar. ``exclude`` is an Occasion
+    being moved."""
     earliest = starts_at - datetime.timedelta(minutes=MAX_LENGTH_MINUTES)
     window = {"starts_at__lt": ends_at, "starts_at__gt": earliest}
-    services = WorshipService.objects.filter(is_cancelled=False, **window)
-    occasions = Occasion.objects.filter(is_cancelled=False, **window)
+    services = WorshipService.objects.for_church(church).filter(
+        is_cancelled=False, **window
+    )
+    occasions = Occasion.objects.for_church(church).filter(is_cancelled=False, **window)
     if exclude is not None and exclude.pk:
         occasions = occasions.exclude(pk=exclude.pk)
     found = [
@@ -119,8 +124,8 @@ def clash_message(found, user):
     )
 
 
-def _check_free(starts_at, ends_at, user, *, exclude=None):
-    found = clashes(starts_at, ends_at, exclude=exclude)
+def _check_free(church, starts_at, ends_at, user, *, exclude=None):
+    found = clashes(church, starts_at, ends_at, exclude=exclude)
     if found:
         raise OccasionRefused(clash_message(found, user))
 
@@ -139,7 +144,13 @@ def save_occasion(occasion, actor, *, before=None):
     with transaction.atomic():
         wait_for_transaction_lock(BOOKINGS)
         if not occasion.is_cancelled:
-            _check_free(occasion.starts_at, occasion.ends_at, actor, exclude=occasion)
+            _check_free(
+                occasion.church,
+                occasion.starts_at,
+                occasion.ends_at,
+                actor,
+                exclude=occasion,
+            )
         occasion.save()
         record_change(
             actor,
@@ -150,15 +161,17 @@ def save_occasion(occasion, actor, *, before=None):
     return occasion
 
 
-def calendar_source(start, end, user):
-    """The Occasions starting between ``start`` and ``end``, as Bookings for
-    the Worship calendar: in full for people who may see them, otherwise
-    only "Booked" (and nothing for a cancelled one)."""
-    if not is_enabled("occasions"):
+def calendar_source(start, end, church, user):
+    """The church's Occasions starting between ``start`` and ``end``, as
+    Bookings for its Worship calendar: in full for people who may see them,
+    otherwise only "Booked" (and nothing for a cancelled one)."""
+    if not is_enabled("occasions", church):
         return []
-    occasions = Occasion.objects.filter(
-        starts_at__gte=start, starts_at__lt=end
-    ).select_related("occasion_type")
+    occasions = (
+        Occasion.objects.for_church(church)
+        .filter(starts_at__gte=start, starts_at__lt=end)
+        .select_related("occasion_type")
+    )
     if not can_see(user):
         return [
             Booking(occasion.starts_at, occasion.ends_at)
@@ -186,8 +199,12 @@ def request_occasion(requester, occasion_type, starts_at, occasion_for, note="")
         raise OccasionRefused("That occasion can't be requested.")
     if starts_at <= timezone.now():
         raise OccasionRefused("Choose a date and time that hasn't passed yet.")
-    _check_free(starts_at, _ends(starts_at, occasion_type.length_minutes), requester)
+    church = occasion_type.church
+    _check_free(
+        church, starts_at, _ends(starts_at, occasion_type.length_minutes), requester
+    )
     request = OccasionRequest.objects.create(
+        church=church,
         requester=requester,
         occasion_type=occasion_type,
         starts_at=starts_at,
@@ -218,7 +235,12 @@ def _day(value):
 
 
 def _tell_requester(request, text):
-    notify([request.requester], text[:300], reverse("occasions:my_requests"))
+    notify(
+        [request.requester],
+        text[:300],
+        reverse("occasions:my_requests"),
+        church=request.church,
+    )
 
 
 def approve(request, actor, *, starts_at=None, officiant=None, venue=""):
@@ -232,6 +254,7 @@ def approve(request, actor, *, starts_at=None, officiant=None, venue=""):
         if starts_at <= timezone.now():
             raise OccasionRefused("Choose a date and time that hasn't passed yet.")
         occasion = Occasion(
+            church=locked.church,
             occasion_type=locked.occasion_type,
             starts_at=starts_at,
             length_minutes=locked.occasion_type.length_minutes,
@@ -240,7 +263,7 @@ def approve(request, actor, *, starts_at=None, officiant=None, venue=""):
             venue=venue,
             notes=locked.note,
         )
-        _check_free(occasion.starts_at, occasion.ends_at, actor)
+        _check_free(occasion.church, occasion.starts_at, occasion.ends_at, actor)
         occasion.save()
         record_change(
             actor,
@@ -312,5 +335,7 @@ def withdraw(request, person):
     return locked
 
 
-def pending_count():
-    return OccasionRequest.objects.filter(status=Status.PENDING).count()
+def pending_count(church):
+    return (
+        OccasionRequest.objects.for_church(church).filter(status=Status.PENDING).count()
+    )

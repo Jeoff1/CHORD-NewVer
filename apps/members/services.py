@@ -268,7 +268,9 @@ def check_import(headers, raw_rows, *, include_private):
             except ValidationError as error:
                 row.problems.extend(error.messages)
 
-        form = MemberForm(data=data, can_view_private=include_private, for_import=True)
+        form = MemberForm(
+            data=data, church=None, can_view_private=include_private, for_import=True
+        )
         if form.is_valid():
             row.form = form
         else:

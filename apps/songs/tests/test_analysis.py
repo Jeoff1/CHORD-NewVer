@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from apps.core.music import Feel
-from apps.core.testing import make_song, make_user
+from apps.core.testing import first_church, make_song, make_user
 from apps.songs.analysis import (
     TAG_THRESHOLD,
     TRUSTED_ARTIST_BONUS,
@@ -22,6 +22,7 @@ from apps.songs.analysis import (
     is_trusted,
     lyrics_text,
     trusted_artist_bonus,
+    trusted_names,
 )
 from apps.songs.ml.keyword import KeywordEngine
 from apps.songs.models import Song, ThemeTag, TrustedArtist, WorshipCheckSettings
@@ -145,10 +146,10 @@ class CheckRuleTests(TestCase):
         self.assertEqual(decide_check(0.1, trusted=False, rules=rules)[1], "rejected")
 
     def test_the_rules_are_off_by_default(self):
-        row = WorshipCheckSettings.load()
+        row = WorshipCheckSettings.load(first_church())
         self.assertEqual(row.pass_mark, 0.5)
         self.assertEqual(row.unlisted_rule, UnlistedRule.OFF)
-        rules = CheckRules.load()
+        rules = CheckRules.load(first_church())
         self.assertEqual(decide_check(0.5, trusted=False, rules=rules)[1], "accepted")
 
     def test_a_song_waiting_for_review_keeps_its_suggested_tags(self):
@@ -181,15 +182,17 @@ class CheckRuleTests(TestCase):
             worship_check=Song.WorshipCheck.ACCEPTED,
             reviewed_at=timezone.now(),
         )
-        WorshipCheckSettings.objects.update_or_create(pk=1, defaults={"pass_mark": 0.7})
-        self.assertEqual(apply_check_rules(), 1)
+        WorshipCheckSettings.objects.update_or_create(
+            church=first_church(), defaults={"pass_mark": 0.7}
+        )
+        self.assertEqual(apply_check_rules(first_church()), 1)
         song.refresh_from_db()
         reviewed.refresh_from_db()
         self.assertEqual(song.worship_check, Song.WorshipCheck.REJECTED)
         self.assertEqual(list(song.tags.all()), [])
         self.assertEqual(reviewed.worship_check, Song.WorshipCheck.ACCEPTED)
         # Adding the artist to the Trusted Artists list rechecks it at once.
-        TrustedArtist.objects.create(name="Choir")
+        TrustedArtist.objects.create(church=first_church(), name="Choir")
         song.refresh_from_db()
         self.assertEqual(song.worship_check, Song.WorshipCheck.ACCEPTED)
         self.assertEqual(song.worship_score, 0.85)
@@ -271,7 +274,7 @@ class AnalyseSongTests(TestCase):
         lyrics = "Glory over the hills"
         plain = self.found(lyrics, artist="Choir A")
         listed = self.found(lyrics, artist="Choir B")
-        TrustedArtist.objects.create(name="Choir B")
+        TrustedArtist.objects.create(church=first_church(), name="Choir B")
         analyse_song(plain)
         analyse_song(listed)
         plain.refresh_from_db()
@@ -282,7 +285,7 @@ class AnalyseSongTests(TestCase):
         lyrics = "Glory over the hills"
         plain = self.found(lyrics, artist="Choir A")
         listed = self.found(lyrics, artist="Choir B")
-        TrustedArtist.objects.create(name="Choir B")
+        TrustedArtist.objects.create(church=first_church(), name="Choir B")
         analyse_song(plain)
         analyse_song(listed)
         plain.refresh_from_db()
@@ -310,15 +313,20 @@ class AnalyseSongTests(TestCase):
                 seen.extend(texts)
                 return super().embed(texts)
 
-        TrustedArtist.objects.create(name="Unmistakable Artist Name")
+        TrustedArtist.objects.create(
+            church=first_church(), name="Unmistakable Artist Name"
+        )
         song = self.found("Glory over the hills", artist="Unmistakable Artist Name")
         analyse_song(song, Recorder())
         self.assertTrue(seen)
         self.assertFalse(any("Unmistakable" in text for text in seen))
 
     def test_trusted_artist_matches_any_credited_artist(self):
-        TrustedArtist.objects.create(name="Grace Band")
-        TrustedArtist.objects.create(name="Retired Choir", is_active=False)
-        self.assertTrue(is_trusted("Someone, grace band"))
-        self.assertFalse(is_trusted("Retired Choir"))
-        self.assertFalse(is_trusted("Grace"))
+        TrustedArtist.objects.create(church=first_church(), name="Grace Band")
+        TrustedArtist.objects.create(
+            church=first_church(), name="Retired Choir", is_active=False
+        )
+        names = trusted_names(first_church())
+        self.assertTrue(is_trusted("Someone, grace band", names))
+        self.assertFalse(is_trusted("Retired Choir", names))
+        self.assertFalse(is_trusted("Grace", names))

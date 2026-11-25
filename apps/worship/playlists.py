@@ -28,7 +28,6 @@ from dataclasses import dataclass
 from django.db import transaction
 from django.utils import formats, timezone
 
-from apps.church.models import ChurchProfile
 from apps.songs import connections
 from apps.songs.spotify import SpotifyClient, SpotifyError, SpotifyRateLimited
 
@@ -64,7 +63,8 @@ def needs_saving(lineup, tracks=None, *, church=None):
     tracks = track_ids(lineup) if tracks is None else tracks
     if not tracks:
         return False
-    church = connections.church_account() is not None if church is None else church
+    if church is None:
+        church = connections.church_account(lineup.service.church) is not None
     if church and not lineup.spotify_playlist_on_church_account:
         return True
     return lineup.spotify_playlist_tracks != tracks
@@ -84,7 +84,7 @@ def playlist_name(lineup):
 
 
 def _description(lineup):
-    word = ChurchProfile.load().label_set.get("lineup")
+    word = lineup.service.church.label_set.get("lineup")
     return f"{word} saved from CHORD."
 
 
@@ -94,7 +94,7 @@ def save(lineup, user, *, client=None):
     for Spotify's sake; the outcome says what happened, for the person."""
     if not lineup.is_confirmed or not connections.is_configured():
         return Outcome(False)
-    church = connections.church_account()
+    church = connections.church_account(lineup.service.church)
     connection = church or connections.connection_for(user)
     if connection is None:
         return Outcome(

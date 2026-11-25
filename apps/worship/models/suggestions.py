@@ -8,7 +8,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from apps.church.models import church_settings_field, first_church_id
+from apps.church.models import church_settings_field
+from apps.church.scoping import church_scoped_manager
 from apps.core.setting_lists import ChurchChoiceItem
 
 from .schedule import TemplateSlot, WorshipService
@@ -97,11 +98,9 @@ class SuggestionSettings(models.Model):
         return "Suggestion settings"
 
     @classmethod
-    def load(cls, church=None):
-        """The church's row, created with the defaults if missing. Without
-        ``church``, the first church's (Phase 9B, slice a only)."""
-        church_id = church.pk if church is not None else first_church_id()
-        settings_row, _ = cls.objects.get_or_create(church_id=church_id)
+    def load(cls, church):
+        """The church's row, created with the defaults if missing."""
+        settings_row, _ = cls.objects.get_or_create(church=church)
         return settings_row
 
     def genres(self):
@@ -218,6 +217,9 @@ class SearchRun(models.Model):
         "whether it ran again without the genre.",
     )
 
+    objects = church_scoped_manager()
+    church_path = "service__church"
+
     class Meta:
         ordering = ["-created_at", "-pk"]
         default_permissions = ("view",)
@@ -282,6 +284,9 @@ class Suggestion(models.Model):
         help_text="Why the song is in its slot, when that needs saying.",
     )
     reasons = models.JSONField(default=list)
+
+    objects = church_scoped_manager()
+    church_path = "run__service__church"
 
     class Meta:
         ordering = ["rank"]

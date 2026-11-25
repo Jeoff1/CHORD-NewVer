@@ -5,7 +5,7 @@ from django.urls import reverse
 from apps.audit.models import AuditEvent
 from apps.audit.services import record_change
 from apps.church.models import ChurchProfile
-from apps.core.testing import make_administrator, make_user
+from apps.core.testing import first_church, make_administrator, make_user
 
 URL = reverse("audit:log")
 
@@ -16,7 +16,7 @@ class AuditLogViewTests(TestCase):
         record_change(self.admin, make_user(username="ana"), AuditEvent.Action.CREATED)
         record_change(
             self.admin,
-            ChurchProfile.load(),
+            first_church(),
             AuditEvent.Action.CHANGED,
             {"Church name": ["Old", "New"]},
         )

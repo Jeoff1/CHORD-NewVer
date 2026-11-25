@@ -11,6 +11,7 @@ in ``apps/worship/lineups.py`` (Design-Decisions, Phase 6).
 from django.conf import settings
 from django.db import models
 
+from apps.church.scoping import church_scoped_manager
 from apps.core.models import TimeStampedModel
 from apps.core.music import KEY_CHOICES
 from apps.core.people import display_name
@@ -106,6 +107,9 @@ class Lineup(TimeStampedModel):
     spotify_playlist_tracks = models.JSONField(default=list, blank=True)
     spotify_playlist_saved_at = models.DateTimeField(null=True, blank=True)
 
+    objects = church_scoped_manager()
+    church_path = "service__church"
+
     class Meta:
         default_permissions = ("add", "change", "view")
         permissions = [
@@ -184,6 +188,9 @@ class LineupItem(models.Model):
         "regenerated until it is unlocked.",
     )
 
+    objects = church_scoped_manager()
+    church_path = "lineup__service__church"
+
     class Meta:
         ordering = ["position", "pk"]
         default_permissions = ()
@@ -261,6 +268,9 @@ class SuggestionFeedback(models.Model):
     slot_feel = models.CharField(
         max_length=10, blank=True, help_text="The feel of the slot it was placed in."
     )
+
+    objects = church_scoped_manager()
+    church_path = "lineup__service__church"
 
     class Meta:
         ordering = ["lineup", "rank"]

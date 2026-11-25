@@ -1,11 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import FormView, ListView
 
 from apps.church.modules import ModuleRequiredMixin
+from apps.church.scoping import ChurchFormKwargsMixin, get_in_church
 from apps.core.views import FormPageMixin
 
 from . import services
@@ -24,11 +25,15 @@ class AnnouncementListView(AnnouncementsMixin, ListView):
     paginate_by = 25
 
     def get_queryset(self):
-        return services.visible_to(self.request.user)
+        return services.visible_to(self.request.user, self.request.church)
 
 
 class AnnouncementCreateView(
-    AnnouncementsMixin, PermissionRequiredMixin, FormPageMixin, FormView
+    ChurchFormKwargsMixin,
+    AnnouncementsMixin,
+    PermissionRequiredMixin,
+    FormPageMixin,
+    FormView,
 ):
     permission_required = "announcements.add_announcement"
     form_class = AnnouncementForm
@@ -42,10 +47,16 @@ class AnnouncementCreateView(
         try:
             services.post(
                 self.request.user,
+                self.request.church,
                 title=data["title"],
                 body=data["body"],
                 audience=data["audience"],
                 service=data.get("service"),
+                visibility=(
+                    Announcement.Visibility.PUBLIC
+                    if data.get("public")
+                    else Announcement.Visibility.INTERNAL
+                ),
             )
         except services.AnnouncementRefused as refused:
             form.add_error(None, str(refused))
@@ -58,8 +69,10 @@ class ArchiveView(AnnouncementsMixin, View):
     """Only the author archives; anyone else gets a 404."""
 
     def post(self, request, public_id):
-        announcement = get_object_or_404(
-            Announcement, public_id=public_id, author=request.user
+        announcement = get_in_church(
+            Announcement.objects.filter(author=request.user),
+            request.church,
+            public_id=public_id,
         )
         services.archive(announcement, request.user)
         messages.success(request, f"“{announcement.title}” was archived.")

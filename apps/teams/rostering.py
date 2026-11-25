@@ -81,34 +81,47 @@ class RosterRefused(Exception):
         self.assignment = assignment
 
 
-def _service_word():
-    return ChurchProfile.load().label_set.get("worship_service").lower()
+def teams_church():
+    """The church whose team these records are (decision 0014). Teams'
+    records aren't kept apart per church yet, so only a church with
+    ``members_teams_unlocked`` (the one from before Phase 9B) may use the
+    Module; person-level records (Team Profiles, Blackout Dates) are its."""
+    return (
+        ChurchProfile.objects.filter(members_teams_unlocked=True).order_by("pk").first()
+    )
+
+
+def _service_word(church):
+    return church.label_set.get("worship_service").lower()
 
 
 def roster_closed(service):
     """Why the service's team can't change any more, or "" when it can."""
+    word = _service_word(service.church)
+    if service.church_id != getattr(teams_church(), "pk", None):
+        return f"This {word}'s church doesn't have the Teams module."
     if service.is_cancelled:
-        return f"This {_service_word()} is cancelled, so its team can't change."
+        return f"This {word} is cancelled, so its team can't change."
     if service.has_started:
-        return (
-            f"This {_service_word()} has already taken place, so its team can't change."
-        )
+        return f"This {word} has already taken place, so its team can't change."
     return ""
 
 
 def church_today():
-    return timezone.localdate(timezone=church_time_zone())
+    return timezone.localdate(timezone=church_time_zone(teams_church()))
 
 
 def service_day(service):
-    """The service's date in the church's time zone."""
-    return timezone.localtime(service.starts_at, church_time_zone()).date()
+    """The service's date in its church's time zone."""
+    return timezone.localtime(
+        service.starts_at, church_time_zone(service.church)
+    ).date()
 
 
 def day_bounds(starts_on, ends_on):
     """The moments that start ``starts_on`` and end ``ends_on``, in the
-    church's time zone."""
-    zone = church_time_zone()
+    team's church's time zone."""
+    zone = church_time_zone(teams_church())
     start = datetime.datetime.combine(starts_on, datetime.time.min, tzinfo=zone)
     end = datetime.datetime.combine(
         ends_on + datetime.timedelta(days=1), datetime.time.min, tzinfo=zone
@@ -128,18 +141,20 @@ def _lock(person):
 # --- The team -------------------------------------------------------------------
 
 
-def may_serve(user):
-    """Whether ``user`` is on the team: active, holding ``TEAM_PERMISSION``."""
-    return user.is_active and user.has_perm(TEAM_PERMISSION)
-
-
 def team_people():
-    """Active users holding ``TEAM_PERMISSION`` through a role, or as
-    superusers. Teams is open only to the first church for now (Phase 9B,
-    decision 0014)."""
-    return users_with_perm(
-        ChurchProfile.load(), TEAM_PERMISSION, include_superusers=True
-    )
+    """Active users holding ``TEAM_PERMISSION`` through a role in the
+    team's church, or as superusers."""
+    church = teams_church()
+    if church is None:
+        return get_user_model().objects.none()
+    return users_with_perm(church, TEAM_PERMISSION, include_superusers=True)
+
+
+def may_serve(user):
+    """Whether ``user`` is on the team: active, holding ``TEAM_PERMISSION``
+    in the team's church. Asked of other people too, so it never relies on
+    the person's own Current Church."""
+    return user.is_active and team_people().filter(pk=user.pk).exists()
 
 
 def _not_on_team(person):
@@ -195,7 +210,7 @@ def candidates(service, part):
 
 def _reason(service, part, person, blacked_out, assigned):
     if person.pk in assigned:
-        return f"Already assigned to {part} at this {_service_word()}."
+        return f"Already assigned to {part} at this {_service_word(service.church)}."
     if person.pk in blacked_out:
         day = service_day(service)
         return f"Can't serve on {day:%b} {day.day}, a blackout date."
@@ -244,7 +259,7 @@ def assign(service, part, person, actor):
             notifying.assigned(assignment, actor)
     except IntegrityError as error:
         raise RosterRefused(
-            f"Already assigned to {part} at this {_service_word()}."
+            f"Already assigned to {part} at this {_service_word(service.church)}."
         ) from error
     record_change(
         actor,
@@ -431,7 +446,7 @@ def take_refusal(swap, person):
     if _blacked_out(service_day(swap.service)).filter(person=person).exists():
         return "That day is one of your blackout dates."
     if Assignment.objects.filter(service=swap.service, person=person).exists():
-        return f"You're already on this {_service_word()}."
+        return f"You're already on this {_service_word(swap.service.church)}."
     return ""
 
 

@@ -61,7 +61,9 @@ def song_usage(service):
 
     return {
         song_id: Usage(times=found.times, last_used=found.last_used)
-        for song_id, found in by_song(uses(before=service.starts_at)).items()
+        for song_id, found in by_song(
+            uses(service.church, before=service.starts_at)
+        ).items()
     }
 
 

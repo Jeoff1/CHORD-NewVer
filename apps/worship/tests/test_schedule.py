@@ -8,6 +8,7 @@ from django.utils import timezone
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_administrator,
     make_service,
     make_theme,
@@ -126,7 +127,7 @@ class CalendarTests(WorshipTestCase):
         late = make_service(
             starts_at=datetime.datetime(2031, 4, 30, 23, 30, tzinfo=MANILA)
         )
-        weeks = scheduling.month_grid(2031, 4, [late])
+        weeks = scheduling.month_grid(2031, 4, [late], first_church())
         days = [day for week in weeks for day in week if day.services]
         self.assertEqual([day.date for day in days], [datetime.date(2031, 4, 30)])
 
@@ -226,7 +227,7 @@ class ThemeTests(WorshipTestCase):
     def test_editing_is_audited_and_keeps_the_poster(self):
         pastor = make_user()
         make_theme(self.service, title="Grace", posted_by=pastor)
-        series = SermonSeries.objects.create(name="Ephesians")
+        series = SermonSeries.objects.create(church=first_church(), name="Ephesians")
         self.client.force_login(make_user(perms=THEME_EDITOR))
         self.client.post(self.url, self.theme_data(series=series.pk))
         theme = Theme.objects.get()

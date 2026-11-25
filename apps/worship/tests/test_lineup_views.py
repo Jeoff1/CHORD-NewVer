@@ -11,6 +11,7 @@ from django.utils import dateformat, timezone
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_administrator,
     make_search_run,
     make_service,
@@ -456,7 +457,7 @@ class ConfirmationViewTests(LineupViewTestCase):
 
     def stamp(self, lineup):
         """The mark's time as the pages show it, in the church's time zone."""
-        with timezone.override(scheduling.church_time_zone()):
+        with timezone.override(scheduling.church_time_zone(first_church())):
             return dateformat.format(timezone.localtime(lineup.edited_at), "M j, g:i A")
 
     def test_the_leaders_edit_to_a_confirmed_lineup_shows_changed_by(self):

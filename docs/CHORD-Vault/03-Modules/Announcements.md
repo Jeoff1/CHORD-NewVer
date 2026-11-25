@@ -12,11 +12,14 @@ app `apps/announcements`. Decisions: [[Design-Decisions]], Phase 8
 
 Built 2026-11-23 (Phase 8, part B):
 
-- **Announcement** (`Announcement`, public UUID): title, message, audience,
-  an optional service, author, and when it was archived. A check
+- **Announcement** (`Announcement`, public UUID): its church, title,
+  message, audience, an optional service, author, when it was archived,
+  and `visibility`: Internal, or Public ("Also show it on the church's
+  homepage", for an announcement to everyone only; shown on the homepage
+  from Phase 9B slice e). A check
   constraint keeps a service only on a service-team announcement.
 - **Audiences** (`services.visible_to`):
-  - **Everyone**: everyone signed in;
+  - **Everyone**: everyone working in the church;
   - **One service's team**: that service's assigned people whose reply is
     Pending or Accepted (see [[Teams]]), plus its author. It is offered,
     and shown, only while Teams is on, and only for a coming service that

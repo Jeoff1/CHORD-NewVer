@@ -7,7 +7,7 @@ from django.core.management import CommandError, call_command
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.core.testing import FakeHttp, make_song
+from apps.core.testing import FakeHttp, first_church, make_song
 from apps.songs import lyrics, pool
 from apps.songs.lyrics import LrclibClient, LyricsResult
 from apps.songs.ml import EngineUnavailable
@@ -38,12 +38,12 @@ class StubLyrics:
 class AddFromSpotifyTests(TestCase):
     def test_adds_a_new_track_once(self):
         track = Track("abc", "Morning Song", ("Band", "Guest"), "Album", 200_400)
-        song, created = pool.add_from_spotify(track)
+        song, created = pool.add_from_spotify(track, first_church())
         self.assertTrue(created)
         self.assertEqual(song.artist, "Band, Guest")
         self.assertEqual(song.length_seconds, 200)
         self.assertEqual(song.lyrics_status, Song.LyricsStatus.PENDING)
-        again, created = pool.add_from_spotify(track)
+        again, created = pool.add_from_spotify(track, first_church())
         self.assertFalse(created)
         self.assertEqual(again.pk, song.pk)
 

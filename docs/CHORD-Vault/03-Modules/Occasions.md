@@ -32,11 +32,13 @@ Built in Phase 9A, A5 (2026-11-24):
 - **Rules** (`rules.py`):
   - **No double booking:** adding, moving, requesting or approving an
     occasion is refused when its time overlaps a worship service (its
-    template's length) or another occasion that isn't cancelled.
+    template's length) or another occasion of the same church that isn't
+    cancelled; each church has its own calendar.
     Back-to-back times are fine; a cancelled booking frees its time.
     Bookings take a database lock (`BOOKINGS`), so two at once take turns.
   - a request needs an active type and a time that hasn't passed;
-    approving may move the time and set the officiant and venue, and
+    approving may move the time and set the officiant (one of the
+    church's active people) and venue, and
     copies the request's note onto the Occasion; declining needs a
     reason; only the requester withdraws, while Pending; a decided request
     can't be decided again;

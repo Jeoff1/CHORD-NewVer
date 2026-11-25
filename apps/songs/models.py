@@ -8,11 +8,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
-from apps.church.models import (
-    church_foreign_key,
-    church_settings_field,
-    first_church_id,
-)
+from apps.church.models import church_foreign_key, church_settings_field
+from apps.church.scoping import church_scoped_manager
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.music import KEY_CHOICES, Feel
 from apps.core.setting_lists import ChurchChoiceItem
@@ -152,7 +149,8 @@ class Song(PublicIdModel, TimeStampedModel):
         "along with it. Leave blank when you don't know it.",
     )
 
-    objects = SongQuerySet.as_manager()
+    objects = church_scoped_manager(SongQuerySet)
+    church_path = "church"
 
     class Meta:
         ordering = ["title", "artist", "pk"]
@@ -239,11 +237,9 @@ class WorshipCheckSettings(models.Model):
         return "Worship check settings"
 
     @classmethod
-    def load(cls, church=None):
-        """The church's row, created with the defaults if missing. Without
-        ``church``, the first church's (Phase 9B, slice a only)."""
-        church_id = church.pk if church is not None else first_church_id()
-        settings_row, _ = cls.objects.get_or_create(church_id=church_id)
+    def load(cls, church):
+        """The church's row, created with the defaults if missing."""
+        settings_row, _ = cls.objects.get_or_create(church=church)
         return settings_row
 
 
@@ -333,7 +329,8 @@ class ChordSheet(TimeStampedModel):
     )
     approved_at = models.DateTimeField(null=True, blank=True)
 
-    objects = ChordSheetQuerySet.as_manager()
+    objects = church_scoped_manager(ChordSheetQuerySet)
+    church_path = "song__church"
 
     class Meta:
         ordering = ["song", "-status", "-updated_at"]

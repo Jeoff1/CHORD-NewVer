@@ -21,6 +21,7 @@ from django.views.generic import (
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.church.modules import is_enabled
+from apps.church.scoping import ChurchFormKwargsMixin, ChurchScopedMixin
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.teams.views import service_team_context
 
@@ -41,7 +42,7 @@ from .suggestions import can_suggest, panel_context
 # --- Services ----------------------------------------------------------------
 
 
-class ServiceListView(WorshipMixin, FilteredListView):
+class ServiceListView(ChurchScopedMixin, WorshipMixin, FilteredListView):
     permission_required = "worship.view_worshipservice"
     model = WorshipService
     template_name = "worship/service_list.html"
@@ -79,7 +80,7 @@ class ServiceListView(WorshipMixin, FilteredListView):
         context.update(
             when=self.get_when(),
             when_choices=self.WHEN.items(),
-            can_schedule_ahead=can_schedule_ahead(user),
+            can_schedule_ahead=can_schedule_ahead(self.request),
             show_lineup=user.has_perm("worship.view_lineup"),
             show_team=show_team(user),
             can_plan=can_plan(user),
@@ -87,11 +88,12 @@ class ServiceListView(WorshipMixin, FilteredListView):
         return context
 
 
-def can_schedule_ahead(user):
+def can_schedule_ahead(request):
     """Whether "Schedule weeks ahead" has anything to offer this person."""
     return (
-        user.has_perm("worship.add_worshipservice")
-        and ServiceTemplate.objects.active()
+        request.user.has_perm("worship.add_worshipservice")
+        and ServiceTemplate.objects.for_church(request.church)
+        .active()
         .filter(weekday__isnull=False, start_time__isnull=False)
         .exists()
     )
@@ -100,7 +102,9 @@ def can_schedule_ahead(user):
 def show_team(user):
     """The schedule's Team column: while Teams is on, for people who may
     see each service's team."""
-    return is_enabled("teams") and user.has_perm("teams.view_assignment")
+    return is_enabled("teams", user.current_church) and user.has_perm(
+        "teams.view_assignment"
+    )
 
 
 class CalendarView(WorshipMixin, TemplateView):
@@ -119,22 +123,28 @@ class CalendarView(WorshipMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         year, month = self.get_month()
-        start, end = scheduling.month_bounds(year, month)
-        services = WorshipService.objects.filter(
-            starts_at__gte=start, starts_at__lt=end
-        ).select_related("theme", "template")
+        church = self.request.church
+        start, end = scheduling.month_bounds(year, month, church)
+        services = (
+            WorshipService.objects.for_church(church)
+            .filter(starts_at__gte=start, starts_at__lt=end)
+            .select_related("theme", "template")
+        )
         context.update(
             month=datetime.date(year, month, 1),
             weeks=scheduling.month_grid(
                 year,
                 month,
                 services,
-                bookings=bookings.calendar_bookings(start, end, self.request.user),
+                church,
+                bookings=bookings.calendar_bookings(
+                    start, end, church, self.request.user
+                ),
             ),
             previous_month="{}-{:02d}".format(*scheduling.shift_month(year, month, -1)),
             next_month="{}-{:02d}".format(*scheduling.shift_month(year, month, 1)),
             weekday_names=["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-            can_schedule_ahead=can_schedule_ahead(self.request.user),
+            can_schedule_ahead=can_schedule_ahead(self.request),
         )
         return context
 
@@ -236,7 +246,9 @@ def planning_steps(service, lineup, run):
     }
 
 
-class ServiceFormMixin(WorshipMixin, FormPageMixin):
+class ServiceFormMixin(
+    ChurchScopedMixin, ChurchFormKwargsMixin, WorshipMixin, FormPageMixin
+):
     model = WorshipService
     form_class = ServiceForm
 
@@ -317,6 +329,7 @@ class ThemeView(ServiceMixin, FormPageMixin, UpdateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["labels"] = self.request.church.label_set
+        kwargs["church"] = self.request.church
         self.is_new = not self.object.pk
         self.before = (
             {} if self.is_new else snapshot(self.object, scheduling.THEME_AUDIT_FIELDS)
@@ -358,7 +371,7 @@ class AttendanceView(ServiceMixin, View):
         return redirect(self.service_url())
 
 
-class ScheduleAheadView(WorshipMixin, FormPageMixin, FormView):
+class ScheduleAheadView(ChurchFormKwargsMixin, WorshipMixin, FormPageMixin, FormView):
     permission_required = "worship.add_worshipservice"
     form_class = ScheduleAheadForm
     page_title = "Schedule weeks ahead"
@@ -391,7 +404,9 @@ class TemplateListView(WorshipMixin, ListView):
     template_name = "worship/template_list.html"
 
     def get_queryset(self):
-        return ServiceTemplate.objects.prefetch_related("slots")
+        return ServiceTemplate.objects.for_church(self.request.church).prefetch_related(
+            "slots"
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -401,7 +416,7 @@ class TemplateListView(WorshipMixin, ListView):
         return context
 
 
-class TemplateFormMixin(WorshipMixin):
+class TemplateFormMixin(ChurchScopedMixin, ChurchFormKwargsMixin, WorshipMixin):
     model = ServiceTemplate
     form_class = TemplateForm
     template_name = "worship/template_form.html"

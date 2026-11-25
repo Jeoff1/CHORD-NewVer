@@ -2,6 +2,45 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Phase 9B, slice b: every record stays in its church
+
+First the temporary fallbacks went (no `church` default, no
+`ChurchProfile.load()`, no first-church answer for a user outside a
+request), so anything that forgot its church failed in tests; then each
+area was scoped ([[Code-Conventions]], "One church's records"; choices in
+[[Phase-9B-Plan]], "Progress notes").
+
+- **Scoping API** (`apps/church/scoping.py`): `for_church`,
+  `get_in_church` (404 for another church's record), `ChurchScopedMixin`,
+  `ChurchFormMixin`, `ChurchFormKwargsMixin`.
+- **Areas:** the schedule, templates, series and seasons; suggestions and
+  the worker (settings, tags, trusted artists, check rules, songs,
+  seasons, usage and time zone of each run's own church); lineups (a song
+  of another church is refused), playlists and reports; the song library,
+  chord sheets and the Church Spotify Account; Occasions (a calendar per
+  church, officiants from the church); Announcements (with Internal/Public
+  `visibility`); Notifications and the Audit Trail (each event's church);
+  the dashboard, settings lists and context processors; Members' linked
+  account and Teams through `teams_church()`.
+- **LRCLIB answers shared** between churches (owner, question 1):
+  `pool.earlier_lookup`.
+- **People with no church** see only their account pages.
+- **Leak found and fixed:** Members' "Linked account" listed every
+  account on the platform; now only the church's active people.
+- **Tests:** `apps/church/tests/test_isolation.py`: two churches, each
+  record created in its church explicitly; every URL taking an object is
+  404 for the other church by GET and POST, and opens for the church's
+  own record; a new such URL fails the test until listed; no page,
+  list or form shows the other church's marker.
+  `apps/worship/tests/test_platform_worker.py`: one worker under the one
+  advisory lock runs two churches' Search Runs in a row, each with its own
+  settings, tags, trusted artists and check rules; the Spotify quota block
+  the first meets (one `SpotifyLimit`) stops the second from calling
+  Spotify; shared LRCLIB answers. Also: a Church Spotify connection can't
+  finish in another church; public announcements; no-church pages.
+- **Checks:** quick check passes (1085 tests); the full check runs in the
+  pre-commit hook.
+
 ## 2026-11-25: Phase 9B, slice a: foundations for many churches
 
 Nothing changes on screen yet; one installation can now hold many

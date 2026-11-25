@@ -3,6 +3,7 @@ import re
 from django import forms
 from django.db.models import Q
 
+from apps.church.scoping import ChurchFormMixin
 from apps.core.music import KEY_CHOICES
 
 from .chords import MAX_LENGTH
@@ -11,7 +12,7 @@ from .models import Song, ThemeTag, WorshipCheckSettings
 SPOTIFY_ID = re.compile(r"^[A-Za-z0-9]{22}$")
 
 
-class SongForm(forms.ModelForm):
+class SongForm(ChurchFormMixin, forms.ModelForm):
     """A person's corrections to a song's analysis."""
 
     class Meta:
@@ -34,7 +35,7 @@ class SongForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         current = list(self.instance.tags.values_list("pk", flat=True))
-        self.fields["tags"].queryset = ThemeTag.objects.filter(
+        self.fields["tags"].queryset = ThemeTag.objects.for_church(self.church).filter(
             Q(is_active=True) | Q(pk__in=current)
         )
         self.fields["feel"].choices = [

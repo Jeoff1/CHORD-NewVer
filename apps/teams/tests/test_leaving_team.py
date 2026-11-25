@@ -19,6 +19,7 @@ from apps.accounts.tests.test_user_management import edit_data
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_administrator,
     make_assignment,
     make_service,
@@ -75,7 +76,9 @@ class LeavingTheTeamTests(TestCase):
         self.assertIn("(Pending)", consequence.items[1])
         self.assertContains(response, "This change takes Ben off the team.")
         self.person.refresh_from_db()
-        self.assertEqual([r.key for r in self.person.roles], ["team_member"])
+        self.assertEqual(
+            [r.key for r in self.person.roles_in(first_church())], ["team_member"]
+        )
         self.assertEqual(len(self.ids()), 5)
 
     def test_end_frees_the_places_and_withdraws_open_swaps(self):
@@ -93,7 +96,9 @@ class LeavingTheTeamTests(TestCase):
         swap.refresh_from_db()
         self.assertEqual(swap.status, SwapRequest.Status.WITHDRAWN)
         self.person.refresh_from_db()
-        self.assertEqual([r.key for r in self.person.roles], ["church_member"])
+        self.assertEqual(
+            [r.key for r in self.person.roles_in(first_church())], ["church_member"]
+        )
         event = AuditEvent.objects.filter(object_id=str(self.person.pk)).first()
         self.assertEqual(
             event.changes["Assignments on coming services"], ["", "Ended (2)"]

@@ -21,7 +21,7 @@ def latest(request):
             f"{audience_label(announcement)} · {timesince(announcement.created_at)} ago",
             None,
         )
-        for announcement in visible_to(request.user)[:SHOWN]
+        for announcement in visible_to(request.user, request.church)[:SHOWN]
     ]
     return Panel(
         title="Announcements",

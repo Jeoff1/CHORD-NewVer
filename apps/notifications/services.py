@@ -9,18 +9,22 @@ from django.utils import timezone
 from .models import Notification
 
 
-def notify(people, text, url="", *, key=""):
-    """Give each of ``people`` a Notification. With ``key``, an unread one
-    with the same key is brought up to date instead."""
+def notify(people, text, url="", *, church, key=""):
+    """Give each of ``people`` a Notification about something in ``church``
+    (None for one about the person's own account). With ``key``, an unread
+    one with the same key in the same church is brought up to date
+    instead."""
     now = timezone.now()
     for person in people:
         updated = 0
         if key:
             updated = Notification.objects.filter(
-                recipient=person, key=key, read_at__isnull=True
+                recipient=person, church=church, key=key, read_at__isnull=True
             ).update(text=text, url=url, created_at=now, updated_at=now)
         if not updated:
-            Notification.objects.create(recipient=person, text=text, url=url, key=key)
+            Notification.objects.create(
+                recipient=person, church=church, text=text, url=url, key=key
+            )
 
 
 def unread_count(user):

@@ -17,7 +17,7 @@ and every version is kept there. Suggestions show one version per song:
 
 import numpy as np
 
-from apps.songs.analysis import is_trusted, trusted_names
+from apps.songs.analysis import is_trusted
 from apps.songs.cleanup import base_title
 
 SAME_TITLE_SIMILARITY = 0.90
@@ -71,12 +71,13 @@ def _why_chosen(kept, best):
     return f"Chosen over the version by {best.song.artist} because {why}."
 
 
-def group(ranked, trusted_artists=None):
+def group(ranked, trusted_artists):
     """``ranked`` with one version per song, in score order. The kept item
-    lists the others in ``versions`` and says so in its reasons."""
+    lists the others in ``versions`` and says so in its reasons.
+    ``trusted_artists`` are the church's (``analysis.trusted_names``)."""
     if len(ranked) < 2:
         return list(ranked)
-    names = trusted_names() if trusted_artists is None else trusted_artists
+    names = trusted_artists
 
     def preference(index):
         song = ranked[index].song

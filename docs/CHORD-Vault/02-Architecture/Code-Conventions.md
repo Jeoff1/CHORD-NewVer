@@ -27,8 +27,41 @@ yet.
 | Deleting       | Users are deactivated and members archived, never deleted. Church-edited list items and Custom Fields are switched off. Worship services are cancelled, not deleted. |
 | Between Modules | A Module never imports a Module that builds on it. It sends a signal instead, which the other Module connects to in its `AppConfig.ready()`: Worship sends `apps.worship.signals.lineup_changed`, and Teams turns it into Notifications. Core apps (Accounts, Audit, Notifications) may be imported by any Module. Accounts asks the Modules what a role change takes away through `apps/accounts/role_changes.py`: a Module registers a finder there (Teams: `apps/teams/leaving.py`). The Worship calendar shows other Modules' bookings through `apps/worship/bookings.py`: Occasions registers a source there. A Module's `view_permission` may be a tuple, any one of which opens it. |
 | Row locks      | When two people can race for one thing (taking a swap, or assigning someone while they add a blackout), lock the row with `select_for_update` inside `transaction.atomic()`, and re-check the rules after the lock. With `select_related` on a nullable foreign key, lock only the row itself: `select_for_update(of=("self",))`. When there is no one row to lock (booking a time on the calendar), take a transaction lock: `wait_for_transaction_lock(BOOKINGS)` (`apps/core/locks.py`). |
-| Dates and times | Stored in UTC and shown in the church's time zone, which the middleware activates for each request. Code that runs outside a request (rules, the worker) asks `scheduling.church_time_zone()`. |
+| Dates and times | Stored in UTC and shown in the church's time zone, which the middleware activates for each request. Code that runs outside a request (rules, the worker) asks `scheduling.church_time_zone(church)` with the record's church. |
+| Churches       | Every record belongs to one church ([[0014-church-platform]]); see "One church's records" below. |
 | Files          | Only the church logo is public (`media/church/`). Personal files use private storage (see below). |
+
+## One church's records
+
+Phase 9B ([[0014-church-platform]]). Nothing ever falls back to a church:
+a record without its church fails, so a forgotten one shows in tests.
+
+- **Models.** A record that belongs to a church has
+  `church = church_foreign_key()` (or `church_settings_field()` for a
+  settings row, and `ChurchChoiceItem` for a church-edited list), no
+  default. Every scoped model sets `church_path` (`"church"`, or a path
+  through its parent such as `"service__church"`) and uses
+  `church_scoped_manager()` (`apps/church/scoping.py`), so
+  `Model.objects.for_church(church)` works.
+- **Reading.** Views read scoped records only through `for_church`,
+  `get_in_church(queryset, request.church, **lookup)` (404, never 403, for
+  another church's record) or `ChurchScopedMixin` on generic views.
+- **Writing.** The church comes from `request.church` or from the record
+  it belongs to, never from a form: `ChurchFormMixin` on a form (it takes
+  `church=` and filters its choice fields) and `ChurchFormKwargsMixin` on
+  its view. Settings rows: `SuggestionSettings.load(church)`,
+  `WorshipCheckSettings.load(church)`.
+- **Without a request** (the worker, notifications, rules called with
+  another person): use the record's church, and
+  `accounts.roles.users_with_perm(church, perm)` instead of `has_perm` on
+  someone else. `notify(..., church=...)` names the church a notification
+  is about. `record_change` finds the church of the record changed.
+- **Teams and Members** aren't kept per church yet: only a church with
+  `members_teams_unlocked` may use them (`modules.is_available`), and
+  Teams' person-level rules use `rostering.teams_church()`.
+- **A new view that takes an object** must be added to `OBJECT_URLS` in
+  `apps/church/tests/test_isolation.py` (or `EXEMPT`, with the reason);
+  the test fails until it is.
 
 ## Audit trail
 
@@ -168,6 +201,11 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
     permissions come only from roles ([[0014-church-platform]]).
   - `make_church(name="Other Church")`: a church with its defaults, as
     registering one gives (`seed_church`)
+  - `first_church()`: the church the builders use unless given another.
+    Builders take `church=`; tests about two churches pass it explicitly.
+    `make_user` returns the user with `current_church` set, as a request
+    would; a user loaded again from the database has none, and so no
+    permissions.
   - `make_administrator()`
   - `complete_setup(**profile_fields)`
   - `make_member(**fields)`
