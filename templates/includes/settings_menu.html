@@ -1,18 +1,15 @@
-{# The Settings hub's side menu (Phase 9A A7; apps/core/settings_menu.py). Categories open and close without JavaScript; the one holding the current page starts open. #}
+{# The Settings hub's side menu (Phase 9A A7; apps/core/settings_menu.py). Every category is always shown; when the menu is taller than the space it has, it scrolls on its own, and opens scrolled to the current page. #}
 <nav class="chord-settings-menu" aria-label="Settings">
   {% for category in settings_menu.categories %}
-    <details{% if category.is_open %} open{% endif %}>
-      <summary>
-        {{ category.title }}
-        <span class="chord-settings-menu__count">{{ category.pages|length }}</span>
-        {% include "includes/icons/chevron-left.html" with size=16 %}
-      </summary>
-      <ul>
+    <div class="chord-settings-menu__category">
+      <p class="chord-settings-menu__title" id="settings-category-{{ category.key }}">{{ category.title }}</p>
+      <ul aria-labelledby="settings-category-{{ category.key }}">
         {% for page in category.pages %}
           {% ifchanged page.group %}{% if page.group %}<li class="chord-settings-menu__group" aria-hidden="true">{{ page.group }}</li>{% endif %}{% endifchanged %}
           <li><a href="{{ page.url }}"{% if page.current %} aria-current="page"{% endif %}>{{ page.label }}</a></li>
         {% endfor %}
       </ul>
-    </details>
+    </div>
   {% endfor %}
 </nav>
+<script>(function () { var menu = document.querySelector(".chord-settings-menu"); var current = menu && menu.querySelector('[aria-current="page"]'); if (current && menu.scrollHeight > menu.clientHeight) { menu.scrollTop = current.offsetTop - menu.clientHeight / 2; } })();</script>

@@ -16,7 +16,10 @@ class HomePageTests(TestCase):
     def test_signed_in_user_sees_base_page(self):
         self.client.force_login(make_user(first_name="Ana"))
         response = self.client.get(reverse("home"))
-        self.assertContains(response, "Welcome, Ana.")
+        # The dashboard greets by the time of day (church.dashboard.greeting).
+        self.assertRegex(
+            response.content.decode(), r"Good (morning|afternoon|evening), Ana</h1>"
+        )
         self.assertContains(response, "Sign out")
         self.assertContains(response, "vendor/htmx-2.0.4/htmx.min.js")
         self.assertContains(response, "vendor/bootstrap-5.3.3/bootstrap.min.css")

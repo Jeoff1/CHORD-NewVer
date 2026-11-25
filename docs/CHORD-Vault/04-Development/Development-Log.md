@@ -2,6 +2,46 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Active switch on settings lists; Settings menu always open
+
+- **Active switch:** on every church-edited list (Occasion types, Membership
+  Statuses, Team parts, Theme tags and the rest), the Active column is a
+  switch for people with the list's change permission. Ticking it saves at
+  once with HTMX (a Save button without JavaScript) through the new
+  `<url_prefix>_switch` URL (`SettingSwitchView` in
+  `apps/core/setting_lists.py`, partial `core/includes/active_switch.html`).
+  The post carries the state wanted, so a second click or a page left
+  open never flips an item the wrong way; a real change is audited
+  ("Active: Yes → No"). People who may only view still see Yes or No.
+  Gated by the Module like the list's other pages.
+- **Settings menu:** the categories are no longer dropdowns; every
+  category and its pages are always shown. The menu scrolls on its own
+  when it is taller than the space it has (beside the page on a wide
+  screen it stays in view, up to the window's height; stacked on a narrow
+  screen it is kept to 45% of the height), and opens scrolled to the
+  current page. `MenuCategory.is_open` was removed.
+- **Tests:** new `apps/core/tests/test_setting_switch.py` (7: switch shown
+  only to people who may change, HTMX switch-off with audit, switch-on
+  without HTMX, asking for the current state changes nothing, POST only,
+  switched-off Module). `test_settings_hub` now checks there are no
+  dropdowns.
+- **Checks:** Ruff lint and format pass. `apps.core`, `apps.occasions`,
+  `apps.members`, `apps.teams` and `apps.songs`: 541 tests, one failure,
+  the known `test_pages` "Welcome, Ana." wording (see the entry below).
+  `test_settings_hub` and `test_setting_switch` re-run after the menu
+  change: 20 tests, OK. Full `check.ps1`: lint, format, Django checks
+  and migrations pass; tests 1046 run, **5 failures**, all in
+  `apps.worship` (`test_lineup_views`: `test_the_leader_confirms`,
+  `test_a_team_member_sees_a_confirmed_lineup_without_the_planning`;
+  `test_lineup_songs`: both `ViewerTests` key tests and
+  `test_a_team_member_pastes_and_only_they_and_planners_see_it_waiting`).
+  The same 5 fail on the committed `master` without these changes, so
+  they come from the A7 part 3 lineup redesign, not from this work.
+  Still to fix; the pending-sheet one may be a real visibility leak.
+- **Fixed test:** `test_pages` now expects the dashboard's time-of-day
+  greeting ("Good morning|afternoon|evening, Ana") instead of "Welcome,
+  Ana."; 3 tests, OK.
+
 ## 2026-11-25: Phase 9A, A7: the landing page
 
 On branch `ui-design-system`, fast-forward merged into `master` for the demo.

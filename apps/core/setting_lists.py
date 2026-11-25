@@ -3,7 +3,8 @@
 Examples: Membership Statuses, relationship types, and later Event Types,
 Funds and Payment Methods. A Module defines a model on ``ChoiceItem`` (or any
 model) and gets list, add and edit pages from ``setting_list_urls``. Items
-are switched off rather than deleted, so records that use them keep them.
+are switched off rather than deleted, so records that use them keep them;
+the list's Active column is a switch for people who may change items.
 """
 
 from dataclasses import dataclass, field
@@ -12,8 +13,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.db import models
 from django.forms import modelform_factory
 from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView, View
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
@@ -108,6 +110,11 @@ class SettingList:
             for name in self.fields
         }
 
+    @property
+    def can_switch(self):
+        """Whether items can be switched on and off from the list."""
+        return "is_active" in self.fields
+
 
 class SettingListMixin(LoginRequiredMixin, PermissionRequiredMixin):
     setting_list: SettingList = None
@@ -151,7 +158,11 @@ class SettingListView(SettingListMixin, ListView):
             create_url=self.url("create") if can_add else None,
             rows=[
                 (
-                    [self._cell(item, attribute) for _, attribute in config.columns],
+                    item,
+                    [
+                        self._cell(item, attribute, can_change)
+                        for _, attribute in config.columns
+                    ],
                     self.url("update", pk=item.pk) if can_change else None,
                 )
                 for item in context["object_list"]
@@ -159,12 +170,67 @@ class SettingListView(SettingListMixin, ListView):
         )
         return context
 
+    def _cell(self, item, attribute, can_change):
+        """``(value, switch_url)``: the Active column of a list whose items
+        can be switched gets a switch for people who may change them."""
+        switch = (
+            attribute == "is_active" and can_change and self.setting_list.can_switch
+        )
+        return (
+            self._value(item, attribute),
+            self.url("switch", pk=item.pk) if switch else None,
+        )
+
     @staticmethod
-    def _cell(item, attribute):
+    def _value(item, attribute):
         if callable(attribute):
             return attribute(item)
         display = getattr(item, f"get_{attribute}_display", None)
         return display() if display else getattr(item, attribute)
+
+
+class SettingSwitchView(SettingListMixin, View):
+    """Switches one item on or off from the list (POST only).
+
+    The post carries the state wanted (``is_active`` present means on), so
+    a page left open, or a second click, never flips an item the wrong way.
+    """
+
+    action = "change"
+    template_name = "core/includes/active_switch.html"
+
+    def post(self, request, pk):
+        config = self.setting_list
+        if not config.can_switch:
+            raise Http404("This list has no Active switch.")
+        item = get_object_or_404(config.model, pk=pk)
+        fields = {"Active": "is_active"}
+        before = snapshot(item, fields)
+        wanted = "is_active" in request.POST
+        if item.is_active == wanted:
+            return self._respond(request, item)
+        item.is_active = wanted
+        item.save(
+            update_fields=[
+                name for name in ("is_active", "updated_at") if hasattr(item, name)
+            ]
+        )
+        record_change(
+            request.user,
+            item,
+            AuditEvent.Action.CHANGED,
+            diff(before, snapshot(item, fields)),
+        )
+        return self._respond(request, item)
+
+    def _respond(self, request, item):
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                self.template_name,
+                {"item": item, "value": item.is_active, "switch_url": request.path},
+            )
+        return redirect(self.url("list"))
 
 
 class _SettingFormView(SettingListMixin, FormPageMixin):
@@ -218,8 +284,8 @@ class SettingUpdateView(_SettingFormView, UpdateView):
 
 
 def setting_list_urls(config: SettingList, route_prefix=""):
-    """List, add and edit URLs for one church-edited list, named
-    ``<url_prefix>_list``, ``_create`` and ``_update``, under
+    """List, add, edit and switch URLs for one church-edited list, named
+    ``<url_prefix>_list``, ``_create``, ``_update`` and ``_switch``, under
     ``<route_prefix><url-prefix>/``."""
     prefix = config.url_prefix
     route = route_prefix + prefix.replace("_", "-")
@@ -238,5 +304,10 @@ def setting_list_urls(config: SettingList, route_prefix=""):
             f"{route}/<int:pk>/",
             SettingUpdateView.as_view(setting_list=config),
             name=f"{prefix}_update",
+        ),
+        path(
+            f"{route}/<int:pk>/switch/",
+            SettingSwitchView.as_view(setting_list=config),
+            name=f"{prefix}_switch",
         ),
     ]

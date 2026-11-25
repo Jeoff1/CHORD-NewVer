@@ -85,10 +85,6 @@ class MenuCategory:
     title: str
     pages: list = field(default_factory=list)
 
-    @property
-    def is_open(self):
-        return any(page.current for page in self.pages)
-
 
 class SettingsMenu:
     """The menu for one request. Everything is worked out on first use."""

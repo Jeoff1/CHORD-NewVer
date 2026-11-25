@@ -783,11 +783,18 @@ a {
   color: var(--bs-secondary-color);
 }
 
-/* The Settings hub's side menu (templates/includes/settings_menu.html). */
+/* The Settings hub's side menu (templates/includes/settings_menu.html).
+   Every category is always shown. The menu scrolls on its own when it is
+   taller than the space it has: beside the page it stays in view while the
+   page scrolls; stacked above the page on a narrow screen it is kept short. */
 .chord-settings-menu {
+  position: relative;
   flex: 1 1 240px;
   max-width: 300px;
   min-width: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: var(--bs-body-bg);
   border: 1px solid var(--bs-border-color);
   border-radius: 0.75rem;
@@ -798,44 +805,27 @@ a {
   .chord-settings-menu { max-width: none; }
 }
 
-.chord-settings-menu details + details {
+@media (min-width: 992px) {
+  .chord-settings-menu {
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+.chord-settings-menu__category + .chord-settings-menu__category {
   border-top: 1px solid var(--bs-border-color);
 }
 
-.chord-settings-menu summary {
+.chord-settings-menu__title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   min-height: 44px;
+  margin: 0;
   padding: 0 0.5rem;
-  cursor: pointer;
-  list-style: none;
   font-family: "Raleway", system-ui, sans-serif;
   font-weight: 700;
   color: var(--chord-heading);
-}
-
-.chord-settings-menu summary::-webkit-details-marker { display: none; }
-
-.chord-settings-menu summary .chord-settings-menu__count {
-  margin-left: auto;
-  font-family: var(--bs-body-font-family);
-  font-weight: 500;
-  font-size: 0.8125rem;
-  color: var(--bs-secondary-color);
-}
-
-.chord-settings-menu summary .chord-icon {
-  transform: rotate(-90deg);
-  transition: transform 0.15s ease;
-}
-
-.chord-settings-menu details[open] summary .chord-icon {
-  transform: rotate(90deg);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chord-settings-menu summary .chord-icon { transition: none; }
 }
 
 .chord-settings-menu ul {

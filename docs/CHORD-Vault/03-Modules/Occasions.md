@@ -19,7 +19,8 @@ Built in Phase 9A, A5 (2026-11-24):
   `/occasions/settings/types/`): a name and a **usual length** (15 minutes
   to a day). "Wedding" (120), "Baptism" (60) and "Funeral" (90) are seeded
   **switched off** (migration `0002_seed_occasion_types`). Switched off,
-  never deleted.
+  never deleted; the list's Active switch turns a type on or off without
+  opening it.
 - **Occasion** (`Occasion`): its type, date and time, length (the type's
   usual length unless changed), **For** (who it is for, as text),
   **Officiant** (a user), **Venue**, notes and **Cancelled**. No theme,

@@ -19,11 +19,12 @@
           </tr>
         </thead>
         <tbody>
-          {% for cells, edit_url in rows %}
+          {% for item, cells, edit_url in rows %}
             <tr>
-              {% for cell in cells %}
+              {% for cell, switch_url in cells %}
                 <td>
-                  {% if cell is True %}<span class="badge text-bg-success">Yes</span>
+                  {% if switch_url %}{% include "core/includes/active_switch.html" with value=cell %}
+                  {% elif cell is True %}<span class="badge text-bg-success">Yes</span>
                   {% elif cell is False %}<span class="badge text-bg-secondary">No</span>
                   {% elif cell is None or cell == "" %}—
                   {% else %}{{ cell }}{% endif %}

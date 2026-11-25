@@ -143,9 +143,11 @@ class HubPageTests(TestCase):
             f'<a href="{reverse("worship:template_list")}" aria-current="page">'
             "Service templates</a>",
         )
-        # The open category holds the current page; the others are closed.
+        # Every category is shown open: no dropdowns.
         content = page.content.decode()
-        self.assertEqual(content.count("<details open>"), 1)
+        self.assertNotIn("<details", content)
+        self.assertIn('class="chord-settings-menu__title"', content)
+        self.assertIn('id="settings-category-worship">Worship</p>', content)
         self.assertIn(f'href="{reverse("home")}" class="chord-back-link"', content)
         self.assertIn('<h1 class="h3 mb-3">Settings</h1>', content)
         self.assertIn('<h2 class="h3 mb-0">Service templates</h2>', content)

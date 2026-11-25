@@ -66,7 +66,11 @@ description, sort order and active switch, plus `.active()` and
 
 - You get list, add and edit pages, gated by the Module and by
   permissions, with audit.
-- Items are switched off, never deleted.
+- Items are switched off, never deleted. The list's Active column is a
+  switch for people with the change permission: ticking it saves at once
+  (HTMX; a Save button without JavaScript) through `<url_prefix>_switch`,
+  which posts the state wanted, so a second click or a page left open
+  never flips an item the wrong way. The change is audited.
 - `nav=` adds tabs that link sibling settings lists.
 - `title=` can be a function of the request when the title uses a Label
   (e.g. "Sermon series").
