@@ -4,7 +4,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
 
 ## 2026-11-25: Phase 9A, A7: the landing page
 
-On branch `ui-design-system` (not merged, as for the rest of A7).
+On branch `ui-design-system`, fast-forward merged into `master` for the demo.
 
 - **Landing page** (`church/landing.html`, `LandingView`): a visitor who
   isn't signed in sees it at `/` instead of being sent to sign in;
