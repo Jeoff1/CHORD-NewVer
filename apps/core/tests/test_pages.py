@@ -6,9 +6,12 @@ from apps.core.testing import make_user
 
 
 class HomePageTests(TestCase):
-    def test_anonymous_user_is_sent_to_sign_in(self):
+    def test_a_visitor_sees_the_landing_page_and_signs_in_for_the_rest(self):
         response = self.client.get(reverse("home"))
-        self.assertRedirects(response, reverse("accounts:login") + "?next=/")
+        self.assertTemplateUsed(response, "church/landing.html")
+        url = reverse("worship:home")
+        response = self.client.get(url)
+        self.assertRedirects(response, f"{reverse('accounts:login')}?next={url}")
 
     def test_signed_in_user_sees_base_page(self):
         self.client.force_login(make_user(first_name="Ana"))

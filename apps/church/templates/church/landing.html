@@ -1,0 +1,201 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  {% comment %}The public front page: nobody is signed in, so the device chooses light or dark mode.{% endcomment %}
+  <script>(function () { var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", dark.matches ? "dark" : "light"); } apply(); dark.addEventListener("change", apply); })();</script>
+  <title>Worship planning · {{ church.name|default:"CHORD" }}</title>
+  <meta name="description" content="CHORD turns the theme of a {{ labels.worship_service|lower }} into a song {{ labels.lineup|lower }}, with chord sheets, keys and playback for the whole team.">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chord.css' %}">
+</head>
+<body class="chord-landing">
+  <a class="visually-hidden-focusable chord-landing__skip" href="#main">Skip to content</a>
+
+  <header class="chord-landing__hero">
+    <nav class="container chord-landing__nav" aria-label="Main">
+      <a class="chord-landing__brand" href="{% url 'home' %}">{% include "includes/icons/music-note.html" with size=22 %}CHORD</a>
+      <ul class="chord-landing__links">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#rehearsal">Rehearsal</a></li>
+      </ul>
+      <a class="chord-landing__btn chord-landing__btn--gold chord-landing__btn--small" href="{% url 'accounts:login' %}">Sign in</a>
+    </nav>
+
+    <div class="container">
+      <div class="row g-5 align-items-center">
+        <div class="col-lg-6">
+          <p class="chord-landing__eyebrow">Worship planning, in one place</p>
+          <h1 class="chord-landing__title">From a {{ labels.sermon|lower }}'s theme to the songs you sing.</h1>
+          <p class="chord-landing__lead">CHORD reads the theme of your {{ labels.worship_service|lower }} and suggests a song {{ labels.lineup|lower }} that fits it. Your {{ labels.pastor|lower }} reviews and confirms it, and the whole team rehearses from the same chord sheets, keys and playback.</p>
+          <div class="chord-landing__actions">
+            <a class="chord-landing__btn chord-landing__btn--gold" href="{% url 'accounts:login' %}">Sign in to your church</a>
+            <a class="chord-landing__btn chord-landing__btn--outline" href="#how-it-works">See how it works</a>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          {% comment %}An example lineup: public-domain hymns only (AGENTS.md). Light inside in both modes, so it reads as a card on the green.{% endcomment %}
+          <figure class="chord-landing__lineup" data-bs-theme="light" aria-label="An example {{ labels.lineup|lower }}">
+            <div class="chord-landing__lineup-head">
+              <div>
+                <p class="chord-landing__kicker">{{ labels.worship_service }} · Example</p>
+                <p class="chord-landing__lineup-title">Grace that forgives</p>
+                <p class="chord-landing__lineup-meta">Ephesians 2:8 · 4 songs suggested from the theme</p>
+              </div>
+              <span class="chord-pill chord-pill--success">Confirmed</span>
+            </div>
+            <ol class="chord-landing__songs">
+              <li><span class="chord-landing__slot">Opening</span><span class="chord-landing__song">Holy, Holy, Holy</span><span class="chord-landing__key" aria-label="Key of D">D</span></li>
+              <li><span class="chord-landing__slot">Praise</span><span class="chord-landing__song">Come Thou Fount</span><span class="chord-landing__key" aria-label="Key of G">G</span></li>
+              <li><span class="chord-landing__slot">Worship</span><span class="chord-landing__song">Amazing Grace</span><span class="chord-landing__key" aria-label="Key of G">G</span></li>
+              <li><span class="chord-landing__slot">Response</span><span class="chord-landing__song">It Is Well with My Soul</span><span class="chord-landing__key" aria-label="Key of C">C</span></li>
+            </ol>
+            <div class="chord-landing__playlist">
+              <span class="chord-landing__play" aria-hidden="true">{% include "includes/icons/play.html" with size=16 %}</span>
+              <div class="flex-grow-1">
+                <p class="mb-1">Playlist saved on Spotify</p>
+                <span class="chord-landing__bar" aria-hidden="true"><span style="width: 38%"></span></span>
+              </div>
+            </div>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="chord-landing__section" id="how-it-works" aria-labelledby="how-title">
+      <div class="container">
+        <p class="chord-eyebrow">How it works</p>
+        <h2 class="chord-landing__h2" id="how-title">Four steps from a theme to a confirmed {{ labels.lineup|lower }}.</h2>
+        <ol class="chord-landing__steps">
+          <li class="chord-landing__step">
+            <span class="chord-landing__num" aria-hidden="true">1</span>
+            <h3>Post the theme</h3>
+            <p>The {{ labels.pastor|lower }} writes the {{ labels.worship_service|lower }}'s theme and Bible passage, with an optional {{ labels.sermon|lower }} series.</p>
+          </li>
+          <li class="chord-landing__step">
+            <span class="chord-landing__num" aria-hidden="true">2</span>
+            <h3>Get suggestions</h3>
+            <p>CHORD compares the theme with each song's lyrics and your church's own tags, and ranks the songs that fit.</p>
+          </li>
+          <li class="chord-landing__step">
+            <span class="chord-landing__num" aria-hidden="true">3</span>
+            <h3>Review and confirm</h3>
+            <p>The worship leader shapes the {{ labels.lineup|lower }}: lock, swap, set keys. The {{ labels.pastor|lower }} has the final word and confirms it.</p>
+          </li>
+          <li class="chord-landing__step">
+            <span class="chord-landing__num chord-landing__num--gold" aria-hidden="true">4</span>
+            <h3>Rehearse together</h3>
+            <p>The team sees the confirmed {{ labels.lineup|lower }} with chord sheets in each person's key, and a Spotify playlist to practise with.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="chord-landing__section pt-0" id="features" aria-labelledby="features-title">
+      <div class="container">
+        <p class="chord-eyebrow">Features</p>
+        <h2 class="chord-landing__h2" id="features-title">Everything the worship team needs, nothing it doesn't.</h2>
+        {% comment %}Only switched-on Modules are offered (AGENTS.md: a switched-off Module is hidden).{% endcomment %}
+        <ul class="chord-landing__features">
+          <li>
+            <span class="chord-landing__icon">{% include "includes/icons/document.html" %}</span>
+            <div><h3>Chord sheets in any key</h3><p>Paste a sheet once; CHORD stores it as ChordPro. Each person chooses their own key or a capo.</p></div>
+          </li>
+          <li>
+            <span class="chord-landing__icon">{% include "includes/icons/play.html" %}</span>
+            <div><h3>Spotify playback</h3><p>Listen to each song right beside its chord sheet, and get the {{ labels.lineup|lower }} saved as a playlist once it's confirmed.</p></div>
+          </li>
+          {% if "teams" in enabled_modules %}
+            <li>
+              <span class="chord-landing__icon">{% include "includes/icons/people.html" %}</span>
+              <div><h3>Team roster</h3><p>Assign each part for a {{ labels.worship_service|lower }}. People accept, mark when they're away, and ask for a swap.</p></div>
+            </li>
+          {% endif %}
+          {% if "occasions" in enabled_modules %}
+            <li>
+              <span class="chord-landing__icon">{% include "includes/icons/calendar.html" %}</span>
+              <div><h3>Calendar and occasions</h3><p>Weddings, baptisms and funerals go on the same calendar as each {{ labels.worship_service|lower }}, so nothing gets double-booked.</p></div>
+            </li>
+          {% endif %}
+          {% if "announcements" in enabled_modules %}
+            <li>
+              <span class="chord-landing__icon">{% include "includes/icons/megaphone.html" %}</span>
+              <div><h3>Announcements</h3><p>Send a note to everyone, or only to the team serving at one {{ labels.worship_service|lower }}.</p></div>
+            </li>
+          {% endif %}
+          <li>
+            <span class="chord-landing__icon">{% include "includes/icons/gear.html" %}</span>
+            <div><h3>Fits how your church works</h3><p>Your kinds of {{ labels.worship_service|lower }}, song slots, theme tags, seasons and wording are settings your church sets, not built in.</p></div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="chord-landing__section pt-0" id="rehearsal" aria-labelledby="rehearsal-title">
+      <div class="container">
+        <div class="row g-5 align-items-center">
+          <div class="col-lg-5">
+            <p class="chord-eyebrow">Rehearsal</p>
+            <h2 class="chord-landing__h2" id="rehearsal-title">The sheet, the key and the song, on one page.</h2>
+            <p class="chord-landing__text">Each song in a confirmed {{ labels.lineup|lower }} has its own page: the chord sheet in the key for everyone, your own key and capo, the leader's notes, and the track ready to play.</p>
+            <ul class="chord-landing__checks">
+              <li>{% include "includes/icons/check-circle.html" with size=18 %}Change your key without changing anyone else's</li>
+              <li>{% include "includes/icons/check-circle.html" with size=18 %}Previous and next song for a run-through</li>
+              <li>{% include "includes/icons/check-circle.html" with size=18 %}Practise along in the recording's key</li>
+            </ul>
+          </div>
+          <div class="col-lg-7">
+            {% comment %}Public-domain lyrics (John Newton, 1779), shown in A with "My key".{% endcomment %}
+            <div class="chord-landing__rehearsal" role="img" aria-label="A chord sheet for Amazing Grace in the key of A, beside a Spotify player">
+              <div class="chord-landing__sheet">
+                <div class="chord-landing__sheet-bar">
+                  <span>Key for everyone <strong>G</strong></span>
+                  <span>My key <strong>A</strong></span>
+                  <span>Capo <strong>None</strong></span>
+                </div>
+                <p class="chord-landing__kicker mb-2">Amazing Grace · Verse 1</p>
+<pre class="chord-landing__pre">  <b>A</b>     <b>A7</b>         <b>D</b>         <b>A</b>
+Amazing grace, how sweet the sound
+     <b>A</b>                   <b>E</b>
+That saved a wretch like me</pre>
+              </div>
+              <div class="chord-landing__listen">
+                <p class="chord-landing__listen-title">Listen</p>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="chord-landing__cover"></span>
+                  <div><p class="chord-landing__listen-song">Amazing Grace</p><p class="chord-landing__listen-meta">Key of G</p></div>
+                </div>
+                <span class="chord-landing__bar chord-landing__bar--dark"><span style="width: 28%"></span></span>
+                <span class="chord-landing__pause">{% include "includes/icons/pause.html" with size=20 %}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="chord-landing__cta" aria-labelledby="cta-title">
+      <div class="container d-flex flex-wrap align-items-center justify-content-between gap-4">
+        <div>
+          <h2 class="chord-landing__h2 mb-1" id="cta-title">Plan your next {{ labels.worship_service|lower }} with CHORD.</h2>
+          <p class="mb-0">Sign in with the account your church gave you.</p>
+        </div>
+        <a class="chord-landing__btn chord-landing__btn--green" href="{% url 'accounts:login' %}">Sign in</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="chord-landing__footer">
+    <div class="container d-flex flex-wrap justify-content-between gap-2">
+      <span class="chord-landing__footer-brand">CHORD</span>
+      {% if church.name %}<span>A worship planning system for {{ church.name }}</span>{% endif %}
+    </div>
+  </footer>
+</body>
+</html>

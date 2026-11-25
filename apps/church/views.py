@@ -41,12 +41,28 @@ def profile_audit_fields():
     return fields
 
 
+class LandingView(TemplateView):
+    """The public front page: what CHORD does, and the way to sign in.
+
+    Its feature list shows only the switched-on Modules, and its wording
+    uses the church's Labels."""
+
+    template_name = "church/landing.html"
+
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     """What needs the person now (Phase 9A, A7): what to act on, what is
     coming up, and the Modules' side cards. Each Module adds its own
-    through ``apps/church/dashboard.py``."""
+    through ``apps/church/dashboard.py``.
+
+    A visitor who isn't signed in sees the landing page instead."""
 
     template_name = "church/dashboard.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return LandingView.as_view()(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

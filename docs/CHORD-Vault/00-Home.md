@@ -14,7 +14,8 @@ accounts) and A5 (occasions, their own Module; Notifications moved into
 a core app) done 2026-11-24; A6 (member reports) is next, after the owner decides
 about "who attended a service". A7 part 2, the owner's design system and
 the Spotify player card, built 2026-11-25 on branch `ui-design-system`
-(not merged; [[Design-System]]).** Phase 8 done (2026-11-23). Updated
+(not merged; [[Design-System]]); the public landing page added the same
+day.** Phase 8 done (2026-11-23). Updated
 2026-11-25.
 
 **Pick up here:**

@@ -75,6 +75,15 @@ of the core and can't be switched off. App: `apps/church`.
 - Tests: `apps/church/tests/test_dashboard_screen.py`,
   `apps/core/tests/test_settings_hub.py`.
 
+### The landing page (Phase 9A, A7)
+
+- **Landing page** (`church/landing.html`, `LandingView`): what a visitor
+  who isn't signed in sees at `/`, with links to sign in. Its copy uses
+  the church's Labels, its feature list shows only switched-on Modules
+  (Teams, Occasions, Announcements), and its footer names the church.
+  ([[Design-System]], "Landing page".)
+- Tests: `apps/church/tests/test_landing.py`.
+
 ## Church settings this module depends on
 
 This module *is* the church's settings: Church Profile details, switched-off

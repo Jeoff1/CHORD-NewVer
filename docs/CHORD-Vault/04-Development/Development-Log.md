@@ -2,6 +2,35 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Phase 9A, A7: the landing page
+
+On branch `ui-design-system` (not merged, as for the rest of A7).
+
+- **Landing page** (`church/landing.html`, `LandingView`): a visitor who
+  isn't signed in sees it at `/` instead of being sent to sign in;
+  signed-in people still get the dashboard (`DashboardView.dispatch`).
+  It follows the owner's reference design: green hero with an example
+  lineup, How it works (four steps), Features, Rehearsal (a chord sheet
+  beside the player), a gold call to action and the footer.
+- **Configure behavior, not identity:** the copy uses the church's Labels
+  (worship service, sermon, lineup, pastor), says no day of the week, and
+  offers Team roster, Calendar and occasions, and Announcements only when
+  those Modules are switched on. The examples are public-domain hymns.
+- **Styles:** `.chord-landing*` in `static/css/chord.css`; light and dark
+  mode follow the device (nobody is signed in). The example lineup card
+  stays light in both modes. New icons: music-note, document, people,
+  calendar, megaphone, check-circle.
+- **Tests:** new `apps/church/tests/test_landing.py` (5: a visitor sees the
+  page and the sign-in link, a signed-in person sees the dashboard, Labels,
+  switched-off and switched-on Modules). `apps/core/tests/test_pages.py`:
+  the visitor test now expects the landing page at `/` and the sign-in
+  redirect on other pages.
+- **Checks:** Ruff lint and format, Django checks and missing migrations
+  pass; 1039 tests, coverage 97%. Six tests fail, and failed before this
+  change too (A7 part 3's page wording): `test_pages` "Welcome, Ana.",
+  `test_lineup_songs` (pending sheet; two viewer tests on "Service key"
+  and "the sheet's key") and `test_lineup_views` (">Confirm<", "(G)").
+
 ## 2026-11-25: Phase 9A, A7 part 2: the owner's design system and the player card
 
 On branch `ui-design-system` (from `master`; not merged, at the owner's

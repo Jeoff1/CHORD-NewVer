@@ -32,7 +32,8 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Two columns | `.chord-columns` holding `.chord-main` and `.chord-side` | Main content and a side column; they stack on a phone |
 | Settings hub | Each app registers `SettingsPage`s in `apps/core/settings_menu.py`; `base.html` shows the hub on their pages | One place for every setting |
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
-| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots | Icon-only buttons carry an `aria-label` and are at least 44px |
+| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle | Icon-only buttons carry an `aria-label` and are at least 44px |
+| Landing page | `church/landing.html`, `.chord-landing*` in `chord.css` | The public front page. Green hero and footer, gold call to action, pill buttons; the example lineup card is light in both modes. Wording from Labels, features only for switched-on Modules |
 
 ## Tokens
 
