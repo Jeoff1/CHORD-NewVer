@@ -6,6 +6,7 @@ import datetime
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from apps.church.models import ChurchProfile
 from apps.core.music import Feel
 from apps.core.testing import make_service, make_song
 from apps.songs.ml.keyword import KeywordEngine
@@ -475,7 +476,11 @@ class VersionTests(TestCase):
 class SeasonTests(SimpleTestCase):
     def season(self, starts, ends, yearly=False):
         return Season(
-            name="Season", starts_on=starts, ends_on=ends, repeats_yearly=yearly
+            church=ChurchProfile(),
+            name="Season",
+            starts_on=starts,
+            ends_on=ends,
+            repeats_yearly=yearly,
         )
 
     def test_a_dated_season(self):

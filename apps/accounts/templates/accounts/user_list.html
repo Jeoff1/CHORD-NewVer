@@ -35,7 +35,7 @@
               <td>{{ person.get_full_name|default:"—" }}</td>
               <td>{{ person.username }}</td>
               <td>{{ person.email|default:"—" }}</td>
-              <td>{% for group in person.groups.all %}<span class="badge text-bg-light border me-1">{{ group.name }}</span>{% empty %}<span class="text-body-secondary">None</span>{% endfor %}</td>
+              <td>{% for membership in person.church_memberships %}{% for role in membership.roles.all %}<span class="badge text-bg-light border me-1">{{ role.title }}</span>{% empty %}<span class="text-body-secondary">None</span>{% endfor %}{% endfor %}</td>
               <td>{% if person.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Inactive</span>{% endif %}</td>
               <td class="text-end text-nowrap">
                 {% if perms.accounts.change_user %}

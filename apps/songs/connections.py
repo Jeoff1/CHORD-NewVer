@@ -29,6 +29,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.debug import sensitive_variables
 
+from apps.church.models import first_church_id
+
 from .models import ChurchSpotifyAccount, SpotifyConnection
 from .spotify import SpotifyConnectionLost, SpotifyError, SpotifyUnauthorized
 
@@ -158,35 +160,41 @@ def disconnect(user):
 # --- The Church Spotify Account ---------------------------------------------------
 
 
-def church_account():
-    """The Church Spotify Account, or None when it isn't connected (or
-    connecting isn't set up)."""
+def _church_id(church):
+    # Without a church, the first church (Phase 9B, slice a only).
+    return church.pk if church is not None else first_church_id()
+
+
+def church_account(church=None):
+    """The church's Church Spotify Account, or None when it isn't connected
+    (or connecting isn't set up)."""
     if not is_configured():
         return None
-    return ChurchSpotifyAccount.objects.filter(
-        pk=ChurchSpotifyAccount.SINGLETON_PK
-    ).first()
+    return ChurchSpotifyAccount.objects.filter(church_id=_church_id(church)).first()
 
 
 @sensitive_variables("tokens", "code")
-def finish_church(user, code, uri, client):
-    """Save the tokens, encrypted, as the Church Spotify Account (replacing
-    any earlier one); ``user`` connected it."""
+def finish_church(user, code, uri, client, church=None):
+    """Save the tokens, encrypted, as the church's Church Spotify Account
+    (replacing any earlier one); ``user`` connected it."""
     tokens = client.exchange_code(code, uri)
     if not tokens.refresh_token:
         raise SpotifyError("Spotify sent no refresh token; try connecting again.")
+    church_id = _church_id(church)
     account = ChurchSpotifyAccount.objects.filter(
-        pk=ChurchSpotifyAccount.SINGLETON_PK
-    ).first() or ChurchSpotifyAccount(pk=ChurchSpotifyAccount.SINGLETON_PK)
+        church_id=church_id
+    ).first() or ChurchSpotifyAccount(church_id=church_id)
     _store(account, tokens, timezone.now())
     account.connected_by = user
     account.save()
     return account
 
 
-def disconnect_church():
-    """Forget the Church Spotify Account; True when there was one."""
-    deleted, _ = ChurchSpotifyAccount.objects.all().delete()
+def disconnect_church(church=None):
+    """Forget the church's Church Spotify Account; True when there was one."""
+    deleted, _ = ChurchSpotifyAccount.objects.filter(
+        church_id=_church_id(church)
+    ).delete()
     return bool(deleted)
 
 

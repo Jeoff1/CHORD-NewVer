@@ -31,7 +31,7 @@ REFUSED = (403, 404)
 class ChurchMemberRoleTests(TestCase):
     def test_role_is_seeded_with_the_schedule_and_occasion_requests(self):
         role = Role.objects.get(key="church_member")
-        self.assertEqual(role.name, "Church Member")
+        self.assertEqual(role.title, "Church Member")
         self.assertEqual(
             {
                 f"{p.content_type.app_label}.{p.codename}"

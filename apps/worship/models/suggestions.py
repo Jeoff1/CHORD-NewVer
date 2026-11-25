@@ -8,7 +8,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from apps.core.setting_lists import ChoiceItem
+from apps.church.models import church_settings_field, first_church_id
+from apps.core.setting_lists import ChurchChoiceItem
 
 from .schedule import TemplateSlot, WorshipService
 
@@ -23,7 +24,9 @@ def _weight(label, default, help_text):
 
 
 class SuggestionSettings(models.Model):
-    """How the church wants songs found and ranked. There is one row."""
+    """How the church wants songs found and ranked. One row per church."""
+
+    church = church_settings_field()
 
     search_genres = models.CharField(
         max_length=200,
@@ -94,8 +97,11 @@ class SuggestionSettings(models.Model):
         return "Suggestion settings"
 
     @classmethod
-    def load(cls):
-        settings_row, _ = cls.objects.get_or_create(pk=1)
+    def load(cls, church=None):
+        """The church's row, created with the defaults if missing. Without
+        ``church``, the first church's (Phase 9B, slice a only)."""
+        church_id = church.pk if church is not None else first_church_id()
+        settings_row, _ = cls.objects.get_or_create(church_id=church_id)
         return settings_row
 
     def genres(self):
@@ -111,7 +117,7 @@ class SuggestionSettings(models.Model):
         }
 
 
-class Season(ChoiceItem):
+class Season(ChurchChoiceItem):
     """A time of the church's year, such as a time of preparation before a
     festival, with the Theme Tags that suit it. None are defined at first."""
 
@@ -130,7 +136,7 @@ class Season(ChoiceItem):
         help_text="Songs with any of these tags fit the season.",
     )
 
-    class Meta(ChoiceItem.Meta):
+    class Meta(ChurchChoiceItem.Meta):
         pass
 
     def contains(self, day):

@@ -27,12 +27,12 @@ only the first of two people pressing at once gets it.
 import datetime
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.accounts.roles import users_with_perm
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.church.models import ChurchProfile
@@ -134,21 +134,11 @@ def may_serve(user):
 
 
 def team_people():
-    """Active users holding ``TEAM_PERMISSION``, directly, through a Role,
-    or as superusers."""
-    app_label, codename = TEAM_PERMISSION.split(".")
-    permission = Permission.objects.filter(
-        content_type__app_label=app_label, codename=codename
-    ).first()
-    return (
-        get_user_model()
-        .objects.filter(is_active=True)
-        .filter(
-            Q(is_superuser=True)
-            | Q(user_permissions=permission)
-            | Q(groups__permissions=permission)
-        )
-        .distinct()
+    """Active users holding ``TEAM_PERMISSION`` through a role, or as
+    superusers. Teams is open only to the first church for now (Phase 9B,
+    decision 0014)."""
+    return users_with_perm(
+        ChurchProfile.load(), TEAM_PERMISSION, include_superusers=True
     )
 
 

@@ -20,6 +20,12 @@ class SongsConfig(AppConfig):
     verbose_name = "Songs"
 
     def ready(self):
+        from apps.church import seeding
+
+        from . import defaults
+
+        # What a new church starts with (Phase 9B).
+        seeding.register(defaults.seed)
         from apps.core.settings_menu import SettingsPage, register
 
         from .models import TrustedArtist

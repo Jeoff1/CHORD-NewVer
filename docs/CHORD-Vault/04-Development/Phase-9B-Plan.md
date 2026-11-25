@@ -45,6 +45,38 @@ version; final presentation 1–4 Dec 2026).
   check before each commit (the pre-commit hook runs it). Never bypass
   the hook.
 
+## Progress notes
+
+**Slice a (done 2026-11-25).** Built as planned, with these choices:
+
+- Every new `church` field (and the three settings rows' one-to-one)
+  defaults to the first church (`first_church_id()`), and
+  `ChurchProfile.load()`, `SuggestionSettings.load()`,
+  `WorshipCheckSettings.load()` and the Church Spotify Account helpers
+  mean the first church when no church is given. A user object with no
+  `current_church` is answered for the first church. **Slice b removes
+  all three**: the defaults go (so a create path that forgets its church
+  fails in tests), `load()` without a church goes, and request-less code
+  uses `users_with_perm(church, ...)`. `first_church_id()` itself stays,
+  because the 9B migrations name it.
+- `WorshipService` needs no extra unique rule: its (template, time) rule
+  is already per church, because a template belongs to one church.
+- Church-edited lists that belong to a church use `ChurchChoiceItem`,
+  whose `validate_constraints` keeps the per-church unique name a form
+  error although `church` is never a form field. Role titles are checked
+  in `RoleForm.clean_title` for the same reason.
+- Members and Teams use the first church directly (batch accounts join
+  it, the team is its holders of `teams.view_assignment`), matching the
+  lock in section 5.
+
+**For slice c, found while building a:** an administrator may set the
+password of any user in their church. Once "Add an existing account"
+exists, that user may belong to other churches too, so Set password (and
+editing the username or email) must be limited to accounts that belong
+only to this church, or left to the person. And a signed-in person with
+no membership currently sees the first church's pages (with no
+permissions), so announcements "to everyone" must check membership.
+
 ## 1. Data model
 
 **Church.** Keep the class name `ChurchProfile` so its ~30 references

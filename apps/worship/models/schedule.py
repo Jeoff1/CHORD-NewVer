@@ -7,15 +7,16 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from apps.church.models import church_foreign_key
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.music import Feel
-from apps.core.setting_lists import ChoiceItem
+from apps.core.setting_lists import ChurchChoiceItem
 
 # The longest a booking may last: one day (Phase 9A, A5).
 MAX_LENGTH_MINUTES = 24 * 60
 
 
-class ServiceTemplate(ChoiceItem):
+class ServiceTemplate(ChurchChoiceItem):
     """A kind of worship service the church holds, such as its main weekly
     service or a youth night, with the places in it where songs are sung.
 
@@ -50,7 +51,7 @@ class ServiceTemplate(ChoiceItem):
         "much time from its start.",
     )
 
-    class Meta(ChoiceItem.Meta):
+    class Meta(ChurchChoiceItem.Meta):
         pass
 
     @property
@@ -84,10 +85,10 @@ class TemplateSlot(models.Model):
         return f"{self.name} ({self.get_feel_display()})" if self.feel else self.name
 
 
-class SermonSeries(ChoiceItem):
+class SermonSeries(ChurchChoiceItem):
     """A run of services whose themes belong together."""
 
-    class Meta(ChoiceItem.Meta):
+    class Meta(ChurchChoiceItem.Meta):
         verbose_name_plural = "sermon series"
 
 
@@ -111,6 +112,7 @@ def start_of_today(now=None):
 class WorshipService(PublicIdModel, TimeStampedModel):
     """One gathering for worship, on one date."""
 
+    church = church_foreign_key()
     name = models.CharField(max_length=120)
     template = models.ForeignKey(
         ServiceTemplate, on_delete=models.PROTECT, related_name="services"

@@ -9,6 +9,12 @@ class WorshipConfig(AppConfig):
     verbose_name = "Worship"
 
     def ready(self):
+        from apps.church import seeding
+
+        from . import defaults
+
+        # What a new church starts with (Phase 9B).
+        seeding.register(defaults.seed)
         from apps.church import dashboard as church_dashboard
         from apps.core.settings_menu import SettingsPage, register
 

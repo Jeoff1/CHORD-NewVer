@@ -14,6 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.audit.models import AuditEvent
+from apps.church.models import ChurchProfile
 from apps.core.testing import (
     SPOTIFY_TEST_SETTINGS,
     FakeHttp,
@@ -41,7 +42,7 @@ CALLBACK = reverse("songs:spotify_callback")
 
 def make_church_account(access="church-access", refresh="church-refresh", **fields):
     return ChurchSpotifyAccount.objects.create(
-        pk=ChurchSpotifyAccount.SINGLETON_PK,
+        church=ChurchProfile.load(),
         access_token_encrypted=connections.encrypt(access),
         refresh_token_encrypted=connections.encrypt(refresh),
         expires_at=timezone.now() + datetime.timedelta(hours=1),
@@ -444,7 +445,7 @@ class ChurchAccountSettingTests(ChurchAccountTestCase):
         state = urllib.parse.parse_qs(
             urllib.parse.urlsplit(response["Location"]).query
         )["state"][0]
-        holder.user_permissions.clear()
+        holder.memberships.get().roles.clear()
         with FakeHttp() as web:
             response = self.client.get(CALLBACK, {"code": "c", "state": state})
         self.assertEqual(response.status_code, 403)

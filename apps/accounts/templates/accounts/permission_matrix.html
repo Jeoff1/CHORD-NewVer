@@ -20,7 +20,7 @@
           <thead class="table-light">
             <tr>
               <th scope="col">Permission</th>
-              {% for role in roles %}<th scope="col" class="text-center small">{{ role.name }}</th>{% endfor %}
+              {% for role in roles %}<th scope="col" class="text-center small">{{ role.title }}</th>{% endfor %}
             </tr>
           </thead>
           <tbody>
@@ -32,7 +32,7 @@
                   {% for role, checked in cells %}
                     <td class="text-center">
                       <input type="checkbox" class="form-check-input" name="role-{{ role.pk }}" value="{{ perm.pk }}"
-                             aria-label="{{ role.name }}: {{ perm.name }}"
+                             aria-label="{{ role.title }}: {{ perm.name }}"
                              {% if checked %}checked{% endif %}
                              {% if role.is_administrator or not can_edit %}disabled{% endif %}>
                     </td>

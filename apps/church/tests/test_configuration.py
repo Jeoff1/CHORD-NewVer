@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AnonymousUser
 from django.http import Http404, HttpResponse
 from django.template import Context, Template
 from django.test import RequestFactory, TestCase
@@ -6,23 +7,30 @@ from django.views import View
 
 from apps.church.context_processors import module_entries
 from apps.church.labels import Labels
-from apps.church.middleware import ChurchProfileMiddleware
+from apps.church.middleware import CurrentChurchMiddleware
 from apps.church.models import ChurchProfile
 from apps.church.modules import MODULES, ModuleRequiredMixin, is_enabled
 
 
 class ChurchProfileTests(TestCase):
-    def test_load_creates_the_single_profile(self):
-        profile = ChurchProfile.load()
-        self.assertEqual(profile.pk, ChurchProfile.SINGLETON_PK)
-        self.assertEqual(ChurchProfile.load().pk, profile.pk)
+    def test_an_installation_starts_with_one_church(self):
         self.assertEqual(ChurchProfile.objects.count(), 1)
+        first = ChurchProfile.objects.get()
+        self.assertEqual(ChurchProfile.load().pk, first.pk)
+        self.assertTrue(first.members_teams_unlocked)
 
-    def test_a_second_profile_overwrites_the_first(self):
-        ChurchProfile.load()
-        ChurchProfile(name="Other").save()
-        self.assertEqual(ChurchProfile.objects.count(), 1)
-        self.assertEqual(ChurchProfile.load().name, "Other")
+    def test_a_second_church_is_its_own_record(self):
+        first = ChurchProfile.load()
+        other = ChurchProfile.objects.create(name="Grace Chapel")
+        self.assertEqual(ChurchProfile.objects.count(), 2)
+        self.assertEqual(ChurchProfile.load().pk, first.pk)
+        self.assertEqual(other.slug, "grace-chapel")
+        self.assertFalse(other.members_teams_unlocked)
+
+    def test_slugs_stay_unique(self):
+        ChurchProfile.objects.create(name="Grace Chapel")
+        again = ChurchProfile.objects.create(name="Grace Chapel")
+        self.assertEqual(again.slug, "grace-chapel-2")
 
     def test_defaults_are_neutral(self):
         profile = ChurchProfile.load()
@@ -121,6 +129,9 @@ class TimeZoneMiddlewareTests(TestCase):
             seen["church"] = request.church
             return HttpResponse()
 
-        ChurchProfileMiddleware(view)(RequestFactory().get("/"))
+        request = RequestFactory().get("/")
+        request.user = AnonymousUser()
+        request.session = {}
+        CurrentChurchMiddleware(view)(request)
         self.assertEqual(seen["tz"], "America/New_York")
         self.assertEqual(seen["church"].pk, profile.pk)

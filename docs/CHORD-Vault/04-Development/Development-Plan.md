@@ -538,7 +538,7 @@ permission-checked.
 
 ## Phase 9B: Church Platform (multi-church)
 
-**Status: in progress (approved 2026-11-25; docs done).** On branch
+**Status: in progress (approved 2026-11-25; docs and slice a done).** On branch
 `phase-9b-church-platform`; merged into `master` only when the full check,
 isolation tests included, passes, so `master` stays presentable. The
 design, slices and risks are in [[Phase-9B-Plan]]; the decision is
@@ -551,7 +551,7 @@ offered Occasion. People can belong to several churches.
 
 - [x] **Docs** (done 2026-11-25): decision 0014, AGENTS.md, this plan, Glossary,
   Design-Decisions, workflow-spec, Project Overview.
-- [ ] **a. Foundations**: church fields, Membership, Role per church,
+- [x] **a. Foundations** (done 2026-11-25): church fields, Membership, Role per church,
   `ChurchRoleBackend`, `CurrentChurchMiddleware`, `seed_church`, test
   builders, the data migration and its test. Nothing changes on screen.
 - [ ] **b. Scoping**: the worship pipeline, song library, worker,

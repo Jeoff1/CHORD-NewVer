@@ -56,9 +56,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "apps.accounts.middleware.PasswordChangeRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
-    "apps.church.middleware.ChurchProfileMiddleware",
+    "apps.church.middleware.CurrentChurchMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Permissions come from the roles of a person's Membership in the Current
+# Church (decision 0014; apps/accounts/backends.py).
+AUTHENTICATION_BACKENDS = ["apps.accounts.backends.ChurchRoleBackend"]
 
 ROOT_URLCONF = "config.urls"
 

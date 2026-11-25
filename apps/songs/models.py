@@ -8,9 +8,14 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
+from apps.church.models import (
+    church_foreign_key,
+    church_settings_field,
+    first_church_id,
+)
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.music import KEY_CHOICES, Feel
-from apps.core.setting_lists import ChoiceItem
+from apps.core.setting_lists import ChurchChoiceItem
 
 
 def word_set(text):
@@ -18,7 +23,7 @@ def word_set(text):
     return {word for word in re.split(r"[^\w']+", text.lower()) if word}
 
 
-class ThemeTag(ChoiceItem):
+class ThemeTag(ChurchChoiceItem):
     """A worship theme a song can be about, such as Grace or Hope. The
     analysis suggests tags from a song's lyrics; people correct them."""
 
@@ -29,7 +34,7 @@ class ThemeTag(ChoiceItem):
         "commas. Used when the full song models aren't installed.",
     )
 
-    class Meta(ChoiceItem.Meta):
+    class Meta(ChurchChoiceItem.Meta):
         pass
 
     def keyword_set(self):
@@ -37,11 +42,11 @@ class ThemeTag(ChoiceItem):
         return word_set(self.keywords) or word_set(self.name)
 
 
-class TrustedArtist(ChoiceItem):
+class TrustedArtist(ChurchChoiceItem):
     """An artist whose songs the church trusts as worship songs. A song by
     a trusted artist passes the worship check more easily."""
 
-    class Meta(ChoiceItem.Meta):
+    class Meta(ChurchChoiceItem.Meta):
         pass
 
 
@@ -73,6 +78,7 @@ class Song(PublicIdModel, TimeStampedModel):
         REJECTED = "rejected", "Not a worship song"
 
     # What the song is (from Spotify; never model input).
+    church = church_foreign_key()
     spotify_id = models.CharField("Spotify track ID", max_length=64, blank=True)
     title = models.CharField(max_length=300)
     artist = models.CharField(max_length=300)
@@ -154,7 +160,7 @@ class Song(PublicIdModel, TimeStampedModel):
         permissions = [("view_lyrics", "Can see a song's full lyrics")]
         constraints = [
             models.UniqueConstraint(
-                fields=["spotify_id"],
+                fields=["church", "spotify_id"],
                 condition=~Q(spotify_id=""),
                 name="one_song_per_spotify_track",
             )
@@ -192,7 +198,10 @@ class WorshipCheckSettings(models.Model):
     """How the church decides the Worship Check from the model's score. One
     row. These are church rules applied after the model: the artist name is
     compared with the Trusted Artist list here, never given to a model, and
-    never a training feature (Design-Decisions, Phase 5 follow-up)."""
+    never a training feature (Design-Decisions, Phase 5 follow-up). One row
+    per church."""
+
+    church = church_settings_field()
 
     class UnlistedRule(models.TextChoices):
         OFF = "off", "Treat every artist the same"
@@ -230,8 +239,11 @@ class WorshipCheckSettings(models.Model):
         return "Worship check settings"
 
     @classmethod
-    def load(cls):
-        settings_row, _ = cls.objects.get_or_create(pk=1)
+    def load(cls, church=None):
+        """The church's row, created with the defaults if missing. Without
+        ``church``, the first church's (Phase 9B, slice a only)."""
+        church_id = church.pk if church is not None else first_church_id()
+        settings_row, _ = cls.objects.get_or_create(church_id=church_id)
         return settings_row
 
 
@@ -385,9 +397,10 @@ class ChurchSpotifyAccount(SpotifyTokens):
     """The church's own Spotify account, an optional church setting
     (decision 0011). When it is connected, every Lineup Playlist is made
     and updated on it, as a public playlist. It holds only the playlist
-    scopes and is never used for playback. There is at most one row."""
+    scopes and is never used for playback. A church has at most one
+    (decision 0014)."""
 
-    SINGLETON_PK = 1
+    church = church_settings_field()
 
     connected_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

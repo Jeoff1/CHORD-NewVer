@@ -14,8 +14,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from apps.church.models import church_foreign_key
 from apps.core.models import PublicIdModel, TimeStampedModel
-from apps.core.setting_lists import ChoiceItem
+from apps.core.setting_lists import ChurchChoiceItem
 from apps.worship.models.schedule import MAX_LENGTH_MINUTES
 
 
@@ -27,7 +28,7 @@ def length_field(**kwargs):
     )
 
 
-class OccasionType(ChoiceItem):
+class OccasionType(ChurchChoiceItem):
     """A kind of occasion the church holds, such as a wedding, with how long
     it usually takes."""
 
@@ -37,7 +38,7 @@ class OccasionType(ChoiceItem):
         "time from its start.",
     )
 
-    class Meta(ChoiceItem.Meta):
+    class Meta(ChurchChoiceItem.Meta):
         pass
 
 
@@ -45,6 +46,7 @@ class Occasion(PublicIdModel, TimeStampedModel):
     """One special service on one date. Seen in full only with
     ``occasions.view_occasion``; everyone else sees "Booked"."""
 
+    church = church_foreign_key()
     occasion_type = models.ForeignKey(
         OccasionType,
         on_delete=models.PROTECT,
@@ -100,6 +102,8 @@ class Occasion(PublicIdModel, TimeStampedModel):
 class OccasionRequest(PublicIdModel, TimeStampedModel):
     """Someone signed in asks for an Occasion. Approving it (with
     ``occasions.approve_occasion``) creates the Occasion."""
+
+    church = church_foreign_key()
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"

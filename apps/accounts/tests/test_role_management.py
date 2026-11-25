@@ -37,17 +37,17 @@ class RoleCrudTests(TestCase):
     def test_create_edit_delete(self):
         self.client.post(
             reverse("accounts:role_create"),
-            {"name": "Ushers", "description": "Welcome people."},
+            {"title": "Ushers", "description": "Welcome people."},
         )
-        role = Role.objects.get(name="Ushers")
+        role = Role.objects.get(title="Ushers")
         self.assertIsNone(role.key)
 
         self.client.post(
             reverse("accounts:role_update", kwargs={"pk": role.pk}),
-            {"name": "Welcome Team", "description": "Welcome people."},
+            {"title": "Welcome Team", "description": "Welcome people."},
         )
         role.refresh_from_db()
-        self.assertEqual(role.name, "Welcome Team")
+        self.assertEqual(role.title, "Welcome Team")
 
         response = self.client.post(
             reverse("accounts:role_delete", kwargs={"pk": role.pk})

@@ -113,27 +113,51 @@ class FakeHttp:
 # --- Builders ----------------------------------------------------------------
 
 
-def make_user(*, roles=(), perms=(), **fields):
-    """Create a user with unique defaults; any field can be overridden.
+def make_user(*, roles=(), perms=(), church=None, **fields):
+    """Create a user with unique defaults and a Membership in ``church`` (the
+    first church by default); any field can be overridden.
 
-    ``roles`` takes default-role keys (e.g. "administrator"); ``perms`` takes
-    "app_label.codename" strings granted directly to the user.
+    ``roles`` takes default-role keys (e.g. "administrator") of that church's
+    roles; ``perms`` takes "app_label.codename" strings, put on a role of the
+    user's own in that church (permissions come only from roles, decision
+    0014). ``church=False`` makes a user with no membership.
     """
-    from apps.accounts.models import Role
+    from apps.accounts.models import Membership, Role
+    from apps.church.models import ChurchProfile
 
     n = next(_sequence)
     fields.setdefault("username", f"user{n}")
     fields.setdefault("email", f"user{n}@example.com")
     password = fields.pop("password", TEST_PASSWORD)
     user = get_user_model().objects.create_user(password=password, **fields)
+    if church is False:
+        return user
+    church = church or ChurchProfile.load()
+    membership = Membership.objects.create(user=user, church=church)
     if roles:
-        user.groups.add(*Role.objects.filter(key__in=roles))
-    for name in perms:
-        app_label, codename = name.split(".")
-        user.user_permissions.add(
-            Permission.objects.get(content_type__app_label=app_label, codename=codename)
-        )
+        membership.roles.add(*Role.objects.filter(church=church, key__in=roles))
+    if perms:
+        own_role = Role.objects.create(church=church, title=f"Test role {n}")
+        for name in perms:
+            app_label, codename = name.split(".")
+            own_role.permissions.add(
+                Permission.objects.get(
+                    content_type__app_label=app_label, codename=codename
+                )
+            )
+        membership.roles.add(own_role)
     return user
+
+
+def make_church(name="Other Church", **fields):
+    """Create a church with its defaults (roles, theme tags, template,
+    settings rows), as registering one does."""
+    from apps.church.models import ChurchProfile
+    from apps.church.seeding import seed_church
+
+    church = ChurchProfile.objects.create(name=name, **fields)
+    seed_church(church)
+    return church
 
 
 def make_administrator(**fields):

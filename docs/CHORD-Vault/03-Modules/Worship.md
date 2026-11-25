@@ -118,7 +118,7 @@ Built in Phase 4 (`apps/songs`), the **Song Pool**:
 Built in Phase 5, **song suggestions** (`apps/worship`, with the
 Spotify safeguards in `apps/songs`):
 
-- **Suggestion Settings** (`models/suggestions.py`, one row): search
+- **Suggestion Settings** (`models/suggestions.py`, one row per church): search
   genres (default "worship"), phrases per theme (4), pages per phrase (2),
   market, the four ranking weights (theme match 1.0, familiarity 0.2,
   season 0.15, recent use 0.3; recalibrated on 2026-11-18 for the fixed
@@ -462,7 +462,7 @@ playback and the Lineup Playlist** ([[Design-Decisions]], Phase 7):
     connect. **Open in Spotify** always shows. A song without a Spotify
     track ID gets the card with "No playback for this song" and no link to
     fix it (no page links an existing song to a track yet).
-- **Church Spotify Account** (`ChurchSpotifyAccount`, at most one row;
+- **Church Spotify Account** (`ChurchSpotifyAccount`, at most one per church;
   [[0011-church-spotify-account]]): an optional church setting on the
   **Spotify** tab of church settings (`/worship/songs/spotify/church/`),
   shown while the Worship module is on. People with

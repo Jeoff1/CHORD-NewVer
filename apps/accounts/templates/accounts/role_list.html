@@ -30,7 +30,7 @@
         <tbody>
           {% for role in object_list %}
             <tr>
-              <td class="fw-semibold">{{ role.name }}{% if role.is_administrator %} <span class="badge text-bg-primary fw-normal">Full access</span>{% endif %}</td>
+              <td class="fw-semibold">{{ role.title }}{% if role.is_administrator %} <span class="badge text-bg-primary fw-normal">Full access</span>{% endif %}</td>
               <td>{{ role.description|default:"—" }}</td>
               <td>{{ role.user_count }}</td>
               <td class="text-end text-nowrap">

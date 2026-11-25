@@ -28,35 +28,96 @@ class User(AbstractUser):
     class Meta(AbstractUser.Meta):
         default_permissions = ("add", "change", "view")
 
+    def roles_in(self, church):
+        """The roles this user holds in ``church`` (none without an active
+        Membership there)."""
+        return Role.objects.filter(
+            memberships__user=self,
+            memberships__church=church,
+            memberships__is_active=True,
+        )
+
     @property
     def roles(self):
-        return Role.objects.filter(user=self)
+        """The roles held in the Current Church (the first church when there
+        is none, outside a request; Phase 9B, slice a only)."""
+        from apps.church.models import ChurchProfile
+
+        church = getattr(self, "current_church", None) or ChurchProfile.load()
+        return self.roles_in(church)
 
 
 class Role(Group):
-    """A named set of permissions given to users; the church edits roles.
+    """A named set of permissions given to users in one church; each church
+    edits its own roles (decisions 0003 and 0014).
 
-    Built on Django's Group, so Django's permission checks include it. Seeded
-    default roles carry a ``key`` so later phases can grant them new
+    Built on Django's Group, whose ``name`` must be unique across the whole
+    installation, so the name people see is ``title`` (unique per church)
+    and ``name`` holds a hidden internal name. Permissions come through a
+    ``Membership``, never through ``user.groups`` (see ``backends.py``).
+    Seeded default roles carry a ``key`` so later phases can grant them new
     permissions; roles the church creates have no key.
     """
 
-    key = models.SlugField(
-        max_length=50, unique=True, null=True, blank=True, editable=False
+    church = models.ForeignKey(
+        "church.ChurchProfile", on_delete=models.CASCADE, related_name="roles"
     )
+    title = models.CharField("Name", max_length=150)
+    key = models.SlugField(max_length=50, null=True, blank=True, editable=False)
     description = models.CharField(max_length=250, blank=True)
     # Default permissions already granted once (see roles.py), so a
     # permission the church removes is never granted again.
     granted_defaults = models.JSONField(default=list, blank=True, editable=False)
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["title"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["church", "title"],
+                name="role_title_unique_per_church",
+                violation_error_message="This church already has a role with "
+                "that name.",
+            ),
+            models.UniqueConstraint(
+                fields=["church", "key"], name="role_key_unique_per_church"
+            ),
+        ]
 
     def __str__(self):
-        return self.name
+        return self.title
+
+    def save(self, *args, **kwargs):
+        self.name = f"{self.church_id}:{self.title}"
+        super().save(*args, **kwargs)
 
     @property
     def is_administrator(self):
         from .roles import ADMINISTRATOR
 
         return self.key == ADMINISTRATOR
+
+
+class Membership(models.Model):
+    """A user's place in one church: their roles there, and whether it is
+    active (decision 0014). A user has at most one per church, and may
+    belong to several churches or none."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
+    church = models.ForeignKey(
+        "church.ChurchProfile", on_delete=models.CASCADE, related_name="memberships"
+    )
+    roles = models.ManyToManyField(Role, blank=True, related_name="memberships")
+    is_active = models.BooleanField("Active", default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        default_permissions = ()
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "church"], name="one_membership_per_church"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user} in {self.church}"

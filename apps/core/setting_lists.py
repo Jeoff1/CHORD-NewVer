@@ -19,6 +19,7 @@ from django.views.generic import CreateView, ListView, UpdateView, View
 
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.church.models import first_church_id
 from apps.church.modules import is_enabled
 
 from .models import TimeStampedModel
@@ -61,6 +62,37 @@ class ChoiceItem(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+
+class ChurchChoiceItem(ChoiceItem):
+    """One entry of a list each church keeps for itself (decision 0014): its
+    names are unique within the church, not across the platform."""
+
+    church = models.ForeignKey(
+        "church.ChurchProfile",
+        on_delete=models.CASCADE,
+        related_name="+",
+        # Phase 9B, slice a only; slice b sets the church everywhere.
+        default=first_church_id,
+    )
+    name = models.CharField(max_length=100)
+
+    class Meta(ChoiceItem.Meta):
+        abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=["church", "name"],
+                name="%(app_label)s_%(class)s_name_per_church",
+                violation_error_message="An item with this name already exists.",
+            )
+        ]
+
+    def validate_constraints(self, exclude=None):
+        # The church is never a form field, so Django would skip the
+        # per-church unique name; the instance always has its church.
+        if exclude and self.church_id is not None:
+            exclude = set(exclude) - {"church"}
+        super().validate_constraints(exclude)
 
 
 @dataclass

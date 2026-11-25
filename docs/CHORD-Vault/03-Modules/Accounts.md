@@ -9,12 +9,28 @@ the core; it can't be switched off. App: `apps/accounts`.
 
 ## What exists
 
-- **User** (`accounts.User`): Django's standard user. Users are
-  deactivated, never deleted, so the audit trail keeps its actors (there is
-  no delete permission).
+- **User** (`accounts.User`): Django's standard user, shared across
+  churches. Users are deactivated, never deleted, so the audit trail keeps
+  its actors (there is no delete permission).
+- **Membership** (`accounts.Membership`; Phase 9B): a user's place in one
+  church, with their roles there and whether it is active. At most one per
+  church. Users, Add user and Edit user work on the Current Church's
+  memberships; a user from another church gives 404.
+- **Permissions per church** (`backends.ChurchRoleBackend`, replacing
+  Django's `ModelBackend`): a user holds the permissions of the roles in
+  their active Membership in the Current Church, and nothing else
+  (`user.groups` and permissions given straight to a user count for
+  nothing). Code without a request asks `roles.users_with_perm(church,
+  perm)`; `roles.administrators(church)` lists a church's administrators.
+  *Phase 9B, slice a only:* a user object with no `current_church` (not
+  loaded through a request) is answered for the first church.
 - **Role** (`accounts.Role`, built on Django's Group;
-  [[0003-editable-roles]]): a name, description and permissions. The six
-  default roles are created by migrations:
+  [[0003-editable-roles]]): belongs to one church
+  ([[0014-church-platform]]), with a `title` (the name people see, unique
+  in the church), description and permissions. Django's `Group.name`
+  holds a hidden internal name, `"<church id>:<title>"`. Each church has
+  its own six default roles: the first church's came from migrations,
+  and a new church gets them from `seed_roles` (`roles.DEFAULT_ROLES`):
   - Administrator
   - Office Staff
   - Pastoral Staff (the [[Concept-Brief]]'s pastor; holds the final say on

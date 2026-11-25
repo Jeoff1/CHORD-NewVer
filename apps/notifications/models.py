@@ -15,6 +15,15 @@ class Notification(TimeStampedModel):
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
     )
+    # The church it is about; empty for one about the person's own account
+    # (decision 0014).
+    church = models.ForeignKey(
+        "church.ChurchProfile",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
     text = models.CharField(max_length=300)
     url = models.CharField(max_length=300, blank=True)
     # A repeat with the same key replaces an unread one instead of piling up.

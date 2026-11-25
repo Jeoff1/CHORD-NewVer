@@ -367,7 +367,9 @@ class AttendanceReportTests(ReportTestCase):
             self.client.force_login(user)
             page = self.client.get(self.URL)
             self.assertContains(page, "120")
-            self.assertNotContains(page, "999")
+            # Checked in the data, not the HTML: "999" can turn up in a
+            # username or an id on the page.
+            self.assertNotIn(999, [s.attendance for s in page.context["services"]])
             self.assertContains(page, "average 120")
             self.assertContains(self.client.get(self.REPORTS), "Attendance")
 

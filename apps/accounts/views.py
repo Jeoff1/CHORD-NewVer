@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -27,7 +27,7 @@ from apps.core.views import FilteredListView, FormPageMixin
 
 from . import role_changes
 from .forms import AppearanceForm, ProfileForm, RoleForm, UserCreateForm, UserEditForm
-from .models import Role, User
+from .models import Membership, Role, User
 from .roles import managed_permissions
 
 USER_AUDIT_FIELDS = {
@@ -36,14 +36,19 @@ USER_AUDIT_FIELDS = {
     "Last name": "last_name",
     "Email": "email",
     "Active": "is_active",
-    "Roles": lambda user: [role.name for role in user.roles],
+    "Roles": lambda user: [role.title for role in user.roles],
 }
 ROLE_AUDIT_FIELDS = {
-    "Name": "name",
+    "Name": "title",
     "Description": "description",
     "Permissions": lambda role: [p.name for p in role.permissions.all()],
 }
 PASSWORD_CHANGE = {"Password": ["", "(new password set)"]}
+
+
+def church_users(request):
+    """Users with a Membership in the Current Church (active or not)."""
+    return User.objects.filter(memberships__church=request.church).distinct()
 
 
 class StaffMixin(LoginRequiredMixin, PermissionRequiredMixin):
@@ -169,7 +174,19 @@ class UserListView(StaffMixin, FilteredListView):
 
     def get_queryset(self):
         queryset = (
-            super().get_queryset().prefetch_related("groups").order_by("username")
+            super()
+            .get_queryset()
+            .filter(memberships__church=self.request.church)
+            .prefetch_related(
+                Prefetch(
+                    "memberships",
+                    queryset=Membership.objects.filter(
+                        church=self.request.church
+                    ).prefetch_related("roles"),
+                    to_attr="church_memberships",
+                )
+            )
+            .order_by("username")
         )
         status = self.get_status()
         if status != "all":
@@ -189,6 +206,11 @@ class UserCreateView(StaffMixin, FormPageMixin, CreateView):
     submit_label = "Add user"
     success_url = reverse_lazy("accounts:user_list")
     cancel_url = reverse_lazy("accounts:user_list")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["church"] = self.request.church
+        return kwargs
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -249,9 +271,13 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
             links.append(("History", history))
         return links
 
+    def get_queryset(self):
+        return church_users(self.request)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["editor"] = self.request.user
+        kwargs["church"] = self.request.church
         self.before = snapshot(self.object, USER_AUDIT_FIELDS)
         return kwargs
 
@@ -263,6 +289,7 @@ class UserUpdateView(StaffMixin, FormPageMixin, UpdateView):
     def form_valid(self, form):
         found = role_changes.consequences(
             form.instance,
+            church=self.request.church,
             roles=list(form.cleaned_data["roles"]),
             is_active=form.cleaned_data["is_active"],
         )
@@ -307,7 +334,7 @@ class UserHistoryView(StaffMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        person = get_object_or_404(User, pk=self.kwargs["pk"])
+        person = get_object_or_404(church_users(self.request), pk=self.kwargs["pk"])
         context.update(
             person=person,
             sign_ins=SignInEvent.objects.filter(user=person)[:HISTORY_LENGTH],
@@ -328,7 +355,7 @@ class UserSetPasswordView(StaffMixin, FormPageMixin, FormView):
     cancel_url = reverse_lazy("accounts:user_list")
 
     def dispatch(self, request, *args, **kwargs):
-        self.target = get_object_or_404(User, pk=kwargs["pk"])
+        self.target = get_object_or_404(church_users(request), pk=kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_page_title(self):
@@ -360,7 +387,9 @@ class RoleListView(StaffMixin, ListView):
     template_name = "accounts/role_list.html"
 
     def get_queryset(self):
-        return Role.objects.annotate(user_count=Count("user", distinct=True))
+        return Role.objects.filter(church=self.request.church).annotate(
+            user_count=Count("memberships", distinct=True)
+        )
 
 
 class RoleCreateView(StaffMixin, FormPageMixin, CreateView):
@@ -372,6 +401,11 @@ class RoleCreateView(StaffMixin, FormPageMixin, CreateView):
     success_url = reverse_lazy("accounts:role_list")
     cancel_url = reverse_lazy("accounts:role_list")
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["church"] = self.request.church
+        return kwargs
+
     def form_valid(self, form):
         response = super().form_valid(form)
         record_change(
@@ -380,7 +414,7 @@ class RoleCreateView(StaffMixin, FormPageMixin, CreateView):
             AuditEvent.Action.CREATED,
             diff({}, snapshot(self.object, ROLE_AUDIT_FIELDS)),
         )
-        messages.success(self.request, f"Role {self.object.name} was added.")
+        messages.success(self.request, f"Role {self.object.title} was added.")
         return response
 
 
@@ -392,10 +426,14 @@ class RoleUpdateView(StaffMixin, FormPageMixin, UpdateView):
     cancel_url = reverse_lazy("accounts:role_list")
 
     def get_page_title(self):
-        return f"Edit role: {self.object.name}"
+        return f"Edit role: {self.object.title}"
+
+    def get_queryset(self):
+        return Role.objects.filter(church=self.request.church)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs["church"] = self.request.church
         self.before = snapshot(self.object, ROLE_AUDIT_FIELDS)
         return kwargs
 
@@ -407,7 +445,7 @@ class RoleUpdateView(StaffMixin, FormPageMixin, UpdateView):
             AuditEvent.Action.CHANGED,
             diff(self.before, snapshot(self.object, ROLE_AUDIT_FIELDS)),
         )
-        messages.success(self.request, f"Role {self.object.name} was saved.")
+        messages.success(self.request, f"Role {self.object.title} was saved.")
         return response
 
 
@@ -416,6 +454,9 @@ class RoleDeleteView(StaffMixin, DeleteView):
     model = Role
     template_name = "accounts/role_confirm_delete.html"
     success_url = reverse_lazy("accounts:role_list")
+
+    def get_queryset(self):
+        return Role.objects.filter(church=self.request.church)
 
     def get_object(self, queryset=None):
         role = super().get_object(queryset)
@@ -431,7 +472,7 @@ class RoleDeleteView(StaffMixin, DeleteView):
             AuditEvent.Action.DELETED,
             diff(snapshot(role, ROLE_AUDIT_FIELDS), {}),
         )
-        messages.success(self.request, f"Role {role.name} was deleted.")
+        messages.success(self.request, f"Role {role.title} was deleted.")
         return super().form_valid(form)
 
 
@@ -446,7 +487,11 @@ class PermissionMatrixView(StaffMixin, TemplateView):
     template_name = "accounts/permission_matrix.html"
 
     def get_roles(self):
-        return list(Role.objects.prefetch_related("permissions"))
+        return list(
+            Role.objects.filter(church=self.request.church).prefetch_related(
+                "permissions"
+            )
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -500,7 +545,7 @@ class PermissionMatrixView(StaffMixin, TemplateView):
                 AuditEvent.Action.CHANGED,
                 diff(before, snapshot(role, ROLE_AUDIT_FIELDS)),
             )
-            changed.append(role.name)
+            changed.append(role.title)
         if changed:
             messages.success(request, f"Permissions saved for: {', '.join(changed)}.")
         else:

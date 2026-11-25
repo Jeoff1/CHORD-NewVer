@@ -162,7 +162,12 @@ permission, add it to `DEFAULT_ROLE_PERMISSIONS` in
   on a temporary PostgreSQL test database.
 - `apps/core/testing.py` has the shared test-data builders. Add new
   builders there instead of repeating setup code in each test.
-  - `make_user(roles=[...], perms=[...])`
+  - `make_user(roles=[...], perms=[...], church=None)`: a user with a
+    Membership in `church` (the first church by default; `church=False`
+    for none). `perms` go on a role of the user's own, because
+    permissions come only from roles ([[0014-church-platform]]).
+  - `make_church(name="Other Church")`: a church with its defaults, as
+    registering one gives (`seed_church`)
   - `make_administrator()`
   - `complete_setup(**profile_fields)`
   - `make_member(**fields)`

@@ -22,9 +22,11 @@ from django.db import transaction
 from django.utils.crypto import get_random_string
 from django.utils.text import slugify
 
+from apps.accounts.models import Membership
 from apps.accounts.views import USER_AUDIT_FIELDS
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
+from apps.church.models import ChurchProfile
 
 from .models import Member
 from .services import member_audit_fields
@@ -95,8 +97,13 @@ def create_accounts(members, role, actor):
             )
             user.must_change_password = True
             user.save(update_fields=["must_change_password"])
+            # Members is open only to the first church for now (Phase 9B,
+            # decision 0014), so batch accounts join that church.
+            membership = Membership.objects.create(
+                user=user, church=ChurchProfile.load()
+            )
             if role is not None:
-                user.groups.add(role)
+                membership.roles.add(role)
             record_change(
                 actor,
                 user,

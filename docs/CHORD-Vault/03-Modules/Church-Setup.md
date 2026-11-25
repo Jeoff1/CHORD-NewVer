@@ -10,13 +10,29 @@ of the core and can't be switched off. App: `apps/church`.
 
 ## What exists
 
-- **Church Profile** (`models.py`): the single row (pk 1, enforced by a
-  database constraint). It holds the name, address, phone, email, website,
-  logo (2 MB maximum), currency (three-letter code, default PHP), time zone
-  (default Asia/Manila), switched-off Modules, Labels and whether setup is
-  finished. Load it with `ChurchProfile.load()`.
-- **Middleware** (`middleware.py`) puts the profile on `request.church`
-  and activates the church's time zone for each request.
+- **Church Profile** (`models.py`): one per church; an installation
+  holds many ([[0014-church-platform]]). It holds the name, a unique `slug`
+  made from the name ("grace-chapel", then "grace-chapel-2"), address,
+  phone, email, website, logo (2 MB maximum), currency (three-letter code,
+  default PHP), time zone (default Asia/Manila), switched-off Modules,
+  Labels and whether setup is finished. Since Phase 9B it also has
+  `about`, `show_in_directory` (on), `show_upcoming_services` (off) and
+  `members_teams_unlocked` (only the church migrated from before 9B). A
+  new installation starts with one church.
+  - *Phase 9B, slice a only:* `ChurchProfile.load()` and the default of
+    every `church` field mean "the first church" (`first_church_id()`), so
+    code not yet scoped keeps working. Slice b replaces them.
+- **Current Church middleware** (`middleware.py`,
+  `CurrentChurchMiddleware`): puts the church a request works in on
+  `request.church` and `request.user.current_church`, and activates its
+  time zone. A signed-in person works in the church kept in the session
+  (`church_id`) while they have an active Membership there (a superuser
+  may choose any church); otherwise in their oldest membership's church.
+- **Seeding** (`seeding.py`): `seed_church(church)` gives a new church its
+  defaults. Each app registers a seeder in `AppConfig.ready()`: roles
+  (Accounts), Theme Tags and Worship Check settings (`songs/defaults.py`),
+  the default template and Suggestion Settings (`worship/defaults.py`),
+  and the example Occasion Types, switched off (`occasions/defaults.py`).
 - **Modules** (`modules.py`): the registry of the four Modules (Members,
   Worship, Teams, Announcements; [[0005-worship-planning-scope]]).
   - Each entry has a code, the Django apps that hold its models, a main

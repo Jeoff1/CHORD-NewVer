@@ -152,7 +152,11 @@ class MemberAccountsForm(forms.Form):
         from apps.accounts.models import Role
 
         super().__init__(*args, **kwargs)
-        self.fields["role"].queryset = Role.objects.order_by("name")
-        default = Role.objects.filter(key="church_member").first()
+        from apps.church.models import ChurchProfile
+
+        # Members is open only to the first church for now (Phase 9B).
+        roles = Role.objects.filter(church=ChurchProfile.load()).order_by("title")
+        self.fields["role"].queryset = roles
+        default = roles.filter(key="church_member").first()
         if default:
             self.fields["role"].initial = default.pk

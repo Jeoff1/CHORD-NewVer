@@ -21,6 +21,12 @@ class AccountsConfig(AppConfig):
     verbose_name = "Users and Roles"
 
     def ready(self):
+        from apps.church import seeding
+
+        from .roles import seed_roles
+
+        # What a new church starts with (Phase 9B).
+        seeding.register(seed_roles)
         from apps.core.settings_menu import SettingsPage, register
 
         post_migrate.connect(_sync_roles, dispatch_uid="chord_sync_default_roles")

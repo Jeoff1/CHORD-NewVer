@@ -4,6 +4,7 @@
 from django.conf import settings
 from django.db import models
 
+from apps.church.models import church_foreign_key
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.worship.models import WorshipService
 
@@ -16,6 +17,7 @@ class Announcement(PublicIdModel, TimeStampedModel):
         EVERYONE = "everyone", "Everyone"
         SERVICE_TEAM = "service_team", "One service's team"
 
+    church = church_foreign_key()
     title = models.CharField(max_length=120)
     body = models.TextField("Message")
     audience = models.CharField(

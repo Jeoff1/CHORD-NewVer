@@ -9,6 +9,7 @@ assignments are never touched.
 
 import datetime
 
+from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -135,14 +136,17 @@ class LeavingTheTeamTests(TestCase):
         self.assertRedirects(response, reverse("accounts:user_list"))
         self.assertEqual(len(self.ids()), 5)
 
-    def test_permission_given_to_the_user_directly_keeps_them_on(self):
-        person = make_user(roles=["team_member"], perms=["teams.view_assignment"])
+    def test_a_permission_given_to_the_user_directly_doesnt_keep_them_on(self):
+        # Permissions come only from roles (decision 0014).
+        person = make_user(roles=["team_member"])
+        person.user_permissions.add(Permission.objects.get(codename="view_assignment"))
         make_assignment(make_service(), person)
         response = self.client.post(
             reverse("accounts:user_update", kwargs={"pk": person.pk}),
             edit_data(person, roles=[self.church_member.pk]),
         )
-        self.assertRedirects(response, reverse("accounts:user_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["consequences"][0].items), 1)
 
     def test_no_coming_assignments_saves_at_once(self):
         person = make_user(roles=["team_member"])

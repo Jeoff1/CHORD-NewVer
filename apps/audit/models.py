@@ -22,6 +22,15 @@ class AuditEvent(models.Model):
         blank=True,
         related_name="+",
     )
+    # The church the change happened in; empty for a change to an account
+    # itself (decision 0014).
+    church = models.ForeignKey(
+        "church.ChurchProfile",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
     action = models.CharField(max_length=16, choices=Action.choices)
     content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT)
     object_id = models.CharField(max_length=64)

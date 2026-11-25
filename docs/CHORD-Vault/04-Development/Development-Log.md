@@ -2,6 +2,43 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-25: Phase 9B, slice a: foundations for many churches
+
+Nothing changes on screen yet; one installation can now hold many
+churches ([[0014-church-platform]]; choices in [[Phase-9B-Plan]],
+"Progress notes").
+
+- **Church Profile** is no longer a single row: it has a `slug`, `about`,
+  `show_in_directory`, `show_upcoming_services` and
+  `members_teams_unlocked` (the migrated church only). The id sequences of
+  the old pk=1 tables are reset by the migrations.
+- **Membership** and **roles per church**: `Role.church` and `Role.title`
+  (unique per church); `ChurchRoleBackend` gives the permissions of the
+  roles in the Current Church only; `CurrentChurchMiddleware` replaces
+  `ChurchProfileMiddleware`. Users and roles pages, the permission matrix,
+  role changes (A2), batch accounts (A4) and the team list read
+  memberships instead of `user.groups`.
+- **`church` on every scoped root model**: services, templates, sermon
+  series, seasons, songs, theme tags, trusted artists, occasion types,
+  occasions, requests and announcements; nullable on notifications and
+  audit events; one settings row per church for Suggestion Settings,
+  Worship Check settings and the Church Spotify Account. Church lists use
+  `ChurchChoiceItem` (names unique per church); Spotify track IDs are
+  unique per church.
+- **`seed_church`** with seeders from Accounts, Songs, Worship and
+  Occasions; `make_church` and a church-aware `make_user` for tests.
+- **Tests:** `apps/accounts/tests/test_church_platform.py` (permissions
+  follow the Current Church, groups and direct permissions give nothing,
+  superusers, `users_with_perm`, administrators per church, the middleware,
+  `seed_church`, per-church names, accounts pages show one church);
+  `apps/church/tests/test_platform_migration.py` (back to before 9B, data,
+  forward: every row in the first church, counts kept, each user's roles
+  kept). Updated tests: role titles instead of names, the Church Spotify
+  Account per church, and "a permission given to the user directly"
+  (it no longer keeps someone on the team).
+- **Checks:** quick check passes (1071 tests); the full check runs in the
+  pre-commit hook.
+
 ## 2026-11-25: Phase 9B approved; docs
 
 The owner approved the Church Platform plan ([[Phase-9B-Plan]], moved into

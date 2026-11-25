@@ -1,9 +1,10 @@
 """Default roles, the permissions CHORD manages, and administrator rules.
 
-The default roles are created once by a data migration; the church may
-rename them, edit their permissions, or delete them (except Administrator).
-The Administrator role always holds every managed permission, so the church
-can't lock itself out.
+Each church has its own roles (decision 0014). The first church's default
+roles came from data migrations; every later church gets the same ones from
+``seed_roles`` when it is created. A church may rename its roles, edit their
+permissions, or delete them (except Administrator). The Administrator role
+always holds every managed permission, so a church can't lock itself out.
 """
 
 from django.apps import apps as django_apps
@@ -12,6 +13,39 @@ from django.contrib.auth.models import Permission
 from django.db.models import Q
 
 ADMINISTRATOR = "administrator"
+
+# key, title, description: what a new church starts with. Matches the
+# first church's roles as the data migrations left them.
+DEFAULT_ROLES = [
+    (ADMINISTRATOR, "Administrator", "Full access to every part of CHORD."),
+    (
+        "office_staff",
+        "Office Staff",
+        "Day-to-day office work, such as keeping the member directory.",
+    ),
+    (
+        "pastoral_staff",
+        "Pastoral Staff",
+        "Schedules worship services, posts each service's theme, and has the "
+        "final say on its lineup.",
+    ),
+    (
+        "worship_leader",
+        "Worship Leader",
+        "Builds and confirms lineups, and manages songs, chord sheets and teams.",
+    ),
+    (
+        "team_member",
+        "Team Member",
+        "Sees confirmed lineups and song pages, and marks their own availability.",
+    ),
+    (
+        "church_member",
+        "Church Member",
+        "Sees the schedule, announcements and their own member record. "
+        "Doesn't see lineups, song pages or chord sheets.",
+    ),
+]
 
 # Apps whose permissions appear in the permission matrix, besides the Modules.
 CORE_PERMISSION_APPS = ("church", "accounts", "audit")
@@ -206,19 +240,34 @@ def managed_permissions():
     )
 
 
-def sync_default_role_permissions():
-    """Give the Administrator every managed permission, and grant default
-    permissions not yet granted to the other default roles."""
+def seed_roles(church):
+    """Give a new church its own default roles and their permissions."""
     from .models import Role
 
-    administrator = Role.objects.filter(key=ADMINISTRATOR).first()
-    if administrator:
-        administrator.permissions.add(*managed_permissions())
+    for key, title, description in DEFAULT_ROLES:
+        Role.objects.get_or_create(
+            church=church,
+            key=key,
+            defaults={"title": title, "description": description},
+        )
+    sync_default_role_permissions(church)
 
-    for key, perm_names in DEFAULT_ROLE_PERMISSIONS.items():
-        role = Role.objects.filter(key=key).first()
-        if role is None:
-            continue
+
+def sync_default_role_permissions(church=None):
+    """In each church (or only ``church``), give the Administrator every
+    managed permission, and grant default permissions not yet granted to
+    the other default roles."""
+    from .models import Role
+
+    roles = Role.objects.exclude(key=None)
+    if church is not None:
+        roles = roles.filter(church=church)
+    managed = list(managed_permissions())
+    for administrator in roles.filter(key=ADMINISTRATOR):
+        administrator.permissions.add(*managed)
+
+    for role in roles.filter(key__in=DEFAULT_ROLE_PERMISSIONS):
+        perm_names = DEFAULT_ROLE_PERMISSIONS[role.key]
         pending = [name for name in perm_names if name not in role.granted_defaults]
         for name in pending:
             app_label, codename = name.split(".")
@@ -231,15 +280,51 @@ def sync_default_role_permissions():
         role.save(update_fields=["granted_defaults"])
 
 
-def administrators():
-    """Active users with full access: superusers and Administrator role holders."""
-    return (
-        get_user_model()
-        .objects.filter(is_active=True)
-        .filter(Q(is_superuser=True) | Q(groups__role__key=ADMINISTRATOR))
-        .distinct()
+def _church_or_first(church):
+    if church is None:
+        # Phase 9B, slice a only: callers without a church yet mean the
+        # first church; slice b passes the church everywhere.
+        from apps.church.models import ChurchProfile
+
+        church = ChurchProfile.load()
+    return church
+
+
+def _holders(church, roles_condition):
+    """A condition on User: an active Membership in ``church`` with a role
+    matching ``roles_condition`` (a Q on Role)."""
+    from .models import Membership, Role
+
+    return Q(
+        memberships__in=Membership.objects.filter(
+            church=church,
+            is_active=True,
+            roles__in=Role.objects.filter(roles_condition),
+        )
     )
 
 
-def is_administrator(user):
-    return administrators().filter(pk=user.pk).exists()
+def users_with_perm(church, perm, *, include_superusers=False):
+    """Active users holding ``perm`` ("app_label.codename") in ``church``,
+    for code without a request (notifications, approvers, the worker)."""
+    app_label, codename = perm.split(".")
+    condition = _holders(
+        church,
+        Q(permissions__content_type__app_label=app_label)
+        & Q(permissions__codename=codename),
+    )
+    if include_superusers:
+        condition |= Q(is_superuser=True)
+    return get_user_model().objects.filter(condition, is_active=True).distinct()
+
+
+def administrators(church=None):
+    """Active users with full access in ``church``: superusers and holders of
+    its Administrator role."""
+    church = _church_or_first(church)
+    condition = Q(is_superuser=True) | _holders(church, Q(key=ADMINISTRATOR))
+    return get_user_model().objects.filter(condition, is_active=True).distinct()
+
+
+def is_administrator(user, church=None):
+    return administrators(church).filter(pk=user.pk).exists()
