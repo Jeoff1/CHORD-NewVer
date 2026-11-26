@@ -47,7 +47,7 @@ flowchart LR
 | 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
 | 9A    | Adviser requests (24 Nov)     | L    | 8          | Paused for 9B (A1–A5 done) |
 | 9B    | Church Platform (multi-church) | L   | 9A (A1–A5) | Done (2026-11-26), merged into `master` |
-| 9C    | Guided service planning (top priority) | M | 9B   | Built (2026-11-26); waiting for the owner's click-through |
+| 9C    | Guided service planning (top priority) | M | 9B   | Done (2026-11-26), merged into `master` |
 | 9     | Learning to rank              | S    | 6, after 9A | Not started (only if time remains) |
 | 10    | Hardening and release         | M    | 7, 8, 9A, 9B, 9C (9 if built) | Not started   |
 
@@ -595,9 +595,10 @@ show lineups, songs, chord sheets, lyrics, members or teams.
 
 ## Phase 9C: Guided service planning
 
-**Status: in progress (since 2026-11-26). Top priority** (owner,
-2026-11-26; AGENTS.md): it comes before A6, A7, Phase 9 and Phase 10.
-Built on branch `phase-9c-guided-planning`. The rules are in
+**Status: done (2026-11-26) and merged into `master` the same day,
+after the full check and the owner's click-through passed. Top
+priority** (owner, 2026-11-26; AGENTS.md): it came before A6, A7, Phase 9
+and Phase 10. Built on branch `phase-9c-guided-planning`. The rules are in
 [[Design-Decisions]], "Phase 9C".
 
 Goal: a pastor who has just added a worship service is told what to do
@@ -632,8 +633,8 @@ playlist preview on one page) and **Confirm** (a rundown, then confirm).
   [[0015-lineup-first-suggestions-assist]]): the pastor adds songs slot by
   slot from the pool or Spotify; suggestions sit beside, each with Add,
   and can fill the empty slots.
-- [ ] **Click-through** by the owner ([[Phase-9C-Click-Through]]), then
-  merging into `master`.
+- [x] **Click-through** by the owner ([[Phase-9C-Click-Through]]), then
+  merging into `master` (done 2026-11-26; every step passed).
 
 **Done when** the tests in [[Design-Decisions]], "Phase 9C", pass and every
 existing test still passes (updated where a screen moved): the team never

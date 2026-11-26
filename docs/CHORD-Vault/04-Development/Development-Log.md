@@ -2,6 +2,21 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9C merged into `master`
+
+- The owner ran the [[Phase-9C-Click-Through]]: every step passed. Steps
+  ticked and the result noted there.
+- Noted during it: a newly registered church starts with an empty song
+  pool (each church has its own, [[0014-church-platform]]), so "Rank the
+  song pool only" finds nothing until Find songs or `seed_hymns` fills
+  it. Not a fault. The page could say so, and "Find songs again" shows
+  after a pool-only run although Spotify wasn't searched yet; both are
+  left for a later pass.
+- `phase-9c-guided-planning` fast-forwarded into `master`.
+  [[Development-Plan]] and [[00-Home]] say so.
+- **Checks:** the full check passed on the merged code (97% coverage);
+  this commit changes docs only.
+
 ## 2026-11-26: Concept Brief matches Phase 9C
 
 - The owner asked for the [[Concept-Brief]] to match the Phase 9C

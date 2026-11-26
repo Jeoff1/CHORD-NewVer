@@ -8,16 +8,16 @@ development task.
 
 ## Current status
 
-**Phase 9C (guided service planning) is the top priority (owner,
-2026-11-26) and is built on branch `phase-9c-guided-planning`, waiting
-for the owner's [[Phase-9C-Click-Through]].** Planning a service now
+**Phase 9C (guided service planning), the top priority (owner,
+2026-11-26), is done and merged into `master` (2026-11-26) after the
+owner's [[Phase-9C-Click-Through]] passed.** Planning a service now
 follows four steps (Theme, Praise Team, Song Lineup, Confirm) with a
 next-step panel on the service page; suggestions moved to the Song Lineup
 page and confirming goes through a rundown; the pastor may attach the
 sermon as a PDF, the Main scripture suggests passages from a stored
 public-domain Bible, suggestions read the whole theme, and the lineup
 comes first with suggestions beside it ([[0015-lineup-first-suggestions-assist]]; [[Design-Decisions]],
-"Phase 9C"). After the merge: A6, A7, then Phase 10.
+"Phase 9C"). Next: A6, A7, then Phase 10.
 
 **Phase 9B (Church Platform: many churches on one installation) is
 done (2026-11-26) and merged into `master` after the owner's
@@ -33,8 +33,8 @@ day.** Phase 8 done (2026-11-23). Updated
 2026-11-26.
 
 **Pick up here:**
-- **Branch:** Phase 9B is merged into `master` (2026-11-26), as are 9A's
-  A1 to A5.
+- **Branch:** Phases 9B and 9C are merged into `master` (2026-11-26), as
+  are 9A's A1 to A5.
 - **Phase 9B** ([[Development-Plan]]; rules and tests in
   [[Design-Decisions]], "Phase 9B"; design and progress notes in
   [[Phase-9B-Plan]]): slices a (foundations) to e (public pages) done.
