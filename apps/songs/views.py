@@ -8,7 +8,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.views import View
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, TemplateView, UpdateView
@@ -265,6 +265,8 @@ class SpotifySearchView(SongsMixin, TemplateView):
             tracks=None,
             problem="",
             block_message=block_message(block) if block else "",
+            # Where to go back to, such as a lineup's "Add a song" (Phase 9C).
+            next=safe_next(self.request, ""),
         )
         if not query:
             return context
@@ -299,7 +301,7 @@ class SpotifyAddView(SongsMixin, View):
         )
         if known is not None:
             messages.info(request, f"{known} is already in the song pool.")
-            return redirect(song_url(known))
+            return _back_or(request, known)
         try:
             track = SpotifyClient.from_settings().get_track(spotify_id)
         except SpotifyError as error:
@@ -320,7 +322,17 @@ class SpotifyAddView(SongsMixin, View):
             )
         else:
             messages.info(request, f"{song} is already in the song pool.")
-        return redirect(song_url(song))
+        return _back_or(request, song)
+
+
+def _back_or(request, song):
+    """Back to where the search started (such as a lineup's "Add a song",
+    Phase 9C), looking for ``song``; otherwise the song's page."""
+    back = safe_next(request, "")
+    if back:
+        joiner = "&" if "?" in back else "?"
+        return redirect(f"{back}{joiner}{urlencode({'q': song.title})}")
+    return redirect(song_url(song))
 
 
 class WorshipCheckSettingsView(SongsMixin, FormPageMixin, UpdateView):

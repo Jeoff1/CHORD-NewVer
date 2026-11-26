@@ -59,8 +59,9 @@ next-step panel naming what to do and one button for it:
 - Praise Team (the church's "team" Label; only while Teams is on): assign
   who serves that day. Suggested, never required: "Skip for now" goes on to
   the songs.
-- Song Lineup: find songs, review the suggestions, save them as the lineup,
-  review it (swap, lock, reorder, keys), and preview what the Spotify
+- Song Lineup: add the songs you have in mind slot by slot, with the
+  suggestions beside them to add one at a time or to fill the empty slots;
+  review (swap, lock, reorder, keys), and preview what the Spotify
   playlist will hold, all on one page.
 - Confirm: a rundown of the service, theme, team, songs and warnings, then
   Confirm. The playlist is saved on confirmation, as below.
@@ -107,8 +108,12 @@ SONG SELECTION (core module)
     - Each lineup song's feel reason is worked out for the slot it is in now.
       Move arrows show only where a move is allowed. People are named by
       their full name (or username) in marks and notes.
-    - The leader or the pastor saves the reviewed suggestions as the lineup:
-      its own copy, which later corrections to the suggestions never change.
+    - Since 2026-11-26 the lineup comes first and suggestions assist
+      ([[0015-lineup-first-suggestions-assist]]): the leader or the pastor
+      adds songs slot by slot from the song pool (or Spotify, through the
+      pool), adds suggested songs one at a time, or fills the empty slots
+      with suggestions. The lineup keeps its own copy of each song, which
+      later corrections to the suggestions never change.
       Review swaps a song for another ranked suggestion, locks, reorders,
       re-keys or removes songs, adds a song from the pool, or regenerates
       around locked songs, from the service's latest finished search. A

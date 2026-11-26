@@ -3,13 +3,14 @@
 {% block title %}Find on Spotify{% endblock %}
 
 {% block content %}
-  {% url 'songs:list' as back_url %}{% include "includes/back_link.html" with url=back_url label="Songs" %}
+  {% if next %}{% include "includes/back_link.html" with url=next label="Back" %}{% else %}{% url 'songs:list' as back_url %}{% include "includes/back_link.html" with url=back_url label="Songs" %}{% endif %}
   <h1 class="h3 mb-2">Find on Spotify</h1>
   <p class="text-body-secondary">Search by title or artist, and add a track to the song pool. Its lyrics are then fetched and analysed like every other song.</p>
   {% if block_message %}<div class="alert alert-warning">{{ block_message }}</div>{% endif %}
 
   <form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
     <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 24rem" placeholder="Title or artist" aria-label="Title or artist" maxlength="200">
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
 
@@ -38,6 +39,7 @@
                     <form method="post" action="{% url 'songs:spotify_add' %}">
                       {% csrf_token %}
                       <input type="hidden" name="spotify_id" value="{{ track.spotify_id }}">
+                      {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
                       <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
                     </form>
                   {% endif %}

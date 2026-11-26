@@ -77,7 +77,7 @@ class PanelTests(SuggestionViewTestCase):
         for user in (self.leader, self.pastor):
             self.client.force_login(user)
             response = self.client.get(url(self.service, "lineup"))
-            self.assertContains(response, "Suggested lineup")
+            self.assertContains(response, "Suggested songs")
             self.assertContains(response, "Placed Song")
             self.assertContains(
                 response, "Its lyrics match the theme closely (song 1)."
@@ -111,8 +111,9 @@ class PanelTests(SuggestionViewTestCase):
             labels={"lineup": {"singular": "Set list", "plural": "Set lists"}}
         )
         self.client.force_login(self.leader)
+        finished_run(self.service)
         response = self.client.get(url(self.service, "lineup"))
-        self.assertContains(response, "Suggested set list")
+        self.assertContains(response, "Songs already in the set list stay.")
 
     def test_without_a_theme_the_panel_says_to_post_it(self):
         service = make_service()

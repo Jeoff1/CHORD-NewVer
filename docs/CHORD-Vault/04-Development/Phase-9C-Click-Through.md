@@ -36,14 +36,21 @@ written; note anything else in the [[Development-Log]].
 ## 2. Song Lineup on one page
 
 - [ ] **2.1** Click **Choose the songs** (or the Song Lineup step). The
-  page is titled "Song Lineup", its step is underlined, and it holds the
-  suggestions: Find songs or Rank the song pool only.
-- [ ] **2.2** Find songs. The progress shows on this page; when it ends,
-  the ranked songs show here. Click **Save these songs as the lineup**.
-- [ ] **2.3** The same page now shows the songs to review (move, lock,
-  swap, keys), a **Spotify playlist** card saying how many songs will be
-  saved and where (or that Spotify isn't set up), with Listen links, and
-  the suggestions folded below. The one button is **Continue to confirm**.
+  page is titled "Song Lineup", its step is underlined. On the left, the
+  service's slots, all **Empty**, each with **Add a song**; on the right,
+  **Suggested songs** with Find songs or Rank the song pool only.
+- [ ] **2.2** Click **Add a song** on the first slot, search the pool for a
+  song you know and add it: it sits in that slot. Try **Find it on
+  Spotify** for a song not in the pool: after adding it you come back to
+  the same page, searching for it.
+- [ ] **2.3** Find songs. The progress shows in the right column; when it
+  ends, click **Add** on one suggestion: it goes to its slot (or the first
+  empty one) and shows "In the lineup". Then click **Fill the empty slots
+  with suggestions**: the songs you chose stay, the rest are filled.
+- [ ] **2.4** The page shows the songs to review (move, lock, swap, keys),
+  a **Spotify playlist** card saying how many songs will be saved and
+  where (or that Spotify isn't set up), with Listen links. The one button
+  is **Continue to confirm**.
 
 ## 3. Confirm with a rundown
 

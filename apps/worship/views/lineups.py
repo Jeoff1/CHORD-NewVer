@@ -28,10 +28,10 @@ from apps.teams.views import service_team_context
 
 from .. import lineups, playlists, suggesting
 from ..forms import LineupItemForm, SendBackForm
-from ..models import Lineup, LineupItem, SearchRun
+from ..models import Lineup, LineupItem, SearchRun, Suggestion
 from ..planning import CONFIRM, SONGS, planning_context, songs_step_label
 from .base import ServiceMixin, can_plan
-from .suggestions import can_suggest, panel_context
+from .suggestions import can_suggest, panel_context, spotify_configured
 
 CHANGE = lineups.CHANGE
 FINAL_SAY = lineups.FINAL_SAY
@@ -211,19 +211,50 @@ def plans(user):
     return can_plan(user) or lineups.sees_drafts(user)
 
 
+def may_start(user):
+    """Whether ``user`` may start a lineup by adding its first song."""
+    return user.has_perm("worship.add_lineup") and user.has_perm(CHANGE)
+
+
+def slot_rows(service, items, *, with_empty):
+    """``[(kind, object)]``: the lineup's songs in order ("song", item) and,
+    ``with_empty``, a row for each empty slot ("empty", slot) where its song
+    would go (decision 0015)."""
+    rows = [("song", item) for item in items]
+    if not with_empty:
+        return rows
+    filled = {item.slot_id for item in items if item.slot_id}
+    for slot in service.template.slots.all():
+        if slot.pk in filled:
+            continue
+        index = next(
+            (
+                i
+                for i, (kind, item) in enumerate(rows)
+                if kind == "song"
+                and (item.slot is None or item.slot.position > slot.position)
+            ),
+            len(rows),
+        )
+        rows.insert(index, ("empty", slot))
+    return rows
+
+
 class LineupView(ServiceMixin, TemplateView):
-    """The Song Lineup step (Phase 9C): before a lineup exists, people who
-    may suggest songs find and review suggestions here; once it exists,
-    the lineup's review, the folded suggestions and the playlist preview.
-    Team members see only a confirmed lineup, as before."""
+    """The Song Lineup step (Phase 9C; decision 0015): the lineup first,
+    slot by slot, each empty slot with "Add a song"; the suggestions beside
+    it, each with "Add"; the playlist preview. Before a lineup exists the
+    slots are all empty. Team members see only a confirmed lineup."""
 
     template_name = "worship/lineup_detail.html"
 
     def has_permission(self):
-        # People who may suggest songs find them here, even without seeing
-        # lineups (they then get the suggestions alone).
+        # People who may suggest songs, or start a lineup, work here even
+        # before a lineup exists.
         user = self.request.user
-        return user.has_perm("worship.view_lineup") or can_suggest(user)
+        return (
+            user.has_perm("worship.view_lineup") or can_suggest(user) or may_start(user)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -233,16 +264,26 @@ class LineupView(ServiceMixin, TemplateView):
         if lineup is not None and not user.has_perm("worship.view_lineup"):
             lineup = None
         if lineup is None:
-            if not can_suggest(user):
+            if not (can_suggest(user) or may_start(user)):
                 raise Http404("This service has no lineup yet.")
-            context["lineup"] = None
+            context.update(
+                lineup=None,
+                lineup_items=[],
+                can_add_songs=may_start(user)
+                and not suggesting.planning_closed(service),
+            )
         elif not lineups.visible_to(lineup, user) and not lineup.is_being_revised:
             # A draft that was never confirmed doesn't exist for the team.
             raise Http404("This lineup isn't confirmed yet.")
         else:
             context.update(lineup_context(lineup, user))
-            if context["can_change_lineup"]:
-                context["open_slots"] = lineups.open_slots(lineup)
+            context["can_add_songs"] = context["can_change_lineup"]
+        if lineup is None or context.get("lineup_visible"):
+            context["slot_rows"] = slot_rows(
+                service,
+                context["lineup_items"],
+                with_empty=lineup is None or context["sees_lineup_drafts"],
+            )
         run = suggesting.latest_run(service)
         if can_suggest(user):
             context.update(panel_context(service, user))
@@ -267,24 +308,82 @@ class LineupView(ServiceMixin, TemplateView):
 # --- Making the lineup ----------------------------------------------------------
 
 
+def _record(user, lineup, before):
+    """The audit trail of a change to ``lineup`` (``before`` is None when it
+    was just started)."""
+    lineup = Lineup.objects.get(pk=lineup.pk)
+    record_change(
+        user,
+        lineup,
+        AuditEvent.Action.CREATED if before is None else AuditEvent.Action.CHANGED,
+        diff(before or {}, snapshot(lineup, lineups.LINEUP_AUDIT_FIELDS)),
+    )
+
+
+def _start_and(request, service, action, *args):
+    """Start the service's lineup if it has none, then run a rule from
+    ``lineups`` on it and record the change. The rule's result, or None
+    (with the reason shown) when it was refused."""
+    try:
+        lineup, started = lineups.start(service, request.user)
+    except lineups.LineupRefused as refusal:
+        messages.error(request, str(refusal))
+        return None
+    before = None if started else snapshot(lineup, lineups.LINEUP_AUDIT_FIELDS)
+    try:
+        result = action(lineup, *args, request.user)
+    except lineups.LineupRefused as refusal:
+        if started:
+            lineup.delete()  # nothing was added: no empty lineup is left
+        messages.error(request, str(refusal))
+        return None
+    _record(request.user, lineup, before)
+    return result
+
+
 class LineupCreateView(ServiceMixin, View):
-    """Make the lineup from the suggestions the planner has reviewed."""
+    """Fill the empty slots with suggestions (decision 0015): the whole
+    lineup when there is none yet, otherwise only the slots still empty."""
 
     permission_required = ("worship.add_lineup", "worship.suggest_songs")
 
     def post(self, request, public_id):
-        try:
-            lineup = lineups.create_from_run(self.service, request.user)
-        except lineups.LineupRefused as refusal:
-            messages.error(request, str(refusal))
-            return redirect(f"{lineup_url(self.service)}#suggestions")
-        record_change(
-            request.user,
-            lineup,
-            AuditEvent.Action.CREATED,
-            diff({}, snapshot(lineup, lineups.LINEUP_AUDIT_FIELDS)),
+        service = self.service
+        if not Lineup.objects.filter(service=service).exists():
+            try:
+                lineup = lineups.create_from_run(service, request.user)
+            except lineups.LineupRefused as refusal:
+                messages.error(request, str(refusal))
+            else:
+                _record(request.user, lineup, None)
+                messages.success(request, "The slots were filled with suggested songs.")
+            return redirect(lineup_url(service))
+        result = _start_and(request, service, lineups.fill_from_suggestions)
+        if result is not None:
+            added = result[1]
+            messages.success(
+                request,
+                f"{added} suggested song{'' if added == 1 else 's'} filled the "
+                "empty slots.",
+            )
+        return redirect(lineup_url(service))
+
+
+class AddSuggestionView(ServiceMixin, View):
+    """Add one suggested song, picked by a person (decision 0015)."""
+
+    permission_required = (CHANGE, "worship.suggest_songs")
+
+    def post(self, request, public_id, pk):
+        suggestion = get_object_or_404(
+            Suggestion.objects.select_related("song", "slot", "run"),
+            pk=pk,
+            run__service=self.service,
         )
-        messages.success(request, "The suggested songs were saved as a draft.")
+        item = _start_and(request, self.service, lineups.add_suggestion, suggestion)
+        if item is not None:
+            where = f"the {item.slot.name} slot" if item.slot else "the end"
+            messages.success(request, f"{item.song.title} was added to {where}.")
         return redirect(lineup_url(self.service))
 
 
@@ -338,26 +437,58 @@ class SwapView(ItemMixin, TemplateView):
         return redirect(self.lineup_url())
 
 
-class AddSongView(LineupMixin, TemplateView):
-    """Add a song from the pool, searching by title or artist."""
+class AddSongView(ServiceMixin, TemplateView):
+    """Add a song of the person's own choosing (decision 0015): from the
+    song pool, searching by title or artist, or from Spotify into the pool
+    first. Adding the first song starts the lineup."""
 
     permission_required = CHANGE
     template_name = "worship/lineup_add.html"
 
+    @cached_property
+    def lineup(self):
+        return Lineup.objects.filter(service=self.service).first()
+
     def get(self, request, *args, **kwargs):
-        return self.refuse_unless_changeable() or super().get(request, *args, **kwargs)
+        user = request.user
+        lineup = self.lineup
+        try:
+            if lineup is not None:
+                lineups.check_change(lineup, user)
+            elif not may_start(user):
+                raise lineups.LineupRefused("You may not start this lineup.")
+        except lineups.LineupRefused as refusal:
+            messages.error(request, str(refusal))
+            return redirect(lineup_url(self.service))
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         query = self.request.GET.get("q", "").strip()[:100]
+        slot = self.request.GET.get("slot", "")
+        here = reverse(
+            "worship:lineup_add", kwargs={"public_id": self.service.public_id}
+        )
+        if slot.isdigit():
+            here += f"?{urlencode({'slot': slot})}"
+        user = self.request.user
         context.update(
             q=query,
             songs=(
-                _with_warnings(lineups.addable_songs(self.lineup, query)[:25])
+                _with_warnings(
+                    lineups.addable_songs(self.service, self.lineup, query)[:25]
+                )
                 if query
                 else None
             ),
-            open_slots=lineups.open_slots(self.lineup),
+            open_slots=lineups.open_slots(self.lineup, self.service),
+            chosen_slot=int(slot) if slot.isdigit() else None,
+            spotify_url=(
+                f"{reverse('songs:spotify_search')}?"
+                f"{urlencode({'q': query, 'next': here})}"
+            )
+            if user.has_perm("songs.add_song") and spotify_configured()
+            else None,
         )
         return context
 
@@ -370,9 +501,9 @@ class AddSongView(LineupMixin, TemplateView):
             slot = get_object_or_404(
                 self.service.template.slots, pk=request.POST["slot"]
             )
-        if self.audited(lineups.add_from_pool, song, slot):
+        if _start_and(request, self.service, lineups.add_from_pool, song, slot):
             messages.success(request, f"{song.title} was added.")
-        return redirect(self.lineup_url())
+        return redirect(lineup_url(self.service))
 
 
 class ItemDetailsView(ItemMixin, FormPageMixin, UpdateView):

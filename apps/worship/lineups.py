@@ -1,8 +1,11 @@
-"""Lineup rules: making a lineup from suggestions, reviewing it, and the
-pastor's final say (Design-Decisions, Phase 6; decision 0008).
+"""Lineup rules: building a lineup, reviewing it, and the pastor's final
+say (Design-Decisions, Phase 6; decisions 0008 and 0015).
 
-- A Lineup is a stored copy of a Search Run's placed suggestions. Later
-  corrections to the run never change it (workflow review F4).
+- The lineup comes first; suggestions assist (decision 0015). People add
+  songs slot by slot from the pool (or Spotify, through the pool), add one
+  suggestion at a time, or fill the empty slots with suggestions. The
+  lineup starts, empty, with the first song added. It keeps its own copy
+  of each song; later corrections to a run never change it (F4).
 - Review: swap a song for a ranked alternative, lock a song in place,
   reorder, remove, add a song from the pool, and regenerate around locked
   songs. A lineup never holds two songs with the same title.
@@ -25,14 +28,14 @@ pastor's final say (Design-Decisions, Phase 6; decision 0008).
   song"; a song that failed the Worship Check or was never checked gets a
   warning in the review instead (the person's choice wins over the model).
 - A cancelled or past service gets no new lineup (F7).
-- Review follows what became of each suggestion (kept, swapped, removed);
-  confirming records it as Suggestion Feedback (``feedback.py``).
+- Review follows what became of each suggestion (kept, picked, swapped,
+  removed); confirming records it as Suggestion Feedback (``feedback.py``).
 
 Every function raises ``LineupRefused`` with a message for people when the
 action isn't allowed. Views record the audit trail.
 """
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
 
@@ -211,27 +214,54 @@ def alternatives(lineup, item=None):
     ]
 
 
-def addable_songs(lineup, query=""):
+def addable_songs(service, lineup=None, query=""):
     """Songs from the pool that could be added: not marked "Not a worship
     song" by a person, not in the lineup, and not sharing a title with one
-    of its songs."""
-    taken = _titles(_items(lineup))
-    songs = Song.objects.for_church(lineup.service.church)
-    songs = songs.exclude(lineup_items__lineup=lineup).exclude(
+    of its songs. ``lineup`` is None before the lineup starts."""
+    taken = _titles(_items(lineup)) if lineup else set()
+    songs = Song.objects.for_church(service.church).exclude(
         worship_check=Song.WorshipCheck.REJECTED, reviewed_at__isnull=False
     )
+    if lineup:
+        songs = songs.exclude(lineup_items__lineup=lineup)
     if query:
         songs = songs.filter(Q(title__icontains=query) | Q(artist__icontains=query))
     return [song for song in songs if base_title(song.title) not in taken]
 
 
-def open_slots(lineup):
-    """The template's slots no song in the lineup fills."""
+def open_slots(lineup, service=None):
+    """The template's slots no song in the lineup fills (all of them before
+    the lineup starts: pass no lineup and the ``service``)."""
+    service = service or lineup.service
+    if lineup is None:
+        return list(service.template.slots.all())
     filled = {item.slot_id for item in lineup.items.all() if item.slot_id}
-    return [s for s in lineup.service.template.slots.all() if s.pk not in filled]
+    return [s for s in service.template.slots.all() if s.pk not in filled]
 
 
 # --- Making a lineup ----------------------------------------------------------
+
+
+def start(service, user):
+    """``(lineup, started)``: the service's lineup, started empty when it has
+    none (decision 0015), since it starts with the first song a person adds.
+    Refused for a cancelled or past service (F7). If two people start it at
+    once, the second gets the one the first started."""
+    existing = Lineup.objects.filter(service=service).first()
+    if existing is not None:
+        return existing, False
+    closed = suggesting.planning_closed(service)
+    if closed:
+        raise LineupRefused(closed)
+    if not user.has_perm("worship.add_lineup"):
+        raise LineupRefused(
+            f"You may not start the {_labels(service.church).get('lineup').lower()}."
+        )
+    try:
+        with transaction.atomic():
+            return Lineup.objects.create(service=service, run=source_run(service)), True
+    except IntegrityError:
+        return Lineup.objects.get(service=service), False
 
 
 def create_from_run(service, user, run=None):
@@ -396,11 +426,13 @@ def remove(lineup, item, user):
         _edited(lineup, user)
 
 
-def add_from_pool(lineup, song, slot, user):
+def add_from_pool(lineup, song, slot, user, *, suggestion=None):
     """Add a pool song into an empty slot of the service's template or,
     with no slot, at the end. Any song may be added except one a person
     marked "Not a worship song"; one that failed the Worship Check or was
-    never checked shows a warning in the review (``check_warning``)."""
+    never checked shows a warning in the review (``check_warning``).
+    ``suggestion``: the suggestion the person picked it from, whose reasons
+    the song keeps and which is followed as **picked** (decision 0015)."""
     _check_same_church(lineup, song)
     with transaction.atomic():
         lineup = _locked_lineup(lineup)
@@ -416,8 +448,13 @@ def add_from_pool(lineup, song, slot, user):
         if slot is not None and slot not in open_slots(lineup):
             raise LineupRefused(f"The {slot.name} slot already has a song.")
         item = LineupItem(
-            lineup=lineup, song=song, slot=slot, reasons=[ADDED_FROM_POOL]
+            lineup=lineup,
+            song=song,
+            slot=slot,
+            reasons=_reasons(suggestion) if suggestion else [ADDED_FROM_POOL],
         )
+        if suggestion is not None:
+            feedback.placed(lineup, [suggestion], feedback.PICKED)
         # Before the first song whose slot comes later in the service.
         index = len(items)
         if slot is not None:
@@ -434,6 +471,68 @@ def add_from_pool(lineup, song, slot, user):
         _renumber([*items[:index], item, *items[index:]])
         _edited(lineup, user)
     return item
+
+
+def add_suggestion(lineup, suggestion, user):
+    """Add one suggested song, picked by a person (decision 0015): into its
+    own slot when that is empty, otherwise the first empty slot, otherwise
+    at the end."""
+    if suggestion.run.service_id != lineup.service_id:
+        raise LineupRefused("That suggestion is for another service.")
+    empty = open_slots(lineup)
+    slot = next((s for s in empty if s.pk == suggestion.slot_id), None)
+    if slot is None and empty:
+        slot = empty[0]
+    return add_from_pool(lineup, suggestion.song, slot, user, suggestion=suggestion)
+
+
+def fill_from_suggestions(lineup, user):
+    """``(lineup, added)``: fill the lineup's empty slots from the service's
+    latest suggestions, keeping every song already in it (decision 0015)."""
+    with transaction.atomic():
+        lineup = _locked_lineup(lineup)
+        check_change(lineup, user)
+        run = source_run(lineup.service)
+        if run is None:
+            raise LineupRefused("Find songs first: there are no suggestions yet.")
+        slots = open_slots(lineup)
+        if not slots:
+            raise LineupRefused("Every slot already has a song.")
+        kept = _items(lineup)
+        kept_titles, kept_songs = _titles(kept), {item.song_id for item in kept}
+        candidates = [
+            s
+            for s in _ranked(run)
+            if s.song_id not in kept_songs
+            and base_title(s.song.title) not in kept_titles
+        ]
+        placements = sequencing.place(
+            candidates, slots, feel_weight=suggesting.feel_weight(run)
+        )
+        feedback.placed(lineup, [candidates[p.index] for p in placements])
+        new = [
+            LineupItem.objects.create(
+                lineup=lineup,
+                song=candidates[p.index].song,
+                slot=p.slot,
+                position=len(kept) + n,
+                reasons=_reasons(candidates[p.index]),
+            )
+            for n, p in enumerate(placements)
+        ]
+        _renumber(_in_service_order([*kept, *new]))
+        lineup.run = lineup.run or run
+        _edited(lineup, user)
+    return lineup, len(new)
+
+
+def _in_service_order(items):
+    """Songs with a slot in the slots' order, then songs without one; songs
+    of equal standing keep their order."""
+    return sorted(
+        items,
+        key=lambda i: (i.slot is None, i.slot.position if i.slot else 0, i.position),
+    )
 
 
 def set_details(lineup, item, key, notes, user):

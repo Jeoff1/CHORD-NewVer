@@ -230,6 +230,8 @@ class SuggestionFeedback(models.Model):
         # An alternative the leader chose in a swap: a positive, like kept,
         # but told apart from a top pick that stayed (decided 2026-11-19).
         SWAPPED_IN = "swapped_in", "Swapped in"
+        # A suggestion a person added on its own: a positive (decision 0015).
+        PICKED = "picked", "Picked"
         SWAPPED = "swapped", "Swapped"
         REMOVED = "removed", "Removed"
 

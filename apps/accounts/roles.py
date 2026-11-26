@@ -90,8 +90,10 @@ DEFAULT_ROLE_PERMISSIONS = {
         # The church's Bible: which books it has (Phase 9C)
         "worship.view_biblesettings",
         "worship.change_biblesettings",
-        # Song pool (Phase 4)
+        # Song pool (Phase 4); since Phase 9C the pastor brings songs in
+        # from Spotify too (decision 0015)
         "songs.view_song",
+        "songs.add_song",
         "songs.view_themetag",
         # Song suggestions (Phase 5); never for team members
         "worship.suggest_songs",

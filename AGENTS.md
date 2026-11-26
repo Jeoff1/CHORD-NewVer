@@ -6,9 +6,12 @@ brief in `docs/CHORD-Vault/01-Project/Concept-Brief.md` (decision 0005).
 
 ## Scope and priorities
 
-**The main module is the theme-based song lineup.** CHORD's core is the
-pipeline that turns a service's theme into a suggested song lineup from
-Spotify, followed by review, confirmation, chord sheets, keys and playback.
+**The main module is the theme-based song lineup.** CHORD's core is
+building a service's song lineup from its theme: the people who plan choose
+the songs, helped by the pipeline that suggests songs fitting the theme
+from Spotify (since 2026-11-26 the lineup comes first and suggestions
+assist, decision 0015), followed by review, confirmation, chord sheets,
+keys and playback.
 It comes first: when effort or time is limited, finish and polish this
 module before any supporting module, and never let supporting work delay it.
 

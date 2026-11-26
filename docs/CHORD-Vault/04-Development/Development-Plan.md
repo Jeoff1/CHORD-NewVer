@@ -628,6 +628,10 @@ playlist preview on one page) and **Confirm** (a rundown, then confirm).
   request): suggestions while typing, the passage's text (World English
   Bible, public domain) shown and read by song suggestions; the
   deuterocanonical books as a church setting.
+- [x] **g. The lineup comes first** (done 2026-11-26; owner's request;
+  [[0015-lineup-first-suggestions-assist]]): the pastor adds songs slot by
+  slot from the pool or Spotify; suggestions sit beside, each with Add,
+  and can fill the empty slots.
 - [ ] **Click-through** by the owner ([[Phase-9C-Click-Through]]), then
   merging into `master`.
 

@@ -1,10 +1,10 @@
 {% load church people %}
-{# Song suggestions for one service. Only for users with worship.suggest_songs; while a run is in progress it reloads itself every two seconds. #}
+{# Song suggestions for one service, beside the lineup (decision 0015: they assist). Only for users with worship.suggest_songs; while a run is in progress it reloads itself every two seconds. Each song can be added on its own, or they fill the empty slots. #}
 {% label "lineup" as lineup_word %}{% label "worship_service" as service_word %}{% label "sermon" as sermon_word %}
 <div id="suggestions" class="card shadow-sm mb-3"{% if run.is_active %} hx-get="{% url 'worship:suggestions' public_id=service.public_id %}" hx-trigger="every 2s" hx-swap="outerHTML"{% endif %}>
   <div class="card-body">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
-      <h2 class="h5 mb-0">Suggested {{ lineup_word|lower }}</h2>
+      <h2 class="h5 mb-0">Suggested songs</h2>
       {% if service.posted_theme and not run.is_active and not planning_closed %}
         <form method="post" action="{% url 'worship:suggest' public_id=service.public_id %}" class="d-flex flex-wrap gap-2">
           {% csrf_token %}
@@ -13,7 +13,7 @@
         </form>
       {% endif %}
     </div>
-    <p class="small text-body-secondary">Seen only by people who plan the {{ service_word|lower }}; the team sees the {{ lineup_word|lower }} once it is confirmed.</p>
+    <p class="small text-body-secondary">Songs ranked for the theme, to help you choose. Seen only by people who plan the {{ service_word|lower }}.</p>
 
     {% if planning_closed %}<div class="alert alert-secondary small">{{ planning_closed }}</div>{% endif %}
     {% if block_message %}<div class="alert alert-warning small">{{ block_message }}</div>{% endif %}
@@ -38,21 +38,22 @@
       <div class="alert alert-danger mb-0">{{ run.message }}</div>
     {% else %}
       <p class="small text-body-secondary">{{ run.message }}</p>
-      {% if can_make_lineup %}
+      {% if can_fill %}
         <form method="post" action="{% url 'worship:lineup_create' public_id=service.public_id %}" class="mb-3">
           {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-primary">Save these songs as the {{ lineup_word|lower }}</button>
-          <span class="small text-body-secondary ms-1">as a draft; you can still swap, reorder and add songs.</span>
+          <button type="submit" class="btn btn-sm btn-outline-primary">Fill the empty slots with suggestions</button>
+          <span class="d-block small text-body-secondary mt-1">Songs already in the {{ lineup_word|lower }} stay.</span>
         </form>
-      {% elif existing_lineup %}
-        <p class="small mb-3">The {{ lineup_word|lower }} is saved; changes here don't alter it. <a href="{% url 'worship:lineup' public_id=service.public_id %}">Open the {{ lineup_word|lower }}</a>.</p>
       {% endif %}
       {% if placed %}
         <ol class="list-group list-group-numbered mb-3">
           {% for suggestion in placed %}
             <li class="list-group-item d-flex gap-2">
               <div class="ms-1 flex-grow-1">
-                <div class="small text-body-secondary">{{ suggestion.slot.name }}{% if suggestion.slot.feel %} ({{ suggestion.slot.get_feel_display|lower }}){% endif %}</div>
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div class="small text-body-secondary">{{ suggestion.slot.name }}{% if suggestion.slot.feel %} ({{ suggestion.slot.get_feel_display|lower }}){% endif %}</div>
+                  {% include "worship/includes/suggestion_add.html" %}
+                </div>
                 <div class="fw-semibold">{% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} <span class="fw-normal text-body-secondary">· {{ suggestion.song.artist }}</span></div>
                 <ul class="small mb-1 ps-3">
                   {% for reason in suggestion.reasons %}<li>{{ reason }}</li>{% endfor %}
@@ -69,7 +70,8 @@
           <summary>Other choices ({{ others|length }})</summary>
           <ul class="list-unstyled small mt-2 mb-0">
             {% for suggestion in others %}
-              <li class="mb-2">{{ suggestion.rank }}. {% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} · {{ suggestion.song.artist }} <span class="text-body-secondary">({{ suggestion.reasons|first }})</span>
+              <li class="mb-2">
+                <div class="d-flex justify-content-between align-items-start gap-2"><span>{{ suggestion.rank }}. {% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} · {{ suggestion.song.artist }} <span class="text-body-secondary">({{ suggestion.reasons|first }})</span></span>{% include "worship/includes/suggestion_add.html" %}</div>
                 {% include "worship/includes/suggestion_corrections.html" %}
               </li>
             {% endfor %}

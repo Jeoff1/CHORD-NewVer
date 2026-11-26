@@ -281,7 +281,8 @@ _Avoid_: song key (that is the original key)
 **Suggestion Feedback**:
 What people did with each Suggestion placed in a Lineup, recorded when the
 Lineup is confirmed: **kept** (a top pick that stayed), **swapped in** (an
-alternative the leader chose in a swap), **swapped** (replaced by a swap) or
+alternative the leader chose in a swap), **picked** (a suggestion a person
+added on its own; decision 0015), **swapped** (replaced by a swap) or
 **removed**. Songs replaced by regenerating, and songs added from the pool,
 leave none; confirming again replaces it. The training data for learning to
 rank, holding only lyrics-based scores and the church's own data, never

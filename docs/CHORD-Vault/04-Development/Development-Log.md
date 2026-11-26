@@ -2,6 +2,34 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9C, the lineup comes first; suggestions assist
+
+- **Why:** the owner asked for the pastor to add songs on their own
+  judgement, with the suggestions as help rather than the main thing.
+  Owner's choices: slots first with suggestions beside; songs from the pool
+  or Spotify only for now. Recorded as
+  [[0015-lineup-first-suggestions-assist]].
+- **Rules** (`apps/worship/lineups.py`): `start` (an empty lineup, started
+  by the first song), `add_suggestion` (its slot, else the first empty
+  one, else the end; Suggestion Feedback **picked**, migration
+  `worship/0017_feedback_picked`), `fill_from_suggestions` (only the empty
+  slots); `add_from_pool` and `addable_songs` work before a lineup exists.
+- **Screens:** the Song Lineup page shows the slots, empty ones with Add a
+  song, and the suggestions beside them, each with Add, plus Fill the
+  empty slots. Add a song links to Find on Spotify, which now comes back
+  (`next`). "Save these songs as the lineup" is gone.
+- **Permissions:** Pastoral Staff holds `songs.add_song` by default.
+- **Docs:** AGENTS.md (the main module's wording), decision 0015,
+  [[Design-Decisions]], [[Development-Plan]] (slice g),
+  `workflow-spec.md`, [[Glossary]] (picked), [[Worship]],
+  [[Phase-9C-Click-Through]] (section 2).
+- **Tests:** new `apps/worship/tests/test_lineup_first.py` (16 tests);
+  updated `test_lineup_views.py`, `test_lineup_rules.py`,
+  `test_lineup_screen.py`, `test_suggestion_views.py`,
+  `test_isolation.py`.
+- **Checks:** the full `scripts/check.ps1` passed: 1249 tests, 97%
+  coverage.
+
 ## 2026-11-26: Phase 9C, each part of the theme has its own share
 
 - **Why:** the owner saw that a long sermon PDF outweighed short notes

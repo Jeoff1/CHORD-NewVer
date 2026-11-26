@@ -6,16 +6,18 @@
 {% block content %}
   {% label "lineup" as lineup_word %}
   {% url 'worship:lineup' public_id=service.public_id as back_url %}{% include "includes/back_link.html" with url=back_url label=lineup_word %}
-  <h1 class="h3 mb-1">Add a song from the pool</h1>
-  <p class="text-body-secondary">Any song in the pool except those marked as not a worship song. Put it in an empty slot, or at the end.</p>
+  {# A song of the person's own choosing (decision 0015): from the song pool, or from Spotify into the pool first. #}
+  <h1 class="h3 mb-1">Add a song</h1>
+  <p class="text-body-secondary">Search the church's song pool by title or artist. Any song can be added except those marked as not a worship song.</p>
 
   <form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
     <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 24rem" placeholder="Title or artist" aria-label="Title or artist" maxlength="100">
+    {% if chosen_slot %}<input type="hidden" name="slot" value="{{ chosen_slot }}">{% endif %}
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
 
   {% if songs is not None %}
-    <div class="list-group">
+    <div class="list-group mb-3">
       {% for song in songs %}
         <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
           <div><span class="fw-semibold">{{ song.title }}</span> <span class="text-body-secondary">· {{ song.artist }}{% if song.feel %} · {{ song.get_feel_display|lower }}{% endif %}</span>{% if song.check_warning %}<div class="small text-warning-emphasis">⚠ {{ song.check_warning }}</div>{% endif %}</div>
@@ -23,7 +25,7 @@
             {% csrf_token %}
             <input type="hidden" name="song" value="{{ song.public_id }}">
             <select name="slot" class="form-select form-select-sm" aria-label="Slot for {{ song.title }}">
-              {% for slot in open_slots %}<option value="{{ slot.pk }}">{{ slot }}</option>{% endfor %}
+              {% for slot in open_slots %}<option value="{{ slot.pk }}"{% if slot.pk == chosen_slot %} selected{% endif %}>{{ slot }}</option>{% endfor %}
               <option value="">At the end, without a slot</option>
             </select>
             <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
@@ -33,5 +35,9 @@
         <div class="list-group-item text-body-secondary">No song in the pool matches "{{ q }}".</div>
       {% endfor %}
     </div>
+  {% endif %}
+
+  {% if spotify_url %}
+    <p class="mb-0">Not in the pool? <a href="{{ spotify_url }}" class="fw-semibold">Find it on Spotify</a>, add it to the pool, then add it here.</p>
   {% endif %}
 {% endblock %}

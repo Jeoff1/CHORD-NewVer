@@ -81,6 +81,10 @@ OBJECT_URLS = {
     },
     "worship:lineup": lambda o: {"public_id": o["service"].public_id},
     "worship:lineup_create": lambda o: {"public_id": o["service"].public_id},
+    "worship:lineup_add_suggestion": lambda o: {
+        "public_id": o["service"].public_id,
+        "pk": o["suggestion"].pk,
+    },
     "worship:lineup_add": lambda o: {"public_id": o["service"].public_id},
     "worship:lineup_regenerate": lambda o: {"public_id": o["service"].public_id},
     "worship:lineup_confirm": lambda o: {"public_id": o["service"].public_id},

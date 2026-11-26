@@ -197,14 +197,17 @@ def _next_step(service, user, current, lineup, run, ranked, song_count):
             action = "See the progress"
         elif ranked:
             panel["text"] = (
-                f"{_plural(ranked, 'song')} are ranked for the theme. Review "
-                f"them and save them as the {lineup_word}."
+                f"Add the songs you have in mind, slot by slot. "
+                f"{_plural(ranked, 'suggested song')} ranked for the theme can "
+                "help."
             )
-            action = "Review the songs"
+            action = "Choose the songs"
         else:
+            # Decision 0015: the lineup comes first; suggestions assist.
             panel["text"] = (
-                "Find songs that fit the theme, review them and save them as "
-                f"the {lineup_word}. You'll hear them before you confirm."
+                "Add the songs you have in mind, slot by slot, or find "
+                "suggestions that fit the theme. You'll hear them before you "
+                "confirm."
             )
             action = "Choose the songs"
         if songs_open(user, lineup):
@@ -225,8 +228,10 @@ def _next_step(service, user, current, lineup, run, ranked, song_count):
 
 
 def songs_open(user, lineup):
-    """Whether ``user`` may work on the songs on the Song Lineup page: make
-    the lineup from suggestions while there is none, or review it."""
+    """Whether ``user`` may work on the songs on the Song Lineup page: start
+    the lineup or find suggestions while there is none, or review it."""
     if lineup is None:
-        return user.has_perm("worship.suggest_songs")
+        return user.has_perm("worship.suggest_songs") or (
+            user.has_perm("worship.add_lineup") and user.has_perm(lineups.CHANGE)
+        )
     return user.has_perm("worship.view_lineup") and lineups.sees_drafts(user)

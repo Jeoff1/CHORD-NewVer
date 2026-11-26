@@ -61,11 +61,12 @@ class LineupViewTestCase(TestCase):
 
 
 class MakingTheLineupTests(LineupViewTestCase):
-    def test_the_panel_offers_to_save_the_suggestions(self):
+    def test_the_panel_offers_to_fill_the_slots(self):
+        # Decision 0015: suggestions assist; they fill the empty slots.
         for user in (self.leader, self.pastor):
             self.login(user)
             response = self.client.get(url(self.service, "lineup"))
-            self.assertContains(response, "Save these songs as the lineup")
+            self.assertContains(response, "Fill the empty slots with suggestions")
 
     def test_the_leader_saves_the_suggestions_as_a_draft(self):
         self.login(self.leader)
@@ -76,10 +77,10 @@ class MakingTheLineupTests(LineupViewTestCase):
         event = AuditEvent.objects.get(object_id=str(lineup.pk))
         self.assertEqual(event.action, AuditEvent.Action.CREATED)
         self.assertIn("Song A", event.changes["Songs"][1])
-        # Once saved, the panel links the lineup instead.
+        # Every slot is filled now: the panel marks the songs instead.
         response = self.client.get(url(self.service, "lineup"))
-        self.assertNotContains(response, "Save these songs as the lineup")
-        self.assertContains(response, "changes here don't alter it")
+        self.assertNotContains(response, "Fill the empty slots with suggestions")
+        self.assertContains(response, ">In the lineup<")
 
     def test_others_may_not_make_it(self):
         for user in (self.team_member, self.office):
@@ -89,11 +90,12 @@ class MakingTheLineupTests(LineupViewTestCase):
             )
         self.assertFalse(Lineup.objects.exists())
 
-    def test_a_second_lineup_is_refused_with_a_message(self):
+    def test_filling_again_keeps_the_lineup(self):
+        # Decision 0015: with a lineup, only its empty slots are filled.
         self.make_lineup()
         self.login(self.leader)
         response = self.client.post(url(self.service, "lineup_create"), follow=True)
-        self.assertContains(response, "already has a lineup")
+        self.assertContains(response, "Every slot already has a song.")
         self.assertEqual(Lineup.objects.count(), 1)
 
 
@@ -107,7 +109,9 @@ class ClosedServiceViewTests(LineupViewTestCase):
         page = self.client.get(url(self.service, "lineup"))
         self.assertContains(page, "is cancelled, so no songs are planned")
         self.assertNotContains(page, "Rank the song pool only")
-        self.assertNotContains(page, "Save these songs as the lineup")
+        self.assertNotContains(page, "Fill the empty slots with suggestions")
+        self.assertNotContains(page, ">Add a song<")
+        self.assertNotContains(page, ">Add</button>")
         response = self.client.post(url(self.service, "suggest"), follow=True)
         self.assertContains(response, "is cancelled")
         response = self.client.post(url(self.service, "lineup_create"), follow=True)
@@ -247,7 +251,7 @@ class VisibilityTests(LineupViewTestCase):
         # people who may suggest songs, and doesn't exist for the team.
         self.login(self.leader)
         self.assertContains(
-            self.client.get(url(self.service, "lineup")), "Suggested lineup"
+            self.client.get(url(self.service, "lineup")), "Suggested songs"
         )
         self.assertEqual(
             self.client.get(url(self.service, "lineup_confirm")).status_code, 404

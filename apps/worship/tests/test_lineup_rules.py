@@ -413,9 +413,12 @@ class ReviewActionTests(LineupTestCase):
             worship_check=Song.WorshipCheck.REJECTED,
             reviewed_at=timezone.now(),
         )
-        found = sorted(s.title for s in lineups.addable_songs(self.lineup, "fresh"))
+        service = self.lineup.service
+        found = sorted(
+            s.title for s in lineups.addable_songs(service, self.lineup, "fresh")
+        )
         self.assertEqual(found, ["Fresh Failed", "Fresh Song", "Fresh Unchecked"])
-        everything = [s.title for s in lineups.addable_songs(self.lineup)]
+        everything = [s.title for s in lineups.addable_songs(service, self.lineup)]
         self.assertNotIn("Song A (Live)", everything)
         self.assertNotIn("Song A", everything)
 

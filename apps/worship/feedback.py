@@ -7,6 +7,8 @@ suggestion placed in it (``apps/worship/lineups.py``):
 - placed in the lineup by making or regenerating it: **kept**;
 - an alternative chosen in a swap: **swapped in** (a positive, like kept,
   told apart from a top pick that stayed);
+- added on its own by a person from the suggestions: **picked** (a
+  positive; decision 0015);
 - replaced by a swap: **swapped**;
 - taken out: **removed**.
 
@@ -23,6 +25,7 @@ from .models import Suggestion, SuggestionFeedback
 
 KEPT = SuggestionFeedback.Label.KEPT
 SWAPPED_IN = SuggestionFeedback.Label.SWAPPED_IN
+PICKED = SuggestionFeedback.Label.PICKED
 SWAPPED = SuggestionFeedback.Label.SWAPPED
 REMOVED = SuggestionFeedback.Label.REMOVED
 
@@ -31,7 +34,7 @@ REMOVED = SuggestionFeedback.Label.REMOVED
 
 
 # The outcomes of a suggestion still in the lineup.
-IN_LINEUP = (KEPT, SWAPPED_IN)
+IN_LINEUP = (KEPT, SWAPPED_IN, PICKED)
 
 
 def placed(lineup, suggestions, outcome=KEPT):

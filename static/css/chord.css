@@ -982,6 +982,11 @@ a {
   overflow-y: auto;
 }
 
+/* An empty slot on the Song Lineup page (decision 0015). */
+.chord-song-row--empty {
+  background: var(--bs-tertiary-bg);
+}
+
 /* The next-step panel on the service page (Phase 9C). */
 .chord-next-step {
   border-left: 4px solid #E5C690;

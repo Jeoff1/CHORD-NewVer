@@ -50,7 +50,7 @@ class LineupScreenTests(TestCase):
         self.assertContains(page, ">Key and notes</a>")
         self.assertContains(page, ">Open the song page</a>")
         self.assertContains(page, ">Remove from the lineup</button>")
-        self.assertContains(page, ">Add a song from the pool</a>")
+        self.assertContains(page, ">Add a song</a>")
         # The playlist preview (Phase 9C) replaces "Saved when confirmed".
         self.assertContains(page, 'id="playlist-title"')
         self.assertNotContains(page, "Saved when the lineup is confirmed.")

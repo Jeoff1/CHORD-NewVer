@@ -829,8 +829,9 @@ Suggestions, Lineup, Confirmed, Playlist) described above.
 - **Song Lineup page** (`worship:lineup`): for people who may suggest
   songs it opens before a lineup exists and shows the suggestions panel
   (Find songs, the progress, the ranked songs and "Save these songs as the
-  <lineup>"). Once the lineup exists it shows the lineup review as before,
-  with the suggestions below it, collapsed, and a **Playlist** card: which
+  <lineup>"; *replaced the same day by "The lineup comes first" below:
+  the slots first, the suggestions beside them*). Once the lineup exists
+  it shows the lineup review as before, and a **Playlist** card: which
   songs have a Spotify track and where the playlist will be saved on
   confirmation. Its one primary button is "Continue to confirm". The
   service page no longer shows the suggestions.
@@ -945,6 +946,47 @@ chapters, verses and ranges; the passage text is kept and matched, and
 the migration fills it; only people who post themes get suggestions; the
 theme card offers the passage to everyone; the setting is audited and
 needs its permission.
+
+### The lineup comes first; suggestions assist (owner, 2026-11-26; [[0015-lineup-first-suggestions-assist]])
+
+The owner asked for the pastor to add songs on their own judgement, with
+the suggestions as help rather than the main thing. Owner's choices: the
+song slots first with the suggestions beside them; songs come from the
+church's song pool or from Spotify only (typing or uploading a song of
+one's own may come later).
+
+- **Song Lineup page:** the service's slots in order, the lineup's songs
+  in them, and each empty slot with **Add a song**. Beside it (below on a
+  phone), **Suggested songs**: each ranked song with **Add**, "In the
+  lineup" once it is, and **Fill the empty slots with suggestions**.
+- **Starting:** the lineup starts, empty, with the first song added
+  (`lineups.start`; needs `worship.add_lineup` and `change_lineup`; not
+  for a cancelled or past service). If that first song is refused, no
+  empty lineup is left behind.
+- **Add a song:** search the pool by title or artist, choose the slot (the
+  one clicked is chosen), or "Find it on Spotify", which adds the track to
+  the pool and comes back to the same page looking for it.
+- **Add (a suggestion):** into its own slot when empty, otherwise the
+  first empty slot, otherwise at the end. The song keeps the suggestion's
+  reasons, and the suggestion is followed as **picked**, a new Suggestion
+  Feedback label and a positive like kept.
+- **Fill the empty slots:** with no lineup, the suggestions make the whole
+  lineup as before ("kept"); with one, only its empty slots are filled and
+  every song already there stays (`lineups.fill_from_suggestions`).
+- **Unchanged:** review (swap, lock, move, key and notes, remove,
+  regenerate around locked songs), confirming, the pastor's lock, and who
+  sees a draft. "Save these songs as the lineup" is gone.
+- **Pastoral Staff holds `songs.add_song`** by default now, so the pastor
+  can bring a song in from Spotify.
+
+Tests: `apps/worship/tests/test_lineup_first.py`: a lineup starts empty
+and only once, never for a cancelled service or without permission; a
+suggestion goes to its slot or the first empty one, keeps its reasons and
+becomes "picked" feedback, while pool songs leave none; filling keeps the
+songs already chosen and refuses when every slot is full or there are no
+suggestions; the page shows empty slots with Add a song and the
+suggestions with Add; the team still gets 404 before confirmation; a
+refused first song leaves no lineup; Find on Spotify comes back.
 
 ### Tests
 

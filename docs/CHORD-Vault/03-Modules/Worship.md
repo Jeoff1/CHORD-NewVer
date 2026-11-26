@@ -249,8 +249,9 @@ Phase 6; [[0008-final-say-permission]]):
   is in now (`sequencing.slot_reason`), after any move, swap, add or
   regenerate.
 - **The rules** (`lineups.py`):
-  - "Save these songs as the lineup" in the suggestions panel copies the
-    run's placed songs, in slot order, with their reasons. The lineup is
+  - "Fill the empty slots with suggestions" (before 2026-11-26: "Save
+    these songs as the lineup"; decision 0015) copies the run's placed
+    songs into the empty slots, in slot order, with their reasons. The lineup is
     its own copy: one-click corrections, `place_again` and new Worship
     Checks change the run, never the lineup (workflow review F4).
   - Review: **swap** for a ranked alternative from the latest finished run
@@ -613,11 +614,21 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   passage's text in `scripture_text`, part of the theme's body for
   suggestions. **Bible settings** (`BibleSettings`,
   `worship:bible_settings`) include the deuterocanonical books.
+- **The lineup comes first** ([[0015-lineup-first-suggestions-assist]]):
+  `LineupView` shows the template's slots with the songs in them and an
+  empty row per open slot (`slot_rows`), with the suggestions beside it
+  (`includes/suggestions.html`, each song's Add in
+  `includes/suggestion_add.html`). Rules in `lineups.py`: `start`,
+  `add_suggestion` (feedback **picked**), `fill_from_suggestions`;
+  `add_from_pool` and `addable_songs` work before a lineup exists. Views:
+  `AddSongView` (pool, or Find on Spotify with `next`), `AddSuggestionView`
+  (`worship:lineup_add_suggestion`), `LineupCreateView` (fills the empty
+  slots).
 - Church settings used: the Teams Module switch; Bible settings (the
   deuterocanonical books); the `team`, `lineup`, `pastor` and `sermon`
   Labels.
 - Tests: `apps/worship/tests/test_planning_steps.py`, `test_sermon_pdf.py`,
-  `test_bible.py`,
+  `test_bible.py`, `test_lineup_first.py`,
   and the updated
   `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_views.py`,
   `test_suggestion_views.py`.

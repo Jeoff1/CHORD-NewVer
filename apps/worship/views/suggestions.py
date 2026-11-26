@@ -23,7 +23,7 @@ from apps.songs import pool
 from apps.songs.models import Song
 from apps.songs.spotify import block_message, current_block
 
-from .. import suggesting
+from .. import lineups, suggesting
 from ..forms import SuggestionSettingsForm
 from ..models import Lineup, SearchRun, Suggestion, SuggestionSettings
 from .base import ServiceMixin, WorshipMixin
@@ -67,19 +67,24 @@ def panel_context(service, user):
     theme = service.posted_theme
     closed = suggesting.planning_closed(service)
     lineup = Lineup.objects.filter(service=service).first()
+    finished = run is not None and run.status == SearchRun.Status.DONE
+    # Decision 0015: suggestions assist. Each can be added on its own, or
+    # they fill the empty slots, by people who may build the lineup (F7: not
+    # for a cancelled or past service).
+    if lineup is None:
+        may_add = user.has_perm("worship.add_lineup") and user.has_perm(lineups.CHANGE)
+        empty_slots = True
+    else:
+        may_add = lineups.may_change(lineup, user)
+        empty_slots = bool(lineups.open_slots(lineup))
+    can_add = may_add and finished and not closed
     return {
         "planning_closed": closed,
-        "existing_lineup": lineup,
-        # The reviewed suggestions can become the lineup once (F7: not for a
-        # cancelled or past service).
-        "can_make_lineup": (
-            user.has_perm("worship.add_lineup")
-            and lineup is None
-            and not closed
-            and bool(placed)
-            and run is not None
-            and run.status == SearchRun.Status.DONE
-        ),
+        "can_add_suggestions": can_add,
+        "can_fill": can_add and bool(placed) and empty_slots,
+        "lineup_song_ids": set(lineup.items.values_list("song_id", flat=True))
+        if lineup
+        else set(),
         "run": run,
         "placed": placed,
         "others": others,

@@ -133,6 +133,11 @@ urlpatterns = [
         name="lineup_create",
     ),
     path(
+        "services/<uuid:public_id>/suggestions/<int:pk>/add/",
+        lineups.AddSuggestionView.as_view(),
+        name="lineup_add_suggestion",
+    ),
+    path(
         "services/<uuid:public_id>/lineup/add/",
         lineups.AddSongView.as_view(),
         name="lineup_add",
