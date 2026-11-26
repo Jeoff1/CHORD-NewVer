@@ -52,7 +52,7 @@ from apps.songs.models import Song, ThemeTag
 from apps.songs.pool import add_from_spotify, fetch_lyrics
 from apps.songs.spotify import SpotifyClient, SpotifyError, SpotifyPaused
 
-from . import ranking, scheduling, sequencing, versions
+from . import ranking, reading, scheduling, sequencing, versions
 from .models import SearchRun, Season, Suggestion, SuggestionSettings
 from .phrases import search_phrases
 
@@ -201,16 +201,22 @@ def _execute(run, spotify, lyrics_client, engine):
 
     progress(2, "Reading the theme")
     engine = engine or get_engine()
-    text = theme.text()
-    theme_vector = engine.embed([text])[0]
-    progress(5, "Reading the theme", theme_tags=theme_tag_ids(text, engine, church))
+    # All of the theme, a sermon PDF included, in passages (Phase 9C).
+    theme_vector = reading.theme_vector(theme, engine)
+    progress(
+        5,
+        "Reading the theme",
+        theme_tags=theme_tag_ids(reading.tag_texts(theme), engine, church),
+    )
 
     note = ""
     if run.use_spotify:
         # The worker may wait out one short Retry-After; web requests never do.
         spotify = spotify or SpotifyClient.from_settings(may_wait=True)
         try:
-            new_songs = _find_on_spotify(run, theme, options, spotify, engine, progress)
+            new_songs = _find_on_spotify(
+                run, theme, theme_vector, options, spotify, engine, progress
+            )
         except SpotifyPaused as pause:
             # Rule 5: a quota lockout must not stop suggestions.
             new_songs, note = [], str(pause)
@@ -253,20 +259,29 @@ def _record_spotify_usage(run, spotify):
     run.save(update_fields=["spotify_calls", "spotify_limits"])
 
 
-def theme_tag_ids(text, engine, church):
-    """The church's Theme Tags a theme is about, best first."""
+def theme_tag_ids(texts, engine, church):
+    """The church's Theme Tags a theme is about, best first. ``texts`` is
+    the theme's text, or its passages (``reading.tag_texts``), whose scores
+    are averaged."""
     tags = list(ThemeTag.objects.for_church(church).active())
     if not tags:
         return []
-    scores = engine.score(text, [tag_label(tag) for tag in tags])
+    texts = [texts] if isinstance(texts, str) else list(texts)
+    labels = [tag_label(tag) for tag in tags]
+    each = [engine.score(text, labels) for text in texts]
+    scores = [sum(values) / len(each) for values in zip(*each)]
     fitting = [(s, t.pk) for s, t in zip(scores, tags) if s >= TAG_THRESHOLD]
     return [pk for _, pk in sorted(fitting, reverse=True)[:MAX_TAGS]]
 
 
-def _find_on_spotify(run, theme, options, spotify, engine, progress):
+def _find_on_spotify(run, theme, theme_vector, options, spotify, engine, progress):
     progress(8, "Choosing search phrases")
     phrases = search_phrases(
-        theme.title, theme.text(), options.phrases_per_theme, engine
+        theme.title,
+        theme.text(),
+        options.phrases_per_theme,
+        engine,
+        theme_vector=theme_vector,
     )
     if not phrases:
         raise RunFailed("The theme has no words to search for; add a title or notes.")

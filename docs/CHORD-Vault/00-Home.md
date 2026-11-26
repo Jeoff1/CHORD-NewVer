@@ -13,8 +13,9 @@ development task.
 for the owner's [[Phase-9C-Click-Through]].** Planning a service now
 follows four steps (Theme, Praise Team, Song Lineup, Confirm) with a
 next-step panel on the service page; suggestions moved to the Song Lineup
-page and confirming goes through a rundown ([[Design-Decisions]], "Phase
-9C"). After the merge: A6, A7, then Phase 10.
+page and confirming goes through a rundown; the pastor may attach the
+sermon as a PDF, and suggestions read the whole theme ([[Design-Decisions]],
+"Phase 9C"). After the merge: A6, A7, then Phase 10.
 
 **Phase 9B (Church Platform: many churches on one installation) is
 done (2026-11-26) and merged into `master` after the owner's

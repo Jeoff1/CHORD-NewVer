@@ -2,6 +2,31 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9C, sermon PDF and reading the whole theme
+
+- **Why:** the owner asked for the pastor to attach the sermon as a PDF,
+  for their own use and so suggestions match the theme better, since it
+  is what will be preached.
+- **Sermon PDF:** `Theme.document` (private storage) and
+  `Theme.document_text` (migration `worship/0015_theme_sermon_pdf`). The
+  theme form takes an optional PDF (checked and read by
+  `apps/worship/sermons.py`, with the new dependency `pypdf==7.1.1`);
+  `worship:theme_document` opens it for people who plan. Replacing or
+  clearing deletes the old file; the audit trail records the name only.
+- **Reading the whole theme** (`apps/worship/reading.py`): the embedding
+  model cuts text at 256 tokens, so a theme over 150 words is read in
+  passages: the heading's vector plus the average of the passages'; Theme
+  Tags averaged over up to 6 passages; search phrases ranked against that
+  vector. Short themes are read as before.
+- **Docs:** AGENTS.md (a sermon PDF's text is theme text), [[Design-Decisions]]
+  ("Sermon PDF"), [[Development-Plan]] (slice e), `workflow-spec.md`,
+  [[Glossary]] (Theme), [[Worship]], [[Phase-9C-Click-Through]] (section 5).
+- **Tests:** new `apps/worship/tests/test_sermon_pdf.py` (19 tests, with a
+  real PDF built in the test); `apps/church/tests/test_isolation.py` now
+  checks another church's PDF.
+- **Checks:** the full `scripts/check.ps1` passed: 1205 tests, 97%
+  coverage, lint, format, Django checks and migrations.
+
 ## 2026-11-26: Phase 9C, guided service planning (built)
 
 - **Why:** the owner found planning a new service had extra steps and no

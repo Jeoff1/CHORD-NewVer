@@ -19,7 +19,7 @@
     {% if block_message %}<div class="alert alert-warning small">{{ block_message }}</div>{% endif %}
     {% if not spotify_configured %}<p class="small text-body-secondary">Spotify isn't set up, so suggestions rank the songs already in the pool.</p>{% endif %}
     {% if theme_needs_notes %}
-      <div class="alert alert-info small">The theme has no {{ sermon_word|lower }} notes yet. Songs match a fuller theme better: add a few sentences about the message{% if perms.worship.change_theme %} (<a href="{% url 'worship:theme' public_id=service.public_id %}">edit the theme</a>){% endif %}, then find songs again.</div>
+      <div class="alert alert-info small">The theme has no {{ sermon_word|lower }} notes yet. Songs match a fuller theme better: add a few sentences about the message, or attach the {{ sermon_word|lower }} as a PDF{% if perms.worship.change_theme %} (<a href="{% url 'worship:theme' public_id=service.public_id %}">edit the theme</a>){% endif %}, then find songs again.</div>
     {% endif %}
 
     {% if not service.posted_theme %}

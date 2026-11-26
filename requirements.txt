@@ -23,6 +23,7 @@ protobuf==7.36.2
 psycopg==3.3.8
 psycopg-binary==3.3.8
 pycparser==3.12
+pypdf==7.1.1
 python-dotenv==1.2.4
 PyYAML==6.0.3
 ruff==0.17.4

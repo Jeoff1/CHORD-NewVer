@@ -5,8 +5,9 @@ import datetime
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
+from django.http import Http404
 from django.shortcuts import redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import (
@@ -22,6 +23,7 @@ from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
 from apps.church.modules import is_enabled
 from apps.church.scoping import ChurchFormKwargsMixin, ChurchScopedMixin
+from apps.core.storage import private_file_response
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.teams.views import service_team_context
 
@@ -265,24 +267,61 @@ class ThemeView(ServiceMixin, FormPageMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs["labels"] = self.request.church.label_set
         kwargs["church"] = self.request.church
+        kwargs["document_url"] = reverse(
+            "worship:theme_document", kwargs={"public_id": self.service.public_id}
+        )
         self.is_new = not self.object.pk
         self.before = (
             {} if self.is_new else snapshot(self.object, scheduling.THEME_AUDIT_FIELDS)
         )
+        self.old_document = self.object.document.name if self.object.pk else ""
         return kwargs
 
     def form_valid(self, form):
         if self.is_new:
             form.instance.posted_by = self.request.user
         response = super().form_valid(form)
+        theme = self.object
+        if self.old_document and self.old_document != theme.document.name:
+            # Replaced or cleared: the old sermon file goes too.
+            theme.document.storage.delete(self.old_document)
         record_change(
             self.request.user,
-            self.object,
+            theme,
             AuditEvent.Action.CREATED if self.is_new else AuditEvent.Action.CHANGED,
-            diff(self.before, snapshot(self.object, scheduling.THEME_AUDIT_FIELDS)),
+            diff(self.before, snapshot(theme, scheduling.THEME_AUDIT_FIELDS)),
         )
         messages.success(self.request, "The theme was saved.")
+        if form.document_text is not None and theme.document:
+            sermon = self.request.church.label_set.get("sermon").lower()
+            if theme.document_words:
+                messages.info(
+                    self.request,
+                    f"{theme.document_words} words were read from the {sermon} "
+                    "PDF; song suggestions use them.",
+                )
+            else:
+                messages.warning(
+                    self.request,
+                    f"No text could be read from the {sermon} PDF (it may be "
+                    "scanned). It is kept for you, and song suggestions use the "
+                    "title, passage and notes.",
+                )
         return response
+
+
+class ThemeDocumentView(ServiceMixin, View):
+    """The sermon PDF, for people who plan (they see the theme's notes too);
+    never for the team."""
+
+    def has_permission(self):
+        return can_plan(self.request.user)
+
+    def get(self, request, public_id):
+        theme = self.service.posted_theme
+        if theme is None or not theme.document:
+            raise Http404("This theme has no PDF.")
+        return private_file_response(theme.document.name, inline=True)
 
 
 class AttendanceView(ServiceMixin, View):

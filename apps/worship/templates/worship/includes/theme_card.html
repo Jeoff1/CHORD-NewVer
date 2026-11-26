@@ -11,6 +11,11 @@
       <p class="text-body-secondary mb-0">
         {% if theme.scripture %}{{ theme.scripture }}{% endif %}{% if theme.series %}{% if theme.scripture %} · {% endif %}{% label "sermon" %} series: {{ theme.series }}{% endif %}
       </p>
+      {% if can_plan and theme.document %}
+        {# The sermon PDF (Phase 9C): only for people who plan, like the notes. #}
+        <p class="small mt-3 mb-0">{% label "sermon" %} PDF: <a href="{% url 'worship:theme_document' public_id=service.public_id %}" target="_blank" rel="noopener" class="fw-semibold">{{ theme.document_name }}</a>
+          <span class="text-body-secondary">· {% if theme.document_words %}{{ theme.document_words }} words read for song suggestions{% else %}no text could be read (scanned?){% endif %}</span></p>
+      {% endif %}
       {% if can_plan and theme.notes %}
         <details class="mt-3">
           <summary class="fw-semibold" style="min-height: 44px; display: flex; align-items: center">{% label "sermon" %} notes</summary>

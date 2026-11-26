@@ -12,6 +12,7 @@ from apps.church.scoping import church_scoped_manager
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.music import Feel
 from apps.core.setting_lists import ChurchChoiceItem
+from apps.core.storage import get_private_storage, random_upload_name
 
 # The longest a booking may last: one day (Phase 9A, A5).
 MAX_LENGTH_MINUTES = 24 * 60
@@ -172,8 +173,16 @@ class WorshipService(PublicIdModel, TimeStampedModel):
         return getattr(self, "theme", None)
 
 
+def sermon_file_path(instance, filename):
+    return random_upload_name("worship/sermons", filename)
+
+
 class Theme(TimeStampedModel):
-    """What a service's message is about; the starting point for its songs."""
+    """What a service's message is about; the starting point for its songs.
+
+    The pastor may attach the sermon as a PDF (Phase 9C): it stays private,
+    for people who plan, and the text read from it is matched with songs
+    alongside the title, passage and notes."""
 
     service = models.OneToOneField(
         WorshipService, on_delete=models.CASCADE, related_name="theme"
@@ -194,6 +203,15 @@ class Theme(TimeStampedModel):
         blank=True,
         related_name="themes",
     )
+    document = models.FileField(
+        "Sermon PDF",
+        storage=get_private_storage,
+        upload_to=sermon_file_path,
+        blank=True,
+        max_length=300,
+    )
+    # The text read from the PDF when it was attached; what suggestions use.
+    document_text = models.TextField(blank=True, editable=False)
     posted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -212,8 +230,24 @@ class Theme(TimeStampedModel):
     def __str__(self):
         return self.title
 
+    def heading(self):
+        """The title and the main passage."""
+        return "\n".join(part for part in (self.title, self.scripture) if part)
+
+    def body(self):
+        """The notes and the text of the sermon PDF."""
+        return "\n".join(
+            part for part in (self.notes, self.document_text) if part.strip()
+        )
+
     def text(self):
         """Everything the theme says, as one text for matching songs."""
-        return "\n".join(
-            part for part in (self.title, self.scripture, self.notes) if part
-        )
+        return "\n".join(part for part in (self.heading(), self.body()) if part)
+
+    @property
+    def document_name(self):
+        return self.document.name.rsplit("/", 1)[-1] if self.document else ""
+
+    @property
+    def document_words(self):
+        return len(self.document_text.split())

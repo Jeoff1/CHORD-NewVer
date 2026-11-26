@@ -620,6 +620,10 @@ playlist preview on one page) and **Confirm** (a rundown, then confirm).
   Pastoral Staff now assigns by default, owner's choice): after an assignment the assign
   page stays open with the team so far, and "Done" goes back to the
   service.
+- [x] **e. Sermon PDF** (done 2026-11-26; owner's request): the pastor
+  attaches the sermon as a PDF to the theme, private to people who plan;
+  its text is read once, and suggestions read the whole theme in passages
+  so a long sermon isn't cut off.
 - [ ] **Click-through** by the owner ([[Phase-9C-Click-Through]]), then
   merging into `master`.
 

@@ -57,9 +57,10 @@ def _similarity(a, b):
     return sum(x * y for x, y in zip(a, b))
 
 
-def search_phrases(title, text, count, engine):
+def search_phrases(title, text, count, engine, *, theme_vector=None):
     """Up to ``count`` phrases to search for, from a theme's title and its
-    whole text."""
+    whole text. Pass the theme's vector when it is read in passages
+    (``reading.theme_vector``), since the model would cut a long text off."""
     phrases = []
     title_words = _words(title)
     if 0 < len(title_words) <= MAX_TITLE_WORDS:
@@ -68,7 +69,10 @@ def search_phrases(title, text, count, engine):
     if len(phrases) >= count or not pool:
         return phrases[:count]
 
-    theme_vector, *vectors = engine.embed([text, *pool])
+    if theme_vector is None:
+        theme_vector, *vectors = engine.embed([text, *pool])
+    else:
+        vectors = engine.embed(pool)
     closeness = [_similarity(theme_vector, v) for v in vectors]
     chosen = []
     # ``chosen`` holds the picks' indexes; each pick is also in ``phrases``.

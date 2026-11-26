@@ -45,6 +45,8 @@ THEME_AUDIT_FIELDS = {
     "Main scripture": "scripture",
     "Notes": "notes",
     "Series": "series",
+    # The file's name only; its text is never copied into the audit trail.
+    "Sermon PDF": lambda theme: theme.document_name,
 }
 TEMPLATE_AUDIT_FIELDS = {
     "Name": "name",

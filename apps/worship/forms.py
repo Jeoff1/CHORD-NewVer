@@ -5,8 +5,10 @@ from django.db.models import Q
 from django.forms import inlineformset_factory
 
 from apps.church.scoping import ChurchFormMixin
+from apps.core.storage import PrivateFileInput
 from apps.songs.models import ThemeTag
 
+from . import sermons
 from .models import (
     LineupItem,
     Season,
@@ -79,10 +81,10 @@ class ServiceForm(ChurchFormMixin, forms.ModelForm):
 class ThemeForm(ChurchFormMixin, forms.ModelForm):
     class Meta:
         model = Theme
-        fields = ["title", "scripture", "series", "notes"]
+        fields = ["title", "scripture", "series", "notes", "document"]
         widgets = {"notes": forms.Textarea(attrs={"rows": 10})}
 
-    def __init__(self, *args, labels, **kwargs):
+    def __init__(self, *args, labels, document_url="#", **kwargs):
         super().__init__(*args, **kwargs)
         sermon = labels.get("sermon")
         self.fields["series"].queryset = SermonSeries.objects.for_church(
@@ -90,6 +92,31 @@ class ThemeForm(ChurchFormMixin, forms.ModelForm):
         ).usable(self.instance.series_id)
         self.fields["series"].label = f"{sermon} series"
         self.fields["notes"].label = f"{sermon} notes"
+        document = self.fields["document"]
+        document.label = f"{sermon} PDF"
+        document.help_text = (
+            f"Optional. Attach the {sermon.lower()} you'll preach from. Only "
+            "people who plan can open it, and song suggestions read all of it "
+            "to match the theme better. Up to 15 MB."
+        )
+        document.widget = PrivateFileInput(
+            attrs={"accept": "application/pdf,.pdf"}, url=document_url
+        )
+        self.document_text = None  # unchanged unless a file is attached or cleared
+
+    def clean_document(self):
+        upload = self.cleaned_data.get("document")
+        if upload is False:  # "Clear" was ticked
+            self.document_text = ""
+        elif upload and upload is not self.initial.get("document"):
+            sermons.check(upload)
+            self.document_text = sermons.read_text(upload)
+        return upload
+
+    def save(self, commit=True):
+        if self.document_text is not None:
+            self.instance.document_text = self.document_text
+        return super().save(commit)
 
 
 class AttendanceForm(forms.ModelForm):

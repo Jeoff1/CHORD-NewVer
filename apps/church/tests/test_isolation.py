@@ -67,6 +67,7 @@ OBJECT_URLS = {
     "worship:service": lambda o: {"public_id": o["service"].public_id},
     "worship:service_update": lambda o: {"public_id": o["service"].public_id},
     "worship:theme": lambda o: {"public_id": o["service"].public_id},
+    "worship:theme_document": lambda o: {"public_id": o["service"].public_id},
     "worship:attendance": lambda o: {"public_id": o["service"].public_id},
     "worship:suggest": lambda o: {"public_id": o["service"].public_id},
     "worship:suggestions": lambda o: {"public_id": o["service"].public_id},
@@ -124,7 +125,10 @@ OBJECT_URLS = {
         "assignment_id": uuid.uuid4(),
     },
 }
-NOT_CHECKED_WITH_OWN = {"teams:assignment_remove"}  # needs a real assignment
+NOT_CHECKED_WITH_OWN = {
+    "teams:assignment_remove",  # needs a real assignment
+    "worship:theme_document",  # needs a real sermon PDF (test_sermon_pdf.py)
+}
 
 # URLs taking an argument that is not another church's record, and why.
 EXEMPT = {

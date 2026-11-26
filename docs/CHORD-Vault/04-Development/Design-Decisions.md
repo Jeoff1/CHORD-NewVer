@@ -855,6 +855,47 @@ Suggestions, Lineup, Confirmed, Playlist) described above.
   see the step bar, the panel, suggestions or a draft; they keep the
   service page and the confirmed lineup as before.
 
+### Sermon PDF (owner, 2026-11-26)
+
+The owner asked for the pastor to attach the sermon as a PDF, to use it,
+and for suggestions to match the theme better from it, since it is what
+will be preached.
+
+- **On the theme form:** an optional "<sermon Label> PDF", up to 15 MB.
+  Only a real PDF is accepted (a `.pdf` name and the `%PDF-` header); a
+  damaged or password-locked one is refused with a reason.
+- **Private:** stored in private storage (`worship/sermons/<random>/`),
+  never public. Only people who plan (`worship.change_theme` or
+  `worship.change_lineup`, who also see the notes) see the link and open
+  it, in the browser; the team never does (403). Another church's PDF is a
+  404. Replacing or clearing it deletes the old file.
+- **Its text is read once, when attached** (pypdf; at most 200 pages and
+  200,000 characters), and kept on the theme (`document_text`), so the
+  search worker never opens PDFs. A scanned PDF has no text: it is kept,
+  and the pastor is told suggestions use the title, passage and notes.
+  The audit trail records the file's name, never its text; nothing of it
+  is logged. It is the church's own theme text, so the models may read it
+  (AGENTS.md); it never leaves the installation.
+- **Matching reads all of the theme** (`apps/worship/reading.py`): the
+  embedding model reads at most 256 tokens and would cut a long text off,
+  so a theme longer than 150 words is read in passages of 150 words (at
+  most 24, spread from start to end). Its vector is the heading's (title
+  and passage) plus the average of the passages', so the title keeps its
+  weight; Theme Tags are the average of the tag scores on up to 6 passages,
+  each read with the heading; search phrases come from the whole text,
+  ranked against that vector. A short theme is read whole, as before. This
+  also helps long typed notes.
+- The "add notes" hint doesn't show when the PDF has text.
+
+Tests: `apps/worship/tests/test_sermon_pdf.py`: attaching reads the text
+and keeps the file private; only planners open it; non-PDFs, damaged and
+oversized files are refused; a scanned PDF is kept with a warning;
+replacing or clearing deletes the old file; saving without a file keeps
+the text; the audit trail holds the name only; no text longer than a
+passage reaches the model, and the end of a long sermon does; tags and
+phrases come from the PDF; a run reads it. `test_isolation.py` covers
+another church's PDF.
+
 ### Tests
 
 - The step bar has four steps with Teams on and three with it off; each

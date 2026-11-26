@@ -9,8 +9,11 @@ written; note anything else in the [[Development-Log]].
 
 - Run `.\scripts\check.ps1` on branch `phase-9c-guided-planning`; it must
   pass.
+- Run `.\.venv\Scripts\python.exe -m pip install -r requirements.txt`
+  (it adds pypdf, which reads sermon PDFs).
 - Run `.\.venv\Scripts\python.exe manage.py migrate` (it gives Pastoral
-  Staff the permission to assign the team), then start the site
+  Staff the permission to assign the team, and adds the sermon PDF to
+  themes), then start the site
   (`manage.py runserver`) and the search worker (`manage.py run_worker`).
 - Sign in as someone with the Pastoral Staff role. Have a second window
   signed in as a Team Member.
@@ -66,3 +69,20 @@ written; note anything else in the [[Development-Log]].
   The step, the team card and the assign page use "Music Team".
 - [ ] **4.4** Settings › Modules: switch Teams off. A service shows three
   steps (no team step). Switch Teams back on.
+
+## 5. Sermon PDF
+
+- [ ] **5.1** Edit a service's theme. Under the notes there is **Sermon
+  PDF**. Attach a sermon saved as a PDF and save. A message says how many
+  words were read; the theme card shows the file's name with "N words
+  read for song suggestions".
+- [ ] **5.2** Click the file's name: the PDF opens in a new tab.
+- [ ] **5.3** In the Team Member's window, open the service: no PDF link.
+- [ ] **5.4** On Song Lineup, find songs again. The suggestions and search
+  phrases ("About this search") reflect the sermon's content, not only
+  the title. Compare with a run before the PDF if you have one.
+- [ ] **5.5** Attach a scanned PDF (a photo of a page): it is kept, with a
+  message that no text could be read. Attach a file that isn't a PDF: it
+  is refused.
+- [ ] **5.6** Edit the theme, tick **Clear** under the PDF and save: the
+  link is gone.

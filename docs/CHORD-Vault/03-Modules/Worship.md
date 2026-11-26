@@ -594,9 +594,17 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   service, theme, team, songs and warnings (`rundown_warnings`), with
   Confirm for people who may confirm; confirming returns to the service
   page.
+- **Sermon PDF** (`Theme.document`, private storage;
+  `Theme.document_text`; `sermons.py` checks and reads it; the theme form
+  and `ThemeDocumentView`, `worship:theme_document`, for people who plan):
+  the theme card links it with the number of words read. Suggestions read
+  the whole theme in passages (`reading.py`: `theme_vector`, `tag_texts`;
+  `phrases.search_phrases(theme_vector=...)`), so a long sermon or long
+  notes aren't cut off by the model's 256-token limit.
 - Church settings used: the Teams Module switch and the `team`, `lineup`,
   `pastor` and `sermon` Labels.
-- Tests: `apps/worship/tests/test_planning_steps.py`, and the updated
+- Tests: `apps/worship/tests/test_planning_steps.py`, `test_sermon_pdf.py`,
+  and the updated
   `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_views.py`,
   `test_suggestion_views.py`.
 

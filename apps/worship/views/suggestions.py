@@ -88,7 +88,7 @@ def panel_context(service, user):
         "spotify_ready": spotify_configured() and not (block and block.is_pause),
         "spotify_configured": spotify_configured(),
         "block_message": block_message(block) if block else "",
-        "theme_needs_notes": bool(theme) and not theme.notes.strip(),
+        "theme_needs_notes": bool(theme) and not theme.body(),
         "can_correct": user.has_perm("songs.change_song"),
         "feel_choices": Feel.choices,
     }

@@ -81,6 +81,11 @@ urlpatterns = [
         name="theme",
     ),
     path(
+        "services/<uuid:public_id>/theme/sermon.pdf",
+        schedule.ThemeDocumentView.as_view(),
+        name="theme_document",
+    ),
+    path(
         "services/<uuid:public_id>/attendance/",
         schedule.AttendanceView.as_view(),
         name="attendance",

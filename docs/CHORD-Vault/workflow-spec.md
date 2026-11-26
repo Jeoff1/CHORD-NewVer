@@ -52,7 +52,8 @@ PLANNING A SERVICE (Phase 9C, 2026-11-26)
 The service page guides the people who plan through four steps, with a
 next-step panel naming what to do and one button for it:
   Theme -> Praise Team -> Song Lineup -> Confirm
-- Theme: the pastor posts the theme.
+- Theme: the pastor posts the theme, and may attach the sermon as a PDF
+  (private to the people who plan). Suggestions read all of it.
 - Praise Team (the church's "team" Label; only while Teams is on): assign
   who serves that day. Suggested, never required: "Skip for now" goes on to
   the songs.
