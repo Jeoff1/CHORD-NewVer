@@ -2,6 +2,17 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Concept Brief matches Phase 9C
+
+- The owner asked for the [[Concept-Brief]] to match the Phase 9C
+  changes (it ranks below the decisions, so it had fallen behind
+  [[0015-lineup-first-suggestions-assist]]). Updated: the overview (the
+  lineup comes first, suggestions assist; the sermon PDF and stored
+  Bible; confirming from a rundown), the vision line, the Pastor and
+  Worship leader roles, the core module's heading and intro, and pipeline
+  stages 1 (theme intake) and 10 (review).
+- **Checks:** docs only; no code changed.
+
 ## 2026-11-26: Phase 9C, the lineup comes first; suggestions assist
 
 - **Why:** the owner asked for the pastor to add songs on their own

@@ -1,8 +1,10 @@
 # Concept Brief: Worship Planning System
 
 The brief that sets this project's scope, written 2026-11-16 and updated
-2026-11-18 with the decisions agreed since, and 2026-11-24 with the
-adviser's comments ([[Design-Decisions]], "Adviser comments, 24 Nov"). This note records what it says;
+2026-11-18 with the decisions agreed since, 2026-11-24 with the
+adviser's comments ([[Design-Decisions]], "Adviser comments, 24 Nov"), and
+2026-11-26 with the owner's Phase 9C changes ([[Design-Decisions]], "Phase
+9C"; [[0015-lineup-first-suggestions-assist]]). This note records what it says;
 [[0005-worship-planning-scope]] records how CHORD follows it, and where
 CHORD departs from its suggestions. Phase-by-phase detail and tests for
 these decisions are in [[Design-Decisions]].
@@ -10,14 +12,18 @@ these decisions are in [[Design-Decisions]].
 ## Overview
 
 The system turns a sermon theme into a ready-to-rehearse worship set:
-suggested songs, a listen-along track, a chord sheet, and the right key for
-the band.
+the songs, a listen-along track, a chord sheet, and the right key for the
+band.
 
-- The pastor posts the service's theme.
-- The system searches Spotify for songs whose lyrics fit the message and
-  proposes a lineup that flows well.
-- The worship leader adjusts it, and either the worship leader or the
-  pastor confirms it.
+- The pastor posts the service's theme, and may attach the sermon as a
+  PDF; the main scripture is chosen from a stored public-domain Bible.
+- The pastor or worship leader builds the lineup slot by slot, choosing
+  songs on their own judgement. Beside it, the system suggests songs whose
+  lyrics fit the message, found on Spotify, to add one at a time or to
+  fill the empty slots (since 2026-11-26 the lineup comes first and the
+  suggestions assist).
+- Either the worship leader or the pastor confirms it, after a rundown of
+  what will be confirmed.
 - The team opens one page per song with the track, the chords and the key
   they will play in.
 
@@ -26,14 +32,15 @@ rosters and song history. Heavy processes stay out.
 
 The vision is the same set of jobs as WorshipTools' Planning, Charts and
 Community, but centralized: one app, one login and one database for the
-whole team, with theme-based song suggestions as its core.
+whole team, with the theme-based song lineup, helped by song
+suggestions, as its core.
 
 ## Roles
 
 | Role                    | Owns                    | Can do                                                                                                   |
 | ----------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| Pastor (pastoral level) | The service and message | Create and schedule services; post the theme, scripture and notes; review, edit and confirm a lineup. The pastor's decision is final. |
-| Worship leader          | The song lineup         | Generate suggestions; swap, lock, reorder and re-key songs; confirm; manage the song library and chord sheets; approve pasted chord sheets; assign musicians. |
+| Pastor (pastoral level) | The service and message | Create and schedule services; post the theme, scripture, notes and sermon PDF; assign the team; choose songs and use suggestions; review, edit and confirm a lineup. The pastor's decision is final. |
+| Worship leader          | The song lineup         | Choose songs and use suggestions; swap, lock, reorder and re-key songs; confirm; manage the song library and chord sheets; approve pasted chord sheets; assign musicians. |
 | Team member             | Their part on the day   | View confirmed lineups; play tracks; read chord sheets in the service key; transpose a personal view (capo); paste a missing chord sheet for approval; mark availability. |
 | Admin                   | The church account      | Manage users and roles, and church settings. The Administrator role can't be deleted. Spotify has one connection per user: each user connects their own account. |
 | Office staff (optional) | The member directory    | Keep the member directory up to date: add and edit members and households, import and export them. |
@@ -53,12 +60,16 @@ edits the lineup directly or sends it back with notes.
 - "Pastor's decision is final" is a permission held by the pastoral role,
   not a check on a role name.
 
-## Core module: theme-based lineup suggestion
+## Core module: the theme-based song lineup
 
-There is no manual song upload. Every song the system checks is saved, so
-the song pool grows from Spotify with each theme. Spotify supplies the
-candidates and the playback; the model reads only LRCLIB lyrics, the
-church's theme text and tags.
+The people who plan choose the lineup's songs; the suggestion pipeline
+below helps them (decision 0015). A song is added from the church's song
+pool, or found on Spotify and added to the pool first. There is no manual
+song upload (a church may later want to upload its own songs). Every song
+the system checks is saved, so the song pool grows from Spotify with each
+theme. Spotify supplies the candidates and the playback; the model reads
+only LRCLIB lyrics, the church's theme text (with the passage's Bible
+text and a sermon PDF's text) and tags.
 
 Stored for each song: Spotify track ID, title, artist, album and length
 (never model input); lyrics from LRCLIB (cached); the worship check result
@@ -69,7 +80,11 @@ confirmed lineup and allowed earlier.
 
 Pipeline stages:
 
-1. **Theme intake**: title, main scripture, sermon notes.
+1. **Theme intake**: title, main scripture (suggested from the stored
+   Bible, with the passage's text), sermon notes and an optional sermon
+   PDF. A long theme is read in passages; the title and scripture are half
+   of the match, and the notes, passage text and PDF share the other half
+   equally.
 2. **Search phrases**: key words and short phrases from the theme, each a
    Spotify search with a genre filter such as `genre:worship`; retried
    without the filter when it returns nothing.
@@ -90,7 +105,9 @@ Pipeline stages:
 8. **Sequencing**: top songs placed in the service template's slots by
    feel.
 9. **Explanation**: each pick says why it was chosen.
-10. **Review**: swap, lock, reorder, regenerate; then confirm.
+10. **Review**: add songs of one's own choosing or single suggestions,
+    fill the empty slots, swap, lock, reorder, regenerate; then confirm
+    from a rundown.
 11. **Learning**: every accept, swap and rejection is logged; once enough
     confirmed lineups exist, they train a learning-to-rank model that
     replaces the hand-set weights. Training uses only lyrics-based scores,
