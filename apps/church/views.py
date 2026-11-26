@@ -362,15 +362,22 @@ def split_match(text, q):
 
 
 class ChurchHomepageView(TemplateView):
-    """A church's public page: only what it chose to publish."""
+    """A church's public profile (redesigned 27 Nov 2026): only what it chose
+    to publish, the same for everyone, no sign-in needed to view it.
+
+    The Modules' sections go in the sidebar (``slot="side"``) or become the
+    main area's tabs."""
 
     template_name = "church/homepage.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         public_church = get_object_or_404(public_churches(), slug=self.kwargs["slug"])
+        sections = homepage.sections(public_church, self.request)
         context.update(
             public_church=public_church,
-            sections=homepage.sections(public_church, self.request),
+            sections=sections,
+            side_sections=[s for s in sections if s.slot == "side"],
+            tab_sections=[s for s in sections if s.slot != "side"],
         )
         return context

@@ -171,13 +171,20 @@ everyone, its own people too.
   "suggest" is a reserved word, so no church can take that address.
 - A Church Homepage still opens for any public church, finished setup or
   not; only the lists need finished setup.
-- **Church Homepage** (`/churches/<slug>/`, `ChurchHomepageView`): name,
-  logo, contact details and About, then the sections the Modules register
-  in `homepage.py` (each only while its Module is on): upcoming services
-  if switched on, date, time and kind only (Worship); the Occasion Types
-  offered publicly with **Request this service** (Occasions); Public
-  announcements to everyone that aren't archived (Announcements). Never
-  lyrics, chord sheets, songs, lineups, themes, members or teams.
+- **Church Homepage**, the public profile (`/churches/<slug>/`,
+  `ChurchHomepageView`; redesigned 27 Nov 2026, [[Design-System]], "The
+  church profile"): open to everyone without signing in, the same page for
+  all. A cover banner with the logo, a sidebar with name, About and contact
+  details, then the sections the Modules register in `homepage.py` (each
+  only while its Module is on). A `Section` says where it goes:
+  `slot="side"` in the sidebar (upcoming services if switched on, date,
+  time and kind only: Worship), otherwise a tab with its `label`, `count`
+  and `icon`: **Announcements** (Public, to everyone, not archived, the
+  latest five; the tab shows "No announcements yet" when there are none)
+  and **Available services** (the Occasion Types offered publicly with
+  **Request this service**, which keeps the existing request form and its
+  sign-in). Never lyrics, chord sheets, songs, lineups, themes, members or
+  teams.
 - Request this service and My requests at every church are Occasions'
   ([[Occasions]]).
 - The landing page links the Directory ("Churches", "Explore churches",

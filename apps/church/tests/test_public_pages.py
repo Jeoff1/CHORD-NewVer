@@ -368,6 +368,109 @@ class HomepageTests(PublicPagesTestCase):
         )
 
 
+class ProfileRedesignTests(PublicPagesTestCase):
+    """The public profile (redesign, 27 Nov 2026): a public website for each
+    church, the same for everyone, with no sign-in needed to view it."""
+
+    def test_everyone_views_the_same_profile_without_signing_in(self):
+        for who, user in self.visitors():
+            self.visit_as(user)
+            with self.subTest(who=who):
+                page = self.client.get(home_url(self.church))
+                self.assertEqual(page.status_code, 200)
+                self.assertTemplateUsed(page, "church/homepage.html")
+                # The cover, the sidebar and both tabs.
+                self.assertContains(page, 'class="pf-banner"')
+                self.assertContains(
+                    page,
+                    '<h1 class="pf-name" id="pf-name">Riverside Church</h1>',
+                    html=False,
+                )
+                self.assertContains(page, "Announcements")
+                self.assertContains(page, "Available services")
+                self.assertContains(page, "Picnic on Sunday")
+                self.assertContains(page, "Wedding")
+                self.assertContains(page, "Upcoming services")
+                self.assertContains(page, "Powered by")
+                # Nothing private, and no sign-in asked for just viewing.
+                self.assertNotContains(page, PRIVATE)
+                self.assertNotContains(page, "sign in to send one")
+
+    def test_the_sections_go_in_the_sidebar_and_the_tabs(self):
+        page = self.client.get(home_url(self.church))
+        tabs = [s.label for s in page.context["tab_sections"]]
+        self.assertEqual(tabs, ["Announcements", "Available services"])
+        self.assertEqual(
+            [s.template for s in page.context["side_sections"]],
+            ["worship/includes/homepage_upcoming.html"],
+        )
+        self.assertEqual(page.context["tab_sections"][0].count, 1)
+
+    def test_contact_shows_once_with_links(self):
+        self.set_church(
+            phone="0917 555 0100",
+            email="office@river.example",
+            website="https://river.example",
+        )
+        page = self.client.get(home_url(self.church))
+        content = page.content.decode()
+        self.assertIn('href="tel:09175550100"', content)
+        self.assertIn('href="mailto:office@river.example"', content)
+        self.assertIn('href="https://river.example"', content)
+        self.assertIn(
+            "https://www.google.com/maps/search/?api=1&amp;query=1%20River%20Road",
+            content,
+        )
+        self.assertEqual(content.count("0917 555 0100"), 1)
+        self.assertEqual(content.count(">office@river.example<"), 1)
+
+    def test_the_way_back_and_home(self):
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, f'href="{DIRECTORY}"')
+        self.assertContains(page, "Back to Churches")
+        self.assertContains(page, f'href="{reverse("home")}"')
+
+    def test_no_announcements_shows_a_note_while_the_module_is_on(self):
+        Announcement.objects.for_church(self.church).delete()
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, "No announcements yet.")
+        self.set_church(disabled_modules=["announcements"])
+        page = self.client.get(home_url(self.church))
+        self.assertNotContains(page, "No announcements yet.")
+        self.assertEqual(
+            [s.label for s in page.context["tab_sections"]], ["Available services"]
+        )
+
+    def test_a_long_announcement_gets_read_more(self):
+        Announcement.objects.create(
+            church=self.church,
+            title="Long news",
+            body="Word " * 80,
+            author=self.approver,
+            visibility=Announcement.Visibility.PUBLIC,
+        )
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, "Read more", count=1)
+
+    def test_a_visitor_is_offered_to_sign_in_only_to_request(self):
+        self.set_church(accept_outside_requests=False)
+        page = self.client.get(home_url(self.church))
+        self.assertNotContains(page, "Request this service")
+        self.assertContains(page, "If you belong to it")
+        self.assertContains(page, "Wedding")  # still visible to everyone
+
+    def test_its_own_styles_load_and_the_logo_or_fallback_shows(self):
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, "css/profile.css")
+        self.assertContains(page, "church/profile.js")
+        self.assertContains(page, "pf-logo--none")
+        self.church.logo.name = "church/riverside-logo.png"
+        self.church.save()
+        self.assertContains(
+            self.client.get(home_url(self.church)), "church/riverside-logo.png"
+        )
+
+
 class RequestThisServiceTests(PublicPagesTestCase):
     def ask(self, user=None, occasion_type=None, starts_at=None):
         return self.client.post(

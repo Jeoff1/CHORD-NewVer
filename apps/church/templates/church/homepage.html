@@ -1,41 +1,105 @@
-{% extends "base.html" %}
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  {% comment %}
+    A church's public profile (Phase 9B; redesigned 27 Nov 2026, Design-System.md, "The church
+    profile"): only what it chose to publish, the same for visitors, signed-in people and its own
+    members, with no sign-in needed to view it. A signed-in person keeps their own light or dark choice.
+  {% endcomment %}
+  <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); })();</script>
+  <title>{{ public_church.name }} · CHORD</title>
+  {% if public_church.about %}<meta name="description" content="{{ public_church.about|truncatechars:155 }}">{% endif %}
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chord.css' %}">
+  <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+  <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+  <script src="{% static 'church/profile.js' %}" defer></script>
+</head>
+<body class="chord-landing chord-profile">
+  <a class="visually-hidden-focusable lp-skip" href="#pf-main">Skip to the church's page</a>
 
-{% block title %}{{ public_church.name }}{% endblock %}
-
-{% block content %}
-  {# A church's public homepage (Phase 9B): only what it chose to publish. #}
-  <div class="d-flex align-items-center gap-3 mb-3">
-    {% if public_church.logo %}<img src="{{ public_church.logo.url }}" alt="" height="64" class="rounded">{% endif %}
-    <div>
-      <h1 class="h3 mb-0">{{ public_church.name }}</h1>
-      <a class="small" href="{% url 'churches:directory' %}">All churches</a>
+  <nav class="lp-nav" aria-label="Main">
+    <div class="lp-wrap pf-nav__row">
+      <a class="lp-brand" href="{% url 'home' %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      <a class="lp-btn lp-btn--ghost lp-btn--small pf-back" href="{% url 'churches:directory' %}">{% include "includes/icons/chevron-left.html" %}<span class="pf-back__long">Back to Churches</span><span class="pf-back__short">Churches</span></a>
     </div>
-  </div>
-  <div class="row g-4">
-    <div class="col-lg-8">
-      {% if public_church.about %}
-        <section class="card shadow-sm mb-4" aria-labelledby="about-title">
-          <div class="card-body">
-            <h2 class="h5" id="about-title">About</h2>
-            {% include "church/includes/about.html" with church=public_church %}
-          </div>
-        </section>
+  </nav>
+
+  <main class="lp-wrap" id="pf-main">
+    {% comment %}The cover: the default green-and-gold banner. When churches can add their own banner image, it goes on .pf-banner (background-image) with no layout change.{% endcomment %}
+    <div class="pf-cover">
+      <div class="pf-banner" aria-hidden="true"></div>
+      {% if public_church.logo %}
+        <span class="pf-logo"><img src="{{ public_church.logo.url }}" alt="{{ public_church.name }} logo"></span>
+      {% else %}
+        <span class="pf-logo pf-logo--none" aria-hidden="true">{% include "includes/icons/people.html" %}</span>
       {% endif %}
-      {% for section in sections %}
-        {% include section.template with public_church=public_church section=section.context %}
-      {% endfor %}
     </div>
-    <aside class="col-lg-4">
-      <section class="card shadow-sm" aria-labelledby="contact-title">
-        <div class="card-body">
-          <h2 class="h5" id="contact-title">Contact</h2>
-          {% if public_church.address %}<p class="mb-2">{{ public_church.address|linebreaksbr }}</p>{% endif %}
-          {% if public_church.phone %}<p class="mb-1">{{ public_church.phone }}</p>{% endif %}
-          {% if public_church.email %}<p class="mb-1"><a href="mailto:{{ public_church.email }}">{{ public_church.email }}</a></p>{% endif %}
-          {% if public_church.website %}<p class="mb-0"><a href="{{ public_church.website }}" rel="nofollow noopener">{{ public_church.website }}</a></p>{% endif %}
-          {% if not public_church.address and not public_church.phone and not public_church.email and not public_church.website %}<p class="text-body-secondary mb-0">No contact details given.</p>{% endif %}
+
+    <div class="pf-layout">
+      {% comment %}The sidebar: the only place for the church's details and contact.{% endcomment %}
+      <aside class="pf-side" aria-labelledby="pf-name">
+        <div>
+          <p class="lp-eyebrow">Church</p>
+          <h1 class="pf-name" id="pf-name">{{ public_church.name }}</h1>
         </div>
+        {% if public_church.about %}
+          <div class="pf-about" id="pf-about">{% include "church/includes/about.html" with church=public_church %}</div>
+          {% if public_church.about|length > 240 %}<button type="button" class="pf-more" data-more="pf-about" aria-controls="pf-about" aria-expanded="false" hidden>Read more</button>{% endif %}
+        {% endif %}
+        {% if public_church.address or public_church.phone or public_church.email or public_church.website %}
+          <hr>
+          <h2 class="pf-side__title">Contact</h2>
+          <ul class="pf-contact">
+            {% if public_church.address %}
+              <li><a href="https://www.google.com/maps/search/?api=1&amp;query={{ public_church.address|urlencode }}" rel="noopener" target="_blank"><span class="pf-contact__icon">{% include "includes/icons/map-pin.html" %}</span><span>{{ public_church.address|linebreaksbr }}<span class="visually-hidden"> (opens a map)</span></span></a></li>
+            {% endif %}
+            {% if public_church.phone %}
+              <li><a href="tel:{{ public_church.phone|cut:' ' }}"><span class="pf-contact__icon">{% include "includes/icons/phone.html" %}</span><span>{{ public_church.phone }}</span></a></li>
+            {% endif %}
+            {% if public_church.email %}
+              <li><a href="mailto:{{ public_church.email }}"><span class="pf-contact__icon">{% include "includes/icons/mail.html" %}</span><span>{{ public_church.email }}</span></a></li>
+            {% endif %}
+            {% if public_church.website %}
+              <li><a href="{{ public_church.website }}" rel="nofollow noopener" target="_blank"><span class="pf-contact__icon">{% include "includes/icons/globe.html" %}</span><span>{{ public_church.website }}</span></a></li>
+            {% endif %}
+          </ul>
+        {% endif %}
+        {% for section in side_sections %}
+          <hr>
+          {% include section.template with public_church=public_church section=section.context %}
+        {% endfor %}
+      </aside>
+
+      <section class="pf-main" aria-label="Announcements and services">
+        {% if tab_sections %}
+          {% comment %}The tabs: shown by profile.js; without it every section shows, one under another.{% endcomment %}
+          <div class="pf-tabs" role="tablist" aria-label="Church sections" hidden>
+            {% for section in tab_sections %}
+              <button type="button" class="pf-tab" role="tab" id="pf-tab-{{ forloop.counter }}" aria-controls="pf-panel-{{ forloop.counter }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"{% if not forloop.first %} tabindex="-1"{% endif %}>
+                {% if section.icon %}{% with "includes/icons/"|add:section.icon|add:".html" as icon %}{% include icon %}{% endwith %}{% endif %}{{ section.label }}{% if section.count is not None %} <span class="pf-tab__count">{{ section.count }}</span>{% endif %}
+              </button>
+            {% endfor %}
+          </div>
+          {% for section in tab_sections %}
+            <div class="pf-panel" role="tabpanel" id="pf-panel-{{ forloop.counter }}" aria-labelledby="pf-tab-{{ forloop.counter }}" tabindex="0">
+              {% include section.template with public_church=public_church section=section.context %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="pf-empty">
+            <span class="pf-empty__mark" aria-hidden="true">{% include "includes/icons/people.html" %}</span>
+            <strong>Nothing more to show yet.</strong>
+            <p>This church hasn't shared announcements or services here yet.</p>
+          </div>
+        {% endif %}
       </section>
-    </aside>
-  </div>
-{% endblock %}
+    </div>
+  </main>
+
+  <footer class="pf-footer"><div class="lp-wrap"><span>Powered by <strong>CHORD</strong></span></div></footer>
+</body>
+</html>

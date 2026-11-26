@@ -47,4 +47,5 @@ def homepage_section(church, request):
         template="worship/includes/homepage_upcoming.html",
         context={"upcoming": services},
         order=10,
+        slot="side",
     )

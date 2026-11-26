@@ -20,11 +20,18 @@ def public_announcements(church):
 
 
 def homepage_section(church, request):
-    shown = list(public_announcements(church)[:SHOWN])
-    if not shown:
+    """The profile's Announcements tab: the latest public ones, newest first.
+    While the Module is on the tab is always there, with a short note when
+    there is nothing yet (redesign, 27 Nov 2026)."""
+    if not is_enabled("announcements", church):
         return None
+    shown = list(public_announcements(church)[:SHOWN])
     return Section(
         template="announcements/includes/homepage_public.html",
         context={"public_announcements": shown},
-        order=30,
+        order=10,
+        slot="tab",
+        label="Announcements",
+        count=len(shown),
+        icon="megaphone",
     )

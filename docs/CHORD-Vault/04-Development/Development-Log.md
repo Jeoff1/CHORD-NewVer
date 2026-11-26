@@ -2,6 +2,36 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Church profile redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned each church's public page as a
+  modern organisation profile, a public website for each listed church:
+  an interactive mockup first, then the owner's public-access rules and
+  choices (upcoming services in the sidebar, the website shown, no
+  announcement images, one service icon, the latest five announcements).
+- **Built:** `church/homepage.html` (standalone: the landing nav and gold
+  logo, Back to Churches, the cover banner and overlapping logo, the
+  sidebar with name, About, contact and upcoming services, the tabs, a
+  "Powered by CHORD" footer); the three Modules' section templates
+  restyled; `static/css/profile.css` and `church/static/church/profile.js`
+  (tabs, Read more); icons `map-pin`, `phone`, `mail`, `globe`.
+- **Sections:** `homepage.Section` gains `slot`, `label`, `count` and
+  `icon`, so each Module says where its section goes (Worship: the
+  sidebar; Announcements and Occasions: tabs) and Church Setup still
+  imports none of them. The Announcements section now shows while its
+  Module is on even with none, with a note. Same view, route and
+  `public_churches()` rule; no model change or migration.
+- **Checked in a browser** as a signed-out visitor (Edge, DevTools device
+  emulation, 1280, 820, 390 and 360 px, light and dark): the page opens
+  without signing in, the tabs switch by click and arrow keys, one section
+  shows at a time, nothing is wider than the screen. Fixed: on phones
+  "Available services" wrapped inside its tab; tab icons now drop below
+  480 px.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1282 tests OK, 97%
+  coverage. Committed and pushed to `origin/joy-ui-ux-v2` with the
+  owner's permission; not merged into `master` and no pull request.
+
 ## 2026-11-27: Church directory redesign (branch `joy-ui-ux-v2`)
 
 - **Why:** the UI/UX owner redesigned the public Church Directory that

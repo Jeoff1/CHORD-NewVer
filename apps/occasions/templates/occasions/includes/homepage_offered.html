@@ -1,19 +1,23 @@
-{# The occasions a church offers publicly (Phase 9B). #}
-<section class="card shadow-sm mb-4" aria-labelledby="offered-title">
-  <div class="card-body">
-    <h2 class="h5" id="offered-title">Services you can request</h2>
-    <ul class="list-group list-group-flush">
-      {% for kind in section.offered %}
-        <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2 px-0">
-          <span><span class="fw-semibold">{{ kind.name }}</span>{% if kind.description %}<span class="d-block small text-body-secondary">{{ kind.description }}</span>{% endif %}</span>
-          {% if section.may_request %}
-            <a class="btn btn-sm btn-primary" href="{% url 'public_requests:request' slug=public_church.slug type_pk=kind.pk %}">Request this service</a>
-          {% endif %}
-        </li>
-      {% endfor %}
-    </ul>
-    {% if not section.may_request %}
-      <p class="small text-body-secondary mt-2 mb-0">{% if section.signed_in %}This church takes requests from its own people only.{% else %}This church takes requests from its own people: sign in with your account to ask.{% endif %}</p>
-    {% endif %}
-  </div>
-</section>
+{# The church profile's Available services tab (Phase 9B; redesigned 27 Nov 2026): the Occasion Types the church offers publicly. Anyone may view them; Request this service opens the existing request form, which asks a visitor to sign in first. Who sees the buttons follows the church's "Accept requests from people outside the church". #}
+<div class="pf-panel__head">
+  <h2>Available services</h2>
+  <p>Request one, and the church will confirm the date with you.</p>
+</div>
+{% if not section.may_request %}
+  <p class="pf-note-box">{% if section.signed_in %}This church takes service requests from its own people only.{% else %}This church takes service requests from its own people. If you belong to it, <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">sign in</a> to send one.{% endif %}</p>
+{% endif %}
+<ul class="pf-services">
+  {% for kind in section.offered %}
+    <li>
+      <article class="pf-service">
+        <span class="pf-service__icon" aria-hidden="true">{% include "includes/icons/calendar.html" %}</span>
+        <h3>{{ kind.name }}</h3>
+        {% if kind.description %}<p>{{ kind.description }}</p>{% else %}<p></p>{% endif %}
+        <span class="pf-service__meta">Usually about {{ kind.length_minutes }} minutes</span>
+        {% if section.may_request %}
+          <a class="lp-btn lp-btn--gold" href="{% url 'public_requests:request' slug=public_church.slug type_pk=kind.pk %}">Request this service</a>
+        {% endif %}
+      </article>
+    </li>
+  {% endfor %}
+</ul>

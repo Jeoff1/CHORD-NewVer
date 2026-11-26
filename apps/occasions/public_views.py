@@ -69,6 +69,10 @@ def homepage_section(church, request):
             "signed_in": request.user.is_authenticated,
         },
         order=20,
+        slot="tab",
+        label="Available services",
+        count=len(offered),
+        icon="calendar",
     )
 
 

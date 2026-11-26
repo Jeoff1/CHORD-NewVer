@@ -684,6 +684,18 @@ Designed as an interactive mockup first (v2 after the owner's review: no overlay
 
 Tests: `apps/church/tests/test_public_pages.py` (`DirectoryTests`, `DirectoryRedesignTests`, `SuggestionTests`): listed churches only, a public church without finished setup left out, search by name and address, sorting, 24 to a page, the HTMX fragment and the full page, the empty search, the logo and its fallback, no contact details, Back to Home, signed-in people keep their account and theme; suggestions listed churches only, from two letters, at most six, names first, the match marked and escaped, and the reserved "suggest".
 
+#### Church profile redesign (UI/UX owner, 27 Nov 2026)
+
+Designed as an interactive mockup first and approved with the owner's rules for public access: the profile is a public website for each listed church, open to everyone without signing in, the same for guests, signed-in people and members; only what is meant to be public; requesting keeps its existing sign-in. Built on `joy-ui-ux-v2` ([[Design-System]], "The church profile"). The owner's choices on the open questions:
+- **Upcoming services** stay, at the bottom of the sidebar, only when the church switches them on.
+- **Website** shows with the other contact details.
+- **No images on announcements** (there is no image field, and no new fields for now).
+- **One calendar icon for every service** (no icon field; choosing by a church's own wording would break the core rule).
+- **The latest five announcements**, as before.
+- The Announcements tab now shows while the Module is on even with none ("No announcements yet"), where the old page left the section out.
+
+Tests: `apps/church/tests/test_public_pages.py` (`HomepageTests`, `ProfileRedesignTests`): the same profile for a visitor, someone from another church and a member, with no sign-in to view and nothing private; the sections in the sidebar and the tabs; contact shown once, with links; Back to Churches and home; the empty Announcements tab only while the Module is on; Read more for long announcements; the sign-in note only for requesting; its own styles, the logo and its fallback.
+
 ---
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])

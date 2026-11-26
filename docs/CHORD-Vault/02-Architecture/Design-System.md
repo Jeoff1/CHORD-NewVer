@@ -32,7 +32,7 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Two columns | `.chord-columns` holding `.chord-main` and `.chord-side` | Main content and a side column; they stack on a phone |
 | Settings hub | Each app registers `SettingsPage`s in `apps/core/settings_menu.py`; `base.html` shows the hub on their pages. Every category is always shown (no dropdowns); the side menu scrolls on its own when it is taller than the window, stays in view beside the page on a wide screen, and opens scrolled to the current page | One place for every setting |
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
-| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle; for the Directory x | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
+| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle; for the Directory x; for the church profile map-pin, phone, mail and globe | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
 | Landing page | `church/landing.html`, its own `static/css/landing.css` (classes `lp-*`) and `church/static/church/landing.js` | The public front page, redesigned 26-27 Nov 2026: see "The landing page" below |
 
 ## The landing page (redesign, 26-27 Nov 2026)
@@ -115,6 +115,39 @@ Designed as an interactive mockup and approved by the UI/UX owner on
   while waiting; placeholder cards only when an update takes longer than
   0.2 s, so a quick answer never flickers. No added delay.
 - **Icon added:** `x` (the search's clear button), solid like the rest.
+
+## The church profile (redesign, 27 Nov 2026)
+
+A public website for each listed church: the same page for visitors,
+signed-in people and its own members, with no sign-in needed to view it.
+Designed as an interactive mockup and approved by the UI/UX owner on
+2026-11-27; built on branch `joy-ui-ux-v2`. `church/homepage.html` loads
+`landing.css` and its own `static/css/profile.css` (classes `pf-*`) and
+`church/static/church/profile.js`; no other page loads them.
+
+- **Nav:** the gold logo (to `/`) and **Back to Churches** (the
+  Directory); "Churches" on narrow phones.
+- **Cover:** a rounded banner with the default green-and-gold gradient,
+  no stock photos; a church's own banner image would go on `.pf-banner`
+  later with no layout change. The church's logo (or the CHORD fallback,
+  the people icon on green) in a circle overlapping its lower left.
+- **Sidebar, the only place for the church's details:** name, About
+  (clamped to five lines with Read more), then Contact: address (opens a
+  map search), phone (`tel:`), email (`mailto:`) and website, each with
+  its icon and only when filled in; then Upcoming services when the church
+  switches them on. Sticky beside the main area on wide screens.
+- **Main area, tabs** (ARIA tabs, arrow keys, Home and End; without
+  JavaScript every section shows): **Announcements** (date badge, title,
+  date, three lines with Read more, latest five, newest first; one panel
+  with dividers; a note when there are none) and **Available services**
+  (equal cards: calendar icon, name, description, usual length, the gold
+  Request this service). A tab appears only while its Module is on.
+- **Footer:** "Powered by CHORD".
+- **Responsive:** sidebar 340 px, then 290 px below 960 px; one column
+  below 760 px (cover, logo, sidebar, tabs, sections); tab icons drop
+  below 480 px so the labels stay on one line.
+- **Icons added:** `map-pin`, `phone`, `mail` and `globe` (the contact
+  rows), solid like the rest.
 
 ## Tokens
 
