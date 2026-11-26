@@ -157,6 +157,12 @@ class SignUpForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         self.fields["email"].required = True
         self.fields["email"].help_text = "For resetting your password."
+        # Wording approved with the sign-up page redesign (27 Nov 2026); the
+        # rules themselves stay Django's: the field and its validators are
+        # unchanged.
+        self.fields["username"].help_text = "Up to 150 letters, digits and @ . + - _"
+        self.fields["password2"].label = "Confirm password"
+        self.fields["password2"].help_text = "Enter the same password again."
 
 
 class AddExistingAccountForm(forms.Form):

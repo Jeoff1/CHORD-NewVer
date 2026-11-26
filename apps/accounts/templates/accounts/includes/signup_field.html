@@ -1,0 +1,32 @@
+{% comment %}
+  One field of the sign-up page (Design-System.md, "The sign-up page"). {{ field }} renders the
+  widget itself (ChordFormRenderer), so its name, value, autocomplete, aria-describedby and
+  aria-invalid stay Django's; the server's errors show under it, unchanged.
+  Optional: icon (a name from includes/icons/), password (adds the show/hide button, which the
+  script reveals), rules (the password checklist in place of Django's help list).
+{% endcomment %}
+<div class="au-field{% if field.errors %} au-field--error{% endif %}">
+  <label class="au-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+  <div class="au-control{% if icon %} au-control--icon{% endif %}{% if password %} au-control--password{% endif %}">
+    {% if icon %}<span class="au-control__icon">{% include "includes/icons/"|add:icon|add:".html" %}</span>{% endif %}
+    {{ field }}
+    {% if password %}
+      <button type="button" class="au-eye" data-au-reveal="{{ field.id_for_label }}" aria-controls="{{ field.id_for_label }}" aria-label="Show password" aria-pressed="false" hidden>
+        <span class="au-eye__show">{% include "includes/icons/eye.html" %}</span>
+        <span class="au-eye__hide" hidden>{% include "includes/icons/eye-off.html" %}</span>
+      </button>
+    {% endif %}
+  </div>
+  {% if field.errors %}<div class="au-errors" id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="au-error">{{ error }}</p>{% endfor %}</div>{% endif %}
+  {% if rules %}
+    {% comment %}Mirrors AUTH_PASSWORD_VALIDATORS (config/settings.py); the server still checks every rule. The script ticks the first three as the person types; only the server knows the common-password list.{% endcomment %}
+    <ul class="au-rules" id="{{ field.auto_id }}_helptext" aria-label="Password requirements" data-au-rules>
+      <li class="au-rule" data-au-rule="length" title="At least 8 characters">{% include "includes/icons/check-circle.html" with size=15 %}<span class="au-rule__dot" aria-hidden="true"></span><span>8 or more characters</span><span class="visually-hidden" data-au-rule-state></span></li>
+      <li class="au-rule" data-au-rule="numeric" title="Can’t be entirely numbers">{% include "includes/icons/check-circle.html" with size=15 %}<span class="au-rule__dot" aria-hidden="true"></span><span>Not only numbers</span><span class="visually-hidden" data-au-rule-state></span></li>
+      <li class="au-rule" data-au-rule="similar" title="Not too similar to your username, name or email">{% include "includes/icons/check-circle.html" with size=15 %}<span class="au-rule__dot" aria-hidden="true"></span><span>Unlike your name or email</span><span class="visually-hidden" data-au-rule-state></span></li>
+      <li class="au-rule au-rule--server" title="Checked when you create the account"><span class="au-rule__dot" aria-hidden="true"></span><span>Not a common password</span><span class="visually-hidden"> (checked when you create the account)</span></li>
+    </ul>
+  {% elif field.help_text %}
+    <p class="au-help" id="{{ field.auto_id }}_helptext"{% if match %} data-au-match aria-live="polite"{% endif %}>{{ field.help_text }}</p>
+  {% endif %}
+</div>

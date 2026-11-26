@@ -2,6 +2,47 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Sign-up page redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned Create an account as a split-screen
+  page after their reference: an interactive mockup first (v2 after
+  review: a freely licensed photo instead of the owner's own, which showed
+  a face; a compact centred form; a short checklist), then approved with
+  the photo, the `#6E8A83` outlines, the `arrow-left` icon and the shorter
+  username hint.
+- **Built:** `accounts/signup.html` (standalone: the photo panel with the
+  gold logo, "Bringing Worship Together" and the tagline; Back to Home;
+  the Sign Up / Sign In toggle; the fields with icons, help, errors and
+  show-password buttons; the password checklist; the gold Create Account
+  button; "Already have an account? Sign in"),
+  `accounts/includes/signup_field.html`, `static/css/auth.css` (every
+  rule under `.au`), `accounts/static/accounts/signup.js` (show or hide,
+  the checklist, the match line); the photo
+  `images/landing/signup-worship.webp`, `.jpg` (1600 px) and `-800.webp`,
+  recorded in `SOURCES.md` (Austin Neill, CC0; cropped, face softened);
+  the `arrow-left` icon. `SignUpView` only names the template and the
+  button "Create Account"; `SignUpForm` changes wording only (the username
+  hint, "Confirm password", "Enter the same password again."), so the
+  church registration page's account fields read the same. Same fields,
+  CSRF, Django validators and redirect; no model change or migration.
+- **Checked in a browser** (headless Edge through DevTools, as a signed-out
+  visitor, light and dark at 1440, 1280, 834, 390 and 360 px): no
+  sideways scrolling; the photo left (48%, 42% on tablet) with the logo at
+  the top and the words at the bottom; the form column 420 px; on phones
+  the banner and Back to Home above the form; every control at least
+  44 px. Typing ticked the checklist (numbers only, too like the
+  username, then all three), the match line changed, the eye button showed
+  and hid the password with its label and `aria-pressed`, the focus ring
+  showed; a real POST with mismatched passwords came back with the error,
+  the name kept and the passwords empty. Fixed on the way: the logo sat
+  halfway down the photo (the `<picture>` was in the column) and its link
+  was 38 px tall on phones.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1296 tests OK (14 new
+  in `apps/accounts/tests/test_signup_page.py`), 97% coverage. Committed
+  and pushed to `origin/joy-ui-ux-v2` with the owner's permission; not
+  merged into `master` and no pull request.
+
 ## 2026-11-27: Church profile redesign (branch `joy-ui-ux-v2`)
 
 - **Why:** the UI/UX owner redesigned each church's public page as a

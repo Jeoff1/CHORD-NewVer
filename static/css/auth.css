@@ -1,0 +1,296 @@
+/*
+ * The sign-up page (redesign, 27 Nov 2026; Design-System.md, "The sign-up page").
+ * Loaded only by accounts/signup.html; every rule sits under body.au (classes au-*),
+ * so nothing here reaches another page. Colours are the design system's tokens.
+ */
+
+/* --- Tokens ---------------------------------------------------------------- */
+
+.au {
+  --au-page: #E6E2E1;
+  --au-surface: #FFFFFF;
+  --au-text: #173630;
+  --au-heading: #173630;
+  --au-text2: #4A5E59;
+  --au-card-border: transparent;
+  --au-input-border: #6E8A83;   /* 3.73:1 on white: the owner's choice for this page's outlines */
+  --au-input-bg: #FFFFFF;
+  --au-tertiary: #F4F1F0;
+  --au-tab-on-bg: #173630;
+  --au-tab-on-fg: #E5C690;
+  --au-ok: #146C43;
+  --au-err: #B02A37;
+  --au-focus: #173630;
+  --au-ring: rgba(229, 198, 144, .65);
+  --au-gold: #E5C690;
+  --au-on-gold: #173630;
+  --au-link: #173630;
+  --au-link-hover: #0B1F1B;
+  --au-icon: #4A5E59;
+  --au-shadow: 0 30px 70px -30px rgba(23, 54, 48, .35), 0 2px 8px rgba(23, 54, 48, .06);
+  --au-btn-shadow: 0 12px 24px -14px rgba(23, 54, 48, .55);
+  --au-head: Raleway, "Fira Sans Condensed", system-ui, sans-serif;
+  --au-body: "Fira Sans Condensed", system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--au-page);
+  color: var(--au-text);
+  font-family: var(--au-body);
+}
+
+[data-bs-theme="dark"] .au {
+  --au-page: #060F00;
+  --au-surface: #0F241F;
+  --au-text: #E6E2E1;
+  --au-heading: #E5C690;
+  --au-text2: #B9C4BF;
+  --au-card-border: #2E4A44;
+  --au-input-border: #6E8A83;
+  --au-input-bg: #173630;
+  --au-tertiary: #173630;
+  --au-tab-on-bg: #E5C690;
+  --au-tab-on-fg: #060F00;
+  --au-ok: #75B798;
+  --au-err: #EA868F;
+  --au-focus: #E5C690;
+  --au-ring: rgba(229, 198, 144, .28);
+  --au-on-gold: #060F00;
+  --au-link: #E5C690;
+  --au-link-hover: #F3E6C9;
+  --au-icon: #B9C4BF;
+  --au-shadow: 0 30px 70px -28px rgba(0, 0, 0, .7);
+  --au-btn-shadow: 0 12px 24px -14px rgba(0, 0, 0, .8);
+}
+
+.au a { color: var(--au-link); text-underline-offset: 3px; transition: color .18s ease; }
+.au a:hover { color: var(--au-link-hover); }
+.au a:focus-visible,
+.au button:focus-visible { outline: 3px solid var(--au-focus); outline-offset: 3px; border-radius: 10px; }
+.au .chord-icon { flex: 0 0 auto; }
+
+.au-skip { position: absolute; top: 8px; left: 8px; z-index: 5; padding: 10px 14px; border-radius: 10px; background: var(--au-surface); }
+
+/* --- Page and card ------------------------------------------------------- */
+
+.au-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-block: max(48px, env(safe-area-inset-top, 0px)) 48px;
+  padding-left: max(56px, env(safe-area-inset-left, 0px));
+  padding-right: max(56px, env(safe-area-inset-right, 0px));
+}
+
+.au-card {
+  width: 100%;
+  max-width: 1200px;
+  min-height: 820px;
+  box-sizing: border-box;
+  display: flex;
+  padding: 12px;
+  background: var(--au-surface);
+  border: 1px solid var(--au-card-border);
+  border-radius: 28px;
+  box-shadow: var(--au-shadow);
+}
+
+/* --- The photograph ------------------------------------------------------ */
+
+.au-photo {
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 48%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 30px 36px 40px;
+  border-radius: 20px;
+  background: #173630;   /* shows while the photo loads */
+}
+.au-photo picture { position: absolute; inset: 0; }   /* out of the column: the logo stays at the top */
+.au-photo__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 40% 40%; }
+/* Deep green over the photo: darker at the top for the logo, darkest at the bottom for the words. */
+.au-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11, 31, 27, .55) 0%, rgba(23, 54, 48, .08) 26%, rgba(23, 54, 48, .22) 55%, rgba(11, 31, 27, .94) 100%);
+}
+.au-logo, .au-photo__text { position: relative; z-index: 1; }
+.au-logo { display: flex; align-items: center; min-height: 44px; width: 128px; }
+.au-logo .lp-logo { display: block; width: 100%; height: auto; }
+.au-photo__text { display: flex; flex-direction: column; gap: 10px; max-width: 400px; }
+.au-photo__title { margin: 0; font-family: var(--au-head); font-weight: 800; font-size: 2.375rem; line-height: 1.12; letter-spacing: -.01em; color: #FFFFFF; text-wrap: balance; }
+.au-photo__tagline { margin: 0; font-size: 1.0625rem; line-height: 1.5; color: #E6E2E1; }
+
+/* --- The form panel ------------------------------------------------------ */
+
+.au-panel { flex: 1 1 0; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 12px 40px 36px; }
+.au-panel__top { display: flex; justify-content: flex-end; }
+.au-panel__body { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; }
+.au-col { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; }
+
+.au-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 500; font-size: .9375rem; text-decoration: none; }
+.au-back:hover { text-decoration: underline; }
+.au-back--top { display: none; align-self: flex-start; }
+
+.au-tabs { display: flex; padding: 4px; border-radius: 999px; background: var(--au-tertiary); }
+.au .au-tab {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 999px;
+  font-family: var(--au-head);
+  font-weight: 700;
+  font-size: .9375rem;
+  text-decoration: none;
+  color: var(--au-text2);
+  transition: background-color .2s ease, color .2s ease;
+}
+.au .au-tab:hover { color: var(--au-text); }
+.au .au-tab--on,
+.au .au-tab--on:hover { background: var(--au-tab-on-bg); color: var(--au-tab-on-fg); box-shadow: 0 4px 12px -6px rgba(0, 0, 0, .35); }
+
+.au-head { display: flex; flex-direction: column; gap: 6px; }
+.au-title { margin: 0; font-family: var(--au-head); font-weight: 800; font-size: 2rem; line-height: 1.15; letter-spacing: -.015em; color: var(--au-heading); }
+.au-intro { margin: 0; font-size: .9375rem; line-height: 1.45; color: var(--au-text2); }
+
+/* --- Fields -------------------------------------------------------------- */
+
+.au-form { display: flex; flex-direction: column; gap: 14px; }
+.au-names { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.au-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.au-label { font-weight: 500; font-size: .9375rem; }
+.au-control { position: relative; }
+.au-control__icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; color: var(--au-icon); pointer-events: none; }
+
+.au .au-form .form-control {
+  height: 48px;
+  padding: 0 14px;
+  border: 1.5px solid var(--au-input-border);
+  border-radius: 12px;
+  background-color: var(--au-input-bg);
+  background-image: none;
+  color: var(--au-text);
+  font-family: var(--au-body);
+  font-size: 1rem;
+  box-shadow: none;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.au .au-control--icon .form-control { padding-left: 44px; }
+.au .au-control--password .form-control { padding-right: 52px; }
+.au .au-form .form-control:hover { border-color: var(--au-focus); }
+.au .au-form .form-control:focus { border-color: var(--au-focus); box-shadow: 0 0 0 4px var(--au-ring); outline: none; }
+.au .au-form .form-control.is-invalid { border-color: var(--au-err); padding-right: 14px; }
+.au .au-control--password .form-control.is-invalid { padding-right: 52px; }
+.au .au-form .form-control.is-invalid:focus { box-shadow: 0 0 0 4px rgba(176, 42, 55, .18); }
+
+.au-eye {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--au-icon);
+  cursor: pointer;
+  transition: color .18s ease, background-color .18s ease;
+}
+.au-eye[hidden] { display: none; }
+.au-eye:hover { color: var(--au-text); background: var(--au-tertiary); }
+.au-eye span { display: inline-flex; }
+.au-eye span[hidden] { display: none; }
+
+.au-help { margin: 0; font-size: .8125rem; color: var(--au-text2); }
+.au-help--ok { color: var(--au-ok); }
+.au-errors { display: flex; flex-direction: column; gap: 2px; }
+.au-error { margin: 0; font-size: .875rem; font-weight: 500; color: var(--au-err); }
+.au-alert { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--au-err); color: var(--au-err); font-size: .875rem; font-weight: 500; }
+.au-alert p { margin: 0; }
+
+/* The password checklist: two short rows under the field. */
+.au-rules { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.au-rule { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: .8125rem; line-height: 1.3; color: var(--au-text2); }
+.au-rule .chord-icon { display: none; color: var(--au-ok); }
+.au-rule__dot { flex: 0 0 auto; width: 15px; height: 15px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 50%; }
+.au-rule--server .au-rule__dot { border-style: dashed; }
+.au-rule--met { color: var(--au-text); }
+.au-rule--met .chord-icon { display: block; }
+.au-rule--met .au-rule__dot { display: none; }
+
+.au-submit {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--au-gold);
+  color: var(--au-on-gold);
+  font-family: var(--au-head);
+  font-weight: 800;
+  font-size: 1.0625rem;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.au-submit:hover { transform: translateY(-1px); box-shadow: var(--au-btn-shadow); }
+.au-submit:active { transform: none; box-shadow: none; }
+
+.au-switch { margin: 0; text-align: center; font-size: .9375rem; color: var(--au-text2); }
+.au-switch a { font-weight: 600; }
+
+/* --- Tablet -------------------------------------------------------------- */
+
+@media (max-width: 991.98px) {
+  .au-page { padding-block: max(40px, env(safe-area-inset-top, 0px)) 40px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
+  .au-card { max-width: 786px; min-height: 0; padding: 10px; border-radius: 24px; }
+  .au-photo { flex-basis: 42%; padding: 22px 22px 30px; border-radius: 18px; }
+  .au-photo__img { object-position: 42% 45%; }
+  .au-logo { width: 108px; }
+  .au-photo__title { font-size: 1.6875rem; }
+  .au-photo__tagline { font-size: 1rem; }
+  .au-panel { padding: 8px 24px 28px; }
+  .au-col { max-width: 400px; }
+  .au-title { font-size: 1.75rem; }
+}
+
+/* --- Phone: the form first, a short photo banner above it ---------------- */
+
+@media (max-width: 719.98px) {
+  .au-page { justify-content: flex-start; padding-block: max(8px, env(safe-area-inset-top, 0px)) 28px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  .au-back--top { display: inline-flex; }
+  .au-panel__top { display: none; }
+  .au-card { flex-direction: column; padding: 8px; }
+  .au-photo { flex: 0 0 auto; min-height: 184px; padding: 16px 18px 18px; }
+  .au-photo__img { object-position: 45% 58%; }
+  .au-logo { width: 96px; }
+  .au-photo__title { font-size: 1.4375rem; }
+  .au-photo__tagline { display: none; }
+  .au-panel { padding: 20px 12px 16px; }
+  .au-col { max-width: none; }
+  .au-title { font-size: 1.6875rem; }
+}
+
+@media (max-width: 479.98px) {
+  .au-names { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .au *, .au *::before, .au *::after { transition: none !important; }
+  .au-submit:hover { transform: none; }
+}

@@ -34,6 +34,7 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
 | Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle; for the Directory x; for the church profile map-pin, phone, mail and globe | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
 | Landing page | `church/landing.html`, its own `static/css/landing.css` (classes `lp-*`) and `church/static/church/landing.js` | The public front page, redesigned 26-27 Nov 2026: see "The landing page" below |
+| Sign-up page | `accounts/signup.html`, its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/signup.js` | Create an account, redesigned 27 Nov 2026: see "The sign-up page" below |
 
 ## The landing page (redesign, 26-27 Nov 2026)
 
@@ -148,6 +149,63 @@ Designed as an interactive mockup and approved by the UI/UX owner on
   below 480 px so the labels stay on one line.
 - **Icons added:** `map-pin`, `phone`, `mail` and `globe` (the contact
   rows), solid like the rest.
+
+## The sign-up page (redesign, 27 Nov 2026)
+
+Create an account (`/accounts/signup/`) as a split screen. Designed as an
+interactive mockup (v2 after review: a freely licensed photo, a compact
+centred form, a short checklist) and approved by the UI/UX owner on
+2026-11-27; built on branch `joy-ui-ux-v2`. `accounts/signup.html`
+(standalone, with `accounts/includes/signup_field.html` for each field)
+loads its own `static/css/auth.css` (classes `au-*`, every rule under
+`body.au`) and `accounts/static/accounts/signup.js`; no other page loads
+them. Same `SignUpView`, `SignUpForm`, CSRF protection and server-side
+validation; no Google, Facebook or Apple sign-in.
+
+- **Card:** one rounded container (28 px, a soft shadow; a border in dark
+  mode) centred on the page background, at most 1200 px wide.
+- **Photo panel (left, 48%):** the photograph
+  (`images/landing/signup-worship.*`, see `SOURCES.md`) with a deep-green
+  overlay, darker at the top for the gold logo (upper left, to `/`) and
+  darkest at the bottom for **Bringing Worship Together** (Raleway 800,
+  white) and the tagline. Decorative: `alt=""`. An 800 px WebP for phones,
+  1600 px for wide screens, a JPEG fallback.
+- **Form panel (right):** **Back to Home** (the new `arrow-left` icon) at
+  its top right; then a centred column, 420 px at most: the **Sign Up /
+  Sign In** toggle (a pill; the current one green with gold text, gold in
+  dark mode; real links to the two routes), "Create an account" and the
+  view's intro, the fields, the full-width gold **Create Account** button
+  and "Already have an account? Sign in".
+- **Fields:** labels above; 48 px inputs, 12 px corners, outlines
+  `#6E8A83` (3.73:1 on white, the owner's choice for this page), a gold
+  focus ring; icons inside Username (person), Email (mail) and both
+  passwords (lock); First and Last name side by side above 480 px. Help
+  text under each field; the server's errors under it in the danger
+  colour (`id_<field>_error`, which Django's `aria-describedby` names),
+  the form's own errors above the fields.
+- **Password checklist:** Django's help list replaced by four short items
+  in two rows under the field, keeping its id: 8 or more characters, Not
+  only numbers, Unlike your name or email (the script ticks these as the
+  person types) and Not a common password (dashed: only the server knows
+  the list). They mirror `AUTH_PASSWORD_VALIDATORS`; the server still
+  checks every rule. Under Confirm password, "Passwords match" or "don't
+  match yet" while typing.
+- **Show password:** an eye button in each password field (44 px,
+  `aria-pressed`, "Show password" / "Hide password"), hidden until the
+  script runs.
+- **Wording** (approved): the username hint "Up to 150 letters, digits and
+  @ . + - _", "Confirm password" and "Enter the same password again."
+  (`SignUpForm`; the rules are Django's).
+- **Light or dark:** the device's (only signed-out people see the page);
+  the tokens of this note, with gold headings and links in dark mode.
+- **Responsive:** below 992 px the card is 786 px at most and the photo
+  42%; below 720 px the card stacks: Back to Home above it, a 184 px photo
+  banner (logo and heading, no tagline), then the form; names one per row
+  below 480 px. The page scrolls normally; nothing is clipped.
+- **Motion:** input focus and button hover only (a 1 px lift); none with
+  `prefers-reduced-motion`.
+- **Icon added:** `arrow-left` (Back to Home here), solid like the rest.
+  The directory and profile keep their chevron Back links.
 
 ## Tokens
 

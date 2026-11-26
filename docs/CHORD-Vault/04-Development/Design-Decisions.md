@@ -696,6 +696,19 @@ Designed as an interactive mockup first and approved with the owner's rules for 
 
 Tests: `apps/church/tests/test_public_pages.py` (`HomepageTests`, `ProfileRedesignTests`): the same profile for a visitor, someone from another church and a member, with no sign-in to view and nothing private; the sections in the sidebar and the tabs; contact shown once, with links; Back to Churches and home; the empty Announcements tab only while the Module is on; Read more for long announcements; the sign-in note only for requesting; its own styles, the logo and its fallback.
 
+#### Sign-up page redesign (UI/UX owner, 27 Nov 2026)
+
+Designed as an interactive mockup first and approved by the owner after one round of changes; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-up page"). The owner's choices:
+- **A split screen** after the owner's reference: the photo panel left (logo upper left, heading and tagline at the bottom), a compact centred form right with the Sign Up / Sign In toggle above it, one rounded container.
+- **The photograph follows the existing rule** (freely licensed, no recognisable faces): the owner's own photo was set aside for "Bearded guitar concert" (Austin Neill, CC0), at least 1600 px wide, the face softened into the stage haze; recorded in `static/images/landing/SOURCES.md`.
+- **Input outlines `#6E8A83`** on this page, which pass 3:1 on white ([[Design-System]], "Contrast", noted the light-mode `#9FA7A2` does not).
+- **Back to Home uses a new `arrow-left` icon.** The directory and profile pages keep their chevron links for now.
+- **A compact password checklist** in place of Django's help list, mirroring the same validators; the server still checks every rule.
+- **Wording:** the username hint "Up to 150 letters, digits and @ . + - _", "Confirm password", "Enter the same password again." (`SignUpForm`, so the church registration page's account fields read the same).
+- No other sign-in services (CHORD has none).
+
+Tests: `apps/accounts/tests/test_signup_page.py` (`SignUpPageTests`, `SignUpValidationTests`): its own page with every form field once, CSRF and one heading; the photo panel's words and decorative images; the toggle, Sign in and Back to Home links; no other sign-in services; the checklist keeping the help text's id, the show buttons hidden without the script; the approved wording; its own stylesheet, script and photos exist, with their sources; its CSS scoped to `.au` and not loaded by the sign-in or home pages; mismatched passwords, each of Django's four password rules, a taken username and a missing email shown on the page with what was typed kept (never the passwords); a good account created as before; a POST without the CSRF token refused; signed-in people sent home.
+
 ---
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])

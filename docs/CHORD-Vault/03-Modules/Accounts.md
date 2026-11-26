@@ -18,7 +18,12 @@ the core; it can't be switched off. App: `apps/accounts`.
   memberships; a user from another church gives 404.
 - **Create an account** (`/accounts/signup/`, Phase 9B): anyone may make
   their own account (username, name, email, password). It belongs to no
-  church; its home says so and offers "Sign in your church".
+  church; its home says so and offers "Sign in your church". Since 27 Nov
+  2026 its own split-screen page (`accounts/signup.html`, `auth.css`,
+  `signup.js`; [[Design-System]], "The sign-up page"): a photo panel, a
+  Sign Up / Sign In toggle, a short password checklist and show-password
+  buttons. `SignUpForm` only changes wording (the username hint, "Confirm
+  password"); its fields and Django's validators are unchanged.
 - **Add an existing account** (`/accounts/users/add-existing/`, needs
   `accounts.add_user`): finds one account by its exact username, or its
   exact email ignoring case (`memberships.find_account`); never a partial

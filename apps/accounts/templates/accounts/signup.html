@@ -1,0 +1,88 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  {% comment %}
+    Create an account (redesigned 27 Nov 2026; Design-System.md, "The sign-up page"): a split
+    screen, the photograph left and the form right. Its own stylesheet and script, so nothing
+    here reaches another page. Only signed-out people see it (SignUpView sends others home), so
+    light or dark follows the device, as on every signed-out page.
+  {% endcomment %}
+  <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); })();</script>
+  <title>{{ page_title }} · CHORD</title>
+  <meta name="description" content="Create your CHORD account to plan worship with your church.">
+  <link rel="preload" as="image" type="image/webp" imagesrcset="{% static 'images/landing/signup-worship-800.webp' %} 800w, {% static 'images/landing/signup-worship.webp' %} 1600w" imagesizes="(max-width: 719.98px) 100vw, (max-width: 991.98px) 42vw, 600px">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chord.css' %}">
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+  <script src="{% static 'accounts/signup.js' %}" defer></script>
+</head>
+<body class="au">
+  <a class="visually-hidden-focusable au-skip" href="#au-form">Skip to the form</a>
+
+  <div class="au-page">
+    <a class="au-back au-back--top" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" %}Back to Home</a>
+
+    <main class="au-card">
+      <aside class="au-photo">
+        <picture>
+          <source type="image/webp" srcset="{% static 'images/landing/signup-worship-800.webp' %} 800w, {% static 'images/landing/signup-worship.webp' %} 1600w" sizes="(max-width: 719.98px) 100vw, (max-width: 991.98px) 42vw, 600px">
+          <img class="au-photo__img" src="{% static 'images/landing/signup-worship.jpg' %}" alt="" width="1600" height="2580" decoding="async" fetchpriority="high">
+        </picture>
+        <a class="au-logo" href="{% url 'home' %}" aria-label="CHORD, home">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
+        <div class="au-photo__text">
+          <p class="au-photo__title">Bringing Worship Together</p>
+          <p class="au-photo__tagline">A space for churches to connect, organize, and plan meaningful worship experiences.</p>
+        </div>
+      </aside>
+
+      <section class="au-panel" aria-labelledby="au-title">
+        <div class="au-panel__top">
+          <a class="au-back au-back--panel" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" %}Back to Home</a>
+        </div>
+
+        <div class="au-panel__body">
+          <div class="au-col">
+            <nav class="au-tabs" aria-label="Account">
+              <a class="au-tab au-tab--on" href="{% url 'accounts:signup' %}" aria-current="page">Sign Up</a>
+              <a class="au-tab" href="{% url 'accounts:login' %}">Sign In</a>
+            </nav>
+
+            <div class="au-head">
+              <h1 class="au-title" id="au-title">{{ page_title }}</h1>
+              {% if intro %}<p class="au-intro">{{ intro }}</p>{% endif %}
+            </div>
+
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags|default:'info' }} mb-0" role="alert">{{ message }}</div>
+            {% endfor %}
+
+            <form class="au-form" id="au-form" method="post" novalidate data-au-signup>
+              {% csrf_token %}
+              {% if form.non_field_errors %}
+                <div class="au-alert" role="alert">{% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div>
+              {% endif %}
+              {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+              {% include "accounts/includes/signup_field.html" with field=form.username icon="person" %}
+              <div class="au-names">
+                {% include "accounts/includes/signup_field.html" with field=form.first_name %}
+                {% include "accounts/includes/signup_field.html" with field=form.last_name %}
+              </div>
+              {% include "accounts/includes/signup_field.html" with field=form.email icon="mail" %}
+              {% include "accounts/includes/signup_field.html" with field=form.password1 icon="lock" password=True rules=True %}
+              {% include "accounts/includes/signup_field.html" with field=form.password2 icon="lock" password=True match=True %}
+
+              <button type="submit" class="au-submit">{{ submit_label }}</button>
+            </form>
+
+            <p class="au-switch">Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
