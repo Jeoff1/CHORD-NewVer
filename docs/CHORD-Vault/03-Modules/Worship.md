@@ -208,8 +208,9 @@ Spotify safeguards in `apps/songs`):
   translator died more than 70 years ago. Running it again adds only
   missing ones.
 - **Screens**:
-  - the service page's **Suggested lineup** panel (named by the "lineup"
-    Label), only for people with `worship.suggest_songs`: "Find songs"
+  - the **Suggested lineup** panel on the Song Lineup page (the service
+    page before Phase 9C; named by the "lineup" Label), only for people
+    with `worship.suggest_songs`: "Find songs"
     (when Spotify is set up and not paused) and "Rank the song pool only";
     while a run is in progress it shows the stage and reloads itself every
     two seconds (HTMX), and after a few minutes of waiting says how to
@@ -552,14 +553,10 @@ wireframes** ([[Design-Decisions]], A7):
   Songs, Reports (`templatetags/worship_ui.py`). The schedule's Lineup
   column shows Draft only to people who plan; its Team column ("N of M
   accepted") only while Teams is on, for people who may see teams.
-- **Service page:** a step bar for people who plan
-  (`views/schedule.py`, `planning_steps`; `includes/planning_steps.html`),
-  the next step's card first (`includes/theme_card.html`,
-  `lineup_card.html` with "Review and confirm", `suggestions_card.html`,
-  folded once a lineup is saved), and Team, Details and Headcount on the
-  right.
-- **Lineup:** Confirm on top, the rest under More; song rows with Move,
-  Lock and a "More for this song" menu.
+- **Service page:** replaced by Phase 9C (below).
+- **Lineup:** the rest under More; song rows with Move, Lock and a "More
+  for this song" menu. Since Phase 9C the one button is "Continue to
+  confirm".
 - **Lineup song page:** Previous and Next song, "song N of M", the sheet's
   one toolbar (Service key, My key, Capo), and the Listen card, Notes for
   the team and This lineup on the right. A song with no service key is
@@ -572,6 +569,36 @@ wireframes** ([[Design-Decisions]], A7):
 - Tests: `apps/worship/tests/test_schedule_screens.py`,
   `test_service_screen.py`, `test_lineup_screen.py`,
   `test_lineup_song_screen.py`.
+
+Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
+"Phase 9C"; the [[Glossary]]'s Planning Steps):
+
+- **Planning Steps** (`planning.py`, `planning_context`): Theme, the
+  church's team (the `team` Label, default "Praise Team"; only while Teams
+  is on), Song Lineup ("Song <lineup Label>") and Confirm, each a link to
+  its page (`includes/planning_steps.html`). The team step is suggested,
+  never required: it stops being the next step once a search ran or a
+  lineup exists, or when the roster is closed.
+- **Service page:** the step bar and the **next-step panel**
+  (`includes/next_step.html`) for people who plan, never on a cancelled
+  service; then the theme card and the lineup card (which shows the
+  Spotify playlist line once confirmed). Suggestions are no longer here.
+- **Song Lineup page** (`views/lineups.py`, `LineupView`,
+  `lineup_detail.html`): opens before a lineup exists for people with
+  `worship.suggest_songs` (the suggestions panel), and still 404s for the
+  team until a lineup is confirmed. With a lineup: the review, a playlist
+  preview (`includes/playlist_preview.html`: which songs have a track,
+  where the playlist will be saved, Listen links) and the folded
+  suggestions. "Find songs" and the one-click corrections return here.
+- **Confirm rundown** (`ConfirmView` GET, `lineup_confirm.html`): the
+  service, theme, team, songs and warnings (`rundown_warnings`), with
+  Confirm for people who may confirm; confirming returns to the service
+  page.
+- Church settings used: the Teams Module switch and the `team`, `lineup`,
+  `pastor` and `sermon` Labels.
+- Tests: `apps/worship/tests/test_planning_steps.py`, and the updated
+  `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_views.py`,
+  `test_suggestion_views.py`.
 
 ## Permissions
 

@@ -19,6 +19,13 @@ Phase 9 is built only if time remains before the final presentation
 decision 0014), comes before the rest of Phase 9A. The rest of the
 core-first rule still holds.
 
+**Top priority (approved 2026-11-26): Phase 9C, guided service planning.**
+The owner's changes to planning a worship service come before everything
+else still to build (A6, A7, Phase 9 and Phase 10): four steps (Theme,
+the church's Praise Team, Song Lineup, Confirm) with a next-step panel
+that tells the pastor what to do and where to click. It is part of the
+main module, so the core-first rule agrees with it.
+
 **Supporting church management stays minimal.** Build only what helps the
 worship workflow, in its smallest useful form:
 

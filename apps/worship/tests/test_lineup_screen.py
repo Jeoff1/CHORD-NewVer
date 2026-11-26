@@ -35,7 +35,9 @@ class LineupScreenTests(TestCase):
     def test_the_leader_gets_confirm_more_and_song_rows(self):
         self.client.force_login(self.leader)
         page = self.client.get(url(self.service, "lineup"))
-        self.assertContains(page, ">Confirm lineup</button>")
+        # Phase 9C: confirming happens on the rundown.
+        self.assertContains(page, ">Continue to confirm</a>")
+        self.assertNotContains(page, ">Confirm lineup</button>")
         self.assertContains(page, ">More</button>")
         self.assertContains(page, "Regenerate around locked songs")
         self.assertNotContains(page, "Send back to the worship leader")
@@ -49,7 +51,9 @@ class LineupScreenTests(TestCase):
         self.assertContains(page, ">Open the song page</a>")
         self.assertContains(page, ">Remove from the lineup</button>")
         self.assertContains(page, ">Add a song from the pool</a>")
-        self.assertContains(page, "Saved when the lineup is confirmed.")
+        # The playlist preview (Phase 9C) replaces "Saved when confirmed".
+        self.assertContains(page, 'id="playlist-title"')
+        self.assertNotContains(page, "Saved when the lineup is confirmed.")
 
     def test_the_pastor_also_gets_send_back(self):
         self.client.force_login(self.pastor)

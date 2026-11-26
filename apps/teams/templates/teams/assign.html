@@ -7,7 +7,25 @@
   <div class="row justify-content-center">
     <div class="col-lg-8 col-xl-7">
       {% url 'worship:service' public_id=service.public_id as back_url %}{% include "includes/back_link.html" with url=back_url label=service %}
-      <h1 class="h3 mb-3">Assign the team</h1>
+      {% label "team" as team_word %}
+      {# Phase 9C: the page stays open after each assignment, showing the team so far; Done returns to the service. #}
+      <div class="chord-page-header">
+        <div class="chord-page-header__text"><h1 class="h3 mb-0">Assign the {{ team_word }}</h1></div>
+        <div class="chord-page-header__actions"><a href="{{ back_url }}" class="btn btn-primary chord-btn">Done</a></div>
+      </div>
+
+      <section class="card shadow-sm mb-3" aria-labelledby="team-so-far-title">
+        <div class="card-body">
+          <div class="chord-card-head"><h2 id="team-so-far-title" class="card-title">{{ team_word }} so far</h2></div>
+          <ul class="list-unstyled mb-0 small">
+            {% for assignment in team %}
+              <li class="d-flex flex-wrap align-items-center gap-2 py-1"><span><span class="text-body-secondary">{{ assignment.part }}</span> · {{ assignment.person|person_name }}</span>{% include "includes/status_pill.html" with status=assignment.reply %}</li>
+            {% empty %}
+              <li class="text-body-secondary">Nobody is assigned yet.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
 
       {% if closed %}
         <div class="alert alert-secondary">{{ closed }}</div>

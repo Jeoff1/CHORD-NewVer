@@ -107,10 +107,13 @@ DEFAULT_ROLE_PERMISSIONS = {
         "songs.view_chordsheet",
         "songs.add_chordsheet",
         "songs.approve_chordsheet",
-        # Teams (Phase 8): sees the roster and each service's team
+        # Teams (Phase 8): sees the roster and each service's team; since
+        # Phase 9C the pastor also assigns it (the planning steps' second step)
         "teams.view_teampart",
         "teams.view_teamprofile",
         "teams.view_assignment",
+        "teams.add_assignment",
+        "teams.delete_assignment",
         # Announcements (Phase 8)
         "announcements.add_announcement",
         # Occasions (Phase 9A, A5): they book occasions, keep the occasion

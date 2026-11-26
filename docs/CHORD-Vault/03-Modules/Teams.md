@@ -114,13 +114,19 @@ Permissions (default roles, `apps/accounts/roles.py`):
 | `teams.view_teamprofile`    | Yes            | Yes            |             |
 | `teams.change_teamprofile`  | Yes            |                |             |
 | `teams.view_assignment` (the team) | Yes     | Yes            | Yes         |
-| `teams.add_assignment`      | Yes            |                |             |
-| `teams.delete_assignment`   | Yes            |                |             |
+| `teams.add_assignment`      | Yes            | Yes (Phase 9C) |             |
+| `teams.delete_assignment`   | Yes            | Yes (Phase 9C) |             |
 
 Replies, swaps, a person's own Team Profile and Blackout Dates need only
 `teams.view_assignment`. The Administrator holds
-every permission; a church may give `teams.add_assignment` to a pastor per
-user.
+every permission. Since Phase 9C (owner, 2026-11-26) Pastoral Staff
+assigns the team by default too, as the second Planning Step; a church may
+take it away in its roles.
+
+Since Phase 9C the assign page (`teams/assign.html`) shows the team so far
+and stays open after each assignment; "Done" returns to the service. The
+service page's team card and the assign page are named with the church's
+`team` Label (default "Praise Team").
 
 Tests: `apps/teams/tests/test_rostering.py` (the rules),
 `test_views.py` (pages, permissions, module switching), `test_swaps.py`

@@ -1,4 +1,4 @@
-"""The suggestions panel on the service page, its settings pages, and who
+"""The suggestions panel on the Song Lineup page (Phase 9C), its settings pages, and who
 may see them. Suggestions are an unconfirmed lineup: team members never see
 them (Design-Decisions, Phase 5)."""
 
@@ -76,7 +76,7 @@ class PanelTests(SuggestionViewTestCase):
         finished_run(self.service)
         for user in (self.leader, self.pastor):
             self.client.force_login(user)
-            response = self.client.get(url(self.service, "service"))
+            response = self.client.get(url(self.service, "lineup"))
             self.assertContains(response, "Suggested lineup")
             self.assertContains(response, "Placed Song")
             self.assertContains(
@@ -94,6 +94,8 @@ class PanelTests(SuggestionViewTestCase):
         self.assertNotContains(response, "Suggested lineup")
         self.assertNotContains(response, "Placed Song")
         self.assertNotIn("placed", response.context)
+        # The Song Lineup page doesn't exist for them before a lineup does.
+        self.assertEqual(self.client.get(url(self.service, "lineup")).status_code, 404)
         self.assertEqual(
             self.client.get(url(self.service, "suggestions")).status_code, 403
         )
@@ -109,23 +111,23 @@ class PanelTests(SuggestionViewTestCase):
             labels={"lineup": {"singular": "Set list", "plural": "Set lists"}}
         )
         self.client.force_login(self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "Suggested set list")
 
     def test_without_a_theme_the_panel_says_to_post_it(self):
         service = make_service()
         self.client.force_login(self.leader)
-        response = self.client.get(url(service, "service"))
+        response = self.client.get(url(service, "lineup"))
         self.assertContains(response, "Post the theme first")
         self.assertNotContains(response, "Rank the song pool only")
 
     def test_spotify_search_is_offered_only_when_spotify_is_set_up(self):
         self.client.force_login(self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertNotContains(response, "Find songs")
         self.assertContains(response, "Spotify isn't set up")
         with override_settings(**SPOTIFY_KEYS):
-            response = self.client.get(url(self.service, "service"))
+            response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "Find songs")
 
     @override_settings(**SPOTIFY_KEYS)
@@ -137,7 +139,7 @@ class PanelTests(SuggestionViewTestCase):
             blocked_until=now + datetime.timedelta(hours=24),
         )
         self.client.force_login(self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "CHORD has paused Spotify until")
         self.assertNotContains(response, "Find songs")
         self.assertContains(response, "Rank the song pool only")
@@ -178,7 +180,7 @@ class PanelTests(SuggestionViewTestCase):
             service=self.service, status=Status.FAILED, message="Spotify answered 503."
         )
         self.client.force_login(self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "Spotify answered 503.")
 
     def test_run_details_need_the_view_search_run_permission(self):
@@ -187,11 +189,11 @@ class PanelTests(SuggestionViewTestCase):
             perms=["worship.view_worshipservice", "worship.suggest_songs"]
         )
         self.client.force_login(only_suggest)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "Placed Song")
         self.assertNotContains(response, "About this search")
         self.client.force_login(self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "About this search")
         self.assertContains(response, "5 requests")
 
@@ -203,16 +205,16 @@ class PanelTests(SuggestionViewTestCase):
             perms=["worship.view_worshipservice", "worship.suggest_songs"]
         )
         self.client.force_login(no_songs)
-        self.assertNotContains(self.client.get(url(self.service, "service")), song_url)
+        self.assertNotContains(self.client.get(url(self.service, "lineup")), song_url)
         self.client.force_login(self.leader)
-        self.assertContains(self.client.get(url(self.service, "service")), song_url)
+        self.assertContains(self.client.get(url(self.service, "lineup")), song_url)
 
 
 class SuggestTests(SuggestionViewTestCase):
     def test_asking_for_suggestions_queues_a_run(self):
         self.client.force_login(self.leader)
         response = self.client.post(url(self.service, "suggest"), {"source": "spotify"})
-        self.assertRedirects(response, url(self.service, "service") + "#suggestions")
+        self.assertRedirects(response, url(self.service, "lineup") + "#suggestions")
         run = SearchRun.objects.get()
         self.assertEqual(run.status, Status.QUEUED)
         self.assertTrue(run.use_spotify)
@@ -425,11 +427,11 @@ class CorrectionTests(SuggestionViewTestCase):
 
     def test_the_panel_offers_corrections_to_people_who_may_correct_songs(self):
         self.client.force_login(self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, self.feel_url(self.placed))
         self.assertContains(response, "Not a worship song")
         self.client.force_login(self.pastor)  # may suggest, not edit songs
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertNotContains(response, self.feel_url(self.placed))
 
     def test_setting_a_feel_keeps_it_places_again_and_is_audited(self):
@@ -452,7 +454,7 @@ class CorrectionTests(SuggestionViewTestCase):
     def test_without_htmx_the_page_reloads(self):
         self.client.force_login(self.leader)
         response = self.client.post(self.feel_url(self.other), {"feel": "slow"})
-        self.assertRedirects(response, url(self.service, "service") + "#suggestions")
+        self.assertRedirects(response, url(self.service, "lineup") + "#suggestions")
 
     def test_a_feel_must_be_one_of_the_three(self):
         self.client.force_login(self.leader)
@@ -467,7 +469,7 @@ class CorrectionTests(SuggestionViewTestCase):
         song.refresh_from_db()
         self.assertEqual(song.worship_check, Song.WorshipCheck.REJECTED)
         self.assertEqual(song.reviewed_by, self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertNotContains(response, "Placed Song")
         self.other.refresh_from_db()
         self.assertIsNotNone(self.other.slot)  # took the free slot
@@ -492,7 +494,7 @@ class CorrectionTests(SuggestionViewTestCase):
 class ThemeNotesHintTests(SuggestionViewTestCase):
     def test_a_theme_without_notes_gets_a_hint(self):
         self.client.force_login(self.pastor)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertContains(response, "The theme has no sermon notes yet")
         self.assertContains(response, url(self.service, "theme"))
 
@@ -501,5 +503,5 @@ class ThemeNotesHintTests(SuggestionViewTestCase):
         theme.notes = "The grace that forgives and restores."
         theme.save()
         self.client.force_login(self.leader)
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertNotContains(response, "has no sermon notes")

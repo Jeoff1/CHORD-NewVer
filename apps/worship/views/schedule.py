@@ -25,7 +25,7 @@ from apps.church.scoping import ChurchFormKwargsMixin, ChurchScopedMixin
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.teams.views import service_team_context
 
-from .. import bookings, scheduling, suggesting
+from .. import bookings, scheduling
 from ..forms import (
     AttendanceForm,
     ScheduleAheadForm,
@@ -34,10 +34,11 @@ from ..forms import (
     TemplateForm,
     ThemeForm,
 )
-from ..models import Lineup, SearchRun, ServiceTemplate, Theme, WorshipService
+from ..models import Lineup, ServiceTemplate, Theme, WorshipService
+from ..planning import planning_context
 from .base import ServiceMixin, WorshipMixin, can_plan, service_url
 from .lineups import lineup_context
-from .suggestions import can_suggest, panel_context
+from .suggestions import can_suggest
 
 # --- Services ----------------------------------------------------------------
 
@@ -164,86 +165,20 @@ class ServiceDetailView(ServiceMixin, DetailView):
             theme=service.posted_theme,
             can_plan=can_plan(user),
             attendance_form=AttendanceForm(instance=service),
+            # Suggestions live on the Song Lineup page since Phase 9C.
             can_suggest=can_suggest(user),
         )
-        # Suggestions are an unconfirmed lineup: only people who may suggest
-        # songs get them, never team members.
-        if context["can_suggest"]:
-            context.update(panel_context(service, user))
         # The service's team, while Teams is on (Phase 8).
         context.update(service_team_context(service, user))
         # The lineup itself: team members get it only once it is confirmed.
         lineup = Lineup.objects.filter(service=service).first()
         if user.has_perm("worship.view_lineup"):
             context.update(lineup_context(lineup, user))
-        # The step bar and the order of the cards, for people who plan
-        # (Phase 9A, A7).
+        # The step bar and the next-step panel, for people who plan
+        # (Phase 9C).
         if context["can_plan"]:
-            run = suggesting.latest_run(service)
-            context.update(planning_steps(service, lineup, run))
+            context.update(planning_context(service, user))
         return context
-
-
-def planning_steps(service, lineup, run):
-    """Where planning a service stands: five steps, each done or not, the
-    first one not done being current; and which card comes first."""
-    ranked = (
-        run.suggestions.count()
-        if run is not None and run.status == SearchRun.Status.DONE
-        else 0
-    )
-    confirmed = lineup is not None and lineup.is_confirmed
-    if lineup is None:
-        lineup_state = "None yet"
-    elif confirmed:
-        lineup_state = "Confirmed"
-    else:
-        lineup_state = "Draft, to review"
-    steps = [
-        {
-            "key": "theme",
-            "label": "Theme",
-            "state": "Posted" if service.posted_theme else "Not posted",
-            "done": service.posted_theme is not None,
-        },
-        {
-            "key": "suggestions",
-            "label": "Suggestions",
-            "state": f"{ranked} song{'' if ranked == 1 else 's'} ranked"
-            if ranked
-            else "Not yet",
-            "done": bool(ranked) or lineup is not None,
-        },
-        {"key": "lineup", "label": "Lineup", "state": lineup_state, "done": confirmed},
-        {
-            "key": "confirmed",
-            "label": "Confirmed",
-            "state": "Team sees it" if confirmed else "Not yet",
-            "done": confirmed,
-        },
-        {
-            "key": "playlist",
-            "label": "Playlist",
-            "state": "Saved on Spotify"
-            if lineup is not None and lineup.spotify_playlist_id
-            else "Not saved yet",
-            "done": lineup is not None and bool(lineup.spotify_playlist_id),
-        },
-    ]
-    current = next((step for step in steps if not step["done"]), None)
-    if current is not None:
-        current["current"] = True
-    key = current["key"] if current else "lineup"
-    if key in ("lineup", "confirmed", "playlist"):
-        first_card = "lineup" if lineup is not None else "suggestions"
-    else:
-        first_card = key
-    return {
-        "steps": steps,
-        "first_card": first_card,
-        "ranked_count": ranked,
-        "latest_run": run,
-    }
 
 
 class ServiceFormMixin(

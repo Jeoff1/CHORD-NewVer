@@ -35,19 +35,21 @@ class ServiceScreenTests(TestCase):
         self.assertIn("Theme", current[:400])
         self.assertIn("Not posted", current[:400])
 
-    def test_a_draft_lineup_is_the_next_step_and_comes_first(self):
+    def test_a_draft_lineup_makes_confirm_the_next_step(self):
+        # Phase 9C: the team step was skipped (nobody assigned), so it stays
+        # not done but is no longer the next step once songs exist.
         make_theme(self.service, title="Grace that forgives", notes="Outline here")
         make_lineup(self.service, [make_song(title="Opening song")], confirmed=False)
         self.client.force_login(self.pastor)
         page = self.client.get(self.url)
         content = page.content.decode()
-        current = content[content.index('aria-current="step"') :][:400]
-        self.assertIn("Lineup", current)
-        self.assertIn("Draft, to review", current)
-        self.assertEqual(content.count("is-done"), 2)  # Theme, Suggestions
-        self.assertContains(page, "Next step: review and confirm.")
+        current = content[content.index('aria-current="step"') :][:600]
+        self.assertIn("Confirm", current)
+        self.assertEqual(content.count("chord-steps__step is-done"), 2)
+        self.assertContains(page, "1 song, draft")
+        self.assertContains(page, "Next: confirm the lineup")
         self.assertContains(page, ">Review and confirm</a>")
-        self.assertLess(content.index('id="lineup"'), content.index('id="theme-title"'))
+        self.assertLess(content.index('id="next-step"'), content.index('id="theme"'))
         self.assertContains(page, "<details")
         self.assertContains(page, "Outline here")
 

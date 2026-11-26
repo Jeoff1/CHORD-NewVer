@@ -26,20 +26,10 @@
 
   <div class="chord-columns">
     <div class="chord-main">
-      {% comment %}The next step's card comes first (Phase 9A A7); without a step bar, the theme leads.{% endcomment %}
-      {% if first_card == "lineup" %}
-        {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
-        {% include "worship/includes/theme_card.html" %}
-        {% if can_suggest %}{% include "worship/includes/suggestions_card.html" %}{% endif %}
-      {% elif first_card == "suggestions" %}
-        {% if can_suggest %}{% include "worship/includes/suggestions_card.html" %}{% endif %}
-        {% include "worship/includes/theme_card.html" %}
-        {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
-      {% else %}
-        {% include "worship/includes/theme_card.html" %}
-        {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
-        {% if can_suggest %}{% include "worship/includes/suggestions_card.html" %}{% endif %}
-      {% endif %}
+      {% comment %}Phase 9C: the next-step panel leads, for people who plan; suggestions are on the Song Lineup page.{% endcomment %}
+      {% if next_step %}{% include "worship/includes/next_step.html" %}{% endif %}
+      {% include "worship/includes/theme_card.html" %}
+      {% if perms.worship.view_lineup %}{% include "worship/includes/lineup_card.html" %}{% endif %}
     </div>
 
     <div class="chord-side">

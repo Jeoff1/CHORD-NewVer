@@ -238,10 +238,19 @@ class AssignViewTests(TeamsViewTestCase):
         response = self.client.post(
             assign_page(self.service), {"part": self.bass.pk, "person": self.member.pk}
         )
-        self.assertRedirects(response, service_page(self.service))
+        # Phase 9C: the page stays open, with the team so far, and "Done"
+        # goes back to the service.
+        self.assertRedirects(response, assign_page(self.service))
         assignment = Assignment.objects.get()
         self.assertEqual(assignment.person, self.member)
         self.assertEqual(assignment.assigned_by, self.leader)
+        page = self.client.get(assign_page(self.service))
+        self.assertContains(page, "Praise Team so far")
+        self.assertContains(page, "Kim Cruz")
+        self.assertContains(
+            page,
+            f'href="{service_page(self.service)}" class="btn btn-primary chord-btn">Done',
+        )
 
     def test_people_without_the_part_arent_offered(self):
         outsider = make_user(first_name="Lee", last_name="Outsider")
@@ -295,7 +304,8 @@ class AssignViewTests(TeamsViewTestCase):
         self.assertEqual(self.client.post(assign_page(self.service)).status_code, 404)
 
     def test_people_without_the_permission_are_refused(self):
-        for user in (self.member, self.pastor, self.office):
+        # Pastors may assign since Phase 9C.
+        for user in (self.member, self.office):
             self.client.force_login(user)
             self.assertEqual(
                 self.client.get(assign_page(self.service)).status_code, 403
@@ -410,9 +420,11 @@ class DefaultRoleTests(TestCase):
         leader = DEFAULT_ROLE_PERMISSIONS["worship_leader"]
         self.assertIn("teams.add_assignment", leader)
         self.assertIn("teams.change_teamprofile", leader)
-        self.assertNotIn(
-            "teams.add_assignment", DEFAULT_ROLE_PERMISSIONS["pastoral_staff"]
-        )
+        # Phase 9C (owner, 2026-11-26): the pastor assigns the team too.
+        pastor = DEFAULT_ROLE_PERMISSIONS["pastoral_staff"]
+        self.assertIn("teams.add_assignment", pastor)
+        self.assertIn("teams.delete_assignment", pastor)
+        self.assertNotIn("teams.change_teamprofile", pastor)
         self.assertEqual(
             [
                 p

@@ -1,26 +1,21 @@
 {% load church %}
-{# The service's lineup on the service page. Team members see it only once it is confirmed; a lineup that was confirmed and is a draft again shows them a note instead. A draft shows the next step to people who may change it (Phase 9A A7). #}
+{# The service's lineup on the service page. Team members see it only once it is confirmed; a lineup that was confirmed and is a draft again shows them a note instead. The next step for people who plan is in the next-step panel (Phase 9C). #}
 {% label "lineup" as lineup_word %}{% label "pastor" as pastor_word %}
 {% if lineup and lineup_visible or lineup and lineup_revising %}
   {% url 'worship:lineup' public_id=service.public_id as lineup_url %}
-  <section id="lineup" class="card shadow-sm{% if first_card == 'lineup' and not lineup.is_confirmed %} border-2{% endif %}" aria-labelledby="lineup-title">
+  <section id="lineup" class="card shadow-sm" aria-labelledby="lineup-title">
     <div class="card-body">
       <div class="chord-card-head">
         <h2 id="lineup-title" class="card-title">{{ lineup_word }}
           {% if lineup_visible %}{% if lineup.is_confirmed %}{% include "includes/status_pill.html" with status="confirmed" %}{% else %}{% include "includes/status_pill.html" with status="draft" %}{% endif %}{% endif %}
         </h2>
-        {% if lineup_visible and lineup.is_confirmed or lineup_visible and not perms.worship.change_lineup %}<a href="{{ lineup_url }}" class="fw-semibold">Open</a>{% endif %}
+        {% if lineup_visible %}<a href="{{ lineup_url }}" class="fw-semibold">Open</a>{% endif %}
       </div>
       {% if not lineup_visible %}
         <p class="text-body-secondary mb-0">This {{ lineup_word|lower }} is being revised. It shows here again once it is confirmed.</p>
       {% else %}
-        {% if not lineup.is_confirmed and perms.worship.change_lineup %}
-          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-            <p class="mb-0">Next step: review and confirm. The team sees it once it is confirmed.</p>
-            <a href="{{ lineup_url }}" class="btn btn-primary chord-btn">Review and confirm</a>
-          </div>
-        {% endif %}
         {% if lineup.edited_at %}<p class="small text-body-secondary mb-2">{% include "worship/includes/lineup_mark.html" %}</p>{% endif %}
+        {% if lineup.is_confirmed %}{% include "worship/includes/spotify_playlist.html" %}{% endif %}
         {% if lineup_items %}<p class="small text-body-secondary mb-1">{{ sheets_ready }} of {{ lineup_items|length }} song{{ lineup_items|length|pluralize }} {{ lineup_items|length|pluralize:"has,have" }} a chord sheet.</p>{% endif %}
         <ol class="mb-0">
           {% for item in lineup_items %}

@@ -937,6 +937,38 @@ a {
   color: var(--bs-secondary-color);
 }
 
+/* Each step is a link (Phase 9C): the whole box is clickable. */
+.chord-steps__step {
+  position: relative;
+}
+
+.chord-steps__step:has(.stretched-link):hover {
+  border-color: var(--chord-border-strong, #9FA7A2);
+}
+
+.chord-steps__label .stretched-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.chord-steps__step.is-here .chord-steps__label {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* The next-step panel on the service page (Phase 9C). */
+.chord-next-step {
+  border-left: 4px solid #E5C690;
+}
+
+.chord-next-step.is-done {
+  border-left-color: #173630;
+}
+
+[data-bs-theme="dark"] .chord-next-step.is-done {
+  border-left-color: #E5C690;
+}
+
 /* A song row on the lineup page: move, the song, lock and its menu. */
 .chord-song-row {
   display: flex;

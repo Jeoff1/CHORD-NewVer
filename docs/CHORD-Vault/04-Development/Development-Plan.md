@@ -24,7 +24,8 @@ flowchart LR
   P6 --> P8[8 Teams and announcements]
   P8 --> P9A[9A Adviser requests]
   P9A --> P9B[9B Church Platform]
-  P9B --> P10
+  P9B --> P9C[9C Guided service planning]
+  P9C --> P10
   P9A --> P9[9 Learning to rank]
   P6 --> P9
   P7 --> P10[10 Hardening and release]
@@ -46,8 +47,9 @@ flowchart LR
 | 8     | Teams and announcements       | M    | 6          | Done (2026-11-23) |
 | 9A    | Adviser requests (24 Nov)     | L    | 8          | Paused for 9B (A1–A5 done) |
 | 9B    | Church Platform (multi-church) | L   | 9A (A1–A5) | Done (2026-11-26), merged into `master` |
+| 9C    | Guided service planning (top priority) | M | 9B   | Built (2026-11-26); waiting for the owner's click-through |
 | 9     | Learning to rank              | S    | 6, after 9A | Not started (only if time remains) |
-| 10    | Hardening and release         | M    | 7, 8, 9A, 9B (9 if built) | Not started   |
+| 10    | Hardening and release         | M    | 7, 8, 9A, 9B, 9C (9 if built) | Not started   |
 
 This **Status** column is the record of phase progress. Statuses: Done
 (with date), In progress, Next, Not started. Sizes are relative
@@ -590,6 +592,41 @@ missing from every list and form; permissions come only from the roles in
 the Current Church; the migration keeps every row and gives each existing
 user a Membership with exactly their roles; and the public pages never
 show lineups, songs, chord sheets, lyrics, members or teams.
+
+## Phase 9C: Guided service planning
+
+**Status: in progress (since 2026-11-26). Top priority** (owner,
+2026-11-26; AGENTS.md): it comes before A6, A7, Phase 9 and Phase 10.
+Built on branch `phase-9c-guided-planning`. The rules are in
+[[Design-Decisions]], "Phase 9C".
+
+Goal: a pastor who has just added a worship service is told what to do
+next and where to click, through four steps: **Theme**, the church's
+**Praise Team**, **Song Lineup** (suggestions, the lineup and the
+playlist preview on one page) and **Confirm** (a rundown, then confirm).
+
+- [x] **Docs** (done 2026-11-26): AGENTS.md, this plan, Design-Decisions,
+  workflow-spec, Glossary, the Worship and Teams notes.
+- [x] **a. Steps and next step** (done 2026-11-26): the four-step bar (three while Teams is
+  off), each step a link; the next-step panel on the service page; the
+  "team" Label (default "Praise Team").
+- [x] **b. Song Lineup page** (done 2026-11-26): suggestions move from the service page to
+  the lineup page, which opens before a lineup exists for people who may
+  suggest songs; the playlist preview; "Continue to confirm".
+- [x] **c. Confirm rundown** (done 2026-11-26): a page that lists what will be confirmed
+  (service, theme, team, songs, warnings, where the playlist goes) with
+  the Confirm button.
+- [x] **d. Assigning the team in one go** (done 2026-11-26;
+  Pastoral Staff now assigns by default, owner's choice): after an assignment the assign
+  page stays open with the team so far, and "Done" goes back to the
+  service.
+- [ ] **Click-through** by the owner ([[Phase-9C-Click-Through]]), then
+  merging into `master`.
+
+**Done when** the tests in [[Design-Decisions]], "Phase 9C", pass and every
+existing test still passes (updated where a screen moved): the team never
+sees the step bar, suggestions or a draft; each moved action is still
+permission-checked; with Teams off there are three steps.
 
 ## Phase 9: Learning to rank
 

@@ -1,0 +1,18 @@
+{% load church %}
+{# What the Lineup Playlist will hold, before confirmation (Phase 9C), for people who plan. Nothing is sent to Spotify until the lineup is confirmed. Expects playlist_preview() from apps/worship/views/lineups.py. #}
+{% label "lineup" as lineup_word %}
+{% if not playlist_spotify_ready %}
+  <p class="small text-body-secondary mb-0">Spotify isn't set up, so no playlist is saved.</p>
+{% else %}
+  <p class="small mb-2">When the {{ lineup_word|lower }} is confirmed, {% if playlist_with_track %}{{ playlist_with_track|length }} song{{ playlist_with_track|length|pluralize }} {{ playlist_with_track|length|pluralize:"is,are" }} saved as a playlist {{ playlist_where }}.{% else %}no playlist is saved: no song has a Spotify track.{% endif %}</p>
+  {% if playlist_connect_url and playlist_with_track %}<p class="small mb-2">Your Spotify account isn't connected. If you'll confirm, <a href="{{ playlist_connect_url }}">connect it</a> first; otherwise you can save the playlist afterwards.</p>{% endif %}
+  {% if playlist_without_track %}<p class="small text-warning-emphasis mb-2">No Spotify track, so not in the playlist: {% for item in playlist_without_track %}{{ item.song.title }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+  {% if playlist_with_track %}
+    <p class="small text-body-secondary mb-1">Listen before you confirm:</p>
+    <ul class="list-unstyled small mb-0">
+      {% for item in playlist_with_track %}
+        <li class="py-1"><a href="{% url 'worship:lineup_song' public_id=service.public_id pk=item.pk %}#listen">{{ item.song.title }}</a> <span class="text-body-secondary">· {{ item.song.artist }}</span></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endif %}

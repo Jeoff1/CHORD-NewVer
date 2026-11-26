@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load church people ui %}
+
+{% block title %}Confirm · {{ service }}{% endblock %}
+
+{% block content %}
+  {% label "lineup" as lineup_word %}{% label "team" as team_word %}
+  {% url 'worship:lineup' public_id=service.public_id as back_url %}{% include "includes/back_link.html" with url=back_url label="Back to "|add:songs_label %}
+
+  {# The Confirm step (Phase 9C): a rundown of what will be confirmed, then one primary button. Warnings never block confirming. #}
+  <div class="chord-page-header">
+    <div class="chord-page-header__text">
+      <h1 class="h3 mb-0">Confirm the {{ lineup_word|lower }}
+        {% if lineup.is_confirmed %}{% include "includes/status_pill.html" with status="confirmed" %}{% else %}{% include "includes/status_pill.html" with status="draft" %}{% endif %}
+      </h1>
+      <p class="chord-page-header__subtitle">Check what the team will get, then confirm.</p>
+    </div>
+    {% if can_confirm_lineup and not confirm_refused %}
+      <div class="chord-page-header__actions">
+        <form method="post" action="{% url 'worship:lineup_confirm' public_id=service.public_id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary chord-btn">Confirm {{ lineup_word|lower }}</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if steps %}{% include "worship/includes/planning_steps.html" %}{% endif %}
+
+  {% if lineup.is_confirmed %}
+    <div class="alert alert-success">Confirmed by {{ lineup.confirmed_by_name }}, {{ lineup.confirmed_at|date:"M j, g:i A" }}. The team can see it. <a href="{{ back_url }}">Open the {{ lineup_word|lower }}</a>.</div>
+  {% elif confirm_refused %}
+    <div class="alert alert-secondary">{{ confirm_refused }}</div>
+  {% endif %}
+
+  {% if warnings and not lineup.is_confirmed %}
+    <section class="alert alert-warning" aria-labelledby="warnings-title">
+      <h2 id="warnings-title" class="h6">Before you confirm</h2>
+      <ul class="mb-0 small">{% for warning in warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+      <p class="small mb-0 mt-2">You can still confirm; these can be fixed afterwards.</p>
+    </section>
+  {% endif %}
+
+  <div class="chord-columns">
+    <div class="chord-main">
+      <section class="card shadow-sm" aria-labelledby="rundown-songs-title">
+        <div class="card-body">
+          <div class="chord-card-head">
+            <h2 id="rundown-songs-title" class="card-title">{{ songs_label }} <span class="chord-card-head__extra fw-normal">{{ lineup_items|length }} song{{ lineup_items|length|pluralize }}</span></h2>
+            {% if can_change_lineup %}<a href="{{ back_url }}" class="fw-semibold">Change</a>{% endif %}
+          </div>
+          <ol class="mb-0 ps-3">
+            {% for item in lineup_items %}
+              <li class="py-1">
+                {% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}<span class="fw-semibold">{{ item.song.title }}</span> <span class="text-body-secondary">· {{ item.song.artist }}</span>
+                <div class="small">
+                  {% if item.key %}Key {{ item.key }}{% else %}<span class="text-body-secondary">No key set</span>{% endif %}
+                  {% if item.has_sheet %} · chord sheet ready{% else %} <span class="chord-pill chord-pill--warning">No chord sheet</span>{% endif %}
+                  {% if not item.song.spotify_id %} <span class="chord-pill">Not on Spotify</span>{% endif %}
+                </div>
+                {% if item.check_warning %}<div class="small text-warning-emphasis">{{ item.check_warning }}</div>{% endif %}
+              </li>
+            {% empty %}
+              <li class="text-body-secondary">No songs yet.</li>
+            {% endfor %}
+          </ol>
+        </div>
+      </section>
+
+      <section class="card shadow-sm" aria-labelledby="playlist-title">
+        <div class="card-body">
+          <div class="chord-card-head"><h2 id="playlist-title" class="card-title">Spotify playlist</h2></div>
+          {% if lineup.is_confirmed %}
+            {% include "worship/includes/spotify_playlist.html" %}
+            {% if not church_playlist and not lineup.spotify_playlist_id and not offer_spotify_save %}<p class="small text-body-secondary mb-0">No playlist was saved for this {{ lineup_word|lower }}.</p>{% endif %}
+          {% else %}
+            {% include "worship/includes/playlist_preview.html" %}
+          {% endif %}
+        </div>
+      </section>
+    </div>
+
+    <div class="chord-side">
+      <section class="card shadow-sm" aria-labelledby="rundown-service-title">
+        <div class="card-body">
+          <div class="chord-card-head"><h2 id="rundown-service-title" class="card-title">{{ service.name }}</h2></div>
+          <dl class="mb-0">
+            <dt>When</dt><dd>{{ service.starts_at|date:"l, F j, Y" }}, {{ service.starts_at|date:"g:i A" }} to {{ service.ends_at|date:"g:i A" }}</dd>
+            {% if service.rehearsal_at %}<dt>Rehearsal</dt><dd>{{ service.rehearsal_at|date:"D, M j, g:i A" }}</dd>{% endif %}
+            <dt>Theme</dt>
+            <dd class="mb-0">{% if theme %}{{ theme.title }}{% if theme.scripture %}<br><span class="text-body-secondary">{{ theme.scripture }}</span>{% endif %}{% else %}<span class="text-body-secondary">Not posted</span>{% endif %}</dd>
+          </dl>
+        </div>
+      </section>
+
+      {% if show_team %}
+        <section class="card shadow-sm" aria-labelledby="rundown-team-title">
+          <div class="card-body">
+            <div class="chord-card-head">
+              <h2 id="rundown-team-title" class="card-title">{{ team_word }}</h2>
+              {% if perms.teams.add_assignment and not team_closed %}<a href="{% url 'teams:assign' public_id=service.public_id %}" class="fw-semibold">Assign</a>{% endif %}
+            </div>
+            <ul class="list-unstyled mb-0 small">
+              {% for assignment in team %}
+                <li class="d-flex flex-wrap align-items-center gap-2 py-1">
+                  <span><span class="text-body-secondary">{{ assignment.part }}</span> · <span{% if assignment.reply == 'declined' %} class="text-decoration-line-through"{% endif %}>{{ assignment.person|person_name }}</span></span>
+                  {% include "includes/status_pill.html" with status=assignment.reply %}
+                </li>
+              {% empty %}
+                <li class="text-body-secondary">Nobody is assigned yet.</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -8,6 +8,14 @@ development task.
 
 ## Current status
 
+**Phase 9C (guided service planning) is the top priority (owner,
+2026-11-26) and is built on branch `phase-9c-guided-planning`, waiting
+for the owner's [[Phase-9C-Click-Through]].** Planning a service now
+follows four steps (Theme, Praise Team, Song Lineup, Confirm) with a
+next-step panel on the service page; suggestions moved to the Song Lineup
+page and confirming goes through a rundown ([[Design-Decisions]], "Phase
+9C"). After the merge: A6, A7, then Phase 10.
+
 **Phase 9B (Church Platform: many churches on one installation) is
 done (2026-11-26) and merged into `master` after the owner's
 [[Phase-9B-Click-Through]] passed ([[0014-church-platform]],

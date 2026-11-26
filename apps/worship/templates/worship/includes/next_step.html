@@ -1,0 +1,15 @@
+{# The next-step panel on the service page (Phase 9C): what to do next, and one button for it. For people who plan; never on a cancelled service. Expects `next_step` from apps/worship/planning.py. #}
+<section id="next-step" class="card shadow-sm chord-next-step{% if next_step.done %} is-done{% endif %}" aria-labelledby="next-step-title">
+  <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div>
+      <h2 id="next-step-title" class="card-title mb-1">{{ next_step.title }}</h2>
+      <p class="mb-0">{{ next_step.text }}</p>
+      {% if next_step.waiting %}<p class="small text-body-secondary mb-0 mt-1">{{ next_step.waiting }}</p>{% endif %}    </div>
+    {% if next_step.action or next_step.skip_url %}
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        {% if next_step.skip_url %}<a href="{{ next_step.skip_url }}" class="fw-semibold">Skip for now</a>{% endif %}
+        {% if next_step.action %}<a href="{{ next_step.action_url }}" class="btn {% if next_step.done %}btn-outline-secondary{% else %}btn-primary{% endif %} chord-btn">{{ next_step.action }}</a>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+</section>

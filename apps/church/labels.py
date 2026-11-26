@@ -47,6 +47,13 @@ LABEL_DEFINITIONS = (
         "Pastors",
         "The people with the final say on a lineup, e.g. Pastor, Minister, Elder.",
     ),
+    LabelDefinition(
+        "team",
+        "Praise Team",
+        "Praise Teams",
+        "The people who serve at a worship service, e.g. Praise Team, "
+        "Worship Team, Music Team.",
+    ),
 )
 
 LABELS_BY_KEY = {label.key: label for label in LABEL_DEFINITIONS}

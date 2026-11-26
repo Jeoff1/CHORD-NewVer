@@ -1,9 +1,9 @@
-{# Where planning this service stands (Phase 9A A7): five steps, for people who plan. Expects `steps` from planning_steps() in apps/worship/views/schedule.py. #}
+{# Where planning this service stands (Phase 9C): Theme, the team (while Teams is on), Song Lineup and Confirm, each a link to its page. For people who plan only. Expects `steps` from apps/worship/planning.py; `step_here` names the step of the page shown, if any. #}
 <ol class="chord-steps" aria-label="Planning steps">
   {% for step in steps %}
-    <li class="chord-steps__step{% if step.done %} is-done{% elif step.current %} is-current{% endif %}"{% if step.current %} aria-current="step"{% endif %}>
+    <li class="chord-steps__step{% if step.done %} is-done{% elif step.current %} is-current{% endif %}{% if step.key == step_here %} is-here{% endif %}"{% if step.current %} aria-current="step"{% endif %}>
       <span class="chord-steps__mark" aria-hidden="true">{% if step.done %}<svg class="chord-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.7 5.3a1 1 0 0 1 0 1.4l-11 11a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 1.4-1.4L9 15.6 19.3 5.3a1 1 0 0 1 1.4 0z"></path></svg>{% else %}{{ forloop.counter }}{% endif %}</span>
-      <span><span class="chord-steps__label">{{ step.label }}</span><span class="chord-steps__state">{% if step.done %}<span class="visually-hidden">Done: </span>{% endif %}{{ step.state }}</span></span>
+      <span><span class="chord-steps__label">{% if step.url %}<a href="{{ step.url }}" class="stretched-link"{% if step.key == step_here %} aria-current="page"{% endif %}>{{ step.label }}</a>{% else %}{{ step.label }}{% endif %}</span><span class="chord-steps__state">{% if step.done %}<span class="visually-hidden">Done: </span>{% endif %}{{ step.state }}</span></span>
     </li>
   {% endfor %}
 </ol>

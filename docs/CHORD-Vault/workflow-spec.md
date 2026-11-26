@@ -48,6 +48,21 @@ ROLES
 People who can change lineups (the leader and the pastor) also see a theme's
 sermon notes; team members don't.
 
+PLANNING A SERVICE (Phase 9C, 2026-11-26)
+The service page guides the people who plan through four steps, with a
+next-step panel naming what to do and one button for it:
+  Theme -> Praise Team -> Song Lineup -> Confirm
+- Theme: the pastor posts the theme.
+- Praise Team (the church's "team" Label; only while Teams is on): assign
+  who serves that day. Suggested, never required: "Skip for now" goes on to
+  the songs.
+- Song Lineup: find songs, review the suggestions, save them as the lineup,
+  review it (swap, lock, reorder, keys), and preview what the Spotify
+  playlist will hold, all on one page.
+- Confirm: a rundown of the service, theme, team, songs and warnings, then
+  Confirm. The playlist is saved on confirmation, as below.
+Team members never see the steps, the panel, suggestions or a draft.
+
 SONG SELECTION (core module)
 1. Pastor posts a theme for a service.
 2. System turns the theme into several search phrases.

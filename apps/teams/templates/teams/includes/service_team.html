@@ -1,9 +1,9 @@
-{% load people %}
-{# The service's team on the service page, for people who may see it while Teams is on. Declined assignments stay for the leader to fill. #}
+{% load church people %}
+{# The service's team on the service page, for people who may see it while Teams is on, named with the church's "team" Label (Phase 9C). Declined assignments stay for the leader to fill. #}
 <section id="team" class="card shadow-sm" aria-labelledby="team-title">
   <div class="card-body">
     <div class="chord-card-head">
-      <h2 id="team-title" class="card-title">Team {% if team_assigned %}<span class="chord-card-head__extra fw-normal">{{ team_accepted }} of {{ team_assigned }} accepted</span>{% endif %}</h2>
+      <h2 id="team-title" class="card-title">{% label "team" %} {% if team_assigned %}<span class="chord-card-head__extra fw-normal">{{ team_accepted }} of {{ team_assigned }} accepted</span>{% endif %}</h2>
       {% if perms.teams.add_assignment and not team_closed %}
         <a href="{% url 'teams:assign' public_id=service.public_id %}" class="fw-semibold">Assign</a>
       {% endif %}

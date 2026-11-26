@@ -1,4 +1,5 @@
-"""Song suggestions on the service page, and their settings.
+"""Song suggestions on the Song Lineup page (Phase 9C; the service page
+before), and their settings.
 
 Suggestions are a lineup before it is confirmed, so team members never see
 them: every view and panel here needs ``worship.suggest_songs``
@@ -9,7 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView, UpdateView
@@ -46,6 +47,11 @@ SETTINGS_AUDIT_FIELDS = {
 
 def can_suggest(user):
     return user.has_perm(SUGGEST)
+
+
+def lineup_page(service):
+    """The Song Lineup page, where the suggestions are (Phase 9C)."""
+    return reverse("worship:lineup", kwargs={"public_id": service.public_id})
 
 
 def spotify_configured():
@@ -115,7 +121,7 @@ class _CorrectionView(ServiceMixin, View):
             context = {"service": self.service}
             context.update(panel_context(self.service, request.user))
             return render(request, "worship/includes/suggestions.html", context)
-        return redirect(f"{self.service_url()}#suggestions")
+        return redirect(f"{lineup_page(self.service)}#suggestions")
 
 
 class SuggestionFeelView(_CorrectionView):
@@ -160,7 +166,7 @@ class SuggestView(ServiceMixin, View):
                 "Finding songs. This page shows the progress; it can take a few "
                 "minutes.",
             )
-        return redirect(f"{self.service_url()}#suggestions")
+        return redirect(f"{lineup_page(self.service)}#suggestions")
 
 
 class SuggestionPanelView(ServiceMixin, TemplateView):

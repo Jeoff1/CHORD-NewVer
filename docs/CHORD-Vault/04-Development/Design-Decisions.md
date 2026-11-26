@@ -639,7 +639,7 @@ The owner approved the A7 wireframes on 2026-11-25, in the design system above. 
 
 **The screens:**
 - **Worship schedule and calendar:** Add service; Schedule weeks ahead and Worship settings under More; tabs Schedule, Calendar, Songs, Reports (each only for people who may open it). The schedule has an Upcoming/Past toggle, the search, and the columns When, Service, Theme, Lineup, Team and Open; a draft shows as one only to people who plan, and Team only while Teams is on, for people who may see teams. The calendar has icon buttons for the months, Today and a legend; decision 0013's "Booked" rule is unchanged.
-- **Service page:** Edit service as the one button; a five-step bar for people who plan (Theme, Suggestions, Lineup, Confirmed, Playlist); the next step's card first; Team, Details and Headcount on the right.
+- **Service page:** Edit service as the one button; a five-step bar for people who plan (Theme, Suggestions, Lineup, Confirmed, Playlist); the next step's card first; Team, Details and Headcount on the right. *Replaced by Phase 9C (2026-11-26): four steps and a next-step panel; see "Phase 9C" below.*
 - **Lineup:** Confirm lineup on top; Regenerate, Send back and Reopen under More; song rows with only Move up and down, Lock and a menu (Swap, Key and notes, Open the song page, Remove).
 - **Lineup song page:** Previous and Next song through the lineup's order (disabled at either end); the chord sheet's controls in one toolbar; the Listen card, Notes for the team and This lineup on the right.
 - **Members:** Add member; Import, Export, Create accounts and Members settings under More; tabs People and Households; one filter row; columns Name, Status, Household, Phone (private) and Can sign in. The Email column is gone (no test or decision needed it).
@@ -780,6 +780,98 @@ these are the rules every slice keeps, and the tests that prove them.
   "Booked", worship services included.
 - My requests: one's own requests at every church; withdraw one's own
   Pending ones only.
+
+---
+
+## Phase 9C: guided service planning (owner, 2026-11-26)
+
+The owner found planning a new service had extra steps and no guidance.
+Top priority (AGENTS.md). It replaces the A7 five-step bar (Theme,
+Suggestions, Lineup, Confirmed, Playlist) described above.
+
+### The owner's choices (2026-11-26)
+
+- **Four steps:** Theme, then the Praise Team (who serves that day), then
+  Song Lineup (suggestions, the lineup and the playlist as one step), then
+  Confirm (a quick rundown of what will be confirmed).
+- **Guidance is a next-step panel** on the service page, every time, not a
+  one-time tour: what to do next and one button for it, until the lineup is
+  confirmed. Each step in the bar is a link.
+- **The team step is guided but can be skipped:** the panel suggests
+  assigning the team, with "Skip for now" to Song Lineup. Confirm's rundown
+  warns when nobody is assigned. It never blocks the songs.
+- **The playlist is previewed during Song Lineup and saved on Confirm,** as
+  today (Phase 7): saving earlier would show a draft on a public Church
+  Spotify Account playlist, against "the team sees a lineup only once it
+  is confirmed".
+
+### Rules
+
+- **The steps follow the church's settings.** The team step shows only
+  while Teams is switched on (otherwise there are three steps). Its name is
+  a new church Label, `team` (default "Praise Team"); Song Lineup is "Song
+  <lineup Label>" (just the Label when it already says "song").
+- **A step is done** when: Theme, a theme is posted; Praise Team, at least
+  one person is assigned and hasn't declined; Song Lineup, a lineup with
+  at least one song exists; Confirm, the lineup is confirmed.
+- **The current step** is the first one not done, except the team step,
+  which stops being current once songs are being chosen (a search ran or a
+  lineup exists) or the roster is closed (a cancelled or past service).
+- **Next-step panel:** only for people who plan, never on a cancelled
+  service. It names the next step, says why, and gives one button when the
+  person may do it ("Post the theme", "Assign the <team>", "Choose the
+  songs", "Review and confirm"); otherwise it says who it waits for. Once
+  confirmed, it says the team can see the lineup and links to it.
+- **Each step links to its page:** Theme to the theme form (or the theme
+  card for people who can't change it); Praise Team to the assign page (or
+  the team card); Song Lineup to the lineup page; Confirm to the rundown,
+  once a lineup exists.
+- **Song Lineup page** (`worship:lineup`): for people who may suggest
+  songs it opens before a lineup exists and shows the suggestions panel
+  (Find songs, the progress, the ranked songs and "Save these songs as the
+  <lineup>"). Once the lineup exists it shows the lineup review as before,
+  with the suggestions below it, collapsed, and a **Playlist** card: which
+  songs have a Spotify track and where the playlist will be saved on
+  confirmation. Its one primary button is "Continue to confirm". The
+  service page no longer shows the suggestions.
+- **Confirm rundown** (`worship:lineup_confirm`, GET): the service's date,
+  time and rehearsal; the theme; the team with replies (while Teams is on
+  and the person may see it); the songs in order with slot, key and chord
+  sheet; warnings (nobody assigned, places declined or still pending,
+  empty slots, songs without a chord sheet or without a key, Worship Check
+  warnings); and where the playlist will be saved, or why it won't be.
+  Warnings never block confirming. The Confirm button shows to people who
+  may confirm (`lineups.may_confirm`); confirming (POST, unchanged rules)
+  returns to the service page.
+- **Assigning in one go:** after assigning someone, the assign page stays
+  open, showing the team so far; "Done" returns to the service page.
+- **The pastor assigns the team by default:** the owner's steps have the
+  pastor assign the team, so Pastoral Staff now also holds
+  `teams.add_assignment` and `teams.delete_assignment` by default (Worship
+  Leader keeps them). A church can take them away in its roles; the panel
+  then says the step waits for someone else.
+- **Unchanged:** who may do what, the pastor's lock, sending back,
+  reopening, and saving the playlist on confirmation. Team members never
+  see the step bar, the panel, suggestions or a draft; they keep the
+  service page and the confirmed lineup as before.
+
+### Tests
+
+- The step bar has four steps with Teams on and three with it off; each
+  step links to its page; the current step follows the rules above
+  (including the skipped team step).
+- The panel shows the right step and button for a new service, after the
+  theme, after the team, after a search, for a draft and when confirmed;
+  it is absent for the team and on a cancelled service.
+- The lineup page opens with the suggestions for a planner before a lineup
+  exists and still 404s for a team member; finding songs and saving the
+  lineup return to it.
+- The rundown lists the service, theme, team, songs and each warning; the
+  Confirm button shows only to people who may confirm; confirming returns
+  to the service page and still saves the playlist; a team member can't
+  open it.
+- Assigning returns to the assign page; the team label shows where the
+  team is named.
 
 ---
 

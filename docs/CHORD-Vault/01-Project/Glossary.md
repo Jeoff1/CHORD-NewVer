@@ -252,6 +252,15 @@ with the "lineup" Label (Set List, Song List). A Lineup is a draft or
 confirmed; the team sees it only once it is confirmed.
 _Avoid_: setlist, worship plan, playlist (a playlist is on Spotify)
 
+**Planning Steps**:
+The steps of planning one Worship Service, shown to people who plan:
+Theme, the church's team (the "team" Label, default "Praise Team"; only
+while Teams is on), Song Lineup and Confirm. The **next-step panel** on
+the service page names the first step not done and gives one button for
+it. The **rundown** is the Confirm step's page: what will be confirmed,
+with warnings.
+_Avoid_: wizard, workflow (alone), checklist
+
 **Service Key**:
 The key a Lineup's song is sung in at that Worship Service, kept on the
 song's place in the Lineup. Chord sheets keep only the song's original key
@@ -427,7 +436,8 @@ The people who hold the permission `teams.view_assignment` (Team Member,
 Worship Leader and Pastoral Staff by default). Only they have a Team
 Profile and Blackout Dates, can be assigned and can take a Swap Request.
 A **service's team** is that service's assigned people whose reply is
-Pending or Accepted.
+Pending or Accepted. The service page and the Planning Steps name it with
+the church's "team" Label (default "Praise Team").
 _Avoid_: band, musicians, ministry
 
 **Team Profile**:

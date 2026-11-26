@@ -1,22 +1,22 @@
 {% extends "base.html" %}
 {% load church ui %}
 
-{% block title %}{% label "lineup" %} · {{ service }}{% endblock %}
+{% block title %}{% if songs_label %}{{ songs_label }}{% else %}{% label "lineup" %}{% endif %} · {{ service }}{% endblock %}
 
 {% block content %}
   {% label "lineup" as lineup_word %}{% label "pastor" as pastor_word %}{% label "pastor" plural=True as pastors_word %}
   {% url 'worship:service' public_id=service.public_id as back_url %}{% with service_name=service|stringformat:"s" %}{% include "includes/back_link.html" with url=back_url label="Back to "|add:service_name %}{% endwith %}
 
-  {# The header (Phase 9A A7): Confirm is the one primary button; the rest is under More. #}
+  {# The Song Lineup step (Phase 9C): suggestions, the lineup and the playlist preview on one page. "Continue to confirm" is the one primary button; the rest is under More. #}
   <div class="chord-page-header">
     <div class="chord-page-header__text">
-      <h1 class="h3 mb-0">{{ lineup_word }}
-        {% if lineup_visible %}{% if lineup.is_confirmed %}{% include "includes/status_pill.html" with status="confirmed" %}{% else %}{% include "includes/status_pill.html" with status="draft" %}{% endif %}{% endif %}
-        {% if lineup_visible and lineup.pastor_locked and sees_lineup_drafts %}<span class="chord-pill chord-pill--accent">Locked by the {{ pastor_word|lower }}</span>{% endif %}
+      <h1 class="h3 mb-0">{% if songs_label %}{{ songs_label }}{% else %}{{ lineup_word }}{% endif %}
+        {% if lineup and lineup_visible %}{% if lineup.is_confirmed %}{% include "includes/status_pill.html" with status="confirmed" %}{% else %}{% include "includes/status_pill.html" with status="draft" %}{% endif %}{% endif %}
+        {% if lineup and lineup_visible and lineup.pastor_locked and sees_lineup_drafts %}<span class="chord-pill chord-pill--accent">Locked by the {{ pastor_word|lower }}</span>{% endif %}
       </h1>
       <p class="chord-page-header__subtitle">{{ service.name }}{% if service.posted_theme %} · {{ service.posted_theme.title }}{% endif %}{% if lineup %} · Saved {{ lineup.created_at|date:"M j, g:i A" }}{% endif %}</p>
     </div>
-    {% if lineup_visible %}
+    {% if lineup and lineup_visible %}
       <div class="chord-page-header__actions">
         {% more_menu %}
           {% if can_change_lineup %}
@@ -29,17 +29,20 @@
             <li><form method="post" action="{% url 'worship:lineup_reopen' public_id=service.public_id %}">{% csrf_token %}<button type="submit" class="dropdown-item">Reopen</button></form></li>
           {% endif %}
         {% endmore_menu %}
-        {% if can_confirm_lineup %}
-          <form method="post" action="{% url 'worship:lineup_confirm' public_id=service.public_id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary chord-btn">Confirm {{ lineup_word|lower }}</button>
-          </form>
+        {% if can_confirm_lineup and lineup_items %}
+          <a href="{% url 'worship:lineup_confirm' public_id=service.public_id %}" class="btn btn-primary chord-btn">Continue to confirm</a>
         {% endif %}
       </div>
     {% endif %}
   </div>
 
-  {% if not lineup_visible %}
+  {% if steps %}{% include "worship/includes/planning_steps.html" %}{% endif %}
+
+  {% if not lineup %}
+    {# No lineup yet: only people who may suggest songs get here. #}
+    <p class="text-body-secondary">CHORD ranks songs that fit the theme. Review them, then save them as the {{ lineup_word|lower }}. The team sees nothing until it is confirmed.</p>
+    {% include "worship/includes/suggestions.html" %}
+  {% elif not lineup_visible %}
     {# A team member, and a lineup that was confirmed is a draft again. #}
     <div class="alert alert-info">This {{ lineup_word|lower }} is being revised. It shows here again once it is confirmed.</div>
   {% else %}
@@ -125,16 +128,20 @@
       {% endif %}
     </section>
 
-    <section class="card shadow-sm" aria-labelledby="playlist-title">
+    <section class="card shadow-sm mb-3" aria-labelledby="playlist-title">
       <div class="card-body">
         <div class="chord-card-head"><h2 id="playlist-title" class="card-title">Spotify playlist</h2></div>
         {% if lineup.is_confirmed %}
           {% include "worship/includes/spotify_playlist.html" %}
           {% if not church_playlist and not lineup.spotify_playlist_id and not offer_spotify_save %}<p class="small text-body-secondary mb-0">No playlist was saved for this {{ lineup_word|lower }}.</p>{% endif %}
+        {% elif sees_lineup_drafts %}
+          {% include "worship/includes/playlist_preview.html" %}
         {% else %}
           <p class="small text-body-secondary mb-0">Saved when the {{ lineup_word|lower }} is confirmed.</p>
         {% endif %}
       </div>
     </section>
+
+    {% if can_suggest %}{% include "worship/includes/suggestions_card.html" %}{% endif %}
   {% endif %}
 {% endblock %}

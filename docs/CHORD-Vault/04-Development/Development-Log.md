@@ -2,6 +2,40 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9C, guided service planning (built)
+
+- **Why:** the owner found planning a new service had extra steps and no
+  guidance, and made this the top priority (AGENTS.md, the plan's Phase
+  9C). Design choices (owner): a next-step panel every time, not a tour;
+  the team step suggested but skippable; the playlist previewed during
+  Song Lineup and saved on Confirm, as before; Pastoral Staff assigns the
+  team by default.
+- **Planning Steps** (`apps/worship/planning.py`): Theme, the church's
+  team (new `team` Label, default "Praise Team"; only while Teams is on),
+  Song Lineup and Confirm, each a link; the next-step panel on the service
+  page (`includes/next_step.html`). The A7 five-step bar is gone.
+- **Song Lineup page** (`LineupView`): opens before a lineup exists for
+  people who may suggest songs, with the suggestions panel; with a lineup,
+  the review, a playlist preview and the folded suggestions; "Continue to
+  confirm". Suggestions left the service page; "Find songs" and the
+  corrections return to this page.
+- **Confirm rundown** (`ConfirmView` GET, `lineup_confirm.html`): service,
+  theme, team, songs and warnings; confirming returns to the service page.
+  The service page's lineup card shows the playlist line once confirmed.
+- **Assigning:** the assign page lists the team so far and stays open;
+  "Done" goes back. Pastoral Staff now holds `teams.add_assignment` and
+  `teams.delete_assignment` by default (granted on `migrate`).
+- **Docs:** AGENTS.md, [[Development-Plan]], [[Design-Decisions]],
+  `workflow-spec.md`, [[Glossary]] (Planning Steps), [[Worship]],
+  [[Teams]], [[00-Home]], [[Phase-9C-Click-Through]].
+- **Tests:** new `apps/worship/tests/test_planning_steps.py` (20 tests);
+  screens that moved were updated in `test_service_screen.py`,
+  `test_lineup_screen.py`, `test_lineup_views.py`,
+  `test_suggestion_views.py`, `apps/teams/tests/test_views.py` and
+  `apps/church/tests/test_views.py`.
+- **Checks:** the full `scripts/check.ps1` passed: 1186 tests, 97%
+  coverage, lint, format, Django checks and migrations.
+
 ## 2026-11-26: Phase 9B merged into `master`
 
 - The owner ran the [[Phase-9B-Click-Through]]: every step passed; the

@@ -64,7 +64,7 @@ class MakingTheLineupTests(LineupViewTestCase):
     def test_the_panel_offers_to_save_the_suggestions(self):
         for user in (self.leader, self.pastor):
             self.login(user)
-            response = self.client.get(url(self.service, "service"))
+            response = self.client.get(url(self.service, "lineup"))
             self.assertContains(response, "Save these songs as the lineup")
 
     def test_the_leader_saves_the_suggestions_as_a_draft(self):
@@ -77,7 +77,7 @@ class MakingTheLineupTests(LineupViewTestCase):
         self.assertEqual(event.action, AuditEvent.Action.CREATED)
         self.assertIn("Song A", event.changes["Songs"][1])
         # Once saved, the panel links the lineup instead.
-        response = self.client.get(url(self.service, "service"))
+        response = self.client.get(url(self.service, "lineup"))
         self.assertNotContains(response, "Save these songs as the lineup")
         self.assertContains(response, "changes here don't alter it")
 
@@ -104,7 +104,7 @@ class ClosedServiceViewTests(LineupViewTestCase):
         self.service.is_cancelled = True
         self.service.save()
         self.login(self.leader)
-        page = self.client.get(url(self.service, "service"))
+        page = self.client.get(url(self.service, "lineup"))
         self.assertContains(page, "is cancelled, so no songs are planned")
         self.assertNotContains(page, "Rank the song pool only")
         self.assertNotContains(page, "Save these songs as the lineup")
@@ -243,7 +243,16 @@ class VisibilityTests(LineupViewTestCase):
             self.assertContains(response, "Draft")
 
     def test_no_lineup_is_404(self):
+        # Phase 9C: before a lineup exists, the page holds the suggestions for
+        # people who may suggest songs, and doesn't exist for the team.
         self.login(self.leader)
+        self.assertContains(
+            self.client.get(url(self.service, "lineup")), "Suggested lineup"
+        )
+        self.assertEqual(
+            self.client.get(url(self.service, "lineup_confirm")).status_code, 404
+        )
+        self.login(self.team_member)
         self.assertEqual(self.client.get(url(self.service, "lineup")).status_code, 404)
 
     def test_switched_off_module_is_404(self):
@@ -396,7 +405,10 @@ class ConfirmationViewTests(LineupViewTestCase):
     def test_the_leader_confirms(self):
         self.login(self.leader)
         page = self.client.get(url(self.service, "lineup"))
-        self.assertContains(page, ">Confirm lineup<")
+        # Phase 9C: the lineup page leads to the rundown, which confirms.
+        self.assertContains(page, ">Continue to confirm<")
+        rundown = self.client.get(url(self.service, "lineup_confirm"))
+        self.assertContains(rundown, ">Confirm lineup<")
         self.assertNotContains(page, "Send back")
         self.assertNotContains(page, ">Reopen<")
         self.client.post(url(self.service, "lineup_confirm"))
@@ -682,7 +694,7 @@ class ClickThroughFixTests(LineupViewTestCase):
         self.assertContains(
             self.client.get(url(self.service, "lineup")), "Confirmed by Ben Reyes"
         )
-        panel = self.client.get(url(self.service, "service"))
+        panel = self.client.get(url(self.service, "lineup"))
         self.assertContains(panel, "by Ben Reyes")
         self.assertNotContains(panel, f"by {named.username}")
         # Without a name, the username.

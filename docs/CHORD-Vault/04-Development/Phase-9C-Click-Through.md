@@ -1,0 +1,68 @@
+# Phase 9C click-through test
+
+A manual run through guided service planning ([[Design-Decisions]],
+"Phase 9C") in a browser, after the automated checks pass. Each step says
+what to do and what you should see. Tick a step when it behaves as
+written; note anything else in the [[Development-Log]].
+
+**Before you start**
+
+- Run `.\scripts\check.ps1` on branch `phase-9c-guided-planning`; it must
+  pass.
+- Run `.\.venv\Scripts\python.exe manage.py migrate` (it gives Pastoral
+  Staff the permission to assign the team), then start the site
+  (`manage.py runserver`) and the search worker (`manage.py run_worker`).
+- Sign in as someone with the Pastoral Staff role. Have a second window
+  signed in as a Team Member.
+
+## 1. A new service guides the pastor
+
+- [ ] **1.1** Worship › Add service; save it. The service page shows four
+  steps: **Theme**, **Praise Team**, **Song Lineup**, **Confirm**, with
+  Theme highlighted. Under it, a panel "Next: post the theme" with a
+  **Post the theme** button.
+- [ ] **1.2** Click **Post the theme**, fill it in and save. Back on the
+  service page, Theme has a tick and the panel says "Next: assign the
+  Praise Team", with **Assign the Praise Team** and **Skip for now**.
+- [ ] **1.3** Click **Assign the Praise Team**. Assign one person to a
+  part. The page stays open: "Praise Team so far" lists them. Assign a
+  second person, then click **Done**.
+- [ ] **1.4** The service page shows "2 assigned, 0 accepted" under Praise
+  Team, and the panel says "Next: choose the songs".
+
+## 2. Song Lineup on one page
+
+- [ ] **2.1** Click **Choose the songs** (or the Song Lineup step). The
+  page is titled "Song Lineup", its step is underlined, and it holds the
+  suggestions: Find songs or Rank the song pool only.
+- [ ] **2.2** Find songs. The progress shows on this page; when it ends,
+  the ranked songs show here. Click **Save these songs as the lineup**.
+- [ ] **2.3** The same page now shows the songs to review (move, lock,
+  swap, keys), a **Spotify playlist** card saying how many songs will be
+  saved and where (or that Spotify isn't set up), with Listen links, and
+  the suggestions folded below. The one button is **Continue to confirm**.
+
+## 3. Confirm with a rundown
+
+- [ ] **3.1** Click **Continue to confirm**. The rundown shows the
+  service's date, time and theme, the Praise Team with replies, the songs
+  with slot, key and chord sheet, and "Before you confirm" warnings (for
+  example songs without a chord sheet or key, people who haven't
+  replied).
+- [ ] **3.2** Click **Confirm lineup**. You're back on the service page:
+  every step is ticked and the panel says "Lineup confirmed" with **Open
+  the lineup**. If Spotify is connected, the lineup card shows the
+  playlist; if saving failed, it shows **Save to Spotify**.
+
+## 4. Other cases
+
+- [ ] **4.1** On a new service, post the theme, then click **Skip for
+  now**. You land on Song Lineup; back on the service page, after a
+  search has run, the panel no longer asks for the team, and Praise Team
+  still says "Nobody yet".
+- [ ] **4.2** In the Team Member's window, open the same service. No
+  steps, no panel, no suggestions; the lineup shows only once confirmed.
+- [ ] **4.3** Settings › Labels: rename "Praise Team" to "Music Team".
+  The step, the team card and the assign page use "Music Team".
+- [ ] **4.4** Settings › Modules: switch Teams off. A service shows three
+  steps (no team step). Switch Teams back on.

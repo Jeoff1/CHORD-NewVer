@@ -320,7 +320,11 @@ class AssignView(ServiceTeamMixin, TemplateView):
                 messages.success(
                     request, f"{display_name(person)} was assigned to {self.part}."
                 )
-                return redirect(service_url(self.service))
+                # The page stays open to assign the rest of the team in one
+                # go; "Done" returns to the service (Phase 9C).
+                return redirect(
+                    reverse("teams:assign", kwargs={"public_id": public_id})
+                )
         return self.render_to_response(self.get_context_data(form=form))
 
 

@@ -24,11 +24,14 @@ from apps.core.views import FormPageMixin
 from apps.songs import connections
 from apps.songs.models import ChordSheet, Song
 from apps.songs.views import playback_context, song_sheet_context
+from apps.teams.views import service_team_context
 
-from .. import lineups, playlists
+from .. import lineups, playlists, suggesting
 from ..forms import LineupItemForm, SendBackForm
-from ..models import Lineup, LineupItem
-from .base import ServiceMixin
+from ..models import Lineup, LineupItem, SearchRun
+from ..planning import CONFIRM, SONGS, planning_context, songs_step_label
+from .base import ServiceMixin, can_plan
+from .suggestions import can_suggest, panel_context
 
 CHANGE = lineups.CHANGE
 FINAL_SAY = lineups.FINAL_SAY
@@ -171,20 +174,93 @@ class ItemMixin(LineupMixin):
 # --- Seeing the lineup --------------------------------------------------------
 
 
-class LineupView(LineupMixin, TemplateView):
-    permission_required = "worship.view_lineup"
+def playlist_preview(lineup, user, items):
+    """What the Song Lineup page and the rundown say about the playlist
+    before confirmation (Phase 9C): which songs it will hold, which have no
+    Spotify track, and where it will be saved, or why it won't be. Nothing
+    reaches Spotify here."""
+    with_track = [item for item in items if item.song.spotify_id]
+    without_track = [item for item in items if not item.song.spotify_id]
+    connect_url = None
+    if not connections.is_configured():
+        where = ""
+    elif connections.church_account(lineup.service.church) is not None:
+        where = "on the church's Spotify account, as a public playlist"
+    elif connections.is_connected(user):
+        where = (
+            "on the Spotify account of whoever confirms it, as a private "
+            "playlist (yours, if you confirm)"
+        )
+    else:
+        where = "on the Spotify account of whoever confirms it"
+        connect_url = (
+            f"{reverse('songs:spotify_account')}?"
+            f"{urlencode({'next': lineup_url(lineup.service)})}"
+        )
+    return {
+        "playlist_spotify_ready": connections.is_configured(),
+        "playlist_with_track": with_track,
+        "playlist_without_track": without_track,
+        "playlist_where": where,
+        "playlist_connect_url": connect_url,
+    }
+
+
+def plans(user):
+    """People who plan see the Planning Steps on the lineup pages."""
+    return can_plan(user) or lineups.sees_drafts(user)
+
+
+class LineupView(ServiceMixin, TemplateView):
+    """The Song Lineup step (Phase 9C): before a lineup exists, people who
+    may suggest songs find and review suggestions here; once it exists,
+    the lineup's review, the folded suggestions and the playlist preview.
+    Team members see only a confirmed lineup, as before."""
+
     template_name = "worship/lineup_detail.html"
+
+    def has_permission(self):
+        # People who may suggest songs find them here, even without seeing
+        # lineups (they then get the suggestions alone).
+        user = self.request.user
+        return user.has_perm("worship.view_lineup") or can_suggest(user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        lineup = self.lineup
+        service = self.service
         user = self.request.user
-        if not lineups.visible_to(lineup, user) and not lineup.is_being_revised:
+        lineup = Lineup.objects.filter(service=service).first()
+        if lineup is not None and not user.has_perm("worship.view_lineup"):
+            lineup = None
+        if lineup is None:
+            if not can_suggest(user):
+                raise Http404("This service has no lineup yet.")
+            context["lineup"] = None
+        elif not lineups.visible_to(lineup, user) and not lineup.is_being_revised:
             # A draft that was never confirmed doesn't exist for the team.
             raise Http404("This lineup isn't confirmed yet.")
-        context.update(lineup_context(lineup, user))
-        if context["can_change_lineup"]:
-            context["open_slots"] = lineups.open_slots(lineup)
+        else:
+            context.update(lineup_context(lineup, user))
+            if context["can_change_lineup"]:
+                context["open_slots"] = lineups.open_slots(lineup)
+        run = suggesting.latest_run(service)
+        if can_suggest(user):
+            context.update(panel_context(service, user))
+            context.update(
+                can_suggest=True,
+                latest_run=run,
+                ranked_count=run.suggestions.count()
+                if run is not None and run.status == SearchRun.Status.DONE
+                else 0,
+            )
+        if plans(user):
+            context.update(planning_context(service, user))
+            context.update(
+                step_here=SONGS,
+                songs_label=songs_step_label(self.request.church.label_set),
+            )
+            if lineup is not None and context.get("lineup_visible"):
+                context.update(playlist_preview(lineup, user, context["lineup_items"]))
         return context
 
 
@@ -201,7 +277,7 @@ class LineupCreateView(ServiceMixin, View):
             lineup = lineups.create_from_run(self.service, request.user)
         except lineups.LineupRefused as refusal:
             messages.error(request, str(refusal))
-            return redirect(f"{self.service_url()}#suggestions")
+            return redirect(f"{lineup_url(self.service)}#suggestions")
         record_change(
             request.user,
             lineup,
@@ -415,12 +491,75 @@ class RegenerateView(LineupMixin, View):
 # --- Confirmation and the final say ------------------------------------------------
 
 
-class ConfirmView(LineupMixin, View):
-    """The worship leader or anyone with the final say confirms."""
+def rundown_warnings(service, lineup, context):
+    """What the rundown warns about before confirming (Phase 9C). Warnings
+    never block confirming."""
+    labels = service.church.label_set
+    warnings = []
+    if service.posted_theme is None:
+        warnings.append("No theme is posted.")
+    if context.get("show_team"):
+        team = context["team"]
+        team_word = labels.get("team")
+        serving = [a for a in team if a.reply != "declined"]
+        declined = len(team) - len(serving)
+        pending = sum(a.reply == "pending" for a in serving)
+        if not serving:
+            warnings.append(f"Nobody is assigned to the {team_word} yet.")
+        if declined:
+            warnings.append(
+                f"{declined} declined place{'' if declined == 1 else 's'} "
+                f"need{'s' if declined == 1 else ''} filling."
+            )
+        if pending:
+            warnings.append(
+                f"{pending} {'person hasn' if pending == 1 else 'people haven'}'t "
+                "replied yet."
+            )
+    items = context["lineup_items"]
+    if not items:
+        warnings.append(f"The {labels.get('lineup').lower()} has no songs.")
+    slots = lineups.open_slots(lineup)
+    if slots:
+        warnings.append(f"Empty slots: {', '.join(slot.name for slot in slots)}.")
+    no_sheet = [item.song.title for item in items if not item.has_sheet]
+    if no_sheet:
+        warnings.append(
+            f"No chord sheet yet: {', '.join(no_sheet)}. Every song needs one "
+            "once it is confirmed."
+        )
+    no_key = [item.song.title for item in items if not item.key]
+    if no_key:
+        warnings.append(f"No key set: {', '.join(no_key)}.")
+    return warnings
+
+
+class ConfirmView(LineupMixin, TemplateView):
+    """The Confirm step (Phase 9C): a rundown of what will be confirmed,
+    then the worship leader or anyone with the final say confirms."""
+
+    template_name = "worship/lineup_confirm.html"
 
     def has_permission(self):
         user = self.request.user
         return user.has_perm(CHANGE) or user.has_perm(FINAL_SAY)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        service, lineup, user = self.service, self.lineup, self.request.user
+        context.update(lineup_context(lineup, user))
+        context.update(service_team_context(service, user))
+        context.update(planning_context(service, user))
+        context.update(playlist_preview(lineup, user, context["lineup_items"]))
+        context.update(
+            step_here=CONFIRM,
+            songs_label=songs_step_label(self.request.church.label_set),
+            theme=service.posted_theme,
+            warnings=rundown_warnings(service, lineup, context),
+            confirm_refused=service.is_cancelled
+            and suggesting.planning_closed(service),
+        )
+        return context
 
     def post(self, request, public_id):
         if self.audited(lineups.confirm):
@@ -429,7 +568,10 @@ class ConfirmView(LineupMixin, View):
             # fails fast and the page offers "Save to Spotify" instead.
             lineup = Lineup.objects.get(pk=self.lineup.pk)
             _report_playlist(request, playlists.save(lineup, request.user))
-        return redirect(self.lineup_url())
+            return redirect(self.service_url())
+        return redirect(
+            reverse("worship:lineup_confirm", kwargs={"public_id": public_id})
+        )
 
 
 def _report_playlist(request, outcome):
