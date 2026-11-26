@@ -32,7 +32,8 @@ of the core and can't be switched off. App: `apps/church`.
   (`request.church` is None): a signed-in person without one sees only
   their own account pages and notifications, and "You're not part of a
   church yet" everywhere else (`church/no_church.html`). The landing page
-  is the platform's, with every Module and the neutral wording.
+  is the platform's, with every Module and the neutral wording; since
+  27 Nov it also shows public churches (below).
 - **Scoping** (`scoping.py`): `for_church`, `get_in_church`,
   `ChurchScopedMixin`, `ChurchFormMixin` and `ChurchFormKwargsMixin`
   ([[Code-Conventions]], "One church's records").
@@ -131,13 +132,23 @@ of the core and can't be switched off. App: `apps/church`.
 - Tests: `apps/church/tests/test_dashboard_screen.py`,
   `apps/core/tests/test_settings_hub.py`.
 
-### The landing page (Phase 9A, A7)
+### The landing page (Phase 9A, A7; redesigned 26-27 Nov 2026)
 
 - **Landing page** (`church/landing.html`, `LandingView`): what a visitor
-  who isn't signed in sees at `/`, with links to sign in. Its copy uses
-  the church's Labels, its feature list shows only switched-on Modules
-  (Teams, Occasions, Announcements), and its footer names the church.
-  ([[Design-System]], "Landing page".)
+  who isn't signed in sees at `/`. It is the platform's page: the neutral
+  default wording and every Module's features. Ways in: Sign in, Sign up,
+  Explore churches and Churches (the Directory). It doesn't link
+  registering a church; the sign-in page and the no-church page do. Its
+  own styles and script: `static/css/landing.css`,
+  `church/static/church/landing.js`. ([[Design-System]], "The landing
+  page".)
+- **United in Worship** (`views.showcase_churches`): up to 12
+  (`SHOWCASE_SIZE`) churches that are public (`public_churches()`, the
+  Directory's rule) **and** finished setup (`setup_completed`), newest
+  first, with name, address on one line and logo only, each linking to its
+  Church Homepage. No new field or migration. With none, a short note.
+- **Settings it reads:** a church's "Show the church publicly"
+  (`show_in_directory`) and whether its setup is finished.
 - Tests: `apps/church/tests/test_landing.py`.
 
 ## Public pages (Phase 9B)
@@ -157,8 +168,10 @@ everyone, its own people too.
   lyrics, chord sheets, songs, lineups, themes, members or teams.
 - Request this service and My requests at every church are Occasions'
   ([[Occasions]]).
-- The landing page links the Directory ("Churches"); so do the user menu
-  and the home of people with no church.
+- The landing page links the Directory ("Churches", "Explore churches",
+  "Explore all churches", "Find a church") and shows up to 12 public
+  churches that finished setup; the user menu and the home of people with
+  no church link the Directory too.
 
 ## Church settings this module depends on
 

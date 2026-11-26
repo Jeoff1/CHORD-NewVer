@@ -2,6 +2,56 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Landing page redesign (Phase 9A, A7; branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned the public landing page: a warm,
+  modern church-website look in the approved palette and fonts, matching
+  Phase 9C. Designed as an interactive mockup first; approved by the UI/UX
+  owner on 2026-11-27, **subject to the lead developer's approval** (the
+  A7 rule). Not committed yet: the owner reviews it locally first.
+- **Built:** `church/landing.html` rewritten (nav with Sign in and Sign up,
+  hero with photograph, How it works with the Phase 9C steps, Features,
+  Rehearsal, Who it's for, United in Worship, call to action with Sign up,
+  footer, loading intro); its own `static/css/landing.css` and
+  `church/static/church/landing.js`; the old `.chord-landing*` styles
+  removed from `chord.css`. Logo include `church/includes/landing_logo.html`.
+- **United in Worship:** `views.showcase_churches()`: up to 12 public
+  churches that finished setup, newest first; name, address and logo only;
+  no new field or migration.
+- **Assets** in `static/images/landing/`: the owner's logo (unchanged,
+  transparent; trimmed and resized: 37 KB WebP, PNG fallback); two CC0
+  photos (StockSnap "Concert Stage", rawpixel guitar close-up; licences
+  checked on Openverse), 960 and 1024 px, 14 and 36 KB as WebP, with JPEG
+  fallbacks; `SOURCES.md` records sources, licences and edits.
+- **Approved exceptions and changes recorded:** the intro's 0.8 s minimum;
+  photography as a new asset; the landing page now names public churches;
+  no "Register your church" link on it ([[Design-Decisions]], A7,
+  "Landing page redesign"; [[Design-System]], "The landing page").
+- **Logo on green (owner's choice, same day):** the owner asked for the
+  logo transparent, with no plate. On green the deep-green letters
+  vanished, so the owner chose a colour-swapped copy for green grounds:
+  `chord-logo-gold.*`, the same pixels and transparency with deep green
+  and gold exchanged (33 KB WebP). The original stays on the gold call to
+  action.
+- **Before committing:** the full `scripts/check.ps1` passed again on the
+  final code (1261 tests OK, 97% coverage). Committed and pushed to
+  `origin/joy-ui-ux-v2` with the owner's permission; not merged into
+  `master` and no pull request yet (waiting for the lead developer).
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1261 tests OK, 97%
+  coverage. New tests in `apps/church/tests/test_landing.py`
+  (`LandingRedesignTests`, `ChurchShowcaseTests`).
+- **Mobile pass (same day):** the page was rendered in Edge with DevTools
+  device emulation at 320, 360, 390, 768, 820 and 1280 px, light and
+  dark. Nothing is wider than the screen at any width. Fixed: with the
+  carousel arrows hidden, the church row fell into the narrow arrow column
+  (each part now has its own grid column); the hero headline and section
+  headings are a little smaller below 420 px; the chord sheet's text is
+  smaller there so it fits from 360 px (at 320 px it scrolls inside its
+  own box). The intro was checked on a phone: it leaves within 3.5 s and
+  doesn't return in the same session. `check.ps1 -Quick` passed after the
+  fixes (1261 tests OK).
+
 ## 2026-11-26: Phase 9C merged into `master`
 
 - The owner ran the [[Phase-9C-Click-Through]]: every step passed. Steps

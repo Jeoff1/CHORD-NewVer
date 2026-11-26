@@ -8,6 +8,12 @@ development task.
 
 ## Current status
 
+**Landing page redesign (A7), 2026-11-27, on branch `joy-ui-ux-v2`, not
+committed yet:** built and checked (full check passed, 1261 tests, 97%);
+approved by the UI/UX owner, waiting for the owner's local review and the
+lead developer's approval before it is committed and merged
+([[Design-System]], "The landing page"; [[Development-Log]]).
+
 **Phase 9C (guided service planning), the top priority (owner,
 2026-11-26), is done and merged into `master` (2026-11-26) after the
 owner's [[Phase-9C-Click-Through]] passed.** Planning a service now

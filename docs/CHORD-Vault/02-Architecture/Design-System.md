@@ -32,8 +32,56 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Two columns | `.chord-columns` holding `.chord-main` and `.chord-side` | Main content and a side column; they stack on a phone |
 | Settings hub | Each app registers `SettingsPage`s in `apps/core/settings_menu.py`; `base.html` shows the hub on their pages. Every category is always shown (no dropdowns); the side menu scrolls on its own when it is taller than the window, stays in view beside the page on a wide screen, and opens scrolled to the current page | One place for every setting |
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
-| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle | Icon-only buttons carry an `aria-label` and are at least 44px |
-| Landing page | `church/landing.html`, `.chord-landing*` in `chord.css` | The public front page. Green hero and footer, gold call to action, pill buttons; the example lineup card is light in both modes. Wording from Labels, features only for switched-on Modules |
+| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
+| Landing page | `church/landing.html`, its own `static/css/landing.css` (classes `lp-*`) and `church/static/church/landing.js` | The public front page, redesigned 26-27 Nov 2026: see "The landing page" below |
+
+## The landing page (redesign, 26-27 Nov 2026)
+
+Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's
+approval; built on branch `joy-ui-ux-v2` ([[Design-Decisions]], A7,
+"Landing page redesign"). Only `church/landing.html` loads `landing.css`
+and `landing.js`, so nothing here reaches a signed-in page.
+
+- **Sections:** a solid green nav that stays at the top (logo and links
+  left; Sign in, outlined, and Sign up, gold, right; a Menu on phones);
+  the hero, its photograph on the right fading into the green, the example
+  lineup card hanging over its lower edge; How it works (the Phase 9C
+  steps on one line); Features (an open 3 by 2 grid); Rehearsal (the
+  chord sheet with the Listen card overlapping it); Who it's for (green,
+  the hero photo faint behind); United in Worship (the church carousel);
+  the gold call to action (Sign up); the footer.
+- **Logo:** transparent, never on a plate
+  (`church/includes/landing_logo.html`). On light grounds (the gold call to
+  action) the owner's final artwork, unchanged
+  (`static/images/landing/chord-logo.webp`, `.png` fallback). On green
+  grounds (nav, intro, footer) its colour-swapped copy, `chord-logo-gold.*`
+  (`variant="gold"`): gold letters and circle, deep-green triangle and
+  church, the same shapes, made by exchanging the two colours pixel by
+  pixel (the owner's choice, 2026-11-27).
+- **Photography** (new kind of asset): freely licensed or owned, each
+  source, creator, licence and edit recorded in
+  `static/images/landing/SOURCES.md`; no recognisable faces and no symbol
+  that belongs to one particular church (decision 0001); decorative, so
+  `alt=""`. Fixed file names, so a photo is replaced without a code change.
+- **Landing-only effects:** photo fades (green overlays), warm glows, soft
+  shadows, gradient washes between sections, smooth scrolling, gentle hover
+  lifts. All motion stops with `prefers-reduced-motion`.
+- **Loading intro:** the logo, a seven-bar gold equalizer, "Bringing
+  worship together" and a thin loading line on the green. Only on the first
+  visit in a browser session (`sessionStorage`), never without JavaScript.
+  It stays at least **0.8 s** (the owner's approved exception to "no
+  deliberate delay", 2026-11-27; none with reduced motion), leaves on
+  `load`, goes after 4 s at most (script) or 6 s (CSS). No sound.
+- **United in Worship:** up to 12 churches that are public and finished
+  setup, newest first (`views.showcase_churches`), in a native-scrolling
+  carousel: three in view on desktop, two on tablet, one on a phone, with
+  snapping and arrow buttons the script shows only when there is more to
+  scroll. Name, address and logo only; each card opens the church's public
+  page, and "Explore all churches" the directory.
+- **Eyebrows** on light grounds use the chord-letter gold `#7A5A1E`; gold
+  `#E5C690` on green and in dark mode. The footer is `#0B1F1B` (the link
+  hover colour).
+- **Wording** is the platform's neutral default Labels ([[0014-church-platform]]).
 
 ## Tokens
 

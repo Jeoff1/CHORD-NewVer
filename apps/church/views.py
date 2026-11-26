@@ -18,7 +18,7 @@ from apps.core.views import FilteredListView
 
 from . import dashboard, homepage
 from .forms import SECTION_ORDER, SECTIONS, ChurchRegistrationForm
-from .labels import LABEL_DEFINITIONS
+from .labels import LABEL_DEFINITIONS, Labels
 from .middleware import SESSION_KEY
 from .models import ChurchProfile
 from .modules import MODULES_BY_CODE
@@ -50,13 +50,42 @@ def profile_audit_fields():
     return fields
 
 
-class LandingView(TemplateView):
-    """The public front page: what CHORD does, and the way to sign in.
+SHOWCASE_SIZE = 12
 
-    Its feature list shows only the switched-on Modules, and its wording
-    uses the church's Labels."""
+
+def showcase_churches():
+    """The churches on the landing page's "United in Worship" carousel: public
+    ones (the directory's own rule) that have also finished their setup, newest
+    first, at most ``SHOWCASE_SIZE``. Only what the directory already shows is
+    read: name, page address, street address and logo."""
+    churches = list(
+        public_churches()
+        .filter(setup_completed=True)
+        .only("name", "slug", "address", "logo")
+        .order_by("-created_at", "-pk")[:SHOWCASE_SIZE]
+    )
+    for listed in churches:
+        # The address on one line, for a card.
+        listed.place = ", ".join(
+            line.strip() for line in listed.address.splitlines() if line.strip()
+        )
+    return churches
+
+
+class LandingView(TemplateView):
+    """The public front page: what CHORD does, the public churches, and the
+    ways to sign in or sign up.
+
+    It is the platform's page (decision 0014), so its wording is the neutral
+    default Labels, whatever any church calls things."""
 
     template_name = "church/landing.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["showcase"] = showcase_churches()
+        context["members_label"] = Labels({}).get("member", plural=True)
+        return context
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):

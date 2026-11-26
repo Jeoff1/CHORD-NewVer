@@ -657,6 +657,22 @@ The owner approved the A7 wireframes on 2026-11-25, in the design system above. 
 
 Tests: `apps/core/tests/test_ui_patterns.py`, `test_settings_hub.py`; `apps/worship/tests/test_schedule_screens.py`, `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_song_screen.py`; `apps/members/tests/test_members_screen.py`; `apps/church/tests/test_dashboard_screen.py`. Each moved action is still refused without its permission, and its menu entry doesn't show.
 
+#### Landing page redesign (UI/UX owner, 26-27 Nov 2026)
+
+Designed as an interactive mockup first, approved by the UI/UX owner on 2026-11-27 **subject to the lead developer's approval** (the A7 rule: no template change before approval), and built on branch `joy-ui-ux-v2`. Details: [[Design-System]], "The landing page".
+
+Approved choices:
+- A modern, warm church-website look within the approved palette and fonts; a solid green nav (logo and links left; Sign in and Sign up right).
+- **Phase 9C wording:** the hero and How it works describe the four steps (Theme, Praise Team, Song Lineup, Confirm) and that suggestions assist.
+- **No "Register your church" on the landing page:** the hero's main button is Explore churches (the Directory), the call to action is Sign up. Registering stays on the sign-in and no-church pages.
+- **Logo:** the owner's final green and gold artwork, unchanged and transparent, on light grounds; on green grounds its colour-swapped copy (gold letters and circle), also transparent, with no plate (the owner's choice, 2026-11-27). The owner confirms the cross and church in it (shared by most churches, naming none; decision 0001).
+- **Photography** as a new asset: CC0 photos from StockSnap and rawpixel, sources and licences in `static/images/landing/SOURCES.md`; the 960 and 1024 px copies for now, replaceable under the same names.
+- **Loading intro** once per browser session, with a **0.8 s minimum**: the owner's approved exception to "no deliberate delay" (2026-11-27). No minimum with reduced motion; the page loads underneath; it can never block the page.
+- **United in Worship:** public churches that also **finished setup** (no approval step, no database change), **newest first**, **up to 12**, in a carousel. Since Phase 9B the landing page named no church; it now names public ones, as the Directory already does.
+- Its own stylesheet, `static/css/landing.css`, so signed-in pages can't change.
+
+Tests: `apps/church/tests/test_landing.py` (`LandingRedesignTests`, `ChurchShowcaseTests`): the Phase 9C steps; the links to sign in, sign up and the Directory, and none to registering; the page's own CSS, script and images exist and load; every image is decorative or labelled; the intro's session flag, minimum, caps and CSS fallback; signed-in pages don't load the landing CSS; only public churches that finished setup, newest first, at most 12; no contact details; the logo fallback; the carousel arrows start hidden.
+
 ---
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
