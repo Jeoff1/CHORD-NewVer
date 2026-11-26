@@ -921,13 +921,21 @@ church setting.
   `worship.change_biblesettings`, held by Pastoral Staff) adds the 15
   deuterocanonical books of the World English Bible. Church practice is a
   setting, never a denomination (decision 0001).
+- **Browsing** (owner, 2026-11-27): clicking the field opens the list.
+  Empty, it lists every book in order with its chapter count; picking a
+  book lists all its chapters with their verse counts; picking a chapter
+  lists **Whole chapter** first, then every verse with its first words.
+  The list scrolls; it stays open while browsing.
 - **Typing:** the field suggests books (by name or abbreviation: "jn",
-  "1 cor", "I Corinthians", "ps"), then chapters with their verse count,
-  then verses with their first words, at most 8; each matching book's
-  best match comes first. Arrow keys, Enter and a click pick one (an
-  ARIA combobox: `worship/scripture.js`). Any text is still accepted
-  ("Various passages").
-- **The passage** shows under the field and, folded ("Read John 3:16"), on
+  "1 cor", "I Corinthians", "ps"), then chapters, then verses, all that
+  match; only numbers after a name that fits several books ("jo 3") are
+  kept to 8, each book's best match first. Arrow keys, Enter and a click
+  pick one (an ARIA combobox: `worship/scripture.js`). Any text is still
+  accepted ("Various passages"); "John 3:" left mid-browse saves as
+  "John 3".
+- **The passage** shows under the field as soon as the field names one:
+  while typing or browsing (half a reference shows nothing, not "Not
+  found"), and when one is picked. Folded ("Read John 3:16"), it shows on
   the theme card for everyone who sees the theme (it is public domain). At
   most 80 verses are shown and read.
 - **Song suggestions read it:** the passage's text is kept on the theme

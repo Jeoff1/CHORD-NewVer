@@ -2,6 +2,30 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Main scripture: browse the Bible
+
+- **Owner's request:** clicking the Main scripture field shows every book
+  to browse; picking leads to the desired passage, and its text shows on
+  typing or clicking.
+- `bible.suggest`: nothing typed lists every book; "John " (a picked
+  book) lists all its chapters, each ending in ":"; "John 3:" lists Whole
+  chapter, then every verse. Lists aren't cut at 8 any more, except
+  numbers after a name that fits several books. `bible.parse` reads
+  "John 3:" as the chapter.
+- `scripture.js`: the list opens on focus or click; a book or chapter
+  goes on to the next list; dragging the list's scrollbar keeps it open;
+  the passage shows while typing or browsing (`live=1`, empty for half a
+  reference). Picking a book used to list the book again instead of its
+  chapters; fixed.
+- `ThemeForm.clean_scripture` saves "John 3:" as "John 3".
+- Design-Decisions ("Main scripture"), [[Worship]] and the workflow spec
+  updated.
+- Tests: `test_bible.py` (`BrowseTests`, browsing views, live preview,
+  saving); three suggestion tests updated for chapter values ending in
+  ":" and lists no longer cut at 8.
+- **Checks:** full check passed (see the commit). The script was checked
+  for syntax only; the owner tries it in the browser.
+
 ## 2026-11-26: Empty-pool pop-up on the Song Lineup page
 
 - **Owner's request:** tell the pastor that a church's song pool is filled

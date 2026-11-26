@@ -294,7 +294,8 @@ def _passage(book, rest):
 def parse(reference, *, deuterocanon=False):
     """The passage ``reference`` names, or None when it isn't one ("John
     3:16", "Jn 3:16-18", "1 Cor 13", "Psalm 23", "Rom 8:28-9:2")."""
-    match = _SPLIT.match(normalise(reference or ""))
+    # "John 3:" (a chapter picked, its verses not yet) names the chapter.
+    match = _SPLIT.match(normalise(reference or "").rstrip(": "))
     if not match or not match["rest"]:
         return None
     book = _index(deuterocanon).get(match["book"].strip())
@@ -326,34 +327,57 @@ def _completions(book, rest):
     chapter_text, verse_text = chapter_text.strip(), verse_text.strip()
     all_chapters = chapters(book)
     if not colon:
-        numbers = [
-            n
-            for n in range(1, len(all_chapters) + 1)
-            if str(n).startswith(chapter_text)
-        ]
-        return [
-            (f"{chapter_name(book)} {n}", f"{len(all_chapters[n - 1])} verses")
-            for n in numbers
-        ][:SUGGESTIONS]
+        return _chapter_options(book, chapter_text)
     chapter = int(chapter_text)
     if not 1 <= chapter <= len(all_chapters):
         return []
     texts = all_chapters[chapter - 1]
-    return [
+    whole = (
+        # "John 3:" with no verse yet: the whole chapter can be picked too.
+        [(f"{chapter_name(book)} {chapter}", f"Whole chapter · {len(texts)} verses")]
+        if not verse_text
+        else []
+    )
+    return whole + [
         (f"{chapter_name(book)} {chapter}:{n}", _snippet(texts[n - 1]))
         for n in range(1, len(texts) + 1)
         if str(n).startswith(verse_text) and texts[n - 1]
-    ][:SUGGESTIONS]
+    ]
+
+
+def _chapter_options(book, typed=""):
+    """The book's chapters starting with ``typed``. Each value ends in ":",
+    so picking one goes on to its verses."""
+    all_chapters = chapters(book)
+    return [
+        (f"{chapter_name(book)} {n}:", f"{len(all_chapters[n - 1])} verses")
+        for n in range(1, len(all_chapters) + 1)
+        if str(n).startswith(typed)
+    ]
+
+
+def _book_option(book):
+    return (f"{book.name} ", f"{len(chapters(book))} chapters")
 
 
 def suggest(query, *, deuterocanon=False):
-    """Up to ``SUGGESTIONS`` (value, description) pairs for what the pastor
-    has typed: books by name or abbreviation, then chapters and verses."""
-    match = _SPLIT.match(normalise(query or ""))
+    """(value, description) pairs for what the pastor has typed, to browse
+    the Bible: every book when nothing is typed; books by name or
+    abbreviation; a book's chapters once its name is followed by a space
+    ("John "); a chapter's verses once it ends in ":" ("John 3:"). Only
+    numbers typed after a name that fits several books ("jo 3") are kept to
+    ``SUGGESTIONS``."""
+    query = query or ""
+    if not query.strip():
+        return [_book_option(book) for book in books(deuterocanon)]
+    match = _SPLIT.match(normalise(query))
     if not match:
         return []
     typed, rest = match["book"].strip(), match["rest"]
     exact = _index(deuterocanon).get(typed)
+    if not rest and exact and query[-1].isspace():
+        # A picked book ("John "): its chapters.
+        return _chapter_options(exact)
     starting = [
         book
         for book in books(deuterocanon)
@@ -362,14 +386,13 @@ def suggest(query, *, deuterocanon=False):
     if not rest:
         # "phil": Philippians (its abbreviation) first, then Philemon.
         candidates = [exact, *starting] if exact else starting
-        return [
-            (f"{book.name} ", f"{len(chapters(book))} chapters")
-            for book in candidates[:SUGGESTIONS]
-        ]
-    # With numbers, an exact book name means that book alone. Otherwise each
-    # book's best match first ("jo 3": Joshua 3, Job 3, Joel 3, John 3 ...),
-    # then the rest of each book's.
-    candidates = [exact] if exact else starting
+        return [_book_option(book) for book in candidates]
+    if exact:
+        # With numbers, an exact book name means that book alone.
+        return _completions(exact, rest)
+    # Otherwise each book's best match first ("jo 3": Joshua 3, Job 3,
+    # Joel 3, John 3 ...), then the rest of each book's.
+    candidates = starting
     each = [_completions(book, rest) for book in candidates[:SUGGESTIONS]]
     found = []
     for rank in range(SUGGESTIONS):

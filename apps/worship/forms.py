@@ -102,7 +102,9 @@ class ScriptureInput(forms.TextInput):
                 "aria-controls": list_id,
                 "autocomplete": "off",
                 "hx-get": self.suggest_url,
-                "hx-trigger": "input changed delay:200ms",
+                # Typing filters; clicking the field opens the list (every
+                # book when it is empty) to browse.
+                "hx-trigger": "input changed delay:200ms, focus, click",
                 "hx-target": f"#{list_id}",
                 "hx-swap": "innerHTML",
                 "data-scripture-input": "",
@@ -134,8 +136,9 @@ class ThemeForm(ChurchFormMixin, forms.ModelForm):
             suggest_url=suggest_url, passage_url=passage_url
         )
         scripture.help_text = (
-            "Type a book, chapter or verse, such as Jn 3:16 or Ps 23, and choose "
-            "a suggestion. The passage's text helps song suggestions match."
+            "Click to browse the books, then a chapter and a verse, or type "
+            "one, such as Jn 3:16 or Ps 23. The passage's text helps song "
+            "suggestions match."
         )
         self.fields["series"].queryset = SermonSeries.objects.for_church(
             self.church
@@ -153,6 +156,11 @@ class ThemeForm(ChurchFormMixin, forms.ModelForm):
             attrs={"accept": "application/pdf,.pdf"}, url=document_url
         )
         self.document_text = None  # unchanged unless a file is attached or cleared
+
+    def clean_scripture(self):
+        # Browsing leaves "John 3:" or "John " while choosing; save "John 3"
+        # or "John".
+        return self.cleaned_data.get("scripture", "").strip().rstrip(":").strip()
 
     def clean_document(self):
         upload = self.cleaned_data.get("document")

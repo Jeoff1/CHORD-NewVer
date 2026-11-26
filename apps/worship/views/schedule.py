@@ -5,7 +5,7 @@ import datetime
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -350,7 +350,14 @@ class ScriptureSuggestView(WorshipMixin, View):
         return render(
             request,
             "worship/includes/scripture_suggestions.html",
-            {"suggestions": suggestions},
+            {
+                # A value ending in a space or ":" (a book or a chapter) goes
+                # on to the next list; its label drops that ending.
+                "suggestions": [
+                    (value, value.rstrip(": "), value[-1] in ": ", description)
+                    for value, description in suggestions
+                ]
+            },
         )
 
 
@@ -360,11 +367,14 @@ class ScripturePassageView(WorshipMixin, View):
     permission_required = "worship.change_theme"
 
     def get(self, request):
-        return render(
-            request,
-            "worship/includes/scripture_passage.html",
-            scripture_context(request.GET.get("scripture", "")[:100], request.church),
+        context = scripture_context(
+            request.GET.get("scripture", "")[:100], request.church
         )
+        if request.GET.get("live") and context["passage"] is None:
+            # While typing or browsing, half a reference ("Jo", "John ") shows
+            # nothing rather than "Not found".
+            return HttpResponse("")
+        return render(request, "worship/includes/scripture_passage.html", context)
 
 
 class BibleSettingsView(WorshipMixin, FormPageMixin, UpdateView):

@@ -619,8 +619,13 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   Bible in `bible/data/web.json.gz`, book names and abbreviations,
   `parse`, `suggest`, `passage_text`): the theme form's `ScriptureInput`
   (an ARIA combobox, `static/worship/scripture.js`) asks
-  `worship:scripture_suggest` and shows `worship:scripture_passage`; the
-  theme card folds the passage ("Read John 3:16"). `Theme.save` keeps the
+  `worship:scripture_suggest` and shows `worship:scripture_passage`.
+  Clicking the field browses: every book, a book's chapters (values end
+  in ":", marked `data-more`), a chapter's verses with Whole chapter
+  first; the passage shows while typing or browsing (`live=1`: nothing for
+  half a reference) and when one is picked. `ThemeForm.clean_scripture`
+  drops a trailing ":". The theme card folds the passage ("Read John
+  3:16"). `Theme.save` keeps the
   passage's text in `scripture_text`, part of the theme's body for
   suggestions. **Bible settings** (`BibleSettings`,
   `worship:bible_settings`) include the deuterocanonical books.

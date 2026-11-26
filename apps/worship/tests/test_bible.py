@@ -107,7 +107,10 @@ class SuggestTests(SimpleTestCase):
         self.assertEqual(bible.suggest("rev")[0][1], "22 chapters")
 
     def test_chapters_then_verses(self):
-        self.assertEqual(self.values("ps 2")[:3], ["Psalm 2", "Psalm 20", "Psalm 21"])
+        # A chapter's value ends in ":", so picking it goes on to its verses.
+        self.assertEqual(
+            self.values("ps 2")[:3], ["Psalm 2:", "Psalm 20:", "Psalm 21:"]
+        )
         found = bible.suggest("john 3:1")
         self.assertEqual(
             [v for v, _ in found][:3], ["John 3:1", "John 3:10", "John 3:11"]
@@ -117,17 +120,57 @@ class SuggestTests(SimpleTestCase):
     def test_each_book_first_for_a_short_name(self):
         self.assertEqual(
             self.values("jo 3")[:5],
-            ["Joshua 3", "Job 3", "Joel 3", "Jonah 3", "John 3"],
+            ["Joshua 3:", "Job 3:", "Joel 3:", "Jonah 3:", "John 3:"],
         )
+        self.assertEqual(len(bible.suggest("jo 3")), bible.SUGGESTIONS)
 
     def test_a_range_is_offered_whole(self):
         self.assertEqual(self.values("rom 8:28-30"), ["Romans 8:28-30"])
         self.assertEqual(self.values("john 3:99"), [])
 
-    def test_at_most_eight_and_nothing_for_nothing(self):
-        self.assertEqual(len(bible.suggest("j")), bible.SUGGESTIONS)
-        self.assertEqual(bible.suggest(""), [])
+    def test_nothing_for_numbers_alone(self):
         self.assertEqual(bible.suggest("123"), [])
+
+
+class BrowseTests(SimpleTestCase):
+    """Browsing the Bible from the empty field: books, then a book's
+    chapters, then a chapter's verses (owner's request, 2026-11-27)."""
+
+    def values(self, typed, **kwargs):
+        return [value for value, _ in bible.suggest(typed, **kwargs)]
+
+    def test_nothing_typed_lists_every_book_in_order(self):
+        values = self.values("")
+        self.assertEqual(len(values), 66)
+        self.assertEqual(values[0], "Genesis ")
+        self.assertEqual(values[-1], "Revelation ")
+        self.assertEqual(self.values("   "), values)
+        self.assertIn("Tobit ", self.values("", deuterocanon=True))
+
+    def test_a_typed_name_lists_every_book_it_fits(self):
+        self.assertGreater(len(self.values("j")), bible.SUGGESTIONS)
+
+    def test_a_picked_book_lists_all_its_chapters(self):
+        found = bible.suggest("Psalms ")
+        self.assertEqual(len(found), 150)
+        self.assertEqual(found[0], ("Psalm 1:", "6 verses"))
+        self.assertEqual(found[-1][0], "Psalm 150:")
+        # Without the space, the name is still being typed: the book itself.
+        self.assertEqual(self.values("Psalms"), ["Psalms "])
+
+    def test_a_picked_chapter_lists_the_whole_chapter_then_every_verse(self):
+        found = bible.suggest("Psalm 119:")
+        self.assertEqual(found[0], ("Psalm 119", "Whole chapter · 176 verses"))
+        self.assertEqual(len(found), 177)
+        self.assertEqual(found[-1][0], "Psalm 119:176")
+        # Once a verse is being typed, only matching verses.
+        self.assertNotIn("Psalm 119", self.values("Psalm 119:1"))
+
+    def test_a_picked_chapter_names_the_chapter(self):
+        self.assertEqual(
+            bible.parse("John 3:").reference(), bible.parse("John 3").reference()
+        )
+        self.assertIsNone(bible.parse("John "))
 
     def test_deuterocanonical_books_follow_the_setting(self):
         self.assertNotIn("Tobit ", self.values("tob"))
@@ -194,6 +237,43 @@ class ScriptureViewTests(TestCase):
         page = self.client.get(self.passage, {"scripture": ""})
         self.assertEqual(page.content.strip(), b"")
 
+    def test_clicking_the_empty_field_lists_every_book_to_browse(self):
+        self.client.force_login(self.pastor)
+        page = self.client.get(self.suggest, {"scripture": ""})
+        self.assertContains(page, 'role="option"', count=66)
+        self.assertContains(page, 'data-value="Genesis " data-more')
+        self.assertContains(page, '<span class="fw-semibold">Genesis</span>')
+
+    def test_a_book_then_a_chapter_then_a_verse(self):
+        self.client.force_login(self.pastor)
+        page = self.client.get(self.suggest, {"scripture": "John "})
+        self.assertContains(page, 'data-value="John 3:" data-more')
+        self.assertContains(page, '<span class="fw-semibold">John 3</span>')
+        page = self.client.get(self.suggest, {"scripture": "John 3:"})
+        self.assertContains(page, 'data-value="John 3">')
+        self.assertContains(page, "Whole chapter")
+        self.assertContains(page, 'data-value="John 3:16">')
+
+    def test_the_text_shows_while_browsing_or_typing(self):
+        self.client.force_login(self.pastor)
+        page = self.client.get(self.passage, {"scripture": "John 3:", "live": "1"})
+        self.assertContains(page, "John 3")
+        self.assertContains(page, "Nicodemus")
+        # Half a reference shows nothing, not "Not found".
+        for typed in ("Jo", "John "):
+            page = self.client.get(self.passage, {"scripture": typed, "live": "1"})
+            self.assertEqual(page.content, b"")
+
+    def test_a_chapter_left_mid_browse_saves_without_the_colon(self):
+        self.client.force_login(self.pastor)
+        self.client.post(
+            reverse("worship:theme", kwargs={"public_id": self.service.public_id}),
+            {"title": "New birth", "scripture": "John 3:", "notes": ""},
+        )
+        theme = Theme.objects.get()
+        self.assertEqual(theme.scripture, "John 3")
+        self.assertIn("Nicodemus", theme.scripture_text)
+
     def test_only_people_who_post_themes(self):
         self.client.force_login(self.member)
         self.assertEqual(
@@ -213,6 +293,9 @@ class ScriptureViewTests(TestCase):
         self.assertContains(page, f'hx-get="{self.passage}"')
         self.assertContains(page, "worship/scripture.js")
         self.assertContains(page, "Jn 3:16 or Ps 23")
+        self.assertContains(
+            page, 'hx-trigger="input changed delay:200ms, focus, click"'
+        )
 
     def test_any_text_is_still_saved(self):
         self.client.force_login(self.pastor)

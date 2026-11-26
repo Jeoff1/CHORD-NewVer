@@ -1,6 +1,7 @@
-{# Suggested passages for the Main scripture field (Phase 9C), swapped into its list by HTMX. #}
-{% for value, description in suggestions %}
-  <li class="list-group-item list-group-item-action chord-scripture__option" role="option" id="scripture-option-{{ forloop.counter }}" aria-selected="false" data-value="{{ value }}">
-    <span class="fw-semibold">{{ value }}</span> <span class="small text-body-secondary">{{ description }}</span>
+{# Suggested passages for the Main scripture field (Phase 9C), swapped into its list by HTMX: every book, a book's chapters, a chapter's verses, or what matches the typing. An option with data-more goes on to the next list. #}
+{% for value, label, more, description in suggestions %}
+  <li class="list-group-item list-group-item-action chord-scripture__option d-flex justify-content-between align-items-center gap-2" role="option" id="scripture-option-{{ forloop.counter }}" aria-selected="false" data-value="{{ value }}"{% if more %} data-more{% endif %}>
+    <span><span class="fw-semibold">{{ label }}</span> <span class="small text-body-secondary">{{ description }}</span></span>
+    {% if more %}<span class="text-body-secondary" aria-hidden="true">›</span>{% endif %}
   </li>
 {% endfor %}

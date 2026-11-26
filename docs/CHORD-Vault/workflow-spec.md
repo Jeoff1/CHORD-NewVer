@@ -53,8 +53,9 @@ The service page guides the people who plan through four steps, with a
 next-step panel naming what to do and one button for it:
   Theme -> Praise Team -> Song Lineup -> Confirm
 - Theme: the pastor posts the theme, and may attach the sermon as a PDF
-  (private to the people who plan). The Main scripture suggests passages
-  from the stored Bible as it is typed and shows the passage. Suggestions
+  (private to the people who plan). The Main scripture browses the stored
+  Bible (click it: books, then chapters, then verses) or suggests
+  passages as it is typed, and shows the passage's text at once. Suggestions
   read all of it: title, passage text, notes and PDF.
 - Praise Team (the church's "team" Label; only while Teams is on): assign
   who serves that day. Suggested, never required: "Skip for now" goes on to
