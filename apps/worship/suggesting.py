@@ -261,15 +261,25 @@ def _record_spotify_usage(run, spotify):
 
 def theme_tag_ids(texts, engine, church):
     """The church's Theme Tags a theme is about, best first. ``texts`` is
-    the theme's text, or its passages (``reading.tag_texts``), whose scores
-    are averaged."""
+    the theme's text, a list of texts, or groups of texts, one per part of
+    the theme (``reading.tag_texts``): scores are averaged within each
+    group, then across the groups, so each part has its own share."""
     tags = list(ThemeTag.objects.for_church(church).active())
     if not tags:
         return []
-    texts = [texts] if isinstance(texts, str) else list(texts)
+    if isinstance(texts, str):
+        groups = [[texts]]
+    else:
+        texts = list(texts)
+        groups = texts if texts and not isinstance(texts[0], str) else [texts]
     labels = [tag_label(tag) for tag in tags]
-    each = [engine.score(text, labels) for text in texts]
-    scores = [sum(values) / len(each) for values in zip(*each)]
+
+    def average(rows):
+        return [sum(values) / len(rows) for values in zip(*rows)]
+
+    scores = average(
+        [average([engine.score(text, labels) for text in group]) for group in groups]
+    )
     fitting = [(s, t.pk) for s, t in zip(scores, tags) if s >= TAG_THRESHOLD]
     return [pk for _, pk in sorted(fitting, reverse=True)[:MAX_TAGS]]
 
@@ -282,6 +292,7 @@ def _find_on_spotify(run, theme, theme_vector, options, spotify, engine, progres
         options.phrases_per_theme,
         engine,
         theme_vector=theme_vector,
+        sources=reading.phrase_sources(theme),
     )
     if not phrases:
         raise RunFailed("The theme has no words to search for; add a title or notes.")

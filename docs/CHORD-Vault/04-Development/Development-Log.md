@@ -2,6 +2,26 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9C, each part of the theme has its own share
+
+- **Why:** the owner saw that a long sermon PDF outweighed short notes
+  (about 46% of the match against 0.5%) and chose equal shares.
+- **Change** (`apps/worship/reading.py`): the title and reference stay
+  half of the theme's vector; the notes, the passage's Bible text and the
+  PDF's text now share the other half equally (each the average of its
+  own passages; an empty part leaves its share). Theme Tags average within
+  each part, then across parts (`suggesting.theme_tag_ids` takes groups).
+  Search phrases are drawn from the heading and each part in equal numbers
+  (`phrases.search_phrases(sources=...)`). Short themes are read whole, as
+  before.
+- **Docs:** [[Design-Decisions]] ("Each part has its own share"),
+  [[Worship]].
+- **Tests:** `apps/worship/tests/test_sermon_pdf.py`, `EqualSharesTests`
+  (notes count as much as a long PDF; an empty part's share goes to the
+  others; tags average per part; phrases come from every part).
+- **Checks:** the full `scripts/check.ps1` passed: 1233 tests, 97%
+  coverage.
+
 ## 2026-11-26: Phase 9C, Main scripture from a stored Bible
 
 - **Why:** the owner asked for a Bible stored in CHORD, so the Main

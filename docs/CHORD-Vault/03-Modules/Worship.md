@@ -600,7 +600,10 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   the theme card links it with the number of words read. Suggestions read
   the whole theme in passages (`reading.py`: `theme_vector`, `tag_texts`;
   `phrases.search_phrases(theme_vector=...)`), so a long sermon or long
-  notes aren't cut off by the model's 256-token limit.
+  notes aren't cut off by the model's 256-token limit. The title and
+  reference are half of the match; the notes, the passage's text and the
+  PDF share the other half equally (`reading.parts`), in tags and search
+  phrases too.
 - **Main scripture from a stored Bible** (`bible/`: the World English
   Bible in `bible/data/web.json.gz`, book names and abbreviations,
   `parse`, `suggest`, `passage_text`): the theme form's `ScriptureInput`

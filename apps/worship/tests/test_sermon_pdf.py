@@ -238,7 +238,8 @@ class ReadingTests(TestCase):
         self.assertEqual(
             reading.theme_vector(theme, engine), engine.embed([theme.text()])[0]
         )
-        self.assertEqual(reading.tag_texts(theme), [theme.text()])
+        self.assertEqual(reading.tag_texts(theme), [[theme.text()]])
+        self.assertIsNone(reading.phrase_sources(theme))
 
     def test_the_end_of_a_long_sermon_reaches_the_model(self):
         theme = self.long_theme("redemption redemption redemption")
@@ -280,7 +281,9 @@ class ReadingTests(TestCase):
 
     def test_tags_are_read_from_passages_with_the_heading(self):
         theme = self.long_theme("")
-        texts = reading.tag_texts(theme)
+        groups = reading.tag_texts(theme)
+        self.assertEqual(len(groups), 1)  # only the PDF has text
+        texts = groups[0]
         self.assertLessEqual(len(texts), reading.TAG_PASSAGES)
         self.assertTrue(
             all(text.startswith("Sunday message\nRomans\n") for text in texts)
@@ -329,3 +332,86 @@ class ReadingTests(TestCase):
         run.refresh_from_db()
         self.assertTrue(run.theme_tags)
         self.assertIsNotNone(SearchRun.objects.get(pk=run.pk).weights)
+
+
+def made_up_words(count):
+    """``count`` different invented words, letters only (search phrases
+    leave out anything with a digit)."""
+    syllables = "ka lo mi re su ta ve ni po da fe gu ho ji ku la me no pi ro".split()
+    return [a + b + c for a in syllables for b in syllables for c in syllables][:count]
+
+
+class EqualSharesTests(TestCase):
+    """Each part of the theme has its own share (owner, 2026-11-26): short
+    notes count as much as a long sermon PDF."""
+
+    def setUp(self):
+        complete_setup()
+        self.service = make_service()
+        self.engine = KeywordEngine()
+
+    def similarity(self, a, b):
+        return sum(x * y for x, y in zip(a, b))
+
+    def test_short_notes_count_as_much_as_a_long_pdf(self):
+        notes = "forgiveness mercy pardon " * 10
+        theme = make_theme(
+            self.service,
+            title="Sunday message",
+            notes=notes,
+            document_text=filler(3000),
+        )
+        vector = reading.theme_vector(theme, self.engine)
+        to_notes = self.similarity(vector, self.engine.embed([notes])[0])
+        to_pdf = self.similarity(vector, self.engine.embed([filler(3000)])[0])
+        self.assertGreater(to_notes, 0.3)
+        self.assertAlmostEqual(to_notes, to_pdf, delta=0.05)
+
+    def test_an_empty_part_leaves_its_share_to_the_others(self):
+        notes = filler(400, word="mercy")
+        theme = make_theme(self.service, title="Sunday message", notes=notes)
+        self.assertEqual(reading.parts(theme), [notes])
+        heading = self.engine.embed([theme.heading()])[0]
+        body = reading._normalised(
+            reading._mean(self.engine.embed(reading.passages(notes)))
+        )
+        expected = reading._normalised([h + b for h, b in zip(heading, body)])
+        for got, want in zip(reading.theme_vector(theme, self.engine), expected):
+            self.assertAlmostEqual(got, want)
+
+    def test_tags_average_each_part_then_the_parts(self):
+        class GraceOnly(KeywordEngine):
+            def score(self, text, labels):
+                return [1.0 if "grace" in text else 0.0 for _ in labels]
+
+        church = first_church()
+        # Three passages of the PDF without it, the notes with it: half.
+        groups = [["sermon"] * 3, ["grace"]]
+        self.assertTrue(suggesting.theme_tag_ids(groups, GraceOnly(), church))
+        # Counted by length instead, it would be a quarter: below the mark.
+        flat = ["sermon"] * 3 + ["grace"]
+        self.assertFalse(suggesting.theme_tag_ids(flat, GraceOnly(), church))
+
+    def test_search_phrases_come_from_every_part(self):
+        sermon = " ".join(made_up_words(400) * 3)
+        theme = make_theme(
+            self.service,
+            title="Sunday message",
+            notes="A fresh start. A fresh start for the forgiven.",
+            document_text=sermon,
+        )
+        vector = reading.theme_vector(theme, self.engine)
+        shared = search_phrases(
+            theme.title,
+            theme.text(),
+            5,
+            self.engine,
+            theme_vector=vector,
+            sources=reading.phrase_sources(theme),
+        )
+        self.assertTrue(any("fresh" in p or "start" in p for p in shared), shared)
+        # Drawn from the whole text by frequency, the sermon crowds them out.
+        crowded = search_phrases(
+            theme.title, theme.text(), 5, self.engine, theme_vector=vector
+        )
+        self.assertFalse(any("fresh" in p for p in crowded), crowded)

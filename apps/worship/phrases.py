@@ -57,15 +57,25 @@ def _similarity(a, b):
     return sum(x * y for x, y in zip(a, b))
 
 
-def search_phrases(title, text, count, engine, *, theme_vector=None):
+def search_phrases(title, text, count, engine, *, theme_vector=None, sources=None):
     """Up to ``count`` phrases to search for, from a theme's title and its
     whole text. Pass the theme's vector when it is read in passages
-    (``reading.theme_vector``), since the model would cut a long text off."""
+    (``reading.theme_vector``), since the model would cut a long text off,
+    and its parts as ``sources``: candidates are then drawn from each part
+    in equal numbers (``reading.phrase_sources``)."""
     phrases = []
     title_words = _words(title)
     if 0 < len(title_words) <= MAX_TITLE_WORDS:
         phrases.append(" ".join(title_words))
-    pool = [p for p in candidates(text) if p not in phrases]
+    if sources:
+        share = max(1, MAX_CANDIDATES // len(sources))
+        pool = []
+        for source in sources:
+            for phrase in candidates(source)[:share]:
+                if phrase not in pool and phrase not in phrases:
+                    pool.append(phrase)
+    else:
+        pool = [p for p in candidates(text) if p not in phrases]
     if len(phrases) >= count or not pool:
         return phrases[:count]
 

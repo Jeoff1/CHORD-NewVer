@@ -879,12 +879,18 @@ will be preached.
 - **Matching reads all of the theme** (`apps/worship/reading.py`): the
   embedding model reads at most 256 tokens and would cut a long text off,
   so a theme longer than 150 words is read in passages of 150 words (at
-  most 24, spread from start to end). Its vector is the heading's (title
-  and passage) plus the average of the passages', so the title keeps its
-  weight; Theme Tags are the average of the tag scores on up to 6 passages,
-  each read with the heading; search phrases come from the whole text,
-  ranked against that vector. A short theme is read whole, as before. This
-  also helps long typed notes.
+  most 24, spread from start to end). A short theme is read whole, as
+  before. This also helps long typed notes.
+- **Each part has its own share** (owner, 2026-11-26, after seeing that a
+  10-page PDF outweighed short notes about 90 to 1): the heading (title
+  and scripture reference) is half of the theme's vector, and the body's
+  parts (the notes, the passage's Bible text, the PDF's text) share the
+  other half equally, whatever their length; an empty part leaves its
+  share to the others. Theme Tags average each part's passages, then the
+  parts. Search phrases are drawn from the heading and each part in equal
+  numbers, then ranked against the theme's vector. The owner accepted the
+  trade-off: a one-line note counts as much as the whole sermon.
+  Tests: `test_sermon_pdf.py`, `EqualSharesTests`.
 - The "add notes" hint doesn't show when the PDF has text.
 
 Tests: `apps/worship/tests/test_sermon_pdf.py`: attaching reads the text
