@@ -173,11 +173,18 @@ Song Slots prefer songs of their feel but don't require them.
 _Avoid_: tempo, energy (Spotify no longer gives either)
 
 **Theme**:
-What a Worship Service's message is about: a title, a main scripture,
-notes and, optionally, the **Sermon PDF** (the sermon the pastor will
+What a Worship Service's message is about: a title, a main scripture
+(with its passage's text from the World English Bible when it names a
+passage), notes and, optionally, the **Sermon PDF** (the sermon the pastor will
 preach from; named with the "sermon" Label). Song suggestions start from
 all of it, read in passages when it is long.
 _Avoid_: topic, sermon (the sermon is the talk; the Theme describes it)
+
+**Deuterocanonical books**:
+The books in some churches' Bibles and not others' (Tobit, Judith,
+Wisdom of Solomon, Sirach, Baruch, the Maccabees and others). Offered for
+the Main scripture only when the church's Bible settings include them.
+_Avoid_: Apocrypha (a judgement some churches don't share), Catholic books
 
 **Series**:
 A church-edited group of Worship Services whose Themes belong together.

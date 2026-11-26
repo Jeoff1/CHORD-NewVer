@@ -7,7 +7,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from apps.church.models import church_foreign_key
+from apps.church.models import church_foreign_key, church_settings_field
 from apps.church.scoping import church_scoped_manager
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.music import Feel
@@ -173,6 +173,35 @@ class WorshipService(PublicIdModel, TimeStampedModel):
         return getattr(self, "theme", None)
 
 
+class BibleSettings(models.Model):
+    """Which books the church's Bible has (Phase 9C). The 66 books shared by
+    every church's Bible are always offered; the deuterocanonical books
+    only when the church includes them (decision 0001: practice, never
+    identity). One row per church."""
+
+    church = church_settings_field()
+    include_deuterocanon = models.BooleanField(
+        "Include the deuterocanonical books",
+        default=False,
+        help_text="Adds Tobit, Judith, Wisdom of Solomon, Sirach, Baruch, 1 to 4 "
+        "Maccabees, 1 and 2 Esdras, the Prayer of Manasseh, Psalm 151 and the "
+        "Greek Esther and Daniel to the Main scripture suggestions and passages.",
+    )
+
+    class Meta:
+        default_permissions = ("change", "view")
+        verbose_name_plural = "Bible settings"
+
+    def __str__(self):
+        return "Bible settings"
+
+    @classmethod
+    def load(cls, church):
+        """The church's row, created with the defaults if missing."""
+        row, _ = cls.objects.get_or_create(church=church)
+        return row
+
+
 def sermon_file_path(instance, filename):
     return random_upload_name("worship/sermons", filename)
 
@@ -212,6 +241,9 @@ class Theme(TimeStampedModel):
     )
     # The text read from the PDF when it was attached; what suggestions use.
     document_text = models.TextField(blank=True, editable=False)
+    # The Main scripture passage's text (World English Bible), kept when the
+    # theme is saved; what suggestions use.
+    scripture_text = models.TextField(blank=True, editable=False)
     posted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -235,10 +267,24 @@ class Theme(TimeStampedModel):
         return "\n".join(part for part in (self.title, self.scripture) if part)
 
     def body(self):
-        """The notes and the text of the sermon PDF."""
+        """The notes, the passage's text and the text of the sermon PDF."""
         return "\n".join(
-            part for part in (self.notes, self.document_text) if part.strip()
+            part
+            for part in (self.notes, self.scripture_text, self.document_text)
+            if part.strip()
         )
+
+    def save(self, *args, **kwargs):
+        from apps.worship import bible
+
+        self.scripture_text = bible.passage_text(
+            self.scripture,
+            deuterocanon=BibleSettings.load(self.service.church).include_deuterocanon,
+        )
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = {*update_fields, "scripture_text"}
+        super().save(*args, **kwargs)
 
     def text(self):
         """Everything the theme says, as one text for matching songs."""

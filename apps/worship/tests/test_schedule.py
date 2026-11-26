@@ -215,11 +215,15 @@ class ThemeTests(WorshipTestCase):
         self.assertRedirects(response, service_url(self.service))
         theme = Theme.objects.get()
         self.assertEqual(theme.posted_by, pastor)
-        self.assertEqual(
-            theme.text(),
-            "Grace that forgives\nEphesians 2:1-10\n"
-            "We were dead in sin, but God made us alive.",
+        self.assertTrue(
+            theme.text().startswith(
+                "Grace that forgives\nEphesians 2:1-10\n"
+                "We were dead in sin, but God made us alive.\n"
+            )
         )
+        # Phase 9C: the passage's text is kept with the theme and matched too.
+        self.assertIn("we are his workmanship", theme.scripture_text)
+        self.assertIn(theme.scripture_text, theme.text())
         event = AuditEvent.objects.get()
         self.assertEqual(event.action, AuditEvent.Action.CREATED)
         self.assertEqual(event.changes["Title"], ["", "Grace that forgives"])

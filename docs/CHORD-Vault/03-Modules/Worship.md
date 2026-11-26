@@ -601,9 +601,20 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   the whole theme in passages (`reading.py`: `theme_vector`, `tag_texts`;
   `phrases.search_phrases(theme_vector=...)`), so a long sermon or long
   notes aren't cut off by the model's 256-token limit.
-- Church settings used: the Teams Module switch and the `team`, `lineup`,
-  `pastor` and `sermon` Labels.
+- **Main scripture from a stored Bible** (`bible/`: the World English
+  Bible in `bible/data/web.json.gz`, book names and abbreviations,
+  `parse`, `suggest`, `passage_text`): the theme form's `ScriptureInput`
+  (an ARIA combobox, `static/worship/scripture.js`) asks
+  `worship:scripture_suggest` and shows `worship:scripture_passage`; the
+  theme card folds the passage ("Read John 3:16"). `Theme.save` keeps the
+  passage's text in `scripture_text`, part of the theme's body for
+  suggestions. **Bible settings** (`BibleSettings`,
+  `worship:bible_settings`) include the deuterocanonical books.
+- Church settings used: the Teams Module switch; Bible settings (the
+  deuterocanonical books); the `team`, `lineup`, `pastor` and `sermon`
+  Labels.
 - Tests: `apps/worship/tests/test_planning_steps.py`, `test_sermon_pdf.py`,
+  `test_bible.py`,
   and the updated
   `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_views.py`,
   `test_suggestion_views.py`.

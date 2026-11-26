@@ -87,6 +87,9 @@ DEFAULT_ROLE_PERMISSIONS = {
         "worship.view_sermonseries",
         "worship.add_sermonseries",
         "worship.change_sermonseries",
+        # The church's Bible: which books it has (Phase 9C)
+        "worship.view_biblesettings",
+        "worship.change_biblesettings",
         # Song pool (Phase 4)
         "songs.view_song",
         "songs.view_themetag",

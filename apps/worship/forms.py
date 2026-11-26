@@ -10,6 +10,7 @@ from apps.songs.models import ThemeTag
 
 from . import sermons
 from .models import (
+    BibleSettings,
     LineupItem,
     Season,
     SermonSeries,
@@ -78,15 +79,64 @@ class ServiceForm(ChurchFormMixin, forms.ModelForm):
         return cleaned
 
 
+class ScriptureInput(forms.TextInput):
+    """The Main scripture field (Phase 9C): suggests passages from the Bible
+    while the pastor types, and shows the chosen passage below. Any text is
+    still accepted."""
+
+    template_name = "worship/widgets/scripture_input.html"
+
+    def __init__(self, *, suggest_url, passage_url, attrs=None):
+        super().__init__(attrs)
+        self.suggest_url, self.passage_url = suggest_url, passage_url
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        widget = context["widget"]
+        list_id = f"{widget['attrs']['id']}-suggestions"
+        widget["attrs"].update(
+            {
+                "role": "combobox",
+                "aria-autocomplete": "list",
+                "aria-expanded": "false",
+                "aria-controls": list_id,
+                "autocomplete": "off",
+                "hx-get": self.suggest_url,
+                "hx-trigger": "input changed delay:200ms",
+                "hx-target": f"#{list_id}",
+                "hx-swap": "innerHTML",
+                "data-scripture-input": "",
+            }
+        )
+        widget.update(list_id=list_id, passage_url=self.passage_url)
+        return context
+
+
 class ThemeForm(ChurchFormMixin, forms.ModelForm):
     class Meta:
         model = Theme
         fields = ["title", "scripture", "series", "notes", "document"]
         widgets = {"notes": forms.Textarea(attrs={"rows": 10})}
 
-    def __init__(self, *args, labels, document_url="#", **kwargs):
+    def __init__(
+        self,
+        *args,
+        labels,
+        document_url="#",
+        scripture_urls=("#", "#"),
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         sermon = labels.get("sermon")
+        suggest_url, passage_url = scripture_urls
+        scripture = self.fields["scripture"]
+        scripture.widget = ScriptureInput(
+            suggest_url=suggest_url, passage_url=passage_url
+        )
+        scripture.help_text = (
+            "Type a book, chapter or verse, such as Jn 3:16 or Ps 23, and choose "
+            "a suggestion. The passage's text helps song suggestions match."
+        )
         self.fields["series"].queryset = SermonSeries.objects.for_church(
             self.church
         ).usable(self.instance.series_id)
@@ -117,6 +167,12 @@ class ThemeForm(ChurchFormMixin, forms.ModelForm):
         if self.document_text is not None:
             self.instance.document_text = self.document_text
         return super().save(commit)
+
+
+class BibleSettingsForm(forms.ModelForm):
+    class Meta:
+        model = BibleSettings
+        fields = ["include_deuterocanon"]
 
 
 class AttendanceForm(forms.ModelForm):

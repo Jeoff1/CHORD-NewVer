@@ -218,7 +218,7 @@ class ReadingTests(TestCase):
         return make_theme(
             self.service,
             title="Sunday message",
-            scripture="Romans 5",
+            scripture="Romans",  # no chapter: no passage text
             document_text=f"{filler(700)} {ending}",
         )
 
@@ -283,7 +283,7 @@ class ReadingTests(TestCase):
         texts = reading.tag_texts(theme)
         self.assertLessEqual(len(texts), reading.TAG_PASSAGES)
         self.assertTrue(
-            all(text.startswith("Sunday message\nRomans 5") for text in texts)
+            all(text.startswith("Sunday message\nRomans\n") for text in texts)
         )
 
     def test_theme_tags_come_from_the_pdf(self):

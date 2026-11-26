@@ -896,6 +896,50 @@ passage reaches the model, and the end of a long sermon does; tags and
 phrases come from the PDF; a run reads it. `test_isolation.py` covers
 another church's PDF.
 
+### Main scripture from a stored Bible (owner, 2026-11-26)
+
+The owner asked for a Bible stored in CHORD, so the Main scripture field
+suggests passages as the pastor types. Owner's choices: references and
+the text of a public-domain translation; the deuterocanonical books as a
+church setting.
+
+- **The Bible:** the World English Bible (public domain; eBible.org's
+  2020 stable text), kept exactly as published in
+  `apps/worship/bible/data/web.json.gz`, with its source in the folder's
+  README. Copyrighted translations (NIV, ESV and the like) can't be
+  bundled.
+- **Which books:** the 66 books shared by every church's Bible always.
+  **Bible settings** (Settings, Worship, Services, Bible;
+  `BibleSettings.include_deuterocanon`, off by default; permission
+  `worship.change_biblesettings`, held by Pastoral Staff) adds the 15
+  deuterocanonical books of the World English Bible. Church practice is a
+  setting, never a denomination (decision 0001).
+- **Typing:** the field suggests books (by name or abbreviation: "jn",
+  "1 cor", "I Corinthians", "ps"), then chapters with their verse count,
+  then verses with their first words, at most 8; each matching book's
+  best match comes first. Arrow keys, Enter and a click pick one (an
+  ARIA combobox: `worship/scripture.js`). Any text is still accepted
+  ("Various passages").
+- **The passage** shows under the field and, folded ("Read John 3:16"), on
+  the theme card for everyone who sees the theme (it is public domain). At
+  most 80 verses are shown and read.
+- **Song suggestions read it:** the passage's text is kept on the theme
+  when it is saved (`Theme.scripture_text`; migration
+  `worship/0016_bible` fills it for existing themes) and is part of the
+  theme's body, read in passages like the notes and the sermon PDF. A
+  setting change applies to a theme the next time it is saved.
+- References are written in one style: "Psalm 23" (one psalm), "Psalms
+  23-24", "John 3:16-18", "Romans 8:28-9:2".
+
+Tests: `apps/worship/tests/test_bible.py`: every book has its text and no
+abbreviation is shared; references are read however they are written,
+and what isn't one is refused; the deuterocanonical books follow the
+setting; long passages are cut at 80 verses; suggestions for books,
+chapters, verses and ranges; the passage text is kept and matched, and
+the migration fills it; only people who post themes get suggestions; the
+theme card offers the passage to everyone; the setting is audited and
+needs its permission.
+
 ### Tests
 
 - The step bar has four steps with Teams on and three with it off; each

@@ -956,6 +956,32 @@ a {
   text-underline-offset: 0.2em;
 }
 
+/* The Main scripture field's suggestions (Phase 9C; worship/scripture.js). */
+.chord-scripture {
+  position: relative;
+}
+
+.chord-scripture__list {
+  position: absolute;
+  z-index: 1050;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 18rem;
+  overflow-y: auto;
+  margin-top: 0.25rem;
+}
+
+.chord-scripture__option {
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.chord-scripture__text {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
 /* The next-step panel on the service page (Phase 9C). */
 .chord-next-step {
   border-left: 4px solid #E5C690;

@@ -2,6 +2,39 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9C, Main scripture from a stored Bible
+
+- **Why:** the owner asked for a Bible stored in CHORD, so the Main
+  scripture field suggests passages as the pastor types. Owner's choices:
+  references plus a public-domain text, and the deuterocanonical books as
+  a church setting.
+- **The Bible** (`apps/worship/bible/`): the World English Bible (public
+  domain) from eBible.org's `eng-web_vpl.zip`, converted line by line into
+  `data/web.json.gz` (81 books, 38,073 verses; the only gaps are verse
+  numbers the source skips in Esther (Greek) and Sirach) and kept exactly
+  as published; book names and abbreviations; `parse`, `suggest`,
+  `passage_text`.
+- **The field:** `ScriptureInput`, an ARIA combobox
+  (`static/worship/scripture.js`) filled by `worship:scripture_suggest`;
+  the passage below it from `worship:scripture_passage`; the theme card
+  folds the passage for everyone who sees the theme.
+- **Matching:** `Theme.scripture_text` is kept on save and read with the
+  notes and the sermon PDF (migration `worship/0016_bible` fills existing
+  themes; applied to the development database, where the one existing
+  theme got its passage).
+- **Bible settings** (`BibleSettings`, Settings, Worship, Services,
+  Bible): include the deuterocanonical books, off by default; Pastoral
+  Staff holds `worship.change_biblesettings`.
+- **Docs:** AGENTS.md (the passage's text is theme text),
+  [[Design-Decisions]], [[Development-Plan]] (slice f), [[Glossary]]
+  (Theme, Deuterocanonical books), `workflow-spec.md`, [[Worship]],
+  [[Phase-9C-Click-Through]] (section 6).
+- **Tests:** new `apps/worship/tests/test_bible.py`; updated
+  `test_schedule.py`, `test_sermon_pdf.py`, `test_settings_hub.py`.
+- **Checks:** the full `scripts/check.ps1` passed: 1229 tests, 97%
+  coverage. `scripture.js` passes `node --check`; its keys are covered by
+  the click-through, not by automated tests.
+
 ## 2026-11-26: Phase 9C, sermon PDF and reading the whole theme
 
 - **Why:** the owner asked for the pastor to attach the sermon as a PDF,

@@ -11,6 +11,13 @@
       <p class="text-body-secondary mb-0">
         {% if theme.scripture %}{{ theme.scripture }}{% endif %}{% if theme.series %}{% if theme.scripture %} · {% endif %}{% label "sermon" %} series: {{ theme.series }}{% endif %}
       </p>
+      {% if scripture.passage %}
+        {# The passage's text (Phase 9C): public domain, for everyone who sees the theme. #}
+        <details class="mt-3">
+          <summary class="fw-semibold" style="min-height: 44px; display: flex; align-items: center">Read {{ scripture.passage.reference }}</summary>
+          {% include "worship/includes/scripture_passage.html" with passage=scripture.passage verses=scripture.verses cut=scripture.cut source=scripture.source reference=scripture.reference %}
+        </details>
+      {% endif %}
       {% if can_plan and theme.document %}
         {# The sermon PDF (Phase 9C): only for people who plan, like the notes. #}
         <p class="small mt-3 mb-0">{% label "sermon" %} PDF: <a href="{% url 'worship:theme_document' public_id=service.public_id %}" target="_blank" rel="noopener" class="fw-semibold">{{ theme.document_name }}</a>

@@ -624,6 +624,10 @@ playlist preview on one page) and **Confirm** (a rundown, then confirm).
   attaches the sermon as a PDF to the theme, private to people who plan;
   its text is read once, and suggestions read the whole theme in passages
   so a long sermon isn't cut off.
+- [x] **f. Main scripture from a stored Bible** (done 2026-11-26; owner's
+  request): suggestions while typing, the passage's text (World English
+  Bible, public domain) shown and read by song suggestions; the
+  deuterocanonical books as a church setting.
 - [ ] **Click-through** by the owner ([[Phase-9C-Click-Through]]), then
   merging into `master`.
 

@@ -66,6 +66,7 @@ class MenuTests(TestCase):
                 ("Services", "Service templates"),
                 ("Services", "Sermon series"),
                 ("Services", "Seasons"),
+                ("Services", "Bible"),
                 ("Songs and suggestions", "Theme tags"),
                 ("Songs and suggestions", "Trusted artists"),
                 ("Songs and suggestions", "Worship check"),

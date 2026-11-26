@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views import View
@@ -27,16 +27,17 @@ from apps.core.storage import private_file_response
 from apps.core.views import FilteredListView, FormPageMixin
 from apps.teams.views import service_team_context
 
-from .. import bookings, scheduling
+from .. import bible, bookings, scheduling
 from ..forms import (
     AttendanceForm,
+    BibleSettingsForm,
     ScheduleAheadForm,
     ServiceForm,
     SlotFormSet,
     TemplateForm,
     ThemeForm,
 )
-from ..models import Lineup, ServiceTemplate, Theme, WorshipService
+from ..models import BibleSettings, Lineup, ServiceTemplate, Theme, WorshipService
 from ..planning import planning_context
 from .base import ServiceMixin, WorshipMixin, can_plan, service_url
 from .lineups import lineup_context
@@ -163,8 +164,12 @@ class ServiceDetailView(ServiceMixin, DetailView):
         context = super().get_context_data(**kwargs)
         service = self.service
         user = self.request.user
+        theme = service.posted_theme
         context.update(
-            theme=service.posted_theme,
+            theme=theme,
+            scripture=scripture_context(theme.scripture, service.church)
+            if theme and theme.scripture
+            else None,
             can_plan=can_plan(user),
             attendance_form=AttendanceForm(instance=service),
             # Suggestions live on the Song Lineup page since Phase 9C.
@@ -270,6 +275,10 @@ class ThemeView(ServiceMixin, FormPageMixin, UpdateView):
         kwargs["document_url"] = reverse(
             "worship:theme_document", kwargs={"public_id": self.service.public_id}
         )
+        kwargs["scripture_urls"] = (
+            reverse("worship:scripture_suggest"),
+            reverse("worship:scripture_passage"),
+        )
         self.is_new = not self.object.pk
         self.before = (
             {} if self.is_new else snapshot(self.object, scheduling.THEME_AUDIT_FIELDS)
@@ -308,6 +317,90 @@ class ThemeView(ServiceMixin, FormPageMixin, UpdateView):
                     "title, passage and notes.",
                 )
         return response
+
+
+def scripture_context(reference, church):
+    """A Main scripture passage for ``scripture_passage.html``."""
+    reference = (reference or "").strip()
+    passage = bible.parse(
+        reference,
+        deuterocanon=BibleSettings.load(church).include_deuterocanon,
+    )
+    verses = passage.verses() if passage else []
+    return {
+        "reference": reference,
+        "passage": passage,
+        "verses": verses,
+        "cut": len(verses) >= bible.MAX_VERSES,
+        "source": bible.SOURCE,
+    }
+
+
+class ScriptureSuggestView(WorshipMixin, View):
+    """Passages to suggest while the Main scripture is typed (Phase 9C)."""
+
+    permission_required = "worship.change_theme"
+
+    def get(self, request):
+        typed = request.GET.get("scripture", "")[:100]
+        suggestions = bible.suggest(
+            typed,
+            deuterocanon=BibleSettings.load(request.church).include_deuterocanon,
+        )
+        return render(
+            request,
+            "worship/includes/scripture_suggestions.html",
+            {"suggestions": suggestions},
+        )
+
+
+class ScripturePassageView(WorshipMixin, View):
+    """The text of the passage typed in the Main scripture (Phase 9C)."""
+
+    permission_required = "worship.change_theme"
+
+    def get(self, request):
+        return render(
+            request,
+            "worship/includes/scripture_passage.html",
+            scripture_context(request.GET.get("scripture", "")[:100], request.church),
+        )
+
+
+class BibleSettingsView(WorshipMixin, FormPageMixin, UpdateView):
+    """Which books the church's Bible has (Phase 9C)."""
+
+    permission_required = "worship.change_biblesettings"
+    form_class = BibleSettingsForm
+    page_title = "Bible"
+    intro = (
+        "The Main scripture of a theme suggests passages as it is typed and "
+        "shows their text, from the World English Bible (public domain). The "
+        "66 books shared by every church's Bible are always offered."
+    )
+    success_url = reverse_lazy("worship:bible_settings")
+
+    def get_object(self, queryset=None):
+        return BibleSettings.load(self.request.church)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        self.before = snapshot(self.object, BIBLE_AUDIT_FIELDS)
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        record_change(
+            self.request.user,
+            self.object,
+            AuditEvent.Action.CHANGED,
+            diff(self.before, snapshot(self.object, BIBLE_AUDIT_FIELDS)),
+        )
+        messages.success(self.request, "The Bible settings were saved.")
+        return response
+
+
+BIBLE_AUDIT_FIELDS = {"Deuterocanonical books": "include_deuterocanon"}
 
 
 class ThemeDocumentView(ServiceMixin, View):

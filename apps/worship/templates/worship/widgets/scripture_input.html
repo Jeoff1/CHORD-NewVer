@@ -1,0 +1,9 @@
+{% load static %}
+{# The Main scripture field (Phase 9C): suggestions while typing (a combobox; worship/scripture.js handles the keys), and the chosen passage below it. #}
+<div class="chord-scripture">
+  {% include "django/forms/widgets/input.html" %}
+  <ul class="list-group shadow-sm chord-scripture__list" id="{{ widget.list_id }}" role="listbox" aria-label="Suggested passages" hidden></ul>
+</div>
+<div class="chord-scripture__passage" id="{{ widget.attrs.id }}-passage" aria-live="polite"
+     hx-get="{{ widget.passage_url }}" hx-trigger="load, change from:#{{ widget.attrs.id }}" hx-include="#{{ widget.attrs.id }}" hx-swap="innerHTML"></div>
+<script src="{% static 'worship/scripture.js' %}" defer></script>

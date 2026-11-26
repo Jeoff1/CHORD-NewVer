@@ -86,3 +86,21 @@ written; note anything else in the [[Development-Log]].
   is refused.
 - [ ] **5.6** Edit the theme, tick **Clear** under the PDF and save: the
   link is gone.
+
+## 6. Main scripture from the Bible
+
+- [ ] **6.1** Edit a theme. In **Main scripture** type `jn`: a list
+  offers John (and books starting the same way). Type `jn 3:1`: verses of
+  John 3 with their first words. Use the arrow keys and Enter, or click,
+  to pick **John 3:16**. The verse's text shows under the field, marked
+  World English Bible.
+- [ ] **6.2** Type `ps 23` and pick **Psalm 23**: the whole psalm shows.
+  Type `Various passages`: "Not found in the Bible", and the theme still
+  saves.
+- [ ] **6.3** Save with a real passage. The theme card has **Read** and
+  the passage's reference; it opens the text. The Team Member sees it too.
+- [ ] **6.4** Type `tob`: Tobit isn't offered. Settings › Worship ›
+  Services › **Bible**: tick "Include the deuterocanonical books" and
+  save. Now `tob` offers Tobit.
+- [ ] **6.5** On Song Lineup, find songs again: the passage's words now
+  count toward the match ("About this search" shows the phrases).

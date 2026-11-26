@@ -84,7 +84,8 @@ condition against this rule.
 
 - **Spotify data is never model input or a training feature.** Spotify
   supplies candidates and playback only. The models read only LRCLIB lyrics,
-  the church's theme text (the text of a sermon PDF included) and the
+  the church's theme text (the text of a sermon PDF and of the main
+  scripture passage included) and the
   church's own tags, and ranking features
   come from the church's own data. The Spotify artist name, title, album,
   track ID and length, and any score adjusted by them (such as the Trusted

@@ -86,6 +86,16 @@ urlpatterns = [
         name="theme_document",
     ),
     path(
+        "scripture/suggest/",
+        schedule.ScriptureSuggestView.as_view(),
+        name="scripture_suggest",
+    ),
+    path(
+        "scripture/passage/",
+        schedule.ScripturePassageView.as_view(),
+        name="scripture_passage",
+    ),
+    path(
         "services/<uuid:public_id>/attendance/",
         schedule.AttendanceView.as_view(),
         name="attendance",
@@ -199,6 +209,11 @@ urlpatterns = [
         "settings/templates/<int:pk>/",
         schedule.TemplateUpdateView.as_view(),
         name="template_update",
+    ),
+    path(
+        "settings/bible/",
+        schedule.BibleSettingsView.as_view(),
+        name="bible_settings",
     ),
     path(
         "settings/suggestions/",

@@ -1,5 +1,6 @@
 from .lineups import Lineup, LineupItem, SuggestionFeedback
 from .schedule import (
+    BibleSettings,
     SermonSeries,
     ServiceTemplate,
     TemplateSlot,
@@ -9,6 +10,7 @@ from .schedule import (
 from .suggestions import SearchRun, Season, Suggestion, SuggestionSettings
 
 __all__ = [
+    "BibleSettings",
     "Lineup",
     "LineupItem",
     "SearchRun",

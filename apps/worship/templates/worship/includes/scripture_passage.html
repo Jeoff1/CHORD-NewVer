@@ -1,0 +1,10 @@
+{# A Main scripture passage's text (Phase 9C): under the theme form's field, and folded on the theme card. The World English Bible is in the public domain. #}
+{% if passage %}
+  <div class="border rounded p-2 bg-body-tertiary small mt-2 chord-scripture__text">
+    <div class="fw-semibold mb-1">{{ passage.reference }} <span class="fw-normal text-body-secondary">· {{ source }}</span></div>
+    <p class="mb-0">{% for chapter, verse, text in verses %}<sup class="text-body-secondary">{% if verse == 1 or forloop.first %}{{ chapter }}:{% endif %}{{ verse }}</sup>&nbsp;{{ text }} {% endfor %}</p>
+    {% if cut %}<p class="text-body-secondary mb-0 mt-1">Only the first {{ verses|length }} verses are shown and read for suggestions.</p>{% endif %}
+  </div>
+{% elif reference %}
+  <p class="small text-body-secondary mt-2 mb-0">Not found in the Bible: check the book, chapter and verse. You can still save it as written.</p>
+{% endif %}
