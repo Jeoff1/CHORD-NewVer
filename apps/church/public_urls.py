@@ -13,5 +13,6 @@ app_name = "churches"
 urlpatterns = [
     path("", views.DirectoryView.as_view(), name="directory"),
     path("register/", views.RegisterChurchView.as_view(), name="register"),
+    path("suggest/", views.ChurchSuggestView.as_view(), name="suggest"),
     path("<slug:slug>/", views.ChurchHomepageView.as_view(), name="home"),
 ]

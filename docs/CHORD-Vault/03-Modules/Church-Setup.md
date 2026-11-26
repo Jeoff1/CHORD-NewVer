@@ -143,10 +143,10 @@ of the core and can't be switched off. App: `apps/church`.
   `church/static/church/landing.js`. ([[Design-System]], "The landing
   page".)
 - **United in Worship** (`views.showcase_churches`): up to 12
-  (`SHOWCASE_SIZE`) churches that are public (`public_churches()`, the
-  Directory's rule) **and** finished setup (`setup_completed`), newest
-  first, with name, address on one line and logo only, each linking to its
-  Church Homepage. No new field or migration. With none, a short note.
+  (`SHOWCASE_SIZE`) listed churches (`listed_churches()`: public **and**
+  finished setup, the same rule as the Directory), newest first, with
+  name, address on one line and logo only, each linking to its Church
+  Homepage. No new field or migration. With none, a short note.
 - **Settings it reads:** a church's "Show the church publicly"
   (`show_in_directory`) and whether its setup is finished.
 - Tests: `apps/church/tests/test_landing.py`.
@@ -157,8 +157,20 @@ Only churches with "Show the church publicly" on have public pages; for
 any other church (and an unknown address) every public page is 404, to
 everyone, its own people too.
 
-- **Directory** (`/churches/`): the public churches, searched on name and
-  address (ignoring case), 20 to a page.
+- **Directory** (`/churches/`, `DirectoryView`; redesigned 27 Nov 2026,
+  [[Design-System]], "The church directory"): the **listed churches**
+  (`listed_churches()`: public **and** finished setup, the same rule as the
+  landing page's showcase, the owner's choice), searched on name and
+  address (ignoring case), sorted newest first (`?sort=newest`, the
+  default) or by name (`name`, `-name`), 24 to a page. An HTMX request gets
+  only `church/includes/directory_results.html`; without JavaScript it is a
+  plain GET form. Cards show the logo only (no profile photos or banners).
+- **Suggestions** (`/churches/suggest/?q=`, `ChurchSuggestView`): an HTML
+  fragment of up to six listed churches matching the name or address, from
+  two characters, names starting with the text first, the match marked.
+  "suggest" is a reserved word, so no church can take that address.
+- A Church Homepage still opens for any public church, finished setup or
+  not; only the lists need finished setup.
 - **Church Homepage** (`/churches/<slug>/`, `ChurchHomepageView`): name,
   logo, contact details and About, then the sections the Modules register
   in `homepage.py` (each only while its Module is on): upcoming services

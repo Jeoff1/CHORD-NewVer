@@ -32,7 +32,7 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Two columns | `.chord-columns` holding `.chord-main` and `.chord-side` | Main content and a side column; they stack on a phone |
 | Settings hub | Each app registers `SettingsPage`s in `apps/core/settings_menu.py`; `base.html` shows the hub on their pages. Every category is always shown (no dropdowns); the side menu scrolls on its own when it is taller than the window, stays in view beside the page on a wide screen, and opens scrolled to the current page | One place for every setting |
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
-| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
+| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle; for the Directory x | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
 | Landing page | `church/landing.html`, its own `static/css/landing.css` (classes `lp-*`) and `church/static/church/landing.js` | The public front page, redesigned 26-27 Nov 2026: see "The landing page" below |
 
 ## The landing page (redesign, 26-27 Nov 2026)
@@ -82,6 +82,39 @@ and `landing.js`, so nothing here reaches a signed-in page.
   `#E5C690` on green and in dark mode. The footer is `#0B1F1B` (the link
   hover colour).
 - **Wording** is the platform's neutral default Labels ([[0014-church-platform]]).
+
+## The church directory (redesign, 27 Nov 2026)
+
+Designed as an interactive mockup and approved by the UI/UX owner on
+2026-11-27; built on branch `joy-ui-ux-v2`. `church/directory.html` loads
+`landing.css` (tokens, nav, logo, buttons) and its own
+`static/css/directory.css` (classes `dir-*`) and
+`church/static/church/directory.js`; no other page loads them.
+
+- **Nav:** the landing page's green nav with the gold logo, and **Back to
+  Home** (chevron-left), a real link to `/` (the landing page for a
+  visitor, the dashboard for a signed-in person); "Home" on narrow phones.
+  The same look for visitors and signed-in people, who keep their account
+  and their own light or dark choice.
+- **Header:** "Discover Churches" and the search, side by side on wide
+  screens, stacked below 900 px.
+- **Search:** a wide rounded bar (search icon, field, an X to clear, the
+  gold Search button), a gold outline on hover and while typing. It stays
+  in place: no overlay, dimming or movement. Suggestions open directly
+  beneath it, under the sticky nav: up to six, the typed text underlined in
+  gold, then "See all results". Arrow keys, Enter and Escape work; a click
+  elsewhere closes them.
+- **Results:** "N churches", or "Back to all churches", "Search results for
+  “…”" and "N churches found"; sort by Newest (default), Name A to Z or Z to
+  A. Cards in rows of 4, 3, 2 and 1 (1200, 900 and 560 px), the same size,
+  never stretched: the logo in a white circle on a warm gradient, or the
+  fallback (the people icon in gold on green, as on the landing page); the
+  name, the address and View church. Hover lifts the card and zooms the
+  image. 24 to a page.
+- **Loading:** a small gold spinner in the suggestions and beside the count
+  while waiting; placeholder cards only when an update takes longer than
+  0.2 s, so a quick answer never flickers. No added delay.
+- **Icon added:** `x` (the search's clear button), solid like the rest.
 
 ## Tokens
 

@@ -2,6 +2,48 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Church directory redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned the public Church Directory that
+  the landing page links ("Churches", "Explore churches", "Explore all
+  churches"): an interactive mockup first (v2 after review: no overlay,
+  the search stays in place, "Search results for" with Back to all
+  churches), then the owner's choices: the showcase's rule, newest first
+  with A to Z and Z to A, logos only, the same page for signed-in people.
+- **Built:** `church/directory.html` (standalone: the landing nav and gold
+  logo, Back to Home, "Discover Churches", the search, the results, a slim
+  footer), `includes/directory_results.html` (the HTMX answer),
+  `includes/directory_suggestions.html`; `static/css/directory.css` and
+  `church/static/church/directory.js`; a new `x` icon.
+- **Views:** `listed_churches()` (public and finished setup) now serves the
+  showcase and the Directory; `DirectoryView` sorts (`?sort=`), 24 to a
+  page, and answers HTMX with the results only; `ChurchSuggestView` at
+  `/churches/suggest/` (up to six, names first, the match marked
+  server-side); "suggest" added to `RESERVED_SLUGS`. No model change or
+  migration.
+- **Checked in a browser** (Edge, DevTools device emulation, light and
+  dark, 1280, 820 and 390 px): suggestions arrive and are marked, the
+  arrow keys and Escape work, searching updates only the results and the
+  address (`?q=`), Back to all churches empties the field and restores
+  the list, the sort updates the address, the empty state shows, nothing
+  is wider than the screen, Back to Home stays visible. Found and fixed:
+  marking the match in the browser after HTMX settled was unreliable, so
+  the server marks it.
+- **Fixed after the owner's review:** the placeholder cards showed all the
+  time, below the real cards: they share `.dir-grid`, whose
+  `display: grid` came later in `directory.css` and beat their
+  `display: none`. The hiding rule is now the more specific one, and a test
+  guards it. The footer's "Back to Home" link was removed at the owner's
+  request (the nav keeps it).
+- **Before committing:** the full `scripts/check.ps1` passed on the final
+  code (1274 tests OK, 97% coverage). Committed and pushed to
+  `origin/joy-ui-ux-v2` with the owner's permission; not merged into
+  `master` and no pull request.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1273 tests OK, 97%
+  coverage. One test was first fixed: it looked for a suggested name as
+  plain text, which the marked match now splits.
+
 ## 2026-11-27: Landing page redesign (Phase 9A, A7; branch `joy-ui-ux-v2`)
 
 - **Why:** the UI/UX owner redesigned the public landing page: a warm,

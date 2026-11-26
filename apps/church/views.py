@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -51,25 +52,30 @@ def profile_audit_fields():
 
 
 SHOWCASE_SIZE = 12
+LISTED_FIELDS = ("name", "slug", "address", "logo")
 
 
-def showcase_churches():
-    """The churches on the landing page's "United in Worship" carousel: public
-    ones (the directory's own rule) that have also finished their setup, newest
-    first, at most ``SHOWCASE_SIZE``. Only what the directory already shows is
-    read: name, page address, street address and logo."""
-    churches = list(
-        public_churches()
-        .filter(setup_completed=True)
-        .only("name", "slug", "address", "logo")
-        .order_by("-created_at", "-pk")[:SHOWCASE_SIZE]
-    )
+def listed_churches():
+    """The churches the landing page and the Directory list: public ones that
+    have also finished their setup (the owner's rule, 2026-11-27). Only what a
+    card shows is read: name, page address, street address and logo."""
+    return public_churches().filter(setup_completed=True).only(*LISTED_FIELDS)
+
+
+def with_place(churches):
+    """Each church's address on one line, for a card, as ``place``."""
+    churches = list(churches)
     for listed in churches:
-        # The address on one line, for a card.
         listed.place = ", ".join(
             line.strip() for line in listed.address.splitlines() if line.strip()
         )
     return churches
+
+
+def showcase_churches():
+    """The landing page's "United in Worship" carousel: the newest listed
+    churches, at most ``SHOWCASE_SIZE``."""
+    return with_place(listed_churches().order_by("-created_at", "-pk")[:SHOWCASE_SIZE])
 
 
 class LandingView(TemplateView):
@@ -276,16 +282,83 @@ def public_churches():
     return ChurchProfile.objects.filter(show_in_directory=True)
 
 
+DIRECTORY_SORTS = {
+    "newest": ("Newest", ("-created_at", "-pk")),
+    "name": ("Name, A to Z", ("name", "pk")),
+    "-name": ("Name, Z to A", ("-name", "-pk")),
+}
+SUGGESTION_SIZE = 6
+SUGGESTION_MIN_LENGTH = 2
+
+
 class DirectoryView(FilteredListView):
-    """The public list of churches, searchable by name and address."""
+    """The public list of churches (redesigned 27 Nov 2026): the listed
+    churches, searchable by name and address, newest first or by name.
+
+    An HTMX request (the search, the sort, a page link, Back to all
+    churches) gets only the results part; any other request, the page."""
 
     template_name = "church/directory.html"
+    results_template = "church/includes/directory_results.html"
     search_fields = ("name", "address")
-    paginate_by = 20
+    paginate_by = 24  # rows of 4, 3, 2 and 1 cards come out even
+
+    def get_sort(self):
+        sort = self.request.GET.get("sort", "")
+        return sort if sort in DIRECTORY_SORTS else "newest"
+
+    def get_template_names(self):
+        if self.request.headers.get("HX-Request"):
+            return [self.results_template]
+        return [self.template_name]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["object_list"] = with_place(context["object_list"])
+        context["sort"] = self.get_sort()
+        context["sorts"] = [(key, label) for key, (label, _) in DIRECTORY_SORTS.items()]
+        return context
 
     def get_queryset(self):
-        self.queryset = public_churches().order_by("name", "pk")
+        self.queryset = listed_churches().order_by(*DIRECTORY_SORTS[self.get_sort()][1])
         return super().get_queryset()
+
+
+class ChurchSuggestView(TemplateView):
+    """The Directory's suggestions as a visitor types (an HTMX fragment): up to
+    ``SUGGESTION_SIZE`` listed churches whose name or address contains the
+    text, names starting with it first. Nothing for fewer than
+    ``SUGGESTION_MIN_LENGTH`` characters."""
+
+    template_name = "church/includes/directory_suggestions.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        q = self.request.GET.get("q", "").strip()
+        churches = []
+        if len(q) >= SUGGESTION_MIN_LENGTH:
+            matches = listed_churches().filter(
+                Q(name__icontains=q) | Q(address__icontains=q)
+            )
+            starts = list(matches.filter(name__istartswith=q).order_by("name", "pk"))
+            rest = matches.exclude(pk__in=[c.pk for c in starts]).order_by("name", "pk")
+            churches = with_place(
+                (starts + list(rest[:SUGGESTION_SIZE]))[:SUGGESTION_SIZE]
+            )
+            for listed in churches:
+                listed.name_parts = split_match(listed.name, q)
+                listed.place_parts = split_match(listed.place, q)
+        context.update(q=q, churches=churches, searched=len(q) >= SUGGESTION_MIN_LENGTH)
+        return context
+
+
+def split_match(text, q):
+    """``(before, match, after)``: the first place ``q`` appears in ``text``,
+    ignoring case, so a template can mark it; ``(text, "", "")`` if nowhere."""
+    at = text.lower().find(q.lower())
+    if at < 0:
+        return (text, "", "")
+    return (text[:at], text[at : at + len(q)], text[at + len(q) :])
 
 
 class ChurchHomepageView(TemplateView):

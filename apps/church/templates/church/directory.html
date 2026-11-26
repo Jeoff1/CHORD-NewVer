@@ -1,21 +1,76 @@
-{% extends "base.html" %}
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  {% comment %}
+    The Church Directory (redesigned 27 Nov 2026; Design-System.md, "The church directory").
+    The same public look for visitors and signed-in people; a signed-in person keeps their own
+    light or dark choice (User.theme), as on every other page.
+  {% endcomment %}
+  <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); })();</script>
+  <title>Discover Churches · CHORD</title>
+  <meta name="description" content="Discover the churches planning their worship with CHORD, and visit their public pages.">
+  <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'css/chord.css' %}">
+  <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+  <link rel="stylesheet" href="{% static 'css/directory.css' %}">
+  <script src="{% static 'vendor/htmx-2.0.4/htmx.min.js' %}" defer></script>
+  <script src="{% static 'church/directory.js' %}" defer></script>
+</head>
+<body class="chord-landing chord-directory">
+  <a class="visually-hidden-focusable lp-skip" href="#dir-area">Skip to the churches</a>
 
-{% block title %}Churches{% endblock %}
+  <nav class="lp-nav" aria-label="Main">
+    <div class="lp-wrap dir-nav__row">
+      <a class="lp-brand" href="{% url 'home' %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      {% comment %}A real link to the home page, never the browser's history: the landing page for a visitor, the dashboard for a signed-in person.{% endcomment %}
+      <a class="lp-btn lp-btn--ghost lp-btn--small dir-back" href="{% url 'home' %}">{% include "includes/icons/chevron-left.html" %}<span class="dir-back__long">Back to Home</span><span class="dir-back__short">Home</span></a>
+    </div>
+  </nav>
 
-{% block content %}
-  {# Phase 9B: only churches that chose to show themselves publicly. #}
-  <h1 class="h3 mb-2">Churches</h1>
-  <p class="text-body-secondary">Churches that plan worship with CHORD and show themselves here.</p>
-  {% include "includes/list_toolbar.html" with placeholder="Search by name or address" %}
-  <div class="list-group shadow-sm">
-    {% for listed in object_list %}
-      <a class="list-group-item list-group-item-action" href="{% url 'churches:home' slug=listed.slug %}">
-        <span class="fw-semibold d-block">{{ listed.name }}</span>
-        {% if listed.address %}<span class="small text-body-secondary">{{ listed.address|linebreaksbr }}</span>{% endif %}
-      </a>
-    {% empty %}
-      <div class="list-group-item text-body-secondary">{% if q %}No church matches “{{ q }}”.{% else %}No churches are listed yet.{% endif %}</div>
-    {% endfor %}
-  </div>
-  {% include "includes/pagination.html" %}
-{% endblock %}
+  <header class="dir-head">
+    <div class="lp-wrap dir-head__row">
+      <div>
+        <p class="lp-eyebrow">Church directory</p>
+        <h1 class="dir-title">Discover Churches</h1>
+        <p class="dir-lede">Find the churches planning their worship with CHORD, and visit their public pages.</p>
+      </div>
+      {% comment %}Works as a plain GET form without JavaScript; with HTMX only the results part is fetched and the address bar follows.{% endcomment %}
+      <form class="dir-search" id="dir-search" method="get" action="{% url 'churches:directory' %}" role="search" autocomplete="off"
+            hx-get="{% url 'churches:directory' %}" hx-target="#dir-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#dir-area">
+        <label class="visually-hidden" for="dir-q">Search churches by name or address</label>
+        <div class="dir-search__bar">
+          <span class="dir-search__icon" aria-hidden="true">{% include "includes/icons/search.html" %}</span>
+          <input class="dir-search__input" id="dir-q" name="q" type="search" value="{{ q }}" placeholder="Search by church name or address"
+                 role="combobox" aria-expanded="false" aria-controls="dir-suggest-body" aria-autocomplete="list"
+                 hx-get="{% url 'churches:suggest' %}" hx-trigger="input changed delay:250ms" hx-target="#dir-suggest-body"
+                 hx-indicator="#dir-suggest" hx-sync="this:replace">
+          <input type="hidden" name="sort" value="{{ sort }}" id="dir-sort-value">
+          <button type="button" class="dir-search__clear" id="dir-clear" aria-label="Clear the search"{% if not q %} hidden{% endif %}>{% include "includes/icons/x.html" %}</button>
+          <button type="submit" class="lp-btn lp-btn--gold dir-search__go">{% include "includes/icons/search.html" %}<span class="dir-search__go-label">Search</span></button>
+        </div>
+        <div class="dir-suggest" id="dir-suggest" hidden>
+          <p class="dir-suggest__loading"><span class="dir-spinner" aria-hidden="true"></span>Looking for churches…</p>
+          <div id="dir-suggest-body" aria-live="polite"></div>
+        </div>
+      </form>
+    </div>
+  </header>
+
+  <main class="lp-wrap dir-area" id="dir-area">
+    {% include "church/includes/directory_results.html" %}
+    {% comment %}Placeholder cards, shown only when an update takes longer than a moment (church/directory.js).{% endcomment %}
+    <ul class="dir-grid dir-skeleton" aria-hidden="true">
+      {% for _ in "12345678" %}<li class="dir-skel"><div class="dir-skel__media"></div><div class="dir-skel__body"><span></span><span></span><span></span></div></li>{% endfor %}
+    </ul>
+  </main>
+
+  <footer class="dir-footer">
+    <div class="lp-wrap dir-footer__row">
+      <span>CHORD · Worship planning</span>
+    </div>
+  </footer>
+</body>
+</html>

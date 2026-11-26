@@ -1,0 +1,25 @@
+{% comment %}The Directory's suggestions (ChurchSuggestView): listed churches only, the typed text marked (escaped as usual). The page's script handles the keyboard.{% endcomment %}
+{% if searched %}
+  {% if churches %}
+    <ul class="dir-suggest__list" role="listbox" aria-label="Matching churches" data-q="{{ q }}">
+      {% for listed in churches %}
+        <li role="presentation">
+          <a class="dir-suggest__item" role="option" id="dir-opt-{{ forloop.counter }}" aria-selected="false" href="{% url 'churches:home' slug=listed.slug %}">
+            {% if listed.logo %}
+              <span class="dir-suggest__thumb" aria-hidden="true"><img src="{{ listed.logo.url }}" alt="" loading="lazy"></span>
+            {% else %}
+              <span class="dir-suggest__thumb dir-suggest__thumb--none" aria-hidden="true">{% include "includes/icons/people.html" with size=18 %}</span>
+            {% endif %}
+            <span class="dir-suggest__text">
+              <span class="dir-suggest__name">{{ listed.name_parts.0 }}{% if listed.name_parts.1 %}<mark>{{ listed.name_parts.1 }}</mark>{% endif %}{{ listed.name_parts.2 }}</span>
+              {% if listed.place %}<span class="dir-suggest__place">{{ listed.place_parts.0 }}{% if listed.place_parts.1 %}<mark>{{ listed.place_parts.1 }}</mark>{% endif %}{{ listed.place_parts.2 }}</span>{% endif %}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+    <button type="submit" form="dir-search" class="dir-suggest__all" role="option" id="dir-opt-all" aria-selected="false">{% include "includes/icons/search.html" %}See all results for <q>{{ q }}</q></button>
+  {% else %}
+    <p class="dir-suggest__none">No church matches <q>{{ q }}</q>.</p>
+  {% endif %}
+{% endif %}

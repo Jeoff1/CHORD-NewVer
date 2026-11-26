@@ -1,0 +1,86 @@
+{% comment %}
+  The Directory's results: the whole of an HTMX answer (the search, the sort, a page link,
+  Back to all churches) and part of the full page. data-q and data-sort let the page's script
+  keep the search field and its hidden sort in step after a swap.
+{% endcomment %}
+{% url 'churches:directory' as directory_url %}
+<div class="dir-results" id="dir-results" data-q="{{ q }}" data-sort="{{ sort }}">
+  <div class="dir-toolbar">
+    {% if q %}
+      <div class="dir-found">
+        <a class="lp-btn lp-btn--line dir-found__back" href="{{ directory_url }}{% if sort != 'newest' %}?sort={{ sort }}{% endif %}"
+           hx-get="{{ directory_url }}{% if sort != 'newest' %}?sort={{ sort }}{% endif %}" hx-target="#dir-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#dir-area"
+           data-show-all>{% include "includes/icons/chevron-left.html" %}Back to all churches</a>
+        <h2 class="dir-found__title">Search results for <q>{{ q }}</q></h2>
+        <p class="dir-found__count"><span class="dir-spinner dir-busy" aria-hidden="true"></span>{{ paginator.count }} church{{ paginator.count|pluralize:"es" }} found</p>
+      </div>
+    {% else %}
+      <p class="dir-count"><span class="dir-spinner dir-busy" aria-hidden="true"></span><strong>{{ paginator.count }}</strong> church{{ paginator.count|pluralize:"es" }}</p>
+    {% endif %}
+    {% if paginator.count %}
+      <form class="dir-sort" method="get" action="{{ directory_url }}"
+            hx-get="{{ directory_url }}" hx-trigger="change" hx-target="#dir-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#dir-area">
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+        <label for="dir-sort">Sort by</label>
+        <select id="dir-sort" name="sort">
+          {% for key, label in sorts %}<option value="{{ key }}"{% if key == sort %} selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <noscript><button type="submit" class="lp-btn lp-btn--line lp-btn--small">Sort</button></noscript>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if object_list %}
+    <ul class="dir-grid">
+      {% for listed in object_list %}
+        <li>
+          <a class="dir-card" href="{% url 'churches:home' slug=listed.slug %}">
+            <span class="dir-card__media">
+              {% if listed.logo %}
+                <span class="dir-card__logo"><span><img src="{{ listed.logo.url }}" alt="" loading="lazy" decoding="async"></span></span>
+              {% else %}
+                {% comment %}The CHORD fallback, the same as on the landing page: the people icon in gold on green.{% endcomment %}
+                <span class="dir-card__fallback" aria-hidden="true"><span>{% include "includes/icons/people.html" %}</span></span>
+              {% endif %}
+            </span>
+            <span class="dir-card__body">
+              <span class="dir-card__name">{{ listed.name }}</span>
+              {% if listed.place %}<span class="dir-card__place">{{ listed.place }}</span>{% endif %}
+            </span>
+            <span class="dir-card__go">View church {% include "includes/icons/chevron-right.html" %}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% elif q %}
+    <div class="dir-empty">
+      <span class="dir-empty__mark" aria-hidden="true">{% include "includes/icons/search.html" %}</span>
+      <strong>No church matches <q>{{ q }}</q>.</strong>
+      <p>Try a shorter name, or a town or city.</p>
+      <a class="lp-btn lp-btn--line" href="{{ directory_url }}" hx-get="{{ directory_url }}" hx-target="#dir-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#dir-area" data-show-all>Show all churches</a>
+    </div>
+  {% else %}
+    <div class="dir-empty">
+      <span class="dir-empty__mark" aria-hidden="true">{% include "includes/icons/people.html" %}</span>
+      <strong>No churches are listed yet.</strong>
+      <p>Churches appear here once they choose to show themselves publicly and finish their setup.</p>
+    </div>
+  {% endif %}
+
+  {% if page_obj.has_other_pages %}
+    <nav class="dir-pager" aria-label="Pages">
+      {% if page_obj.has_previous %}
+        {% querystring page=page_obj.previous_page_number as prev_query %}
+        <a href="{{ prev_query }}" hx-get="{{ directory_url }}{{ prev_query }}" hx-target="#dir-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#dir-area" aria-label="Previous page">{% include "includes/icons/chevron-left.html" %}</a>
+      {% endif %}
+      {% for number in paginator.page_range %}
+        {% querystring page=number as page_query %}
+        <a href="{{ page_query }}" hx-get="{{ directory_url }}{{ page_query }}" hx-target="#dir-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#dir-area"{% if number == page_obj.number %} aria-current="page"{% endif %}>{{ number }}</a>
+      {% endfor %}
+      {% if page_obj.has_next %}
+        {% querystring page=page_obj.next_page_number as next_query %}
+        <a href="{{ next_query }}" hx-get="{{ directory_url }}{{ next_query }}" hx-target="#dir-results" hx-swap="outerHTML" hx-push-url="true" hx-indicator="#dir-area" aria-label="Next page">{% include "includes/icons/chevron-right.html" %}</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+</div>

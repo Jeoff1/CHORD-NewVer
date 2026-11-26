@@ -673,6 +673,17 @@ Approved choices:
 
 Tests: `apps/church/tests/test_landing.py` (`LandingRedesignTests`, `ChurchShowcaseTests`): the Phase 9C steps; the links to sign in, sign up and the Directory, and none to registering; the page's own CSS, script and images exist and load; every image is decorative or labelled; the intro's session flag, minimum, caps and CSS fallback; signed-in pages don't load the landing CSS; only public churches that finished setup, newest first, at most 12; no contact details; the logo fallback; the carousel arrows start hidden.
 
+#### Church directory redesign (UI/UX owner, 27 Nov 2026)
+
+Designed as an interactive mockup first (v2 after the owner's review: no overlay, the search stays in place, "Search results for" with Back to all churches), approved with these choices and built on `joy-ui-ux-v2` ([[Design-System]], "The church directory"):
+- **Which churches:** the same rule as the landing showcase: "Show the church publicly" on **and** setup finished (`listed_churches()`). This narrows the Directory, which listed every public church. A Church Homepage still opens for any public church.
+- **Sort:** newest first by default; Name A to Z and Z to A.
+- **Images:** the church's logo only, else the CHORD fallback; no profile photos, banners or stock images (church administrators will manage profiles and banners later, in the church management area).
+- **Signed-in people** get the same public page (Back to Home goes to their dashboard), keeping their account and their own light or dark choice.
+- **Search** without reloading: HTMX fetches the results part and the suggestions (`/churches/suggest/`, a new reserved word "suggest"); a plain GET form without JavaScript.
+
+Tests: `apps/church/tests/test_public_pages.py` (`DirectoryTests`, `DirectoryRedesignTests`, `SuggestionTests`): listed churches only, a public church without finished setup left out, search by name and address, sorting, 24 to a page, the HTMX fragment and the full page, the empty search, the logo and its fallback, no contact details, Back to Home, signed-in people keep their account and theme; suggestions listed churches only, from two letters, at most six, names first, the match marked and escaped, and the reserved "suggest".
+
 ---
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
