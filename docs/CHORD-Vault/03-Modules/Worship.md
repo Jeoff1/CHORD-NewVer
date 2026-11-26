@@ -591,6 +591,16 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   preview (`includes/playlist_preview.html`: which songs have a track,
   where the playlist will be saved, Listen links) and the folded
   suggestions. "Find songs" and the one-click corrections return here.
+  **Empty-pool pop-up** (`includes/pool_empty_modal.html`, a Bootstrap
+  modal over the page, never part of it): for people with
+  `worship.suggest_songs`, when `suggesting.pool_is_empty(church)` (no
+  song passed the worship check and none is waiting for lyrics or
+  analysis; a new church starts this way), no run is in progress and
+  planning isn't closed. It says suggestions and Add a song need the pool
+  filled by Find songs (Spotify), with a **Find songs** button once the
+  theme is posted, **Post the theme** before that, or why Spotify isn't
+  available. It opens once per browser session per church
+  (`sessionStorage`).
 - **Confirm rundown** (`ConfirmView` GET, `lineup_confirm.html`): the
   service, theme, team, songs and warnings (`rundown_warnings`), with
   Confirm for people who may confirm; confirming returns to the service

@@ -468,6 +468,19 @@ def _summary(run):
 # --- Reading results ---------------------------------------------------------
 
 
+def pool_is_empty(church):
+    """True when the church's song pool has nothing suggestions could rank,
+    now or soon: no song passed the worship check and none is still waiting
+    for lyrics or analysis. A new church starts this way (decision 0014);
+    Find songs fills the pool from Spotify."""
+    songs = Song.objects.for_church(church)
+    return not (
+        songs.accepted().exists()
+        or songs.needs_lyrics().exists()
+        or songs.needs_analysis().exists()
+    )
+
+
 def latest_run(service):
     return service.search_runs.order_by("-created_at", "-pk").first()
 

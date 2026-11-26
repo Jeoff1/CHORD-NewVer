@@ -293,6 +293,11 @@ class LineupView(ServiceMixin, TemplateView):
                 ranked_count=run.suggestions.count()
                 if run is not None and run.status == SearchRun.Status.DONE
                 else 0,
+                # A pop-up, not part of the page: the pool is empty, so
+                # suggestions and Add a song need Find songs first.
+                pool_empty_notice=not context["planning_closed"]
+                and not (run is not None and run.is_active)
+                and suggesting.pool_is_empty(service.church),
             )
         if plans(user):
             context.update(planning_context(service, user))

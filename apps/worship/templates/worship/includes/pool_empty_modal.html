@@ -1,0 +1,42 @@
+{% load church %}
+{# Shown over the Song Lineup page, never in it, when the church's song pool has nothing to suggest (a new church starts empty, decision 0014). Opens once per browser session per church; Find songs fills the pool from Spotify. #}
+{% label "lineup" as lineup_word %}
+<div class="modal fade" id="pool-empty-modal" tabindex="-1" aria-labelledby="pool-empty-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="pool-empty-title">Your song pool is empty</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Suggestions and <strong>Add a song</strong> choose from your church's song pool, and it has no songs yet.</p>
+        {% if not spotify_ready %}
+          <p class="mb-0">The pool is filled by searching Spotify for songs that fit the theme, and Spotify isn't available right now{% if block_message %}: {{ block_message }}{% else %}. Ask your administrator to set it up.{% endif %}</p>
+        {% elif not service.posted_theme %}
+          <p class="mb-0">To fill it, post the theme first, then click <strong>Find songs</strong> on this page. CHORD searches Spotify for songs that fit the theme, checks their lyrics and adds them to the pool.</p>
+        {% else %}
+          <p class="mb-0">To fill it, click <strong>Find songs</strong>. CHORD searches Spotify for songs that fit the theme, checks their lyrics and adds them to the pool. <strong>Rank the song pool only</strong> has nothing to rank until then.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Not now</button>
+        {% if spotify_ready and service.posted_theme %}
+          <form method="post" action="{% url 'worship:suggest' public_id=service.public_id %}">
+            {% csrf_token %}<button type="submit" name="source" value="spotify" class="btn btn-primary">Find songs</button>
+          </form>
+        {% elif spotify_ready and perms.worship.change_theme %}
+          <a href="{% url 'worship:theme' public_id=service.public_id %}" class="btn btn-primary">Post the theme</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var key = "chord-pool-empty-seen-{{ church.slug|escapejs }}";
+    var modal = document.getElementById("pool-empty-modal");
+    if (!modal || !window.bootstrap || sessionStorage.getItem(key)) { return; }
+    modal.addEventListener("hidden.bs.modal", function () { sessionStorage.setItem(key, "1"); });
+    window.bootstrap.Modal.getOrCreateInstance(modal).show();
+  });
+</script>

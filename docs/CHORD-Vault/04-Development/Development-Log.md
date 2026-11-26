@@ -2,6 +2,23 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Empty-pool pop-up on the Song Lineup page
+
+- **Owner's request:** tell the pastor that a church's song pool is filled
+  by Find songs (Spotify), as a pop-up only, not part of the page. Follows
+  the note in the Phase 9C merge entry below.
+- `suggesting.pool_is_empty(church)`: no song passed the worship check and
+  none is waiting for lyrics or analysis.
+- `includes/pool_empty_modal.html` on the Song Lineup page (`LineupView`
+  sets `pool_empty_notice`): for people who may suggest songs, when the
+  pool is empty, no run is in progress and planning isn't closed. Find
+  songs button once the theme is posted, Post the theme before that, or
+  why Spotify isn't available (it then doesn't name a button the page
+  lacks). Opens once per browser session per church.
+- Tests: `apps/worship/tests/test_pool_empty_notice.py` (12).
+- Still open from the merge note: "Find songs again" after a pool-only run.
+- **Checks:** full check passed (see the commit).
+
 ## 2026-11-26: Phase 9C merged into `master`
 
 - The owner ran the [[Phase-9C-Click-Through]]: every step passed. Steps
