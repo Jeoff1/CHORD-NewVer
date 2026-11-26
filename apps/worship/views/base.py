@@ -64,16 +64,6 @@ def service_url(service):
     return reverse("worship:service", kwargs={"public_id": service.public_id})
 
 
-def settings_nav(request):
-    """Tabs linking the Worship settings pages the user may open."""
-    sermon = request.church.label_set.get("sermon")
-    return [
-        (label.format(sermon=sermon), reverse(url_name))
-        for label, permission, url_name in SETTINGS_PAGES
-        if request.user.has_perm(permission)
-    ]
-
-
 def can_plan(user):
     """Whether the user plans services: they see the notes behind a theme."""
     return user.has_perm("worship.change_theme") or user.has_perm(

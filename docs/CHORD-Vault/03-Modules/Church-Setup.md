@@ -124,8 +124,9 @@ of the core and can't be switched off. App: `apps/church`.
   Teams (My schedule) and Announcements (the latest two). Each only for
   people who may act on it, and nothing from a switched-off Module.
 - **Settings hub:** the gear in the navbar replaced the Administration
-  menu. The Church Profile's sections (Church details, Labels, Modules) are
-  its General category; the setup wizard stays outside it.
+  menu. The Church Profile's sections (Church details, Labels, Modules,
+  Public homepage) are its General category; the setup wizard stays
+  outside it.
   ([[Design-System]], "Page patterns".)
 - Tests: `apps/church/tests/test_dashboard_screen.py`,
   `apps/core/tests/test_settings_hub.py`.
@@ -162,9 +163,9 @@ everyone, its own people too.
 ## Church settings this module depends on
 
 This module *is* the church's settings: Church Profile details, switched-off
-Modules and Labels. While the Worship module is on, the settings tabs also
-show **Spotify**, the optional Church Spotify Account, which the Worship
-module keeps ([[Worship]], [[0011-church-spotify-account]]).
+Modules, Labels and what the Public homepage shows. While the Worship
+module is on, the Settings hub also lists **Spotify** under Integrations:
+the optional Church Spotify Account, which the Worship module keeps ([[Worship]], [[0011-church-spotify-account]]).
 
 ## Open questions
 

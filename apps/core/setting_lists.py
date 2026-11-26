@@ -100,9 +100,9 @@ class ChurchChoiceItem(ChoiceItem):
 class SettingList:
     """How one church-edited list appears.
 
-    ``columns`` are ``(header, attribute)`` pairs shown in the list;
-    ``nav`` is an optional ``callable(request) -> [(label, url)]`` that
-    links the list to its sibling settings pages. ``title`` may be a
+    ``columns`` are ``(header, attribute)`` pairs shown in the list.
+    The Settings hub (``apps/core/settings_menu.py``) links the list to
+    its sibling settings pages. ``title`` may be a
     ``callable(request) -> str`` when it uses one of the church's Labels.
     """
 
@@ -124,7 +124,6 @@ class SettingList:
             ("Active", "is_active"),
         ]
     )
-    nav: object = None
 
     def permission(self, action):
         opts = self.model._meta
@@ -179,10 +178,6 @@ class SettingListMixin(LoginRequiredMixin, PermissionRequiredMixin):
         prefix = self.setting_list.url_prefix
         return reverse(f"{namespace}:{prefix}_{name}", kwargs=kwargs)
 
-    def nav_links(self):
-        nav = self.setting_list.nav
-        return nav(self.request) if nav else []
-
 
 class SettingListView(SettingListMixin, ListView):
     template_name = "core/setting_list.html"
@@ -198,8 +193,6 @@ class SettingListView(SettingListMixin, ListView):
         context.update(
             config=config,
             title=config.get_title(self.request),
-            nav_links=self.nav_links(),
-            current_url=self.request.path,
             create_url=self.url("create") if can_add else None,
             rows=[
                 (

@@ -15,7 +15,6 @@ PARTS_LIST = SettingList(
     intro="The voices and instruments people can take at a service. People "
     "choose theirs in their Team Profile; only they can be assigned to it.",
     module="teams",
-    nav=views.teams_nav,
 )
 
 urlpatterns = [

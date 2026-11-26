@@ -28,6 +28,7 @@ class ChurchConfig(AppConfig):
                         ("details", "Church details"),
                         ("labels", "Labels"),
                         ("modules", "Modules"),
+                        ("homepage", "Public homepage"),
                     )
                 )
             )

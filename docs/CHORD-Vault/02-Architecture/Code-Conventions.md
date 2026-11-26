@@ -104,7 +104,9 @@ description, sort order and active switch, plus `.active()` and
   (HTMX; a Save button without JavaScript) through `<url_prefix>_switch`,
   which posts the state wanted, so a second click or a page left open
   never flips an item the wrong way. The change is audited.
-- `nav=` adds tabs that link sibling settings lists.
+- Register the list page with the Settings hub (`SettingsPage` in
+  `apps/core/settings_menu.py`, from the app's `AppConfig.ready()`); the
+  hub's side menu is what links it to the other settings pages.
 - `title=` can be a function of the request when the title uses a Label
   (e.g. "Sermon series").
 

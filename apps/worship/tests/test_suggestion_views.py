@@ -308,7 +308,7 @@ class SuggestionSettingsTests(SuggestionViewTestCase):
             self.client.force_login(user)
             self.assertEqual(self.client.get(SETTINGS).status_code, 403)
 
-    def test_the_settings_tabs_link_the_new_pages(self):
+    def test_the_settings_hub_links_the_new_pages(self):
         self.client.force_login(self.leader)
         response = self.client.get(SETTINGS)
         self.assertContains(response, SEASONS)

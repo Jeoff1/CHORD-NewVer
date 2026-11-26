@@ -1,7 +1,6 @@
 from django.urls import path
 
 from apps.core.setting_lists import SettingList, setting_list_urls
-from apps.worship.views.base import settings_nav
 
 from . import views
 from .models import ThemeTag, TrustedArtist
@@ -19,7 +18,6 @@ THEME_TAGS = SettingList(
     module="worship",
     fields=["name", "keywords", "description", "sort_order", "is_active"],
     columns=[("Name", "name"), ("Keywords", "keywords"), ("Active", "is_active")],
-    nav=settings_nav,
 )
 TRUSTED_ARTISTS = SettingList(
     model=TrustedArtist,
@@ -32,7 +30,6 @@ TRUSTED_ARTISTS = SettingList(
     module="worship",
     fields=["name", "description", "is_active"],
     columns=[("Name", "name"), ("Description", "description"), ("Active", "is_active")],
-    nav=settings_nav,
 )
 
 urlpatterns = [

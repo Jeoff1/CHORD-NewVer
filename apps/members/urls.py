@@ -1,4 +1,4 @@
-from django.urls import path, reverse
+from django.urls import path
 
 from apps.core.setting_lists import SettingList, setting_list_urls
 
@@ -6,20 +6,6 @@ from . import views
 from .models import MemberField, MembershipStatus, RelationshipType
 
 app_name = "members"
-
-
-def settings_nav(request):
-    """Tabs linking the Members settings lists the user may see."""
-    links = [
-        ("Membership statuses", "members.view_membershipstatus", "status_list"),
-        ("Household roles", "members.view_relationshiptype", "relationship_list"),
-        ("Custom fields", "members.view_memberfield", "field_list"),
-    ]
-    return [
-        (label, reverse(f"members:{name}"))
-        for label, perm, name in links
-        if request.user.has_perm(perm)
-    ]
 
 
 STATUS_LIST = SettingList(
@@ -38,7 +24,6 @@ STATUS_LIST = SettingList(
         ("Order", "sort_order"),
         ("Active", "is_active"),
     ],
-    nav=settings_nav,
 )
 RELATIONSHIP_LIST = SettingList(
     model=RelationshipType,
@@ -47,7 +32,6 @@ RELATIONSHIP_LIST = SettingList(
     item_name="Household role",
     intro="The roles people can have in a household.",
     module="members",
-    nav=settings_nav,
 )
 FIELD_LIST = SettingList(
     model=MemberField,
@@ -75,7 +59,6 @@ FIELD_LIST = SettingList(
         ("Order", "sort_order"),
         ("Active", "is_active"),
     ],
-    nav=settings_nav,
 )
 
 urlpatterns = [

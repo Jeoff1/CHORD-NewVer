@@ -84,6 +84,23 @@ class HomepageSettingsTests(TestCase):
         complete_setup()
         self.client.force_login(make_administrator())
 
+    def test_the_settings_hub_links_it_under_general_after_modules(self):
+        # The old settings tabs are gone; the hub is the only way in.
+        menu = self.client.get(DETAILS).context["settings_menu"]
+        general = next(c for c in menu.categories if c.key == "general")
+        self.assertEqual(
+            [(page.label, page.url) for page in general.pages][-2:],
+            [
+                ("Modules", reverse("church:settings", kwargs={"section": "modules"})),
+                ("Public homepage", HOMEPAGE),
+            ],
+        )
+        self.assertContains(self.client.get(DETAILS), f'href="{HOMEPAGE}"')
+        self.assertEqual(
+            self.client.get(HOMEPAGE).context["settings_menu"].current.label,
+            "Public homepage",
+        )
+
     def test_the_church_chooses_what_is_public(self):
         response = self.client.post(
             HOMEPAGE,
@@ -194,6 +211,22 @@ class SetupWizardForANewChurchTests(TestCase):
     def test_its_administrator_is_sent_to_the_wizard(self):
         admin = make_user(church=self.church, roles=["administrator"])
         self.assertRedirects(self.home_as(admin), self.setup)
+
+    def test_its_fourth_step_is_the_public_homepage(self):
+        admin = make_user(church=self.church, roles=["administrator"])
+        self.home_as(admin)
+        step = reverse("church:setup", kwargs={"section": "homepage"})
+        self.assertContains(self.client.get(step), "Step 4 of 4: Public homepage")
+        self.assertContains(
+            self.client.get(reverse("church:setup", kwargs={"section": "modules"})),
+            "Step 3 of 4: Modules",
+        )
+        # Once set up, the step opens the settings page the hub links.
+        complete_setup(self.church)
+        self.assertRedirects(
+            self.client.get(step),
+            reverse("church:settings", kwargs={"section": "homepage"}),
+        )
 
     def test_a_superuser_looking_in_is_not(self):
         boss = make_user(is_superuser=True, church=False)

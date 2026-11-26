@@ -2,6 +2,33 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9B click-through: Public homepage in the Settings hub
+
+- **Found in the click-through:** the Public homepage settings page
+  (`/church/settings/homepage/`) had no link, because the old church
+  settings tabs no longer render and the Settings hub listed only Church
+  details, Labels and Modules. It is now registered in
+  `apps/church/apps.py`, under General after Modules.
+- **Other settings pages checked:** every other settings page is in the
+  hub (the church Spotify account is under Integrations) or in the user
+  menu (My profile, Change password, the person's own Spotify account).
+- **Tests:** `apps/church/tests/test_public_settings.py`: the
+  Administrator's hub links Public homepage after Modules and marks it
+  current; the setup wizard's step 4 is still Public homepage and, once
+  set up, opens the settings page. `apps/core/tests/test_settings_hub.py`
+  now expects four General pages. [[Phase-9B-Click-Through]] step 2.1
+  names the menu path.
+- **Removed the old settings tabs:** the church and Worship
+  `settings_tabs.html` templates, which no page included; `SettingList`'s
+  `nav` option, which the settings-list page never showed; and the
+  Worship and Members `settings_nav()` functions, which only fed those
+  tabs. The Teams and Occasions tab bars (`teams_nav`, `occasions_nav`) on
+  their everyday pages stay. [[Code-Conventions]] now says to register a
+  settings list with the hub instead of passing `nav=`. The Worship test
+  that checked the "settings tabs" is renamed to check the hub's link.
+- **Checks:** `check.ps1 -Quick` passed (1166 tests), before and after
+  the cleanup.
+
 ## 2026-11-26: Phase 9B, slice e: the public pages; Phase 9B done
 
 - **Directory** (`/churches/`): public churches only, searched on name and

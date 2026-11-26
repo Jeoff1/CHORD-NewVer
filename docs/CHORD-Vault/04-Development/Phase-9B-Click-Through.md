@@ -32,7 +32,7 @@ behaves as written; note anything else in the [[Development-Log]].
 
 ## 2. Make the first church public
 
-- [ ] **2.1** Sign in again as its Administrator. In **Public homepage**,
+- [ ] **2.1** Sign in again as its Administrator. In **Settings → General → Public homepage**,
   switch **"Show the church publicly" on**, write two lines in About (put
   `<b>bold</b>` in one), and save.
 - [ ] **2.2** Open Occasions, then Settings, then Occasion types. Edit

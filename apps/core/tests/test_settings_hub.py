@@ -45,7 +45,10 @@ class MenuTests(TestCase):
             ],
         )
         found = labels(menu)
-        self.assertEqual(found["General"], ["Church details", "Labels", "Modules"])
+        self.assertEqual(
+            found["General"],
+            ["Church details", "Labels", "Modules", "Public homepage"],
+        )
         self.assertEqual(
             found["People and access"], ["Users", "Roles and permissions", "Audit log"]
         )

@@ -5,7 +5,6 @@ from apps.core.setting_lists import SettingList, setting_list_urls
 from .forms import SeasonForm
 from .models import Season, SermonSeries
 from .views import lineups, reports, schedule, suggestions
-from .views.base import settings_nav
 
 app_name = "worship"
 
@@ -17,7 +16,6 @@ SERIES_LIST = SettingList(
     intro="Groups of services whose themes belong together. Choose a series "
     "when posting a service's theme.",
     module="worship",
-    nav=settings_nav,
 )
 
 
@@ -55,7 +53,6 @@ SEASONS_LIST = SettingList(
         ("Theme tags", lambda season: ", ".join(t.name for t in season.tags.all())),
         ("Active", "is_active"),
     ],
-    nav=settings_nav,
 )
 
 urlpatterns = [

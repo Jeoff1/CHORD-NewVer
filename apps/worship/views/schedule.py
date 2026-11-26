@@ -35,7 +35,7 @@ from ..forms import (
     ThemeForm,
 )
 from ..models import Lineup, SearchRun, ServiceTemplate, Theme, WorshipService
-from .base import ServiceMixin, WorshipMixin, can_plan, service_url, settings_nav
+from .base import ServiceMixin, WorshipMixin, can_plan, service_url
 from .lineups import lineup_context
 from .suggestions import can_suggest, panel_context
 
@@ -408,13 +408,6 @@ class TemplateListView(WorshipMixin, ListView):
             "slots"
         )
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            nav_links=settings_nav(self.request), current_url=self.request.path
-        )
-        return context
-
 
 class TemplateFormMixin(ChurchScopedMixin, ChurchFormKwargsMixin, WorshipMixin):
     model = ServiceTemplate
@@ -433,7 +426,6 @@ class TemplateFormMixin(ChurchScopedMixin, ChurchFormKwargsMixin, WorshipMixin):
         context.setdefault("slots", self.get_slot_formset())
         context.update(
             page_title=self.get_page_title(),
-            nav_links=settings_nav(self.request),
             cancel_url=self.success_url,
         )
         return context

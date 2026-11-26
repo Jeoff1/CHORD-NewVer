@@ -31,7 +31,6 @@ TYPES_LIST = SettingList(
         ("Offered publicly", lambda item: "Yes" if item.offered_publicly else "No"),
         ("Active", "is_active"),
     ],
-    nav=views.occasions_nav,
 )
 
 urlpatterns = [
