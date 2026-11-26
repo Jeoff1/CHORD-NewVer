@@ -9,10 +9,9 @@ development task.
 ## Current status
 
 **Phase 9B (Church Platform: many churches on one installation) is
-done (2026-11-26) on branch `phase-9b-church-platform`
-([[0014-church-platform]], [[Phase-9B-Plan]]), not merged into `master`
-yet: the owner runs the [[Phase-9B-Click-Through]] and says when to
-merge.** Phase 9A is paused for it: A1 (Church Member
+done (2026-11-26) and merged into `master` after the owner's
+[[Phase-9B-Click-Through]] passed ([[0014-church-platform]],
+[[Phase-9B-Plan]]).** Phase 9A was paused for it: A1 (Church Member
 role), A2 (a role change keeps history), A3 (user history), A4 (batch
 accounts) and A5 (occasions, their own Module; Notifications moved into
 a core app) done 2026-11-24; A6 (member reports) is next, after the owner decides
@@ -20,12 +19,11 @@ about "who attended a service". A7 part 2, the owner's design system and
 the Spotify player card, built 2026-11-25 on branch `ui-design-system`
 ([[Design-System]]), with the public landing page, merged into `master` the same
 day.** Phase 8 done (2026-11-23). Updated
-2026-11-25.
+2026-11-26.
 
 **Pick up here:**
-- **Branch:** Phase 9B is on `phase-9b-church-platform` (pushed). Merge
-  it into `master` only when the owner says so, after the
-  [[Phase-9B-Click-Through]]. 9A's A1 to A5 are already in `master`.
+- **Branch:** Phase 9B is merged into `master` (2026-11-26), as are 9A's
+  A1 to A5.
 - **Phase 9B** ([[Development-Plan]]; rules and tests in
   [[Design-Decisions]], "Phase 9B"; design and progress notes in
   [[Phase-9B-Plan]]): slices a (foundations) to e (public pages) done.

@@ -2,6 +2,16 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-26: Phase 9B merged into `master`
+
+- The owner ran the [[Phase-9B-Click-Through]]: every step passed; the
+  one finding (Public homepage not in the Settings hub) was fixed first
+  (entry below). Steps ticked and the result noted there.
+- `phase-9b-church-platform` fast-forwarded into `master`.
+  [[Development-Plan]], [[Phase-9B-Plan]] and [[00-Home]] say so.
+- **Checks:** the full check passed on the merged code (1166 tests, 97%
+  coverage); this commit changes docs only.
+
 ## 2026-11-26: Phase 9B click-through: Public homepage in the Settings hub
 
 - **Found in the click-through:** the Public homepage settings page

@@ -39,8 +39,8 @@ version; final presentation 1–4 Dec 2026).
   "Sign in to your church" at line 35, CTA "Sign in with the account your
   church gave you." at line 187).
 - **Branch:** `phase-9b-church-platform`, from `master` (which already
-  holds 9A's A1 to A5). It is merged into `master` only when the full
-  check passes.
+  holds 9A's A1 to A5). Merged into `master` on 2026-11-26, after the
+  full check and the owner's click-through passed.
 - **Checks:** `.\scripts\check.ps1 -Quick` after each change, the full
   check before each commit (the pre-commit hook runs it). Never bypass
   the hook.
