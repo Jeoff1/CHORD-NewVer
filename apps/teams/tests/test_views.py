@@ -405,14 +405,17 @@ class RosterAndPartsTests(TeamsViewTestCase):
         self.client.force_login(self.member)
         self.assertEqual(self.client.get(PARTS).status_code, 403)
 
-    def test_the_teams_tabs_follow_permissions(self):
+    def test_the_sidebar_offers_the_roster_by_permission(self):
+        # The Teams tab bar is gone (UI/UX owner, 28 Nov 2026): the sidebar
+        # links the roster, and Team parts stay in Settings.
         self.client.force_login(self.member)
         page = self.client.get(MY_SCHEDULE)
         self.assertNotContains(page, f'href="{ROSTER}"')
+        self.assertNotContains(page, "nav-tabs")
         self.client.force_login(self.leader)
         page = self.client.get(MY_SCHEDULE)
         self.assertContains(page, f'href="{ROSTER}"')
-        self.assertContains(page, f'href="{PARTS}"')
+        self.assertNotContains(page, f'href="{PARTS}"')
 
 
 class DefaultRoleTests(TestCase):

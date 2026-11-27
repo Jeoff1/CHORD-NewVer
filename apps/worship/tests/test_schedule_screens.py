@@ -42,7 +42,11 @@ class ScheduleScreenTests(TestCase):
         self.assertContains(page, ">Open</a>")
         self.assertContains(page, 'aria-pressed="true"')
         self.assertContains(page, 'placeholder="Search by name or theme"')
-        self.assertContains(page, 'class="active" aria-current="page">Schedule</a>')
+        # No tab bar: the sidebar marks the page (UI/UX owner, 28 Nov 2026).
+        self.assertNotContains(page, 'aria-label="Worship sections"')
+        self.assertContains(
+            page, f'class="chord-sb__sublink is-active" href="{SCHEDULE}"'
+        )
 
     def test_the_team_never_sees_a_draft(self):
         self.client.force_login(make_user(roles=["team_member"]))
@@ -109,5 +113,7 @@ class CalendarScreenTests(TestCase):
         self.assertContains(page, 'aria-label="Next month"')
         self.assertContains(page, ">Today</a>")
         self.assertContains(page, "Booked (details hidden)")
-        self.assertContains(page, 'class="active" aria-current="page">Calendar</a>')
+        self.assertNotContains(page, 'aria-label="Worship sections"')
+        self.assertContains(page, '<h1 class="h3 mb-0">Calendar</h1>')
+        self.assertContains(page, 'class="chord-sb__sublink is-active"')
         self.assertContains(page, ">Worship settings</a>")

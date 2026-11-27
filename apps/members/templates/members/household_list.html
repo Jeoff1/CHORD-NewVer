@@ -4,12 +4,11 @@
 {% block title %}Households{% endblock %}
 
 {% block content %}
-  {% url 'members:list' as back_url %}{% label "member" plural=True as back_label %}{% include "includes/back_link.html" with url=back_url label=back_label %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">Households</h1>
+  {% load ui %}
+  {% page_header "Households" %}
     {% if perms.members.add_household %}<a href="{% url 'members:household_create' %}" class="btn btn-primary">Add household</a>{% endif %}
-  </div>
-  {% load ui members_ui %}{% members_sections as links %}{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label="Members sections" %}
+  {% endpage_header %}
+  {# The Module's tabs and the link back to the directory are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   {% include "includes/list_toolbar.html" with placeholder="Search households" %}
 

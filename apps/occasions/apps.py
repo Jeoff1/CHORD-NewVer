@@ -30,6 +30,7 @@ class OccasionsConfig(AppConfig):
 
         church_dashboard.register_attention(dashboard.attention)
         church_dashboard.register_coming_up(dashboard.coming_up)
+        church_dashboard.register_stat(dashboard.stats)
 
         from .rules import calendar_source
 

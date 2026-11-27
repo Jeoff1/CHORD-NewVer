@@ -2,6 +2,171 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: The sidebar replaces the Modules' tab bars (branch `joy-ui-ux-v3`, not committed yet)
+
+- **Why:** the UI/UX owner: the old tab bars (Occasions, Requests, My
+  requests, Settings, and the like) repeated the sidebar
+  ([[Design-Decisions]], "The sidebar replaces the Modules' tab bars").
+- **What changed:** the tab bars are gone from the Occasions, Teams,
+  Worship, Songs, Reports and Members pages (their three `nav.html`
+  templates deleted); each page has one heading named as in the sidebar,
+  with its actions beside it; tabs that switch reports or filter a list
+  stay. The waiting-requests count moved to the sidebar's Service
+  Requests link. Verified the earlier requests: no setup wizard after
+  signing in or registering, the five-second welcome (tests), the
+  Upcoming cards, the trimmed shortcuts, the gold CHORD logo on every
+  signed-in page. Only templates, CSS and tests changed.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations and 1403 tests passed, 97% coverage. Screenshots of eleven
+  Module pages and the dashboard against a throwaway test database: no
+  tab bar, the page marked in the sidebar, no horizontal overflow.
+
+## 2026-11-28: No setup wizard, a sidebar that remembers, a leaner dashboard (branch `joy-ui-ux-v3`, not committed yet)
+
+- **Why:** the UI/UX owner's requests of 27-28 Nov ([[Design-Decisions]],
+  "No setup wizard; a sidebar that remembers; a leaner dashboard").
+- **What changed:** the dashboard no longer redirects to the setup wizard
+  and registration always goes to the dashboard with the welcome;
+  `mark_set_up` (`apps/church/registration.py`) marks an older church set
+  up when its details pass registration's checks, otherwise the dashboard
+  links to Settings › Church details. The sidebar's mode and open
+  categories and groups are cookies read by `navigation.py` (drawn by the
+  server, no jump), its scroll position is restored from session storage
+  before the page shows; thinner scrollbar, even spacing, reduced motion.
+  The dashboard's shortcuts are only record-creating ones ("Create"), one
+  link per section, Upcoming as compact clickable cards, and the church
+  name only in the sidebar.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations and 1401 tests passed, 97% coverage. Screenshots against a
+  throwaway test database (1440, 1024, 390 px, light and dark; an
+  existing and a new church; a team member): state kept across a page
+  change (Songs open, Bookings closed, scroll restored), no horizontal
+  overflow; the service date blocks were made darker in dark mode.
+
+## 2026-11-27: Dashboard and sidebar redesign (branch `joy-ui-ux-v3`, not committed yet)
+
+- **Why:** the UI/UX owner's approved mockup, with the lead developer's
+  menu layout ([[Design-Decisions]], "Dashboard and sidebar redesign").
+- **What changed:** every signed-in page with a church has a sidebar
+  (`templates/includes/app_sidebar.html`, `app_header.html`,
+  `static/css/sidebar.css`, `apps/church/static/church/sidebar.js`), built
+  by `apps/church/navigation.py` from switched-on Modules and permissions;
+  the official gold CHORD logo, the church panel ("Church Administration"
+  for administrators, role titles for others), icon-only mode and a phone
+  offcanvas. The dashboard (`church/dashboard.html`,
+  `static/css/dashboard.css`) gained figures (`register_stat` in
+  `apps/church/dashboard.py`; Worship, Occasions, Teams and Members
+  register theirs, `apps/members/dashboard.py` is new), a lineup status bar
+  (`register_breakdown`), Upcoming with date blocks, and Quick actions in
+  place of "Go to". The reminder reads "service requests" (one line in
+  `apps/occasions/dashboard.py`, approved). The church switcher left the
+  sidebar; the account menu keeps it for people with more than one church.
+  No models, migrations, forms or routes changed; `views.py` is untouched.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations and 1397 tests passed, 97% coverage. Screenshots against a
+  throwaway test database at 1440, 1024 and 390 px, light and dark
+  (administrator, team member, a new church, calendar, Settings, the
+  icon-only dropdown, the phone menu): no horizontal overflow; the
+  icon-only dropdown opened behind the cards and was fixed (the sidebar
+  sits above the page).
+
+## 2026-11-27: Registering goes straight to the dashboard, with a welcome (branch `joy-ui-ux-v3`, not committed yet)
+
+- **Why:** the owner removed the setup wizard after registering, since the
+  four registration steps already ask for the church's information, and
+  asked for a one-time welcome toast on the dashboard ([[Design-Decisions]],
+  "Registering goes straight to the dashboard").
+- **Checked first:** the wizard's four sections need only the name, which
+  registration asks; everything else has a working default and stays
+  changeable in Settings.
+- **Changed (backend, no database change):**
+  - `registration.setup_requirements_met` (the model's checks) decides
+    `setup_completed` at registration.
+  - `ChurchRegistrationForm` has a hidden `time_zone`, filled in from the
+    device by `register.js`.
+  - `RegisterChurchView` sends the person to the dashboard with a message
+    tagged `chord-welcome`, or to the wizard if the checks failed. A used
+    token also goes to the dashboard.
+- **Changed (UI):** `templates/includes/welcome_toast.html`,
+  `static/js/welcome-toast.js`, and the toast styles at the end of
+  `chord.css`. `base.html` shows the toast after the navigation bar and
+  leaves it out of the alerts.
+- **Checked in a browser** (headless Edge, `manage.py testserver`; light
+  and dark at 1440 and 390 px):
+  - Registering lands on the dashboard with the toast 12 px under the
+    navigation bar: green, a gold check, a gold bar and a 44 px X, with no
+    sideways scrolling.
+  - It closed itself at about 4.9 s and didn't come back on refresh.
+    Hovering paused it past six seconds, the X closed it, and the page
+    beside it stayed clickable.
+  - Reduced motion turned off its animations.
+  - Church details showed the device's time zone and PHP.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1379 tests OK, 97%
+  coverage. Not committed, for the owner to try first.
+
+## 2026-11-27: Church banner, and the profile step's recommended sizes (branch `joy-ui-ux-v3`)
+
+- **Why:** the owner asked for an optional church banner in registration
+  step 2, shown on the church's public page. A mockup and plan came first;
+  the owner approved the new field, the backend changes and the server-side
+  optimising, with the recommendations: the cover takes the banner's 3:1
+  shape, and the banner is changed in Public homepage settings
+  ([[Design-Decisions]], "The church banner").
+- **Built:**
+  - **The field:** `ChurchProfile.banner` (migration
+    `church/0005_churchprofile_banner`, one added column; `0004` was the
+    latest on `master` too, so no conflict).
+  - **Checks and the WebP copy:** `apps/church/images.py`. Its
+    `BannerFieldMixin` checks the type, size, real format and pixels, makes
+    the WebP copy with `optimize_banner` (upright, no hidden details, at
+    most 1920 px wide, never enlarged or cropped), and deletes a replaced
+    or cleared file once the change is saved.
+  - **Forms:** used by `ChurchRegistrationForm` and `ChurchHomepageForm`.
+  - **Recommended sizes:** the logo hint "512 × 512 px recommended (1:1)"
+    in registration and Church details.
+  - **Step 2:** the banner between the logo and the description in
+    `register.html`: drag and drop, an immediate 3:1 preview, Replace,
+    Remove, the name, size and pixel size. `register.js` checks it, and the
+    review's cover shows it. The page asks for it again after a correction
+    (`banner_lost`). Styles in `register.css`; a new `image` icon.
+  - **Public profile:** `homepage.html` and `profile.css` show it as the
+    cover (`.pf-banner--image`: 3:1, at most 360 px, `object-fit: cover`),
+    the logo still overlapping. The directory is unchanged (logo only).
+  - **Audit:** "Banner" in the audit trail's church fields.
+- **Checked in a browser** (headless Edge, `manage.py testserver`, a
+  throwaway database):
+  - **Step 2:** light and dark at 1440, 834 and 390 px; both recommended
+    sizes shown, no sideways scrolling.
+  - **Choosing a 2400 × 800 JPG:** preview, "cover-2400x800.jpg · 126 KB ·
+    2400 × 800 px", Replace image and Remove.
+  - **Replacing with an 800 × 600 PNG:** the not-3:1 and smaller notes.
+  - **Refused:** a 5.4 MB file and a PDF, each with its message.
+  - **Remove and drag and drop:** Remove clears it, and a dropped image
+    works.
+  - **Between steps:** the file is kept through Previous and Next.
+  - **Review and saving:** the review shows the 2400 px image; registering
+    saved it.
+  - **Settings and the public page:** in the Public homepage settings step
+    the upload field shows the current file. After an upload, the public
+    page showed a 1920 × 640 WebP filling a 3:1 cover (1080 × 360 on
+    desktop, 354 × 118 on a phone), the logo overlapping, in light and
+    dark. Clearing it brought back the green-and-gold cover.
+  - **Clean-up:** the test uploads that went to the dev `media/` folder
+    were deleted.
+- **Migration:** applied to the dev database, undone and applied again
+  cleanly; `migrate --check` is up to date. The owner had hit "column
+  banner does not exist" while registering, between the migration being
+  made and applied. Afterwards:
+  - **Nothing partial was left:** registering is one transaction, so no
+    church or account was saved, and no church lacks a member.
+  - **A real registration with a banner on the local database** (rolled
+    back, its file deleted) redirected to setup and saved a 1920 × 640
+    WebP, shown on the public page.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1369 tests OK, 97%
+  coverage. Not committed yet, at the owner's request.
+
 ## 2026-11-27: Registration steps reordered; the day's account changes committed (branch `joy-ui-ux-v2`)
 
 - **Why:** the owner reordered the registration wizard to Church, Profile,

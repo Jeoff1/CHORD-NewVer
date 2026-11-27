@@ -1,5 +1,5 @@
 {# Tabs for the reports, and the period filter. Expects `links`, `form` and `title`. #}
-{% include "worship/includes/nav.html" with active="reports" %}
+{# The Worship Module's tabs are gone: the sidebar holds them. The tabs below switch between reports, so they stay. #}
 {% if links|length > 1 %}
   <ul class="nav nav-tabs mb-3">
     {% for label, url in links %}<li class="nav-item"><a class="nav-link{% if label == title %} active{% endif %}" href="{{ url }}">{{ label }}</a></li>{% endfor %}

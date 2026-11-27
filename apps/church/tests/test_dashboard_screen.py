@@ -65,7 +65,8 @@ class DashboardScreenTests(TestCase):
         self.assertContains(self.page(self.pastor), "Post the theme for Midweek prayer")
         self.assertNotContains(self.page(self.leader), "Post the theme")
 
-    def test_occasion_requests_are_for_approvers(self):
+    def test_service_requests_are_for_approvers(self):
+        # On screen the Occasions Module is "Services" (owner, 27 Nov 2026).
         OccasionRequest.objects.create(
             church=first_church(),
             requester=self.church_member,
@@ -74,9 +75,9 @@ class DashboardScreenTests(TestCase):
             occasion_for="Ana and Ben",
         )
         page = self.page(self.pastor)
-        self.assertContains(page, "1 occasion request is waiting")
+        self.assertContains(page, "1 service request is waiting")
         self.assertContains(page, ">Open requests</a>")
-        self.assertNotContains(self.page(self.leader), "occasion request")
+        self.assertNotContains(self.page(self.leader), "service request")
 
     def test_chord_sheets_waiting_are_for_people_who_approve_them(self):
         ChordSheet.objects.create(
@@ -104,8 +105,13 @@ class DashboardScreenTests(TestCase):
         page = self.page(self.pastor)
         self.assertContains(page, "Sunday gathering")
         self.assertContains(page, "Garden wedding: Ana and Ben")
-        self.assertContains(page, 'class="chord-pill chord-pill--accent">Occasion')
-        self.assertContains(page, ">Full schedule</a>")
+        self.assertContains(
+            page, 'class="chord-pill chord-pill--accent">Booked service'
+        )
+        self.assertContains(
+            page,
+            f'href="{reverse("worship:calendar")}" class="chord-dash-card__link">View calendar</a>',
+        )
         page = self.page(self.church_member)
         self.assertContains(page, "Sunday gathering")
         self.assertNotContains(page, "Ana and Ben")
@@ -119,9 +125,15 @@ class DashboardScreenTests(TestCase):
         self.assertContains(page, 'class="chord-pill chord-pill--success">Accepted')
         self.assertNotContains(self.page(self.church_member), "My schedule</h2>")
 
-    def test_announcements_and_go_to(self):
+    def test_announcements_and_create_shortcuts(self):
+        # The sidebar navigates; the dashboard's only shortcuts create a
+        # record (UI/UX owner, 27 Nov 2026).
         page = self.page(self.church_member)
         self.assertContains(page, "Announcements</h2>")
         self.assertContains(page, "No announcements yet.")
-        self.assertContains(page, "Go to</h2>")
-        self.assertContains(page, f'href="{reverse("worship:home")}" class="btn')
+        self.assertNotContains(page, "Create</h2>")
+        page = self.page(self.pastor)
+        self.assertContains(page, "Create</h2>")
+        self.assertContains(page, f'<a href="{reverse("worship:service_create")}">')
+        self.assertNotContains(page, f'<a href="{reverse("worship:calendar")}">')
+        self.assertNotContains(page, f'<a href="{reverse("songs:spotify_search")}">')

@@ -166,6 +166,34 @@
 .au-navbar__step[hidden] { display: none; }
 .au .au-navbar [hidden] { display: none; }
 
+/* The church banner (owner, 27 Nov 2026): a wide 3:1 drop area that becomes the preview; the
+   image fills it without stretching (object-fit: cover). */
+.au-banner { overflow: hidden; border: 1.5px dashed var(--au-input-border); border-radius: 14px; background: var(--au-tertiary); transition: border-color .2s ease, background-color .2s ease; }
+.au-banner.is-over { border-style: solid; border-color: var(--au-focus); background: var(--au-note-bg); }
+.au-banner.has-image { border-style: solid; }
+.au-banner__preview {
+  position: relative;
+  aspect-ratio: 3 / 1;
+  display: grid;
+  place-items: center;
+  background-color: #173630;
+  background-image:
+    radial-gradient(ellipse 55% 90% at 85% 0%, rgba(229, 198, 144, .42), rgba(229, 198, 144, 0) 70%),
+    radial-gradient(ellipse 40% 70% at 15% 100%, rgba(229, 198, 144, .18), rgba(229, 198, 144, 0) 70%),
+    linear-gradient(120deg, #0B1F1B 0%, #173630 45%, #2E4A44 100%);
+}
+.au-banner__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.au-banner__img[hidden] { display: none; }
+.au-banner__empty { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px; text-align: center; font-size: .9375rem; color: #E6E2E1; }
+.au-banner__empty[hidden] { display: none; }
+.au-banner__empty .chord-icon { color: #E5C690; margin-bottom: 2px; }
+.au-banner__note { font-size: .8125rem; color: #A9BDB7; }
+.au-banner__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; padding: 10px 14px; }
+.au-banner__meta { min-width: 0; overflow-wrap: anywhere; }
+.au-field--error .au-banner { border-color: var(--au-err); }
+.au-pv__banner { position: relative; overflow: hidden; }
+.au-pv__banner img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
 /* --- Tablet ---------------------------------------------------------------- */
 
 @media (max-width: 991.98px) {
@@ -202,7 +230,12 @@
   .au .au-navbar .au-btn { padding: 10px 18px; }
 }
 
+@media (max-width: 719.98px) {
+  .au-banner__empty { font-size: .875rem; }
+  .au-banner__note { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .au-rg--steps .au-pane.is-on { animation: none; }
-  .au-prog__fill, .au-step__dot, .au-step::before { transition: none; }
+  .au-prog__fill, .au-step__dot, .au-step::before, .au-banner { transition: none; }
 }

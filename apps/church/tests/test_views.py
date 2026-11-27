@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 from io import BytesIO
+from unittest import mock
 
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -65,17 +66,31 @@ def labels_data(**overrides):
 
 
 class DashboardTests(TestCase):
-    def test_administrator_is_sent_to_setup_until_it_is_done(self):
+    def test_signing_in_opens_the_dashboard_not_the_setup_wizard(self):
+        # No setup wizard any more (owner, 27 Nov 2026): a church whose
+        # details pass registration's checks is marked set up on arrival.
         self.client.force_login(make_administrator())
         response = self.client.get(reverse("home"))
-        self.assertRedirects(
-            response, reverse("church:setup", kwargs={"section": "details"})
-        )
+        self.assertEqual(response.status_code, 200)
+        first_church().refresh_from_db()
+        self.assertTrue(first_church().setup_completed)
+        self.assertNotContains(response, "need checking")
 
-    def test_other_users_see_a_notice_while_setup_is_unfinished(self):
-        self.client.force_login(make_user())
-        response = self.client.get(reverse("home"))
-        self.assertContains(response, "Church setup isn't finished yet")
+    def test_details_that_fail_the_checks_show_a_notice_instead(self):
+        with mock.patch(
+            "apps.church.registration.setup_requirements_met", return_value=False
+        ):
+            self.client.force_login(make_administrator())
+            response = self.client.get(reverse("home"))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "need checking before it can be listed")
+            self.assertContains(
+                response, reverse("church:settings", kwargs={"section": "details"})
+            )
+            self.client.force_login(make_user())
+            response = self.client.get(reverse("home"))
+            self.assertContains(response, "An administrator can fix them in Settings.")
+        self.assertFalse(first_church().setup_completed)
 
     def test_shows_switched_on_modules_only(self):
         complete_setup(disabled_modules=["announcements"])
@@ -83,8 +98,8 @@ class DashboardTests(TestCase):
         response = self.client.get(reverse("home"))
         self.assertContains(response, "Worship")
         self.assertNotContains(response, "Announcements")
-        # The Settings gear replaced the Administration menu (Phase 9A, A7).
-        self.assertContains(response, 'aria-label="Settings"')
+        # Settings sits at the foot of the sidebar (dashboard redesign).
+        self.assertContains(response, 'title="Settings"')
 
     def test_plain_users_gear_opens_their_appearance(self):
         # Everyone has Settings › Personal › Appearance (Phase 9A, A7).
@@ -92,7 +107,7 @@ class DashboardTests(TestCase):
         self.client.force_login(make_user())
         self.assertContains(
             self.client.get(reverse("home")),
-            f'href="{reverse("accounts:appearance")}" aria-label="Settings"',
+            f'href="{reverse("accounts:appearance")}" title="Settings"',
         )
 
 

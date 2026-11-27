@@ -8,6 +8,16 @@ development task.
 
 ## Current status
 
+**Dashboard and sidebar redesign (A7), 2026-11-27, on branch
+`joy-ui-ux-v3`: built and checked, not committed yet** (the UI/UX owner
+reviews the running site first). Every signed-in page now has a green
+sidebar with the CHORD logo, the church's own panel and a menu limited to
+what the person may open (Management holds Services and Bookings, the
+on-screen names of the Occasions Module); the dashboard shows figures for
+the next 30 days, the lineup status, Action required, Upcoming and Quick
+actions ([[Design-System]], "The app sidebar and dashboard";
+[[Design-Decisions]], "Dashboard and sidebar redesign").
+
 **Landing page redesign (A7), 2026-11-27, on branch `joy-ui-ux-v2`:**
 committed and pushed (`ee4fc60`), waiting for the lead developer's
 approval before it is merged ([[Design-System]], "The landing page").

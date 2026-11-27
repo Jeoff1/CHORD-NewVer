@@ -22,6 +22,13 @@ def validate_logo_size(file):
         raise ValidationError("The logo must be 2 MB or smaller.")
 
 
+def banner_path(instance, filename):
+    """``church/banner/<random>.webp``: like the logo's, an address that says
+    nothing about the church; the banner is always saved as WebP
+    (``images.optimize_banner``)."""
+    return f"church/banner/{uuid.uuid4().hex}.webp"
+
+
 def logo_path(instance, filename):
     """``church/<random>.<ext>``: the logo is public, so its address says
     nothing about the church, the uploader or the file they chose."""
@@ -147,6 +154,14 @@ class ChurchProfile(TimeStampedModel):
             validate_logo_size,
             FileExtensionValidator(allowed_extensions=LOGO_EXTENSIONS),
         ],
+    )
+    # The cover of the church's public page (owner, 27 Nov 2026): optional,
+    # checked and saved as a WebP copy at most 1920 px wide by the forms
+    # (``images.BannerFieldMixin``). Without one the green and gold cover shows.
+    banner = models.ImageField(
+        upload_to=banner_path,
+        blank=True,
+        help_text="1920 × 640 px recommended (3:1). JPG, PNG or WebP, 5 MB at most.",
     )
     currency = models.CharField(
         max_length=3,

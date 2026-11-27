@@ -1,0 +1,2 @@
+{# One top-level sidebar link (templates/includes/app_sidebar.html). Expects `link`, a NavLink. #}
+<a class="chord-sb__link{% if link.active %} is-active{% endif %}" href="{{ link.url }}"{% if link.active %} aria-current="page"{% endif %} title="{{ link.label }}">{% include "includes/icons/"|add:link.icon|add:".html" %}<span class="chord-sb__label">{{ link.label }}</span></a>

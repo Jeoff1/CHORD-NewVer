@@ -29,9 +29,13 @@
   </nav>
 
   <main class="lp-wrap" id="pf-main">
-    {% comment %}The cover: the default green-and-gold banner. When churches can add their own banner image, it goes on .pf-banner (background-image) with no layout change.{% endcomment %}
+    {% comment %}The cover: the church's own banner when it has one (27 Nov 2026; the image fills a 3:1 cover, at most 360 px tall, without stretching), else the green-and-gold banner.{% endcomment %}
     <div class="pf-cover">
-      <div class="pf-banner" aria-hidden="true"></div>
+      {% if public_church.banner %}
+        <div class="pf-banner pf-banner--image" aria-hidden="true"><img class="pf-banner__img" src="{{ public_church.banner.url }}" alt="" fetchpriority="high" decoding="async"></div>
+      {% else %}
+        <div class="pf-banner" aria-hidden="true"></div>
+      {% endif %}
       {% if public_church.logo %}
         <span class="pf-logo"><img src="{{ public_church.logo.url }}" alt="{{ public_church.name }} logo"></span>
       {% else %}

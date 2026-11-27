@@ -155,6 +155,12 @@ then Approved (which books the Occasion) or Declined, or withdrawn while
 Pending. Approving is the permission `occasions.approve_occasion`.
 _Avoid_: service request, booking
 
+**Services and Bookings (on screen)**:
+The names the sidebar and dashboard give the Occasions Module (the lead
+developer's naming, 27 Nov 2026): an Occasion Request is a "service
+request" and an Occasion a "booked service". The code, routes and data keep
+the name Occasion.
+
 **Booked Time**:
 The time a Worship Service takes, from its start for its template's length.
 Requests that overlap a booked time are refused; people who don't plan see

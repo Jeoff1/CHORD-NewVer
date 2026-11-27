@@ -29,6 +29,9 @@ class WorshipConfig(AppConfig):
         # The dashboard's "Needs your attention" and "Coming up" (Phase 9A, A7).
         church_dashboard.register_attention(dashboard.attention)
         church_dashboard.register_coming_up(dashboard.coming_up)
+        # The overview figures and the lineup status bar (dashboard redesign).
+        church_dashboard.register_stat(dashboard.stats)
+        church_dashboard.register_breakdown(dashboard.lineup_breakdown)
 
         from .views.base import SETTINGS_GROUPS, SETTINGS_PAGES
 

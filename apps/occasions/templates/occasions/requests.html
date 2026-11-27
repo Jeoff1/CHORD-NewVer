@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load people %}
 
-{% block title %}Occasion requests{% endblock %}
+{% block title %}Service requests{% endblock %}
 
 {% block content %}
-  <h1 class="h3 mb-3">Occasion requests</h1>
-
-  {% include "occasions/includes/nav.html" %}
+  {% load ui %}
+  {% page_header "Service requests" subtitle="Requests for weddings, baptisms, funerals and other special services. Approving one books it on the calendar." %}{% endpage_header %}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   <h2 class="h5">Pending ({{ paginator.count }})</h2>
   <div class="card shadow-sm mb-4">

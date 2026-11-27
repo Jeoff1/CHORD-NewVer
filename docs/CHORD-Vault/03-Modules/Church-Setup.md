@@ -41,16 +41,31 @@ of the core and can't be switched off. App: `apps/church`.
   `registration.register_church`): a four-step wizard on one page since
   27 Nov 2026 ([[Design-System]], "Registering a church"): Church,
   Profile, Account, Review. `ChurchRegistrationForm` needs only the name;
-  address, contact number, email, logo, description and Public visibility
-  (`show_in_directory`, public by default) are optional. Plus a new
+  address, contact number, email, logo, banner, description and Public
+  visibility (`show_in_directory`, public by default) are optional. Plus a new
   account for a visitor who isn't signed in (`SignUpForm`). Each page
   carries a token (`church_registration_token` in the session); a token
   already used, sent again by the person who registered (a double press,
-  Back and send again), goes to that church's setup instead of making a
-  second one. In one transaction it creates
-  the account, the church and slug, its defaults and the person's
-  Administrator Membership; any failure leaves nothing. The person then
-  works in the new church and goes on to the setup wizard.
+  Back and send again), goes to that church's dashboard instead of making
+  a second one. In one transaction it creates the account, the church and
+  slug, its defaults and the person's Administrator Membership; any
+  failure leaves nothing.
+  - **Set up when registered** (owner, 27 Nov 2026): registration asks
+    for what the setup wizard's steps need (the name) and offers the rest.
+    Every other setting starts from a default the church changes later in
+    its settings: website (Church details), currency (PHP) and time zone,
+    Labels, Modules (all on that the church may use), "Show upcoming
+    services" and "Accept requests from outside". So
+    `registration.setup_requirements_met` runs the model's own checks
+    (`full_clean`) and, when they pass, the church is marked
+    `setup_completed`. If they fail, it isn't, and the wizard still asks.
+  - **Time zone:** the church starts in the person's device's time zone,
+    sent by `register.js` in a hidden field and kept only if CHORD knows
+    it; otherwise the default.
+  - **Afterwards:** the person is signed in, works in the new church, and
+    goes straight to the dashboard. It welcomes them once with a toast
+    ([[Design-System]], "The welcome toast"), a Django message tagged
+    `chord-welcome` (`views.WELCOME_MESSAGE`).
 - **Slugs** (`models.unique_slug`): made from the name, never shared
   ("grace", "grace-2"), never a reserved word (`RESERVED_SLUGS`, such as
   `register`: a church named "Register" gets `register-church`).
@@ -61,15 +76,33 @@ of the core and can't be switched off. App: `apps/church`.
   signing out clears the choice.
 - **Public homepage** settings section (also the setup wizard's last
   step): "Show the church publicly" (directory and homepage), About (plain
-  text, line breaks kept, 2,000 characters), "Show upcoming services" and
+  text, line breaks kept, 2,000 characters), the **Church banner** (an
+  upload field: add, replace, or Clear to remove; a replaced or removed
+  file is deleted once saved), "Show upcoming services" and
   "Accept requests from people outside the church". The church from before
   Phase 9B starts private ([[Design-Decisions]], Phase 9B).
 - **Logo**: an image only (PNG, JPEG, GIF or WebP, checked with Pillow), 2
-  MB at most, saved under a random name (`church/<random>.<ext>`).
+  MB at most, saved under a random name (`church/<random>.<ext>`); 512 ×
+  512 px recommended.
+- **Banner** (`ChurchProfile.banner`, migration `0005_churchprofile_banner`,
+  27 Nov 2026): optional; JPG, PNG or WebP, 5 MB at most, 1920 × 640 px
+  (3:1) recommended. `images.BannerFieldMixin` (on the registration and
+  Public homepage forms) checks the type, size, real format and pixel
+  count (at most 40 million), and `optimize_banner` saves a WebP copy:
+  turned upright, hidden details such as GPS left out, at most 1920 px
+  wide, never enlarged, cropped or stretched (`church/banner/<random>.webp`).
+  Shown as the cover of the church's public page; never on directory or
+  showcase cards (`LISTED_FIELDS` reads the logo only). Recorded in the
+  audit trail as "Banner".
 - **Setup wizard** (details, Labels, Modules, Public homepage): a church
   whose setup isn't finished sends its Administrator role holders there
-  from the dashboard, such as whoever just registered it; not a superuser
-  looking in, nor anyone else holding the permission.
+  from the dashboard; not a superuser looking in, nor anyone else holding
+  the permission. Since 27 Nov 2026 a registered church is set up already
+  (above), so the wizard only serves a church that isn't: the church from
+  before Phase 9B until its administrator finishes it, or a registration
+  whose values failed the checks. Its four sections are also the Settings
+  pages (`/church/settings/<section>/`), where everything is changed
+  later.
 - **Locked Modules**: on the Modules settings page, Members and Teams show
   "Not available yet" for a church without `members_teams_unlocked`, with
   no switch, and can't be posted on.
@@ -121,23 +154,46 @@ of the core and can't be switched off. App: `apps/church`.
 - Tests: `apps/church/tests/` (profile, Labels, module switching, time
   zone, wizard, settings, logo upload).
 
-### The dashboard and the Settings hub (Phase 9A, A7 part 3)
+### The dashboard, the sidebar and the Settings hub (Phase 9A, A7 part 3; redesigned 27 Nov 2026)
 
+- **Sidebar** on every signed-in page with a church
+  (`apps/church/navigation.py`, `templates/includes/app_sidebar.html`):
+  the CHORD logo, the church panel (its logo or initials, its name, and
+  "Church Administration" for its administrators or the person's role
+  titles), and the menu: Dashboard, Management (Services and Bookings, the
+  on-screen names of the Occasions Module), Planning, Songs, Members,
+  Announcements, Settings, Sign Out. A link shows only when its Module is
+  switched on and the person may open its page. The account menu keeps
+  the church switcher for people with more than one church. The sidebar
+  remembers its mode, open categories and scroll between pages (cookies
+  read by `navigation.py`; session storage).
+- **No setup wizard on the way in** (28 Nov 2026): signing in and
+  registering open the dashboard. `mark_set_up` marks an older church set
+  up once its details pass registration's checks; otherwise the dashboard
+  links to Settings › Church details. The wizard's pages remain at
+  `church:setup` but nothing links to them.
 - **Dashboard** (`church/dashboard.html`, `apps/church/dashboard.py`): a
-  greeting with today's date; **Needs your attention** (one sentence, a
-  detail and one button per item, the first primary); **Coming up** (the
-  next services and occasions); side cards; **Go to**. Each Module
-  registers what it adds from its `AppConfig.ready()`: Worship (draft
-  lineups to confirm, services with no theme, chord sheets waiting, the
-  coming services), Occasions (waiting requests, the coming occasions),
-  Teams (My schedule) and Announcements (the latest two). Each only for
-  people who may act on it, and nothing from a switched-off Module.
-- **Settings hub:** the gear in the navbar replaced the Administration
-  menu. The Church Profile's sections (Church details, Labels, Modules,
-  Public homepage) are its General category; the setup wizard stays
-  outside it.
-  ([[Design-System]], "Page patterns".)
-- Tests: `apps/church/tests/test_dashboard_screen.py`,
+  greeting with today's date; the figures (`register_stat`: upcoming
+  services, pending service requests, confirmed lineups, songs, and
+  smaller ones), each stating its dates; **Action required**; the lineup
+  status bar (`register_breakdown`); **Upcoming** services and bookings;
+  side cards; **Quick actions**. Each Module registers what it adds from
+  its `AppConfig.ready()`: Worship (draft lineups to confirm, services
+  with no theme, chord sheets waiting, the coming services, its figures
+  and the status bar), Occasions (waiting requests, the coming occasions,
+  pending requests and booked services), Teams (My schedule, the person's
+  assignments), Members (active members) and Announcements (the latest
+  two). Each only for people who may act on it, and nothing from a
+  switched-off Module. The figures, the bar and the quick actions reach
+  the template through the `dashboard_overview` tag
+  (`templatetags/church.py`).
+- **Settings hub:** Settings at the foot of the sidebar (it replaced the
+  navbar's gear, which had replaced the Administration menu). The Church
+  Profile's sections (Church details, Labels, Modules, Public homepage)
+  are its General category.
+  ([[Design-System]], "The app sidebar and dashboard".)
+- Tests: `apps/church/tests/test_app_shell.py`,
+  `apps/church/tests/test_dashboard_screen.py`,
   `apps/core/tests/test_settings_hub.py`.
 
 ### The landing page (Phase 9A, A7; redesigned 26-27 Nov 2026)

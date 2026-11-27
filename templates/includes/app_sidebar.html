@@ -1,0 +1,81 @@
+{% load church %}{% comment %}
+  The signed-in sidebar (dashboard redesign, 27 Nov 2026; Design-System.md, "The app sidebar"). Expects
+  `nav` from {% app_navigation %} (apps/church/navigation.py): only Modules that are switched on and
+  pages the person may open. From 768 px it stays beside the page and can shrink to icons (the button
+  beside the logo; sidebar.js remembers the choice); below that it is a Bootstrap offcanvas panel.
+  Each category shows twice: a collapsible list for the full sidebar, and a dropdown for the icon-only
+  one; CSS shows one of them. Categories and groups arrive open or closed the way the person left them
+  (the chord_sidebar_open cookie, read by navigation.py), the one holding the current page always open,
+  and the script at the end puts the menu back where it was scrolled before the page shows.
+{% endcomment %}
+<aside class="offcanvas-md offcanvas-start chord-sb" tabindex="-1" id="chord-sidebar" aria-label="Main menu">
+  <div class="chord-sb__inner">
+    <div class="chord-sb__top">
+      <div class="chord-sb__brand">
+        <a class="chord-sb__logo" href="{% url 'home' %}" aria-label="CHORD, dashboard">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
+        <button type="button" class="chord-sb__icon-btn chord-sb__collapse" data-chord-sidebar-toggle aria-pressed="false" aria-label="Shrink the menu to icons" title="Shrink the menu to icons">{% include "includes/icons/sidebar.html" %}</button>
+        <button type="button" class="chord-sb__icon-btn chord-sb__close" data-bs-dismiss="offcanvas" data-bs-target="#chord-sidebar" aria-label="Close the menu">{% include "includes/icons/x.html" %}</button>
+      </div>
+      {% church_role_line as role_line %}
+      <div class="chord-sb__church" title="{{ church.name }}">
+        <span class="chord-sb__church-logo">{% if church.logo %}<img src="{{ church.logo.url }}" alt="">{% else %}<span aria-hidden="true">{{ church.name|initials }}</span>{% endif %}</span>
+        <span class="chord-sb__church-text">
+          <span class="chord-sb__church-name">{{ church.name }}</span>
+          {% if role_line %}<span class="chord-sb__church-role">{{ role_line }}</span>{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <nav class="chord-sb__nav" id="chord-sb-nav" aria-label="Main">
+      {% include "includes/app_sidebar_link.html" with link=nav.dashboard %}
+      {% for category in nav.categories %}
+        <div class="chord-sb__cat{% if category.active %} has-active{% endif %}">
+          <button type="button" class="chord-sb__link chord-sb__cat-btn" data-bs-toggle="collapse" data-bs-target="#chord-sb-{{ category.key }}" aria-expanded="{% if category.open %}true{% else %}false{% endif %}" aria-controls="chord-sb-{{ category.key }}">
+            {% include "includes/icons/"|add:category.icon|add:".html" %}<span class="chord-sb__label">{{ category.label }}</span>{% include "includes/icons/chevron-right.html" with size=16 %}
+          </button>
+          <div class="dropend chord-sb__fly">
+            <button type="button" class="chord-sb__link" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" aria-label="{{ category.label }}" title="{{ category.label }}">{% include "includes/icons/"|add:category.icon|add:".html" %}</button>
+            <ul class="dropdown-menu chord-sb__fly-menu">
+              <li><h2 class="dropdown-header">{{ category.label }}</h2></li>
+              {% for link in category.links %}<li><a class="dropdown-item{% if link.active %} active{% endif %}" href="{{ link.url }}"{% if link.active %} aria-current="page"{% endif %}>{{ link.label }}</a></li>{% endfor %}
+              {% for group in category.groups %}
+                <li><h3 class="dropdown-header chord-sb__fly-group">{{ group.label }}</h3></li>
+                {% for link in group.links %}<li><a class="dropdown-item{% if link.active %} active{% endif %}" href="{{ link.url }}"{% if link.active %} aria-current="page"{% endif %}>{{ link.label }}</a></li>{% endfor %}
+              {% endfor %}
+            </ul>
+          </div>
+          <div class="collapse{% if category.open %} show{% endif %}" id="chord-sb-{{ category.key }}" data-chord-remember="{{ category.key }}">
+            <ul class="chord-sb__sub">
+              {% for link in category.links %}
+                <li><a class="chord-sb__sublink{% if link.active %} is-active{% endif %}" href="{{ link.url }}"{% if link.active %} aria-current="page"{% endif %}>{{ link.label }}</a></li>
+              {% endfor %}
+              {% for group in category.groups %}
+                <li>
+                  <button type="button" class="chord-sb__group{% if group.active %} has-active{% endif %}" data-bs-toggle="collapse" data-bs-target="#chord-sb-{{ category.key }}-{{ group.key }}" aria-expanded="{% if group.open %}true{% else %}false{% endif %}" aria-controls="chord-sb-{{ category.key }}-{{ group.key }}">{{ group.label }}{% include "includes/icons/chevron-right.html" with size=14 %}</button>
+                  <div class="collapse{% if group.open %} show{% endif %}" id="chord-sb-{{ category.key }}-{{ group.key }}" data-chord-remember="{{ category.key }}-{{ group.key }}">
+                    <ul class="chord-sb__sub chord-sb__sub--deep">
+                      {% for link in group.links %}
+                        <li><a class="chord-sb__sublink{% if link.active %} is-active{% endif %}" href="{{ link.url }}"{% if link.active %} aria-current="page"{% endif %}>{{ link.label }}{% if link.key == "occasions:requests" and pending_occasions %} <span class="chord-sb__badge" aria-label="{{ pending_occasions }} pending">{{ pending_occasions }}</span>{% endif %}</a></li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endfor %}
+      {% if nav.announcements %}{% include "includes/app_sidebar_link.html" with link=nav.announcements %}{% endif %}
+    </nav>
+
+    <div class="chord-sb__foot">
+      {% if nav.settings %}{% include "includes/app_sidebar_link.html" with link=nav.settings %}{% endif %}
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="chord-sb__link" title="Sign out">{% include "includes/icons/log-out.html" %}<span class="chord-sb__label">Sign Out</span></button>
+      </form>
+    </div>
+  </div>
+  {# Before the page shows: the menu's scroll position as it was, then the current page brought into view if it is hidden. #}
+  <script>(function () { var nav = document.getElementById("chord-sb-nav"); if (!nav) return; try { var y = sessionStorage.getItem("chord-sidebar-scroll"); if (y !== null) nav.scrollTop = +y; } catch (e) {} var here = Array.prototype.filter.call(nav.querySelectorAll('[aria-current="page"]'), function (link) { return link.offsetParent; })[0]; if (here) { var a = here.getBoundingClientRect(), b = nav.getBoundingClientRect(); if (a.top < b.top || a.bottom > b.bottom) nav.scrollTop += a.top - b.top - b.height / 3; } })();</script>
+</aside>

@@ -78,7 +78,17 @@ class RegisterChurchTests(TestCase):
         form = ChurchRegistrationForm()
         self.assertEqual(
             list(form.fields),
-            ["name", "address", "phone", "email", "logo", "about", "show_in_directory"],
+            [
+                "name",
+                "address",
+                "phone",
+                "email",
+                "logo",
+                "banner",
+                "about",
+                "time_zone",
+                "show_in_directory",
+            ],
         )
         self.assertEqual(
             [name for name, field in form.fields.items() if field.required], ["name"]
@@ -92,7 +102,7 @@ class RegisterChurchTests(TestCase):
         church = ChurchProfile.objects.get(name="Grace Chapel")
         self.assertRedirects(
             response,
-            reverse("church:setup", kwargs={"section": "details"}),
+            reverse("home"),
             fetch_redirect_response=False,
         )
         self.assertEqual(church.slug, "grace-chapel")

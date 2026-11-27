@@ -30,7 +30,9 @@ class MembersScreenTests(TestCase):
         ):
             with self.subTest(text):
                 self.assertContains(page, text)
-        self.assertContains(page, 'class="active" aria-current="page">People</a>')
+        # No tab bar: the sidebar holds the directory and Households.
+        self.assertNotContains(page, 'aria-label="Members sections"')
+        self.assertContains(page, 'class="chord-sb__sublink is-active"')
         self.assertContains(page, ">Households</a>")
 
     def test_a_viewer_gets_no_more_menu(self):

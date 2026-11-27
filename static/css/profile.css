@@ -19,8 +19,8 @@
 }
 
 /* --- Cover banner and logo -------------------------------------------------
- * The default banner is a green-and-gold gradient. A church's own banner image,
- * when that exists, goes on .pf-banner as a background-image. */
+ * The default banner is a green-and-gold gradient; a church's own banner image
+ * (.pf-banner--image) replaces it. */
 
 .pf-cover { position: relative; z-index: 5; margin-top: 1.5rem; }
 .pf-banner {
@@ -33,6 +33,11 @@
   background-size: cover; background-position: center;
 }
 .pf-banner::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(229, 198, 144, .05) 0 1px, transparent 1px 26px); }
+/* A church's own banner (27 Nov 2026): the cover keeps the banner's 3:1 shape, at most 360 px
+ * tall; the image fills it without stretching, and the texture lines are left off the photo. */
+.pf-banner--image { height: auto; aspect-ratio: 3 / 1; max-height: 360px; }
+.pf-banner--image::after { display: none; }
+.pf-banner__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .pf-logo { position: absolute; left: clamp(20px, 3.5vw, 44px); bottom: 0; transform: translateY(50%); display: grid; place-items: center; width: clamp(104px, 11vw, 140px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 6px var(--lp-page), 0 12px 30px rgba(23, 54, 48, .25); }
 .pf-logo img { width: 100%; height: 100%; object-fit: contain; padding: 14%; }
 .pf-logo--none { background: radial-gradient(circle at 50% 35%, rgba(229, 198, 144, .25), rgba(229, 198, 144, 0) 60%), linear-gradient(160deg, #1D4039, #0B1F1B); color: var(--lp-gold); font-size: 2.6rem; }

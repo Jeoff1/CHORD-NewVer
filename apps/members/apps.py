@@ -9,7 +9,13 @@ class MembersConfig(AppConfig):
     verbose_name = "Members"
 
     def ready(self):
+        from apps.church import dashboard as church_dashboard
         from apps.core.settings_menu import SettingsPage, register
+
+        from .dashboard import active_members
+
+        # The dashboard's smaller figures (dashboard redesign).
+        church_dashboard.register_stat(active_members)
 
         register(
             *(

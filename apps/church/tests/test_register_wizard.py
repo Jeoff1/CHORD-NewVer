@@ -20,7 +20,8 @@ from apps.church.models import ChurchProfile
 from apps.core.testing import complete_setup, make_user
 
 REGISTER = reverse("churches:register")
-SETUP = reverse("church:setup", kwargs={"section": "details"})
+# Registering goes straight to the dashboard, set up (owner, 27 Nov 2026).
+SETUP = reverse("home")
 ACCOUNT = {
     "first_name": "Ruth",
     "last_name": "Ann",
@@ -100,7 +101,7 @@ class WizardPageTests(TestCase):
     def test_only_the_name_is_marked_needed(self):
         response = self.client.get(REGISTER)
         self.assertContains(
-            response, '<span class="au-optional">Optional</span>', count=7
+            response, '<span class="au-optional">Optional</span>', count=8
         )
         self.assertContains(response, "Only the name is needed now.")
 

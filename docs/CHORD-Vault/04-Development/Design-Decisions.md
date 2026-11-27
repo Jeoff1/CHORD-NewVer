@@ -760,7 +760,145 @@ Tests: `test_signup_page.py`: no username field, the middle name and suffix fiel
 
 The owner reordered the wizard, without changing anything inside a step: **1 Church information, 2 Church profile, 3 Account information, 4 Review and confirm**. A correction from the server opens the first step with an error in this order. The review's Edit buttons go to the moved steps. Tests: `test_register_wizard.py` (the order of the stepper and the fields; a church problem opens step 1 before an account problem; the account step is 3, the profile step 2), `test_signup_page.py` (account errors open step 3).
 
+#### The church banner (owner, 27 Nov 2026)
+
+Designed as a mockup with an implementation plan, and approved by the owner with its recommendations ([[Design-System]], "Registering a church" and "The church profile"):
+- **A new optional field**, `ChurchProfile.banner` (migration `church/0005_churchprofile_banner`, one added column, no conflict: `0004` was the latest on `master` too). Approved, with the backend changes below, after the owner was told the lead developer works on these forms.
+- **Registration step 2:** the banner between the logo and the description, with drag and drop, an immediate wide preview, Replace and Remove, the name, size and pixel size, and the recommended sizes (logo 512 × 512 px, 1:1; banner 1920 × 640 px, 3:1). Checked in the page and again on the server: JPG, PNG or WebP, 5 MB at most.
+- **Optimised on the server:** a WebP copy, turned upright, its hidden details (camera, GPS) left out, at most 1920 px wide, never enlarged, cropped or stretched.
+- **Public profile:** the banner fills the cover, which takes its 3:1 shape at most 360 px tall; the logo still overlaps it; without one, the green-and-gold cover as before. Directory and showcase cards keep the logo only.
+- **Changing it later:** Church settings › Public homepage (Django's upload field: add, replace, or Clear); a replaced or removed file is deleted once the change is saved.
+- **Kept:** the step order, layout, colours and fonts; the logo's behaviour. After a correction from the server, the page asks for the banner again (a browser can't keep a chosen file).
+
+Tests: `apps/church/tests/test_banner.py`: the copy is WebP, at most 1920 wide with its shape kept, never enlarged, upright with no hidden details, transparency kept; JPG, PNG and WebP accepted, GIF, PDF and a GIF named `.jpg` refused, more than 5 MB refused; step 2 shows the field between the logo and the description with both recommended sizes and the review cover hook; registering saves `church/banner/<random>.webp` at 1920 × 640; no banner is fine; a bad banner opens step 2 and makes nothing; the banner asked for again after a correction; the public page shows the gradient without a banner, the image with one with the logo still overlapping; directory cards never show it; the Public homepage settings add, replace and clear it, deleting the old files; a bad file is refused there too.
+
+#### Registering goes straight to the dashboard (owner, 27 Nov 2026)
+
+The owner removed the setup wizard after registering: the four registration steps already ask for the church's information.
+- **The wizard's four steps were checked first.** Church details, Labels, Modules and Public homepage need nothing registration doesn't ask. The name is the only required value. Website, currency (PHP) and time zone (Church details), the Labels, the Modules (all on that the church may use), and "Show upcoming services" and "Accept requests from outside" (Public homepage) all start from defaults. The church changes them later on the same pages, under Settings.
+- **Set up only when the checks pass, not bypassed.** `setup_requirements_met` runs the model's own checks on the new church; only then is it marked `setup_completed`. If they fail, the dashboard still sends its administrator to the wizard, which stays for that case and for the church from before Phase 9B.
+- **The time zone comes from the person's device** (a hidden field `register.js` fills in, kept only if CHORD knows the zone); otherwise the default. Currency keeps its default (PHP), as a device can't tell it.
+- **The new administrator is signed in and sent to the dashboard**, with a one-time welcome toast ([[Design-System]], "The welcome toast") through Django's messages framework. The same form sent again goes to the dashboard without a second church.
+- A set-up, public church can appear in the landing page's showcase, as by the existing rules. Permissions, Modules and the defaults each Module seeds are unchanged.
+- Backend changes, no database change: `registration.setup_requirements_met` and `setup_completed` set at registration; the hidden `time_zone` field on `ChurchRegistrationForm`; `RegisterChurchView` redirecting to the dashboard with the welcome message; `base.html` showing the toast.
+
+Tests: `apps/church/tests/test_welcome.py`: signed in and sent to the dashboard, set up; the toast once, right after the navigation bar, never also as an alert, and not after a refresh or a normal sign-in; the device's time zone kept, an unknown or missing one leaving the default; the page sending it; a church that fails the checks still goes through the wizard, without the toast; the same form again goes to the dashboard with one church; a public registered church can be showcased; the script and styles exist. `test_public_settings.py`, `test_platform_accounts.py` and `test_register_wizard.py` expect the dashboard instead of the wizard.
+
 ---
+
+#### Dashboard and sidebar redesign (UI/UX owner and lead developer, 27 Nov 2026)
+
+Approved by the UI/UX owner from the interactive mockup on 27 Nov 2026,
+with the lead developer's menu layout. Built on branch `joy-ui-ux-v3`.
+
+- **A sidebar on every signed-in page** with a church: deep green, the
+  official gold CHORD logo (unchanged, sized only; with no separate emblem
+  file, the icon-only sidebar shows the whole logo small), a gold bar on
+  the current page. It shrinks to icons from 768 px (the choice is kept in
+  the browser; a tablet starts with icons) and is an offcanvas panel on
+  phones. Public pages, sign-in and registration keep their own layouts.
+- **The menu:** Dashboard; Management (Services: Service Requests, Request
+  a Service, My Requests; Bookings: All Bookings, Book a Service); Planning
+  (worship services, Calendar, My Schedule, Team Roster, Reports); Songs
+  (Song Pool, Find Songs); Members (the church's word: directory,
+  Households, User Accounts, Roles & Permissions); Announcements; Settings;
+  Sign Out. A link shows only when its Module is switched on and the
+  person may open its page; an empty group or category disappears.
+  Configuration (Occasion Types, the worship check) stays in Settings.
+- **"Services" and "Bookings" are on-screen names** for the Occasions
+  Module (the lead developer's naming). Its code, routes, models and data
+  keep the name Occasions; the dashboard's reminder reads "service
+  requests" (`apps/occasions/dashboard.py`, the owner's approval).
+- **The church panel** shows the church's own logo (its initials without
+  one) and name, and below it "Church Administration" for its
+  administrators, the person's role titles for others, or nothing.
+- **No church switcher in the sidebar** (one administrator, one church).
+  The account menu keeps the existing switcher for people with more than
+  one church and for superusers; switching itself is unchanged until the
+  lead developer decides.
+- **The figures** (each Module registers them with `register_stat`, for
+  people who may open their page, counted for the current church):
+  upcoming worship services and confirmed lineups in the next 30 days,
+  pending service requests (all, any date), songs in the pool (total);
+  smaller: active members (not archived), the person's assignments and
+  booked services in the next 30 days. Every figure states its dates.
+- **Lineup status:** one bar of the next 30 days' services, confirmed,
+  draft and no lineup yet, for people who plan lineups
+  (`register_breakdown`); plain CSS, no chart library.
+- **Action required, Upcoming, My schedule and Announcements** keep their
+  sources and permission rules; **Quick actions** replace "Go to" and list
+  only pages the person may open.
+
+Tests: `apps/church/tests/test_app_shell.py` (the shell only on signed-in
+pages; the gold logo; the church panel and its role line; no switcher for
+one church; the menu by permission and Module; empty categories hidden;
+settings pages stay in Settings; the current page marked; the figures,
+their dates and their church; figures and quick actions by permission;
+the lineup status for planners; a new church's empty states), with
+`test_dashboard_screen.py`, `test_views.py` and `test_settings_hub.py`
+updated for the new wording and the sidebar's Settings link.
+
+#### No setup wizard; a sidebar that remembers; a leaner dashboard (UI/UX owner, 28 Nov 2026)
+
+- **Nobody is sent through the setup wizard.** Signing in opens the
+  dashboard; registering opens it with the welcome toast. An older church
+  is marked set up the first time someone who manages it arrives, when
+  its saved details pass the same checks registration uses
+  (`mark_set_up` in `apps/church/registration.py`, audited). One whose
+  details fail them shows a notice on the dashboard linking to Settings ›
+  Church details, and stays out of the directory until fixed. Everything
+  the wizard asked is in Settings already (Church details, Labels,
+  Modules, Public homepage). The wizard's pages still answer at their
+  addresses, but nothing links there; removing them is the lead
+  developer's call.
+- **The sidebar keeps its state between pages:** full or icon-only, which
+  categories and groups are open (cookies `chord_sidebar` and
+  `chord_sidebar_open`, read by `navigation.py` so the server draws the
+  page that way: nothing opens, closes or jumps on load), and where the
+  menu was scrolled (session storage, restored before the page shows).
+  The category holding the current page always opens; a group starts
+  open, a category closed. Pages still load in full: HTMX swapping of the
+  content was left out because many pages load their own stylesheets and
+  scripts in the head.
+- **The dashboard informs; the sidebar navigates.** The only shortcuts
+  left ("Create") create a record and have no sidebar link: a worship
+  service, an announcement, a member. Each section keeps at most one
+  link (Upcoming: View calendar; My schedule; All announcements).
+  Upcoming is a list of compact cards (date block left, name, time and
+  theme or kind, status, a chevron), each a link to its record; bookings
+  have a gold date block and a gold wash. The church name shows only in
+  the sidebar's panel (not in the header or the greeting).
+
+Tests: `apps/church/tests/test_app_shell.py` (`SidebarStateTests`), and
+updated `test_views.py`, `test_public_settings.py`, `test_welcome.py` and
+`test_dashboard_screen.py`.
+
+#### The sidebar replaces the Modules' tab bars (UI/UX owner, 28 Nov 2026)
+
+- **Gone:** the tab bars at the top of the Occasions pages (Occasions,
+  Requests, My requests, Settings), Teams (My schedule, Roster, Team
+  parts), Worship, Songs and Reports (Schedule, Calendar, Songs, Reports)
+  and Members (People, Households), and the Households page's link back
+  to the directory. Every destination is in the sidebar, or in Settings
+  (Occasion types, Team parts). The templates `worship/includes/nav.html`,
+  `occasions/includes/nav.html` and `teams/includes/nav.html` are deleted;
+  the Python that builds the old tab lists (`occasions_nav`, `teams_nav`,
+  `worship_sections`, `members_sections`) is unused now and left for the
+  lead developer to remove.
+- **Kept:** tabs that switch something else: between reports, a list's
+  filter (upcoming or past, current or archived), and a record's own
+  steps.
+- **Headings:** each page has one heading named as in the sidebar
+  (Bookings, Service requests, My requests, Team roster, Calendar,
+  Reports, Households), with a short description only where it helps and
+  its own actions beside it (`{% page_header %}`).
+- **The waiting count** that the Requests tab carried shows beside
+  Service Requests in the sidebar, from the count Occasions already works
+  out on every page for approvers.
+
+Tests: `apps/church/tests/test_app_shell.py` (`NoModuleTabsTests`), and
+updated `test_members_screen.py`, `apps/teams/tests/test_views.py` and
+`test_schedule_screens.py`.
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 

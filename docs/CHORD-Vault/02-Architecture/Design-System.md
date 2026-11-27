@@ -26,7 +26,7 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | ------- | ----- | --- |
 | Page header | `{% load ui %}{% page_header title subtitle=… %}…{% endpage_header %}` (`apps/core/templatetags/ui.py`, `includes/page_header.html`) | The heading left, the actions right. One primary button (`btn-primary`) per page |
 | More | `{% more_menu %}<li>…</li>{% endmore_menu %}` | Every other page action, each behind its own permission; an empty menu doesn't render |
-| Section tabs | `{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label=… %}` | A Module's sections; the current one (the longest link the page's path starts with) gets the gold underline and `aria-current` |
+| Section tabs | `{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label=… %}` | Tabs within a page only (since 28 Nov 2026 no Module has a tab bar of its sections: the sidebar holds them); the current tab (the longest link the page's path starts with) gets the gold underline and `aria-current` |
 | Status pill | `{% include "includes/status_pill.html" with status=… %}` | draft, confirmed, none, cancelled, occasion, pending, accepted, declined; optional `pill_text` |
 | Cards | `.card` with `.chord-card-head` (a Raleway `.card-title`, and a count or link on the right) | Content blocks |
 | Two columns | `.chord-columns` holding `.chord-main` and `.chord-side` | Main content and a side column; they stack on a phone |
@@ -130,9 +130,12 @@ Designed as an interactive mockup and approved by the UI/UX owner on
 - **Nav:** the gold logo (to `/`) and **Back to Churches** (the
   Directory); "Churches" on narrow phones.
 - **Cover:** a rounded banner with the default green-and-gold gradient,
-  no stock photos; a church's own banner image would go on `.pf-banner`
-  later with no layout change. The church's logo (or the CHORD fallback,
-  the people icon on green) in a circle overlapping its lower left.
+  no stock photos. Since 27 Nov 2026 a church's own banner, when it has
+  one (`.pf-banner--image`): the cover takes the banner's 3:1 shape, at
+  most 360 px tall, and the image fills it (`object-fit: cover`, never
+  stretched), without the texture lines. The church's logo (or the CHORD
+  fallback, the people icon on green) in a circle overlapping its lower
+  left either way.
 - **Sidebar, the only place for the church's details:** name, About
   (clamped to five lines with Read more), then Contact: address (opens a
   map search), phone (`tel:`), email (`mailto:`) and website, each with
@@ -220,7 +223,7 @@ string.
   fade between the two pages through the browser's page transitions, the
   photo held still (Chrome, Edge and Safari; Firefox switches at once).
   None of it with `prefers-reduced-motion`.
-- **Icons added:** `arrow-left` and `alert-circle`, solid like the rest.
+- **Icons added:** `arrow-left` and `alert-circle`, solid like the rest; `image` (the banner's drop area, 27 Nov 2026).
 
 ## Registering a church (redesign, 27 Nov 2026)
 
@@ -248,8 +251,9 @@ and `church/static/church/register.js`, then `auth.js`.
 - **Steps** (in this order since 27 Nov 2026, the owner's choice: the church first, the account last before review):
   1. **Church information:** Church name (the only field needed), address,
      contact number and church email, all optional.
-  2. **Church profile:** logo (PNG, JPEG, GIF or WebP, 2 MB at most, with a
-     preview and Remove), description (2000 characters, with a count) and
+  2. **Church profile:** logo ("512 × 512 px recommended (1:1). PNG,
+     JPEG, GIF or WebP, 2 MB at most.", with a preview and Remove); the
+     **banner** (below); description (2000 characters, with a count) and
      Public visibility as two cards: **Public** (listed in the directory,
      the default) or **Not public**.
   3. **Account information:** for a visitor, First name and Last name side
@@ -269,15 +273,98 @@ and `church/static/church/register.js`, then `auth.js`.
 - **The stepper:** the current step gold, finished steps ticked; any step
   reached can be opened again. Each step's heading takes the focus when it
   opens. On a phone the stepper runs across the top, under the header.
-- **Not in it:** a banner image (no field for it; the owner chose to leave
-  it out), the public address in the preview (the server chooses the
-  slug) and the "registered" screen of the mockup: a registered church
-  goes straight to the setup wizard, as before.
+- **The banner** (owner, 27 Nov 2026; optional): a wide 3:1 drop area
+  between the logo and the description, on the green-and-gold cover with
+  the `image` icon, "Drag an image here or choose one below", and below it
+  Choose image (then Replace image), Remove and the hint "1920 × 640 px
+  recommended (3:1). JPG, PNG or WebP, 5 MB at most."
+  - **Choosing or dropping** an image shows it at once, filling the area
+    without stretching, with its name, size and pixel size, and a note
+    when it isn't 3:1 or is under 1200 px wide.
+  - **Refused at once:** another type ("Choose a JPG, PNG or WebP image.")
+    or more than 5 MB, with the size.
+  - **Between steps** the file stays in the form, and the review's profile
+    preview shows it as the cover.
+  - **On the server** (`images.BannerFieldMixin`): the type, size, real
+    format and pixel count are checked again. A WebP copy is saved (turned
+    upright, hidden details left out, at most 1920 px wide, never enlarged
+    or cropped) as `church/banner/<random>.webp`.
+  - **After a correction** from the server the page asks for the banner
+    again, as for the logo.
+- **Not in it:** the public address in the preview (the server chooses the
+  slug) and the "registered" screen of the mockup. Since 27 Nov 2026 a
+  registered church goes straight to its dashboard, set up, with the
+  welcome toast (below); no second setup wizard.
 - **Responsive:** below 992 px a 250 px stepper without hints and one
   column of fields; below 720 px the stepper across the top and Cancel and
   the step count hidden from the bottom bar.
 - **Motion:** each step slides in 18 px and fades (from the left when
   going back), the progress bar grows; none with `prefers-reduced-motion`.
+
+## The welcome toast (27 Nov 2026)
+
+Shown once on the dashboard after registering a church
+(`templates/includes/welcome_toast.html`, styles at the end of
+`static/css/chord.css`, `static/js/welcome-toast.js`). It's a Django
+message tagged `chord-welcome`; `base.html` shows it right after the
+navigation bar and leaves it out of the usual alerts. Django never shows a
+message twice, so a refresh or a later sign-in doesn't bring it back.
+
+- **Look:** deep green (`#173630`) with a thin gold border (`#2E4A44` in
+  dark mode); a gold circle with a green check; "Welcome to CHORD!" in
+  Raleway gold; the message in light text; an X (44 px, "Dismiss the
+  welcome message"); a 3 px gold countdown bar along the bottom. At most
+  560 px wide, centred 12 px under the navigation bar; on phones the full
+  width less 12 px each side.
+- **Behaviour:** slides down 14 px and fades in; closes itself after five
+  seconds (the bar shrinks over that time). Hovering or focusing it
+  pauses it; the X or Escape closes it. It fades out as it goes.
+- **Never in the way:** not a modal. The region under the navigation bar
+  lets clicks through, so the dashboard stays usable around it.
+  `role="status"` and `aria-live="polite"`.
+- **Reduced motion:** no slide, fade or countdown animation; it still
+  closes after five seconds.
+
+## The app sidebar and dashboard (redesign, 27 Nov 2026)
+
+Every signed-in page with a church: `templates/base.html` with
+`includes/app_sidebar.html` and `includes/app_header.html`,
+`static/css/sidebar.css` and `apps/church/static/church/sidebar.js`; the
+menu is built by `apps/church/navigation.py`. Other pages keep the plain
+top bar.
+
+- **Sidebar:** `#173630` (`#0B1F1B` in dark mode), the gold CHORD logo
+  (`church/includes/landing_logo.html` with `variant="gold"`, unchanged),
+  then the church panel: the church's own logo or initials on gold, its
+  name in Raleway, and the role line. Links in `#E6E2E1`, sub-links in
+  `#A9BDB7`; the current page gold with a 4 px gold bar at the left edge.
+  Categories open with a chevron (Bootstrap collapse); Management has two
+  nested groups. Settings and Sign Out sit at the foot.
+- **Icon-only:** 80 px wide from 768 px, by the button beside the logo;
+  each category becomes a dropdown (fixed position, over the page). The
+  logo shows whole at 56 px.
+- **It remembers:** the mode and the open categories and groups (cookies
+  the server reads, so the page arrives drawn that way) and the menu's
+  scroll position (session storage). A thin scrollbar (6 px) that brightens
+  on hover; collapse animations are off with reduced motion.
+- **Phones (below 768 px):** a Bootstrap offcanvas panel, opened by the
+  menu button in the header (focus, Escape and the backdrop are
+  Bootstrap's).
+- **Header:** sticky, white (the raised surface in dark mode): the
+  category (when there is one) and current page, the bell with the unread
+  count, the account menu (only the letter on phones). The church's name
+  is only in the sidebar's panel.
+- **Dashboard** (`static/css/dashboard.css`): the greeting, then the date
+  and a one-line summary; four figure cards (four in a row, two on
+  tablets, one below 400 px) with an icon, the number in Raleway 800 and
+  the dates under it; smaller figures as pills; then Action required
+  (a gold rule beside each item, one button), Upcoming (compact cards: a
+  64 px date block, green for services and gold for bookings, the name,
+  time and theme, status pills, a chevron; the whole card is the link),
+  the lineup status bar (confirmed `#2F7D5B`, draft gold, none `#C9C2BF`,
+  a one-line legend), and a side column of Create (record-making
+  shortcuts only), My schedule and Announcements, each with one link in
+  its header.
 
 ## Tokens
 

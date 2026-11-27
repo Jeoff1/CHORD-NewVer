@@ -3,8 +3,9 @@
 {% block title %}Reports{% endblock %}
 
 {% block content %}
-  {% include "worship/includes/nav.html" with active="reports" %}
-  <h1 class="h3 mb-3">Reports</h1>
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
+  {% load ui %}
+  {% page_header "Reports" subtitle="What the church's records show over a period you choose." %}{% endpage_header %}
   {% if reports %}
     <div class="list-group" style="max-width: 32rem">
       {% for label, url in reports %}<a href="{{ url }}" class="list-group-item list-group-item-action">{{ label }}</a>{% endfor %}

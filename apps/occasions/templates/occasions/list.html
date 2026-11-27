@@ -1,19 +1,14 @@
 {% extends "base.html" %}
 {% load people %}
 
-{% block title %}Occasions{% endblock %}
+{% block title %}Bookings{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">Occasions</h1>
-    <div class="d-flex flex-wrap gap-2">
-      {% if perms.occasions.request_occasion %}<a href="{% url 'occasions:request' %}" class="btn btn-outline-primary">Request an occasion</a>{% endif %}
-      {% if perms.occasions.add_occasion %}<a href="{% url 'occasions:create' %}" class="btn btn-primary">Add an occasion</a>{% endif %}
-    </div>
-  </div>
-  <p class="text-body-secondary">Weddings, baptisms, funerals and other special services. They share the calendar with worship services: the same time can't be booked twice.</p>
-
-  {% include "occasions/includes/nav.html" %}
+  {% load ui %}
+  {% page_header "Bookings" subtitle="Weddings, baptisms, funerals and other special services. They share the calendar with worship services: the same time can't be booked twice." %}
+    {% if perms.occasions.add_occasion %}<a href="{% url 'occasions:create' %}" class="btn btn-primary">Book a service</a>{% endif %}
+  {% endpage_header %}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   <ul class="nav nav-pills mb-3">
     {% for key, title in when_choices %}

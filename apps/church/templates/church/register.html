@@ -66,6 +66,8 @@
 
             {% csrf_token %}
             <input type="hidden" name="registration" value="{{ registration_token }}">
+            {# The device's time zone, filled in by register.js; the church's default without it. #}
+            <input type="hidden" name="{{ church_form.time_zone.html_name }}" value="{{ church_form.time_zone.value|default:'' }}" data-au-time-zone>
 
             {% for message in messages %}
               <div class="alert alert-{{ message.tags|default:'info' }}" role="alert">{{ message }}</div>
@@ -110,6 +112,31 @@
                     </div>
                     {% if field.errors %}<div class="au-errors" id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="au-error">{{ error }}</p>{% endfor %}</div>
                     {% elif logo_lost %}<p class="au-help au-rg__lost">Please choose the logo again: a browser can’t keep a chosen file when the page comes back with a correction.</p>{% endif %}
+                  </div>
+                {% endwith %}
+                {% with field=church_form.banner %}
+                  <div class="au-field au-field--wide{% if field.errors %} au-field--error{% endif %}" data-au-field="{{ field.html_name }}">
+                    <span class="au-label" id="{{ field.auto_id }}_label">{{ field.label }} <span class="au-optional">Optional</span></span>
+                    <div class="au-banner" data-au-banner-drop>
+                      <div class="au-banner__preview">
+                        <img class="au-banner__img" alt="" data-au-banner-img hidden>
+                        <div class="au-banner__empty" data-au-banner-empty>
+                          {% include "includes/icons/image.html" with size=28 %}
+                          <span><b>Drag an image here</b> or choose one below</span>
+                          <span class="au-banner__note">Without one, the green and gold cover shows.</span>
+                        </div>
+                      </div>
+                      <div class="au-banner__bar">
+                        <div class="au-drop__actions">
+                          <input class="au-file" type="file" name="{{ field.html_name }}" id="{{ field.auto_id }}" accept="image/jpeg,image/png,image/webp" aria-labelledby="{{ field.auto_id }}_label" aria-describedby="{{ field.auto_id }}_helptext{% if field.errors %} {{ field.auto_id }}_error{% endif %}"{% if field.errors %} aria-invalid="true"{% endif %}>
+                          <label class="au-filebtn" for="{{ field.auto_id }}" data-au-banner-choose>Choose image</label>
+                          <button type="button" class="au-linkbtn" data-au-banner-clear hidden>Remove</button>
+                        </div>
+                        <p class="au-help au-banner__meta" id="{{ field.auto_id }}_helptext" data-au-banner-name>{{ field.help_text }}</p>
+                      </div>
+                    </div>
+                    {% if field.errors %}<div class="au-errors" id="{{ field.auto_id }}_error">{% for error in field.errors %}<p class="au-error">{{ error }}</p>{% endfor %}</div>
+                    {% elif banner_lost %}<p class="au-help au-rg__lost">Please choose the banner again: a browser can’t keep a chosen file when the page comes back with a correction.</p>{% endif %}
                   </div>
                 {% endwith %}
                 <div class="au-field--wide">
@@ -189,7 +216,7 @@
                 <div class="au-box au-box--wide">
                   <div class="au-box__head"><h3>Church profile preview</h3><button type="button" class="au-edit" data-au-goto="2">Edit<span class="visually-hidden"> the church profile</span></button></div>
                   <div class="au-pv">
-                    <div class="au-pv__banner"></div>
+                    <div class="au-pv__banner" data-au-pv-banner></div>
                     <div class="au-pv__body">
                       <div class="au-pv__logo" data-au-pv-logo>{% include "includes/icons/people.html" with size=30 %}</div>
                       <div class="au-pv__name" data-au-pv-name></div>

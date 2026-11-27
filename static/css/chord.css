@@ -1042,3 +1042,62 @@ a {
 
 /* The landing page has its own stylesheet, static/css/landing.css, loaded
  * only by church/landing.html (redesign, 27 Nov 2026). */
+
+/* --- The welcome toast (27 Nov 2026; Design-System.md, "The welcome toast") ---
+ * After registering a church, once: deep green with a gold check and a gold countdown bar, right
+ * under the navigation bar, over the page without blocking it (the region lets clicks through). */
+
+.chord-toast-region {
+  position: relative;
+  z-index: 1035;
+  height: 0;
+  pointer-events: none;
+}
+.chord-toast {
+  --chord-toast-ms: 5000ms;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: min(560px, calc(100% - 24px));
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 14px 8px 16px 16px;
+  overflow: hidden;
+  border: 1px solid rgba(229, 198, 144, .35);
+  border-radius: 14px;
+  background: #173630;
+  color: #E6E2E1;
+  box-shadow: 0 18px 40px -18px rgba(11, 31, 27, .55), 0 2px 8px rgba(11, 31, 27, .18);
+  pointer-events: auto;
+  transform: translateX(-50%);
+  animation: chord-toast-in .38s cubic-bezier(.2, .8, .2, 1) both;
+}
+.chord-toast__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #E5C690; color: #173630; }
+.chord-toast__body { min-width: 0; padding-top: 1px; }
+.chord-toast__title { margin: 0 0 2px; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 800; font-size: 1.0625rem; color: #E5C690; }
+.chord-toast__text { margin: 0; font-size: .9375rem; line-height: 1.45; color: #E6E2E1; }
+.chord-toast__close { display: grid; place-items: center; width: 44px; height: 44px; margin: -8px 0 -8px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: #E6E2E1; cursor: pointer; transition: background-color .18s ease, color .18s ease; }
+.chord-toast__close:hover { background: rgba(229, 198, 144, .14); color: #E5C690; }
+.chord-toast__close:focus-visible { outline: 3px solid #E5C690; outline-offset: 1px; }
+.chord-toast__bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: #E5C690; transform-origin: left center; animation: chord-toast-count var(--chord-toast-ms) linear forwards; }
+.chord-toast.is-paused .chord-toast__bar { animation-play-state: paused; }
+.chord-toast.is-leaving { animation: chord-toast-out .3s ease forwards; }
+[data-bs-theme="dark"] .chord-toast { border-color: #2E4A44; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .8); }
+
+@keyframes chord-toast-in { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes chord-toast-out { from { opacity: 1; transform: translate(-50%, 0); } to { opacity: 0; transform: translate(-50%, -8px); } }
+@keyframes chord-toast-count { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+@media (max-width: 575.98px) {
+  .chord-toast { top: 8px; gap: 10px; padding: 12px 6px 14px 12px; }
+  .chord-toast__icon { width: 34px; height: 34px; }
+  .chord-toast__text { font-size: .875rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chord-toast, .chord-toast.is-leaving { animation: none; }
+  .chord-toast__bar { animation: none; }
+}

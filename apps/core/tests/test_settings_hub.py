@@ -126,17 +126,17 @@ class HubPageTests(TestCase):
         self.assertContains(
             page,
             f'href="{reverse("church:settings", kwargs={"section": "details"})}" '
-            'aria-label="Settings"',
+            'title="Settings"',
         )
         self.client.force_login(make_user(roles=["pastoral_staff"]))
         page = self.client.get(reverse("home"))
         self.assertContains(
-            page, f'href="{reverse("worship:template_list")}" aria-label="Settings"'
+            page, f'href="{reverse("worship:template_list")}" title="Settings"'
         )
         self.client.force_login(make_user(roles=["church_member"]))
         self.assertContains(
             self.client.get(reverse("home")),
-            f'href="{reverse("accounts:appearance")}" aria-label="Settings"',
+            f'href="{reverse("accounts:appearance")}" title="Settings"',
         )
 
     def test_a_settings_page_shows_the_menu_and_where_it_is(self):

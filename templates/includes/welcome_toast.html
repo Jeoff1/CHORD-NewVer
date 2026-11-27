@@ -1,0 +1,19 @@
+{% load static %}{% comment %}
+  The welcome after registering a church (owner, 27 Nov 2026; Design-System.md, "The welcome
+  toast"): a message from Django's messages framework tagged "chord-welcome", shown once, right
+  under the navigation bar. It slides down and fades in, closes itself after five seconds (the gold
+  bar counts down; hovering or focusing it pauses), and has an X to close it. Not a modal: the page
+  stays usable under it. static/js/welcome-toast.js runs it; without the script it simply stays.
+{% endcomment %}
+<div class="chord-toast-region">
+  <div class="chord-toast" role="status" aria-live="polite" data-chord-toast data-chord-toast-ms="5000">
+    <span class="chord-toast__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 12.5l4.2 4.2L18.5 8"/></svg></span>
+    <div class="chord-toast__body">
+      <p class="chord-toast__title">Welcome to CHORD!</p>
+      <p class="chord-toast__text">{{ message }}</p>
+    </div>
+    <button type="button" class="chord-toast__close" data-chord-toast-close aria-label="Dismiss the welcome message">{% include "includes/icons/x.html" with size=18 %}</button>
+    <span class="chord-toast__bar" aria-hidden="true"></span>
+  </div>
+</div>
+<script src="{% static 'js/welcome-toast.js' %}" defer></script>

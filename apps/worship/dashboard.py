@@ -1,13 +1,20 @@
 """What Worship adds to the dashboard (Phase 9A, A7, part 3;
 ``apps/church/dashboard.py``): lineups to confirm, services with no theme
 and chord sheets waiting for approval, for people who may act on them; and
-the coming services."""
+the coming services; and the overview figures and the lineup status bar."""
 
 from django.db.models import Count, Q
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.church.dashboard import Attention, ComingUp
+from apps.church.dashboard import (
+    Attention,
+    Breakdown,
+    ComingUp,
+    Stat,
+    stat_window,
+    window_label,
+)
 from apps.church.modules import is_enabled
 
 from .models import Lineup, WorshipService
@@ -160,3 +167,95 @@ def coming_up(request):
             )
         )
     return rows
+
+
+def _upcoming(request):
+    """The church's services in the dashboard's window that still take place."""
+    start, end = stat_window()
+    return WorshipService.objects.for_church(request.church).filter(
+        is_cancelled=False, starts_at__gte=start, starts_at__lt=end
+    )
+
+
+def stats(request):
+    """Upcoming services, how many of them have a confirmed lineup, and the
+    size of the song pool, each for people who may open it."""
+    user = request.user
+    if not is_enabled("worship", getattr(request, "church", None)):
+        return []
+    labels = _labels(request)
+    found = []
+    if user.has_perm("worship.view_worshipservice"):
+        upcoming = _upcoming(request)
+        total = upcoming.count()
+        found.append(
+            Stat(
+                label=f"Upcoming {labels.get('worship_service', plural=True).lower()}",
+                value=total,
+                period=window_label(),
+                icon="calendar",
+                url=reverse("worship:home"),
+                order=10,
+            )
+        )
+        if user.has_perm("worship.view_lineup"):
+            found.append(
+                Stat(
+                    label=f"Confirmed {labels.get('lineup', plural=True).lower()}",
+                    value=upcoming.filter(
+                        lineup__status=Lineup.Status.CONFIRMED
+                    ).count(),
+                    out_of=total,
+                    period=window_label(),
+                    icon="check-circle",
+                    url=reverse("worship:home"),
+                    order=30,
+                )
+            )
+    if user.has_perm("songs.view_song"):
+        from apps.songs.models import Song
+
+        found.append(
+            Stat(
+                label="Songs in song pool",
+                value=Song.objects.for_church(request.church).count(),
+                period="Total songs today",
+                icon="music-note",
+                url=reverse("songs:list"),
+                order=40,
+            )
+        )
+    return found
+
+
+def lineup_breakdown(request):
+    """The upcoming services by lineup status, for people who plan them:
+    drafts are theirs to see (as in "Coming up")."""
+    user = request.user
+    if not (
+        is_enabled("worship", getattr(request, "church", None))
+        and user.has_perm("worship.view_worshipservice")
+        and user.has_perm("worship.view_lineup")
+        and can_plan(user)
+    ):
+        return None
+    counts = _upcoming(request).aggregate(
+        confirmed=Count("pk", filter=Q(lineup__status=Lineup.Status.CONFIRMED)),
+        draft=Count("pk", filter=Q(lineup__status=Lineup.Status.DRAFT)),
+        none=Count("pk", filter=Q(lineup__isnull=True)),
+    )
+    labels = _labels(request)
+    lineup = labels.get("lineup")
+    services = labels.get("worship_service", plural=True).lower()
+    window = window_label()
+    return Breakdown(
+        title=f"{lineup} status",
+        period=f"Upcoming {services}, {window[:1].lower()}{window[1:]}",
+        parts=[
+            ("Confirmed", counts["confirmed"], "confirmed"),
+            ("Draft", counts["draft"], "draft"),
+            (f"No {lineup.lower()} yet", counts["none"], "none"),
+        ],
+        empty=f"No {services} in the next 30 days yet.",
+        order=10,
+    )

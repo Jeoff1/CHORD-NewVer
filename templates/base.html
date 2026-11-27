@@ -1,5 +1,5 @@
-{% load static %}<!doctype html>
-<html lang="en">
+{% load static church %}<!doctype html>
+<html lang="en"{% if user.is_authenticated and church and request.COOKIES.chord_sidebar == "icons" %} class="chord-sb-icons"{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,8 +11,23 @@
   <link rel="stylesheet" href="{% static 'css/chord.css' %}">
   <script src="{% static 'vendor/bootstrap-5.3.3/bootstrap.bundle.min.js' %}" defer></script>
   <script src="{% static 'vendor/htmx-2.0.4/htmx.min.js' %}" defer></script>
+  {% if user.is_authenticated and church %}
+    {% comment %}The signed-in sidebar (dashboard redesign, 27 Nov 2026): its stylesheet and script. The person's choice of a full or icon-only sidebar comes from the chord_sidebar cookie (on the html tag above), so the page arrives drawn that way; with no choice yet, a tablet starts icon-only.{% endcomment %}
+    <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    {% if not request.COOKIES.chord_sidebar %}<script>(function () { if (window.innerWidth >= 768 && window.innerWidth < 1200) { document.documentElement.classList.add("chord-sb-icons"); } })();</script>{% endif %}
+    <script src="{% static 'church/sidebar.js' %}" defer></script>
+  {% endif %}
+  {% block extra_head %}{% endblock %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% if user.is_authenticated and church %}
+  {% app_navigation as nav %}
+  <a class="visually-hidden-focusable chord-skip" href="#chord-main">Skip to the page</a>
+  <div class="chord-app">
+    {% include "includes/app_sidebar.html" %}
+    <div class="chord-app__body">
+      {% include "includes/app_header.html" %}
+  {% else %}
   <nav class="navbar navbar-expand-lg border-bottom">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
@@ -83,13 +98,17 @@
       {% endif %}
     </div>
   </nav>
+  {% endif %}
+  {% for message in messages %}{% if "chord-welcome" in message.extra_tags %}{% include "includes/welcome_toast.html" %}{% endif %}{% endfor %}
 
-  <main class="container py-4">
+  <main {% if user.is_authenticated and church %}class="chord-app__main" id="chord-main"{% else %}class="container py-4"{% endif %}>
     {% for message in messages %}
-      <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
+      {% if "chord-welcome" not in message.extra_tags %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
     {% endfor %}
     {% if settings_menu.current %}
       {% comment %}The Settings hub (Phase 9A A7): every registered settings page, and its add and edit pages, sits beside the side menu.{% endcomment %}
@@ -106,5 +125,9 @@
       </div>
     {% endif %}
   </main>
+  {% if user.is_authenticated and church %}
+    </div>
+  </div>
+  {% endif %}
 </body>
 </html>

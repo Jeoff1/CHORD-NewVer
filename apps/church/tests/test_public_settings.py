@@ -200,21 +200,32 @@ class SetupWizardForANewChurchTests(TestCase):
         session.save()
         return self.client.get(reverse("home"))
 
-    def test_registering_opens_the_wizard_for_the_new_administrator(self):
+    def test_registering_goes_straight_to_the_dashboard(self):
+        # Registration asks what the wizard needs; the rest has defaults
+        # (owner, 27 Nov 2026). The wizard stays for a church not set up.
         self.client.force_login(make_user())
         response = self.client.post(
             reverse("churches:register"), {"church-name": "Hope Hall"}
         )
-        self.assertRedirects(response, self.setup, fetch_redirect_response=False)
-        self.assertRedirects(self.client.get(reverse("home")), self.setup)
+        self.assertRedirects(response, reverse("home"), fetch_redirect_response=False)
+        self.assertTrue(ChurchProfile.objects.get(name="Hope Hall").setup_completed)
+        self.assertEqual(self.client.get(reverse("home")).status_code, 200)
 
-    def test_its_administrator_is_sent_to_the_wizard(self):
+    def test_its_administrator_goes_to_the_dashboard(self):
+        # No setup wizard any more (owner, 27 Nov 2026).
         admin = make_user(church=self.church, roles=["administrator"])
-        self.assertRedirects(self.home_as(admin), self.setup)
+        self.assertEqual(self.home_as(admin).status_code, 200)
+        self.church.refresh_from_db()
+        self.assertTrue(self.church.setup_completed)
 
     def test_its_fourth_step_is_the_public_homepage(self):
+        # The wizard's pages stay at their addresses, though nothing sends
+        # anyone there now.
         admin = make_user(church=self.church, roles=["administrator"])
-        self.home_as(admin)
+        self.client.force_login(admin)
+        session = self.client.session
+        session[SESSION_KEY] = self.church.pk
+        session.save()
         step = reverse("church:setup", kwargs={"section": "homepage"})
         self.assertContains(self.client.get(step), "Step 4 of 4: Public homepage")
         self.assertContains(

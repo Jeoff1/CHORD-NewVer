@@ -1,6 +1,6 @@
 /*
  * Registering a church (Design-System.md, "Registering a church"): shows the one-page form as four
- * steps, checks each step before the next, previews the logo and fills the review.
+ * steps, checks each step before the next, previews the logo and the banner, and fills the review.
  * Only a convenience: the form is sent once and the server checks everything (RegisterChurchView),
  * coming back on the first step with an error. Without this script every step shows at once.
  * Loaded before auth.js, so a submit that only moves to the next step never reaches its busy button.
@@ -32,6 +32,11 @@
   }
 
   root.classList.add("au-rg--steps");
+  // The church starts in the time zone of the person's device (changed later in Church details).
+  var zone = form.querySelector("[data-au-time-zone]");
+  if (zone && !zone.value) {
+    try { zone.value = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { zone.value = ""; }
+  }
   root.querySelectorAll("[data-au-steps-only]").forEach(function (el) { el.hidden = false; });
   var prev = $("[data-au-prev]");
   var next = $("[data-au-next]");
@@ -64,7 +69,7 @@
     text.className = "au-error";
     text.textContent = message;
     box.appendChild(text);
-    var control = field.querySelector(".au-control, .au-drop");
+    var control = field.querySelector(".au-control, .au-drop, .au-banner");
     control.insertAdjacentElement("afterend", box);
     field.classList.add("au-field--error");
     input.setAttribute("aria-invalid", "true");
@@ -102,6 +107,9 @@
       var logo = named("church-logo");
       var file = logo && logo.files && logo.files[0];
       check("church-logo", !file || file.size <= MAX_LOGO, "The logo must be 2 MB or smaller.");
+      var bannerInput = named("church-banner");
+      var bannerFile = bannerInput && bannerInput.files && bannerInput.files[0];
+      check("church-banner", !bannerProblem(bannerFile), bannerProblem(bannerFile));
     }
     if (problems.length) problems[0].focus();
     return !problems.length;
@@ -230,6 +238,104 @@
     });
   }
 
+  // --- The banner ------------------------------------------------------------------------------
+  // Choose or drop an image; it shows at once as the wide cover, with its name, size and pixel
+  // size, and can be replaced or removed. The file stays in the form while the person moves
+  // between steps. The server checks it again and saves an optimised copy.
+
+  var banner = named("church-banner");
+  var bannerDrop = $("[data-au-banner-drop]");
+  var bannerUrl = null;
+  var BANNER_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  var MAX_BANNER = 5 * 1024 * 1024;
+
+  function fileSize(bytes) {
+    return bytes < 1024 * 1024 ? Math.max(1, Math.round(bytes / 1024)) + " KB" : (bytes / 1048576).toFixed(1) + " MB";
+  }
+
+  function bannerProblem(file) {
+    if (!file) return "";
+    if (BANNER_TYPES.indexOf(file.type) === -1) return "Choose a JPG, PNG or WebP image.";
+    if (file.size > MAX_BANNER) return "The banner must be 5 MB or smaller (this one is " + fileSize(file.size) + ").";
+    return "";
+  }
+
+  if (banner && bannerDrop) {
+    var bannerImage = bannerDrop.querySelector("[data-au-banner-img]");
+    var bannerEmpty = bannerDrop.querySelector("[data-au-banner-empty]");
+    var bannerMeta = bannerDrop.querySelector("[data-au-banner-name]");
+    var bannerChoose = bannerDrop.querySelector("[data-au-banner-choose]");
+    var bannerClear = bannerDrop.querySelector("[data-au-banner-clear]");
+    var bannerHint = bannerMeta.textContent;
+
+    var showBanner = function () {
+      if (bannerUrl) URL.revokeObjectURL(bannerUrl);
+      bannerUrl = null;
+      var file = banner.files && banner.files[0];
+      var wrong = bannerProblem(file);
+      if (wrong) {
+        banner.value = "";
+        file = null;
+        setError(banner, wrong);
+      } else if (file) {
+        clearError(banner);
+      }
+      if (!file) {
+        bannerImage.hidden = true;
+        bannerImage.removeAttribute("src");
+        bannerEmpty.hidden = false;
+        bannerMeta.textContent = bannerHint;
+        bannerChoose.textContent = "Choose image";
+        bannerClear.hidden = true;
+        bannerDrop.classList.remove("has-image");
+        return;
+      }
+      bannerUrl = URL.createObjectURL(file);
+      bannerImage.onload = function () {
+        var w = bannerImage.naturalWidth, h = bannerImage.naturalHeight;
+        var notes = [file.name + " · " + fileSize(file.size) + " · " + w + " × " + h + " px"];
+        if (Math.abs(w / h - 3) > 0.35) notes.push("Not 3:1, so the cover shows its middle.");
+        if (w < 1200) notes.push("Smaller than recommended; it may look soft on wide screens.");
+        bannerMeta.textContent = notes.join(" ");
+      };
+      bannerImage.src = bannerUrl;
+      bannerImage.hidden = false;
+      bannerEmpty.hidden = true;
+      bannerMeta.textContent = file.name + " · " + fileSize(file.size);
+      bannerChoose.textContent = "Replace image";
+      bannerClear.hidden = false;
+      bannerDrop.classList.add("has-image");
+    };
+
+    banner.addEventListener("change", showBanner);
+    bannerClear.addEventListener("click", function () {
+      banner.value = "";
+      clearError(banner);
+      showBanner();
+      banner.focus();
+    });
+    // Drag and drop: the dropped file becomes the input's file, so the form sends it as usual.
+    ["dragenter", "dragover"].forEach(function (name) {
+      bannerDrop.addEventListener(name, function (event) {
+        event.preventDefault();
+        bannerDrop.classList.add("is-over");
+      });
+    });
+    ["dragleave", "drop"].forEach(function (name) {
+      bannerDrop.addEventListener(name, function () { bannerDrop.classList.remove("is-over"); });
+    });
+    bannerDrop.addEventListener("drop", function (event) {
+      event.preventDefault();
+      var file = event.dataTransfer && event.dataTransfer.files[0];
+      if (!file || typeof DataTransfer === "undefined") return;
+      var list = new DataTransfer();
+      list.items.add(file);
+      banner.files = list.files;
+      showBanner();
+    });
+    showBanner();
+  }
+
   // --- The description's count ----------------------------------------------------------------
 
   var about = named("church-about");
@@ -267,6 +373,16 @@
     row(church, "Email", value("church-email"));
     $("[data-au-pv-name]").textContent = value("church-name");
     $("[data-au-pv-about]").textContent = value("church-about") || "No description yet.";
+    var cover = $("[data-au-pv-banner]");
+    if (cover) {
+      cover.replaceChildren();
+      if (bannerUrl) {
+        var coverImage = document.createElement("img");
+        coverImage.alt = "";
+        coverImage.src = bannerUrl;
+        cover.appendChild(coverImage);
+      }
+    }
     var preview = $("[data-au-pv-logo]");
     if (logoUrl) {
       var image = document.createElement("img");

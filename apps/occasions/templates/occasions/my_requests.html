@@ -1,16 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}My occasion requests{% endblock %}
+{% block title %}My requests{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">My occasion requests</h1>
-    {% if can_request %}<a href="{% url 'occasions:request' %}" class="btn btn-primary">Request an occasion</a>{% endif %}
-  </div>
-
-  {% include "occasions/includes/nav.html" %}
-
-  <p class="text-body-secondary">Special services you asked for, such as a wedding, a baptism or a funeral. You get a notification when one is approved or declined.</p>
+  {% load ui %}
+  {% page_header "My requests" subtitle="Special services you asked for, such as a wedding, a baptism or a funeral. You get a notification when one is approved or declined." %}
+    {% if can_request %}<a href="{% url 'occasions:request' %}" class="btn btn-primary">Request a service</a>{% endif %}
+  {% endpage_header %}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   <div class="card shadow-sm">
     <ul class="list-group list-group-flush">

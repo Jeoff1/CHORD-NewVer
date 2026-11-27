@@ -9,11 +9,13 @@ from django import forms
 from django.core.validators import MaxLengthValidator
 
 from .context_processors import module_entries
+from .images import BannerFieldMixin
 from .labels import LABEL_DEFINITIONS
-from .models import ChurchProfile
+from .models import TIME_ZONE_CHOICES, ChurchProfile
 from .modules import MODULE_CHOICES, MODULES, MODULES_BY_CODE, is_available
 
 ABOUT_MAX_LENGTH = 2000
+TIME_ZONES = {zone for zone, _ in TIME_ZONE_CHOICES}
 
 
 class ChurchDetailsForm(forms.ModelForm):
@@ -30,25 +32,36 @@ class ChurchDetailsForm(forms.ModelForm):
             "time_zone",
         ]
         labels = {"name": "Church name"}
+        help_texts = {
+            "logo": "512 × 512 px recommended (1:1). PNG, JPEG, GIF or WebP, 2 MB at most."
+        }
         widgets = {"address": forms.Textarea(attrs={"rows": 3})}
 
     def clean_currency(self):
         return self.cleaned_data["currency"].strip().upper()
 
 
-class ChurchHomepageForm(forms.ModelForm):
+class ChurchHomepageForm(BannerFieldMixin, forms.ModelForm):
     """What the church shows publicly (Phase 9B). Nothing shows until the
-    church switches it on, except what a new church chose at registration."""
+    church switches it on, except what a new church chose at registration.
+    The banner (27 Nov 2026) is changed or removed here."""
 
     class Meta:
         model = ChurchProfile
         fields = [
             "show_in_directory",
             "about",
+            "banner",
             "show_upcoming_services",
             "accept_outside_requests",
         ]
-        widgets = {"about": forms.Textarea(attrs={"rows": 5})}
+        labels = {"banner": "Church banner"}
+        widgets = {
+            "about": forms.Textarea(attrs={"rows": 5}),
+            "banner": forms.ClearableFileInput(
+                attrs={"accept": "image/jpeg,image/png,image/webp"}
+            ),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -150,12 +163,15 @@ SECTIONS = {
 SECTION_ORDER = list(SECTIONS)
 
 
-class ChurchRegistrationForm(forms.ModelForm):
+class ChurchRegistrationForm(BannerFieldMixin, forms.ModelForm):
     """Register a church (decisions 0001 and 0014): its name, which is all it
     needs, and, if the person likes, the details and public profile they
     could otherwise set later in the settings (owner, 27 Nov 2026). Never
     who the church is, only what it does (decision 0001)."""
 
+    # Hidden: filled in from the person's device (owner, 27 Nov 2026), so the
+    # church starts in the right time zone; changed later in Church details.
+    time_zone = forms.CharField(required=False, widget=forms.HiddenInput)
     show_in_directory = forms.TypedChoiceField(
         label="Public visibility",
         choices=[("public", "Public"), ("private", "Not public")],
@@ -168,18 +184,19 @@ class ChurchRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = ChurchProfile
-        fields = ["name", "address", "phone", "email", "logo", "about"]
+        fields = ["name", "address", "phone", "email", "logo", "banner", "about"]
         labels = {
             "name": "Church name",
             "address": "Church address",
             "phone": "Contact number",
             "email": "Church email address",
             "logo": "Church logo",
+            "banner": "Church banner",
             "about": "Church description",
         }
         help_texts = {
             "name": "As people know it. You can change it later.",
-            "logo": "PNG, JPEG, GIF or WebP, 2 MB at most.",
+            "logo": "512 × 512 px recommended (1:1). PNG, JPEG, GIF or WebP, 2 MB at most.",
         }
         widgets = {
             "address": forms.Textarea(attrs={"rows": 3}),
@@ -205,9 +222,16 @@ class ChurchRegistrationForm(forms.ModelForm):
     def clean_about(self):
         return self.cleaned_data["about"].strip()
 
+    def clean_time_zone(self):
+        # The person's device's time zone, sent by register.js; one CHORD
+        # doesn't know (or none) leaves the church's default.
+        zone = self.cleaned_data.get("time_zone", "").strip()
+        return zone if zone in TIME_ZONES else ""
+
     def details(self):
         """Everything but the name, for ``register_church``."""
         data = {k: v for k, v in self.cleaned_data.items() if k != "name"}
-        if not data.get("logo"):
-            data.pop("logo", None)
+        for optional in ("logo", "banner", "time_zone"):
+            if not data.get(optional):
+                data.pop(optional, None)
         return data

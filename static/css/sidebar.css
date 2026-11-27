@@ -1,0 +1,462 @@
+/* The signed-in app shell: sidebar and header (dashboard redesign, 27 Nov 2026; Design-System.md,
+ * "The app sidebar"). Loaded by base.html only for a signed-in person with a church, so public pages,
+ * sign-in and registration never get it.
+ *
+ * Deep green with the gold CHORD logo, a gold bar on the current page. From 768 px the sidebar stays
+ * beside the page and can shrink to icons (html.chord-sb-icons); below, Bootstrap's offcanvas. */
+
+:root {
+  --chord-sb-width: 272px;
+  --chord-sb-icons-width: 80px;
+  --chord-sb-bg: #173630;
+  --chord-sb-text: #E6E2E1;
+  --chord-sb-muted: #A9BDB7;
+  --chord-sb-hover: rgba(230, 226, 225, .08);
+  --chord-sb-line: rgba(230, 226, 225, .12);
+  --chord-sb-active-bg: rgba(229, 198, 144, .14);
+  --chord-hd-height: 64px;
+}
+[data-bs-theme=dark] {
+  --chord-sb-bg: #0B1F1B;
+  --chord-sb-hover: rgba(229, 198, 144, .08);
+  --chord-sb-line: rgba(230, 226, 225, .10);
+}
+
+.chord-skip {
+  position: absolute;
+  z-index: 1080;
+  top: 8px;
+  left: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #E5C690;
+  color: #173630;
+  font-weight: 600;
+}
+
+.chord-app {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.chord-app__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.chord-app__main {
+  flex: 1;
+  width: 100%;
+  max-width: 1440px;
+  padding: 28px 32px 48px;
+}
+
+/* --- Sidebar ------------------------------------------------------------ */
+
+.chord-sb {
+  --bs-offcanvas-width: 300px;
+  --bs-offcanvas-bg: var(--chord-sb-bg);
+  --bs-offcanvas-color: var(--chord-sb-text);
+}
+.chord-sb__inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--chord-sb-bg);
+  color: var(--chord-sb-text);
+}
+
+@media (min-width: 768px) {
+  .chord-sb {
+    position: sticky;
+    top: 0;
+    flex: none;
+    width: var(--chord-sb-width);
+    height: 100vh;
+    height: 100dvh;
+    /* Above the page, so the icon-only dropdowns open over the cards. */
+    z-index: 1030;
+    transition: width .22s ease;
+  }
+  .chord-sb-icons .chord-sb {
+    width: var(--chord-sb-icons-width);
+  }
+}
+
+.chord-sb__top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 16px 14px;
+  border-bottom: 1px solid var(--chord-sb-line);
+}
+.chord-sb__brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+/* The official CHORD logo, the gold copy for green grounds, unchanged: only its size is set. */
+.chord-sb__logo {
+  display: block;
+  min-width: 0;
+  border-radius: 6px;
+}
+.chord-sb__logo img {
+  display: block;
+  width: 148px;
+  max-width: 100%;
+  height: auto;
+}
+.chord-sb__icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--chord-sb-muted);
+}
+.chord-sb__icon-btn:hover { background: var(--chord-sb-hover); color: var(--chord-sb-text); }
+.chord-sb__icon-btn:focus-visible,
+.chord-sb__link:focus-visible,
+.chord-sb__sublink:focus-visible,
+.chord-sb__group:focus-visible,
+.chord-sb__logo:focus-visible {
+  outline: 3px solid #E5C690;
+  outline-offset: 1px;
+}
+.chord-sb__close { display: none; }
+@media (max-width: 767.98px) {
+  .chord-sb__collapse { display: none; }
+  .chord-sb__close { display: inline-grid; }
+}
+
+/* The church's own identity: its logo (or initials) and name. Not the CHORD logo. */
+.chord-sb__church {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--chord-sb-line);
+  border-radius: 14px;
+  background: rgba(230, 226, 225, .04);
+}
+.chord-sb__church-logo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #E5C690;
+  color: #173630;
+  font-family: "Raleway", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+}
+.chord-sb__church-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #FFFFFF;
+}
+.chord-sb__church-text { min-width: 0; display: flex; flex-direction: column; }
+.chord-sb__church-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-family: "Raleway", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.25;
+  color: var(--chord-sb-text);
+}
+.chord-sb__church-role {
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--chord-sb-muted);
+}
+
+.chord-sb__nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(230, 226, 225, .18) transparent;
+  overscroll-behavior: contain;
+}
+/* A thin, quiet scrollbar that shows clearly only while the menu is hovered. */
+.chord-sb__nav::-webkit-scrollbar { width: 6px; }
+.chord-sb__nav::-webkit-scrollbar-track { background: transparent; }
+.chord-sb__nav::-webkit-scrollbar-thumb { border-radius: 6px; background: rgba(230, 226, 225, .12); }
+.chord-sb__nav:hover::-webkit-scrollbar-thumb { background: rgba(230, 226, 225, .28); }
+.chord-sb__cat + .chord-sb__cat,
+.chord-sb__cat + .chord-sb__link,
+.chord-sb__link + .chord-sb__cat { margin-top: 2px; }
+.chord-sb__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-top: 1px solid var(--chord-sb-line);
+}
+.chord-sb__foot form { margin: 0; }
+
+.chord-sb__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--chord-sb-text);
+  font-size: 15px;
+  text-align: left;
+  text-decoration: none;
+}
+.chord-sb__link:hover { background: var(--chord-sb-hover); color: var(--chord-sb-text); }
+.chord-sb__link .chord-icon { flex: none; }
+.chord-sb__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chord-sb__link.is-active {
+  background: var(--chord-sb-active-bg);
+  color: #E5C690;
+  font-weight: 600;
+}
+.chord-sb__link.is-active::before,
+.chord-sb__sublink.is-active::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 8px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: #E5C690;
+}
+.chord-sb__cat-btn > .chord-icon:last-child,
+.chord-sb__group > .chord-icon {
+  color: var(--chord-sb-muted);
+  transition: transform .2s ease;
+}
+.chord-sb__cat-btn[aria-expanded="true"] > .chord-icon:last-child,
+.chord-sb__group[aria-expanded="true"] > .chord-icon {
+  transform: rotate(90deg);
+}
+.chord-sb__cat.has-active > .chord-sb__cat-btn { color: #E5C690; }
+
+.chord-sb__sub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 8px;
+}
+.chord-sb__sublink {
+  position: relative;
+  display: block;
+  padding: 7px 12px 7px 44px;
+  border-radius: 10px;
+  color: var(--chord-sb-muted);
+  font-size: 14.5px;
+  text-decoration: none;
+}
+.chord-sb__sublink:hover { background: var(--chord-sb-hover); color: var(--chord-sb-text); }
+.chord-sb__badge {
+  float: right;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #E5C690;
+  color: #173630;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.chord-sb__sublink.is-active {
+  background: rgba(229, 198, 144, .10);
+  color: #E5C690;
+  font-weight: 600;
+}
+.chord-sb__group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 12px 7px 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--chord-sb-text);
+  font-size: 14.5px;
+  font-weight: 600;
+  text-align: left;
+}
+.chord-sb__group:hover { background: var(--chord-sb-hover); }
+.chord-sb__group.has-active { color: #E5C690; }
+.chord-sb__sub--deep { padding: 2px 0 4px; }
+.chord-sb__sub--deep .chord-sb__sublink { padding-left: 58px; font-size: 14px; }
+
+/* The icon-only dropdowns: hidden in the full sidebar. */
+.chord-sb__fly { display: none; }
+.chord-sb__fly-menu {
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 12px;
+}
+.chord-sb__fly-menu .dropdown-header {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.chord-sb__fly-menu .chord-sb__fly-group { margin-top: 6px; letter-spacing: .04em; }
+.chord-sb__fly-menu .dropdown-item { border-radius: 8px; }
+.chord-sb__fly-menu .dropdown-item.active { box-shadow: inset 3px 0 0 #E5C690; }
+
+/* --- Icons only (768 px and up) ------------------------------------------ */
+
+@media (min-width: 768px) {
+  .chord-sb-icons .chord-sb__top { align-items: center; padding-inline: 10px; }
+  .chord-sb-icons .chord-sb__brand { flex-direction: column; gap: 10px; }
+  .chord-sb-icons .chord-sb__logo img { width: 56px; }
+  .chord-sb-icons .chord-sb__church { justify-content: center; padding: 0; border: 0; background: transparent; }
+  .chord-sb-icons .chord-sb__church-text,
+  .chord-sb-icons .chord-sb__label,
+  .chord-sb-icons .chord-sb__cat-btn,
+  .chord-sb-icons .chord-sb__cat > .collapse { display: none; }
+  .chord-sb-icons .chord-sb__fly { display: block; }
+  .chord-sb-icons .chord-sb__link { justify-content: center; padding: 11px 0; }
+}
+
+/* --- Header ------------------------------------------------------------- */
+
+.chord-hd {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--chord-hd-height);
+  padding: 8px 32px;
+  border-bottom: 1px solid var(--bs-border-color);
+  background: var(--chord-raised);
+}
+.chord-hd__where { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.chord-hd__section {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--bs-secondary-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chord-hd__page {
+  overflow: hidden;
+  font-family: "Raleway", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.25;
+  color: var(--chord-heading);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chord-hd__btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--bs-body-color);
+  text-decoration: none;
+}
+.chord-hd__btn:hover { border-color: var(--chord-border-strong); color: var(--bs-emphasis-color); }
+.chord-hd__menu { display: none; }
+.chord-hd__count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--chord-raised);
+  border-radius: 999px;
+  background: #B02A37;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.chord-hd__user {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 260px;
+  padding: 4px 14px 4px 4px;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bs-body-color);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chord-hd__user:hover { border-color: var(--chord-border-strong); }
+.chord-hd__user .chord-avatar { flex: none; }
+
+@media (max-width: 1199.98px) {
+  .chord-app__main { padding: 24px 24px 40px; }
+  .chord-hd { padding-inline: 24px; }
+}
+@media (max-width: 767.98px) {
+  .chord-hd { padding: 8px 14px; min-height: 58px; }
+  .chord-hd__menu { display: inline-grid; }
+  .chord-app__main { padding: 18px 14px 32px; }
+}
+@media (max-width: 575.98px) {
+  /* On a phone the account button shows only the person's letter. */
+  .chord-hd__user { font-size: 0; gap: 0; padding: 4px; }
+  .chord-hd__user::after { display: none; }
+  .chord-hd__section { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chord-sb .collapsing { transition: none; }
+  .chord-sb,
+  .chord-sb__cat-btn > .chord-icon:last-child,
+  .chord-sb__group > .chord-icon { transition: none; }
+}

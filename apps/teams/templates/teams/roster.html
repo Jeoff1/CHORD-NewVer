@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load people %}
 
-{% block title %}Roster{% endblock %}
+{% block title %}Team roster{% endblock %}
 
 {% block content %}
-  {% include "teams/includes/nav.html" %}
-  <h1 class="h3 mb-1">Roster</h1>
-  <p class="text-body-secondary">Everyone with an account, and the parts in their Team Profile.</p>
+  {% load ui %}
+  {% page_header "Team roster" subtitle="Everyone with an account, and the parts in their Team Profile." %}{% endpage_header %}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   <div class="card shadow-sm">
     <div class="table-responsive">

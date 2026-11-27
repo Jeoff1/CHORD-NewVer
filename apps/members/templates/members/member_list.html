@@ -16,7 +16,7 @@
     {% if perms.members.add_member %}<a href="{% url 'members:create' %}" class="btn btn-primary">Add {{ labels.member|lower }}</a>{% endif %}
   {% endpage_header %}
 
-  {% members_sections as links %}{% section_tabs links as tabs %}{% include "includes/section_tabs.html" with tabs=tabs label="Members sections" %}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   {# One filter row (Phase 9A A7): search, status, archived people, Filter. #}
   <form method="get" role="search" class="d-flex flex-wrap align-items-end gap-3 mb-3">

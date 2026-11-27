@@ -25,7 +25,7 @@ from .labels import LABEL_DEFINITIONS, Labels
 from .middleware import SESSION_KEY
 from .models import ChurchProfile
 from .modules import MODULES_BY_CODE
-from .registration import register_church
+from .registration import mark_set_up, register_church
 
 MANAGE_PERMISSION = "church.change_churchprofile"
 
@@ -39,6 +39,7 @@ def profile_audit_fields():
         "Email": "email",
         "Website": "website",
         "Logo": "logo",
+        "Banner": "banner",
         "Currency": "currency",
         "Time zone": "time_zone",
         "Switched-off modules": lambda p: [
@@ -124,18 +125,16 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
     def get(self, request, *args, **kwargs):
-        if not request.church.setup_completed and self.sets_up(request):
-            return redirect("church:setup", section=SECTION_ORDER[0])
+        # Nobody is sent through the setup wizard any more (owner, 27 Nov
+        # 2026): signing in opens the dashboard. An older church whose saved
+        # details pass registration's checks is marked set up the first time
+        # someone who manages it arrives; one that doesn't shows a notice
+        # pointing to its settings.
+        if not request.church.setup_completed and request.user.has_perm(
+            MANAGE_PERMISSION
+        ):
+            mark_set_up(request.church, request.user)
         return super().get(request, *args, **kwargs)
-
-    @staticmethod
-    def sets_up(request):
-        """Whether the person finishes this church's setup: a holder of its
-        Administrator role, such as whoever registered it. Not a superuser
-        looking in for support, nor anyone else with the permission."""
-        from apps.accounts.roles import ADMINISTRATOR
-
-        return request.user.roles_in(request.church).filter(key=ADMINISTRATOR).exists()
 
 
 class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
@@ -220,13 +219,21 @@ class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 # --- Churches on the platform (Phase 9B, decision 0014) ------------------------
 
 
+WELCOME_TAG = "chord-welcome"
+WELCOME_MESSAGE = (
+    "Your church is officially registered. Your workspace is ready, and you can "
+    "now start managing your church and planning meaningful worship experiences."
+)
+
+
 class RegisterChurchView(TemplateView):
     """Register your church: a four-step wizard on one page (owner, 27 Nov
     2026; Design-System.md, "Registering a church"). Church, Profile,
     Account (a new one for a visitor; a signed-in person uses their own)
     and Review, all sent in one POST and checked here; the script only moves
     between the steps. The person becomes the church's first Administrator
-    and goes on to the setup wizard.
+    is signed in, and goes straight to the dashboard with a one-time welcome
+    (27 Nov 2026), never to the setup wizard.
 
     Sending the same form twice (a double press, Back and send again) never
     makes a second church: each page carries a token, and a token already
@@ -254,6 +261,9 @@ class RegisterChurchView(TemplateView):
         context["start_step"] = self.start_step(church_form, account_form)
         context["logo_lost"] = church_form.is_bound and bool(
             self.request.FILES.get("church-logo")
+        )
+        context["banner_lost"] = church_form.is_bound and bool(
+            self.request.FILES.get("church-banner")
         )
         return context
 
@@ -289,7 +299,7 @@ class RegisterChurchView(TemplateView):
         if church is not None:
             request.session[SESSION_KEY] = church.pk
             messages.info(request, f"{church.name} is already registered.")
-            return redirect("church:setup", section=SECTION_ORDER[0])
+            return redirect("home")
         church_form, account_form = self.forms(request.POST, request.FILES)
         valid = church_form.is_valid()
         valid = (account_form is None or account_form.is_valid()) and valid
@@ -312,8 +322,13 @@ class RegisterChurchView(TemplateView):
         done[request.POST.get("registration", "")] = church.pk
         request.session[self.DONE_KEY] = done
         request.session[self.TOKEN_KEY] = uuid.uuid4().hex
-        messages.success(request, f"{church.name} is registered. Let's set it up.")
-        return redirect("church:setup", section=SECTION_ORDER[0])
+        # The welcome, once, whatever happens next: if a saved detail fails
+        # the checks, the dashboard says so and links to its settings (no
+        # setup wizard any more, owner, 27 Nov 2026). the dashboard shows it as a toast under the
+        # navigation bar (includes/welcome_toast.html), and Django's messages
+        # never show a message twice.
+        messages.success(request, WELCOME_MESSAGE, extra_tags=WELCOME_TAG)
+        return redirect("home")
 
 
 @method_decorator(require_POST, name="dispatch")

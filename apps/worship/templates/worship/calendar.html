@@ -4,8 +4,8 @@
 {% block title %}Calendar: {{ month|date:"F Y" }}{% endblock %}
 
 {% block content %}
-  {% include "worship/includes/schedule_header.html" %}
-  {% include "worship/includes/nav.html" %}
+  {% include "worship/includes/schedule_header.html" with page_title="Calendar" %}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
     <div class="d-flex align-items-center gap-2">
