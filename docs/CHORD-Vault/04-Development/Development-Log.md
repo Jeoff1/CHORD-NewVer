@@ -2,6 +2,95 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Registration steps reordered; the day's account changes committed (branch `joy-ui-ux-v2`)
+
+- **Why:** the owner reordered the registration wizard to Church, Profile,
+  Account, Review, with nothing inside a step changed, and asked to commit
+  it with the pending changes listed below: the personal sign-up page
+  removed, the account step's names, and email sign-in.
+- **Changed:** `church/register.html` (the steps' order, the stepper and the
+  review's Edit targets), `register.js` (step names and checks by step),
+  `RegisterChurchView.start_step` (the first step with an error in the new
+  order); tests and the vault notes to match.
+- **Checked:**
+  - **Migration:** `0011_user_middle_name_suffix` applied to the dev
+    database (it only adds two blank columns; 5 accounts kept), undone and
+    applied again cleanly.
+  - **Browser** (headless Edge, `manage.py testserver`, light and dark at
+    1440, 834 and 390 px; no sideways scrolling):
+    - The wizard opens on Church information, with the stepper reading
+      Church, Profile, Account, Review.
+    - An empty church name is refused. Profile, then Account (an empty Next
+      asks for the names, email and password), then the review with the
+      full name.
+    - Edit Account opens step 3 with the typed name kept. Complete reaches
+      setup.
+    - A second registration with the same email in capitals comes back on
+      step 3 with "An account already uses this email".
+    - A wrong password shows the error box. The email in capitals signs
+      in.
+    - `/accounts/signup/` lands on the wizard.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed before
+  committing; results in the commit report.
+
+## 2026-11-27: The account step's names, and signing in with an email (branch `joy-ui-ux-v2`)
+
+- **Why:** the owner asked for First and Last name on one line, Middle name
+  and Suffix (optional) below, and no username. Asked first and approved:
+  two new account fields (a migration) and signing in with the email
+  ([[Design-Decisions]], "The account step: names, and signing in with an
+  email").
+- **Changed:**
+  - `accounts.User` gets `middle_name` and `suffix` (migration `0011`).
+  - `SignUpForm` asks for no username: the email must be unique, the
+    username is made from it (`username_from_email`), and first and last
+    name are needed. `ProfileForm` gets the two new fields.
+  - `ChurchRoleBackend.authenticate` accepts an email, and
+    `EmailOrUsernameAuthenticationForm` labels the sign-in field "Email or
+    username".
+  - The wizard's step 1 has the new layout (`.au-names`, every width). Its
+    script checks the names, not a username, and the review shows the full
+    name. The signed-in card shows the username only when it isn't the
+    email.
+- **Checked in a browser** (headless Edge, `manage.py testserver`, light
+  and dark at 1440, 834, 390 and 360 px):
+  - First and Last name share a row at every width, with Middle name
+    (two-thirds) and Suffix (one third) below.
+  - There is no username field and no sideways scrolling.
+  - An empty Next asks for the first name, last name, email and password.
+  - A real registration with a middle name and suffix showed "Daniel Cruz
+    Reyes Jr." in the review and reached setup.
+  - Signing in with the email in capitals worked.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1329 tests OK, 97%
+  coverage.
+
+## 2026-11-27: Sign up is registering a church (branch `joy-ui-ux-v2`)
+
+- **Why:** the owner removed the separate personal sign-up page: church
+  registration is CHORD's sign-up, and the account is made in its first
+  step ([[Design-Decisions]], "Sign up is registering a church"). Asked
+  first: outsiders can no longer make an account just to request an
+  occasion; the owner plans a no-account request form for later.
+- **Changed:**
+  - `SignUpView` became `SignUpRedirectView`: `/accounts/signup/` (still
+    `accounts:signup`) redirects to `/churches/register/` with its query
+    string. `accounts/signup.html` is deleted. `SignUpForm` stays, since
+    the wizard's first step uses it.
+  - The landing page's three Sign up links open registering. The wizard's
+    side panel offers "Already have an account? Sign in" in place of
+    "Create a personal account".
+  - CSS only the old page used (`.au-choice`, `.au-col--wide`,
+    `.au-names`) was removed; comments were renamed to "The sign-in page".
+  - The sign-in page itself is unchanged.
+- **Tests:** `test_signup_page.py` was rewritten for the redirect and the
+  account step's validation (moved from the old page). The old
+  `CreateAnAccountTests` were removed: no page makes a church-less account
+  any more. The landing, wizard and denomination-free tests were updated.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1324 tests OK, 97%
+  coverage.
+
 ## 2026-11-27: Full-page sign-in and sign-up, and the church registration wizard (branch `joy-ui-ux-v2`)
 
 - **Why:** the UI/UX owner approved a second mockup of the three pages:

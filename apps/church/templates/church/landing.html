@@ -60,7 +60,7 @@
           </ul>
         </details>
         <a class="lp-btn lp-btn--ghost lp-btn--small lp-nav__signin" href="{% url 'accounts:login' %}">Sign in</a>
-        <a class="lp-btn lp-btn--gold lp-btn--small" href="{% url 'accounts:signup' %}">Sign up</a>
+        <a class="lp-btn lp-btn--gold lp-btn--small" href="{% url 'churches:register' %}">Sign up</a>
       </div>
     </div>
   </nav>
@@ -310,7 +310,7 @@ Was blind, but now I see</pre>
         <p class="lp-eyebrow">Get started</p>
         <h2 id="cta-title">Plan your next {{ labels.worship_service|lower }} with CHORD.</h2>
         <p>Create your account, then find your church in the directory.</p>
-        <a class="lp-btn lp-btn--green lp-btn--large" href="{% url 'accounts:signup' %}">Sign up</a>
+        <a class="lp-btn lp-btn--green lp-btn--large" href="{% url 'churches:register' %}">Sign up</a>
       </div>
     </section>
   </main>
@@ -333,7 +333,7 @@ Was blind, but now I see</pre>
         <h3>Get started</h3>
         <ul>
           <li><a href="{% url 'accounts:login' %}">Sign in</a></li>
-          <li><a href="{% url 'accounts:signup' %}">Sign up</a></li>
+          <li><a href="{% url 'churches:register' %}">Sign up</a></li>
           <li><a href="{% url 'churches:directory' %}">Find a church</a></li>
         </ul>
       </div>

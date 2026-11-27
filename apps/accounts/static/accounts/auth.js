@@ -1,6 +1,6 @@
 /*
- * The sign-in, sign-up and church registration pages (Design-System.md, "The sign-in and sign-up
- * pages"): show or hide a password, a busy button while the form is sent, and where there is a
+ * The sign-in and church registration pages (Design-System.md, "The sign-in page" and
+ * "Registering a church"): show or hide a password, a busy button while the form is sent, and where there is a
  * new password, the password checklist and whether the two passwords match.
  * Only conveniences: the server checks everything and shows its own errors. Without this script
  * the pages still work; the show buttons stay hidden.

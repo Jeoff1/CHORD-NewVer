@@ -90,6 +90,10 @@
 .au-pane__intro { margin: 0 0 24px; max-width: 62ch; color: var(--au-text2); }
 
 .au-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
+/* The account step: first and last name side by side, middle name and suffix below, at every width. */
+.au-rg__account { display: flex; flex-direction: column; gap: 18px; }
+.au-names { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 16px; }
+.au-names--middle { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 .au-field--wide { grid-column: 1 / -1; }
 .au-grid2 .au-rules { grid-template-columns: minmax(0, 1fr); }
 .au-count { margin: 4px 0 0; text-align: right; font-size: .8125rem; color: var(--au-text2); font-variant-numeric: tabular-nums; }

@@ -42,6 +42,7 @@ class SignInPageTests(TestCase):
 
     def test_password_managers_still_fill_it(self):
         response = self.client.get(LOGIN)
+        self.assertContains(response, ">Email or username</label>")
         self.assertContains(response, 'autocomplete="username"')
         self.assertContains(response, 'autocomplete="current-password"')
         self.assertContains(response, 'type="password"')
@@ -94,11 +95,32 @@ class SignInBehaviourTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<div class="au-alert" role="alert">')
-        self.assertContains(response, "Please enter a correct username and password.")
+        self.assertContains(
+            response, "Please enter a correct email or username and password."
+        )
         self.assertTemplateUsed(response, "includes/icons/alert-circle.html")
         # The username stays; the password never comes back.
         self.assertContains(response, 'value="ruth.ann"')
         self.assertNotContains(response, "not-the-password")
+        self.assertNotIn(SESSION_KEY, self.client.session)
+
+    def test_an_email_signs_in_too_whatever_its_case(self):
+        self.user.email = "ruth@example.com"
+        self.user.save()
+        response = self.client.post(
+            LOGIN, {"username": "Ruth@Example.COM", "password": TEST_PASSWORD}
+        )
+        self.assertRedirects(response, reverse("home"), fetch_redirect_response=False)
+        self.assertEqual(int(self.client.session[SESSION_KEY]), self.user.pk)
+
+    def test_an_email_two_accounts_share_signs_neither_in(self):
+        self.user.email = "shared@example.com"
+        self.user.save()
+        make_user(email="SHARED@example.com")
+        response = self.client.post(
+            LOGIN, {"username": "shared@example.com", "password": TEST_PASSWORD}
+        )
+        self.assertContains(response, 'class="au-alert"')
         self.assertNotIn(SESSION_KEY, self.client.session)
 
     def test_empty_fields_show_errors_under_them(self):

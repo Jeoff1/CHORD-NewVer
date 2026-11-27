@@ -1,5 +1,7 @@
+import re
+
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from .memberships import (
     AccountNotFound,
@@ -33,10 +35,41 @@ class RolesMixin:
         membership.roles.set(self.cleaned_data["roles"])
 
 
+def username_from_email(email):
+    """A username no account has, made from ``email`` (Django's username
+    characters only: letters, digits and @ . + - _), for accounts that sign
+    in with their email."""
+    base = re.sub(r"[^\w.@+-]", "", email.strip().lower())[:140] or "member"
+    username, number = base, 1
+    while User.objects.filter(username__iexact=username).exists():
+        number += 1
+        username = f"{base}-{number}"
+    return username
+
+
+class EmailOrUsernameAuthenticationForm(AuthenticationForm):
+    """Django's sign-in form, for an email or a username (owner, 27 Nov
+    2026): accounts made by registering a church sign in with their email;
+    older ones and those an administrator made keep their username.
+    ``ChurchRoleBackend`` finds the account."""
+
+    error_messages = {
+        **AuthenticationForm.error_messages,
+        "invalid_login": (
+            "Please enter a correct email or username and password. Note that "
+            "the password is case-sensitive."
+        ),
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = "Email or username"
+
+
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email"]
+        fields = ["first_name", "middle_name", "last_name", "suffix", "email"]
 
 
 class AppearanceForm(forms.ModelForm):
@@ -146,23 +179,46 @@ class RoleForm(forms.ModelForm):
 
 
 class SignUpForm(UserCreationForm):
-    """Create an account (Phase 9B): a person's own, with no church yet. A
-    church's administrator adds it to their church later."""
+    """A person's own account, made in the first step of registering a
+    church (Phase 9B; owner, 27 Nov 2026). It asks no username: the person
+    signs in with their email (``EmailOrUsernameAuthenticationForm``), so
+    the email must be no other account's, and the username Django still
+    needs is made from it behind the scenes."""
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ["username", "first_name", "last_name", "email"]
+        fields = ["first_name", "last_name", "middle_name", "suffix", "email"]
+        labels = {"email": "Email address"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["email"].required = True
-        self.fields["email"].help_text = "For resetting your password."
+        # The name shows wherever the account does, now that it has no
+        # username of its own choosing (owner, 27 Nov 2026).
+        self.fields["first_name"].required = True
+        self.fields["last_name"].required = True
+        self.fields["email"].help_text = "You sign in with it, and reset your password."
         # Wording approved with the sign-up page redesign (27 Nov 2026); the
         # rules themselves stay Django's: the field and its validators are
         # unchanged.
-        self.fields["username"].help_text = "Up to 150 letters, digits and @ . + - _"
         self.fields["password2"].label = "Confirm password"
         self.fields["password2"].help_text = "Enter the same password again."
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "An account already uses this email. Sign in with it instead."
+            )
+        return email
+
+    def clean(self):
+        cleaned = super().clean()
+        email = cleaned.get("email")
+        if email:
+            # Before the password checks, which compare it with the username.
+            self.instance.username = username_from_email(email)
+        return cleaned
 
 
 class AddExistingAccountForm(forms.Form):

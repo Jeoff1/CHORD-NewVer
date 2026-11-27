@@ -12,7 +12,9 @@
   var form = document.querySelector("[data-au-wizard-form]");
   if (!root || !form) return;
 
-  var NAMES = { 1: "Account information", 2: "Church information", 3: "Church profile", 4: "Review and confirm" };
+  // The order of the steps (owner, 27 Nov 2026): the church first, the account last before review.
+  var NAMES = { 1: "Church information", 2: "Church profile", 3: "Account information", 4: "Review and confirm" };
+  var CHURCH = 1, PROFILE = 2, ACCOUNT = 3;
   var LAST = 4;
   var MAX_LOGO = 2 * 1024 * 1024;
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -81,10 +83,9 @@
       if (ok) clearError(input);
       else { setError(input, message); problems.push(input); }
     }
-    if (step === 1 && named("username")) {
-      var username = value("username");
-      check("username", username && /^[\p{L}\p{N}_.@+-]{1,150}$/u.test(username),
-        username ? "Use only letters, digits and @ . + - _" : "Choose a username.");
+    if (step === ACCOUNT && named("password1")) {
+      check("first_name", value("first_name"), "Enter your first name.");
+      check("last_name", value("last_name"), "Enter your last name.");
       var email = value("email");
       check("email", emailOk(email), email ? "Enter a valid email address." : "Enter your email address.");
       var p1 = named("password1").value, p2 = named("password2").value;
@@ -92,12 +93,12 @@
         !p1 ? "Enter a password." : p1.length < 8 ? "This password is too short. It must contain at least 8 characters." : "This password is entirely numeric.");
       check("password2", p1 === p2, p2 ? "The two password fields didn’t match." : "Enter the same password again.");
     }
-    if (step === 2) {
+    if (step === CHURCH) {
       check("church-name", value("church-name"), "Give the church’s name.");
       var churchEmail = value("church-email");
       check("church-email", !churchEmail || emailOk(churchEmail), "Enter a valid email address.");
     }
-    if (step === 3) {
+    if (step === PROFILE) {
       var logo = named("church-logo");
       var file = logo && logo.files && logo.files[0];
       check("church-logo", !file || file.size <= MAX_LOGO, "The logo must be 2 MB or smaller.");
@@ -217,7 +218,7 @@
     thumb.replaceChildren(image);
     logoName.textContent = file.name + " · " + (file.size / 1048576).toFixed(1) + " MB";
     clear.hidden = false;
-    validate(3);
+    validate(PROFILE);
   }
   if (logo && thumb) {
     logo.addEventListener("change", showLogo);
@@ -251,10 +252,10 @@
 
   function renderReview() {
     var account = $('[data-au-review="account"]');
-    if (named("username")) {
+    if (named("password1")) {
       account.replaceChildren();
-      row(account, "Name", (value("first_name") + " " + value("last_name")).trim());
-      row(account, "Username", value("username"));
+      var name = ["first_name", "middle_name", "last_name", "suffix"].map(value).filter(Boolean).join(" ");
+      row(account, "Name", name);
       row(account, "Email", value("email"));
       row(account, "Password", "Set (hidden)");
     }

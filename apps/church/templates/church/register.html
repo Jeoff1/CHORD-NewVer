@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light dark">
   {% comment %}
     Register your church (redesigned 27 Nov 2026; Design-System.md, "Registering a church"): a
-    four-step wizard on one page (Account, Church, Profile, Review). It is one form, sent once and
+    four-step wizard on one page (Church, Profile, Account, Review; reordered 27 Nov 2026). It is one form, sent once and
     checked on the server (RegisterChurchView); register.js shows one step at a time, checks each
     step before the next, and fills the review. Without the script every step shows at once.
     Only the church's name is needed (decisions 0001 and 0014).
@@ -43,14 +43,14 @@
             <p class="au-side__intro">Four short steps. Nothing is saved until you complete the registration.</p>
           </div>
           <ol class="au-steps">
-            {% include "church/includes/register_step.html" with number=1 name="Account" title="Account information" hint="Your sign-in details" icon="person" %}
-            {% include "church/includes/register_step.html" with number=2 name="Church" title="Church information" hint="Name and contact" icon="map-pin" %}
-            {% include "church/includes/register_step.html" with number=3 name="Profile" title="Church profile" hint="Logo, description and visibility" icon="globe" %}
+            {% include "church/includes/register_step.html" with number=1 name="Church" title="Church information" hint="Name and contact" icon="map-pin" %}
+            {% include "church/includes/register_step.html" with number=2 name="Profile" title="Church profile" hint="Logo, description and visibility" icon="globe" %}
+            {% include "church/includes/register_step.html" with number=3 name="Account" title="Account information" hint="Your sign-in details" icon="person" %}
             {% include "church/includes/register_step.html" with number=4 name="Review" title="Review and confirm" hint="Check and confirm" icon="document" %}
           </ol>
           {% if not user.is_authenticated %}
             <div class="au-side__foot">
-              <p>Joining a church that already uses CHORD? <a href="{% url 'accounts:signup' %}">Create a personal account</a></p>
+              <p>Already have an account? <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Sign in</a> and your church is added to it.</p>
             </div>
           {% endif %}
         </div>
@@ -74,38 +74,9 @@
               <div class="au-alert au-rg__summary" role="alert">{% include "includes/icons/alert-circle.html" %}<p>Some details need another look. The step with the first one is open.</p></div>
             {% endif %}
 
-            {# --- Step 1: the account ------------------------------------------- #}
+            {# --- Step 1: the church ------------------------------------------- #}
             <section class="au-pane" data-au-pane="1" aria-labelledby="au-pane-1">
-              <h2 class="au-pane__title" id="au-pane-1" tabindex="-1">Account information</h2>
-              {% if account_form %}
-                <p class="au-pane__intro">This account becomes the church’s first administrator.</p>
-                {% if account_form.non_field_errors %}
-                  <div class="au-alert" role="alert">{% include "includes/icons/alert-circle.html" %}<div>{% for error in account_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div></div>
-                {% endif %}
-                <div class="au-grid2">
-                  {% include "accounts/includes/auth_field.html" with field=account_form.first_name optional=True %}
-                  {% include "accounts/includes/auth_field.html" with field=account_form.last_name optional=True %}
-                  {% include "accounts/includes/auth_field.html" with field=account_form.username icon="person" %}
-                  {% include "accounts/includes/auth_field.html" with field=account_form.email icon="mail" %}
-                  {% include "accounts/includes/auth_field.html" with field=account_form.password1 icon="lock" password=True rules=True %}
-                  {% include "accounts/includes/auth_field.html" with field=account_form.password2 icon="lock" password=True match=True %}
-                </div>
-              {% else %}
-                <p class="au-pane__intro">You’re signed in, so the church is added to your account. You become its first administrator.</p>
-                <div class="au-signed">
-                  <div class="au-avatar" aria-hidden="true">{% if user.first_name or user.last_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.username|slice:":1"|upper }}{% endif %}</div>
-                  <div>
-                    <p><b>{{ user.get_full_name|default:user.username }}</b></p>
-                    <p class="au-signed__muted">{{ user.username }}{% if user.email %} · {{ user.email }}{% endif %}</p>
-                  </div>
-                </div>
-                <p class="au-help au-rg__notyou">Not you? <button type="submit" form="au-signout" class="au-linkbtn">Sign out</button> and register with another account.</p>
-              {% endif %}
-            </section>
-
-            {# --- Step 2: the church ------------------------------------------- #}
-            <section class="au-pane" data-au-pane="2" aria-labelledby="au-pane-2">
-              <h2 class="au-pane__title" id="au-pane-2" tabindex="-1">Church information</h2>
+              <h2 class="au-pane__title" id="au-pane-1" tabindex="-1">Church information</h2>
               <p class="au-pane__intro">Only the name is needed now. Everything here can be changed later in the church settings.</p>
               {% if church_form.non_field_errors %}
                 <div class="au-alert" role="alert">{% include "includes/icons/alert-circle.html" %}<div>{% for error in church_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div></div>
@@ -118,9 +89,9 @@
               </div>
             </section>
 
-            {# --- Step 3: the public profile ----------------------------------- #}
-            <section class="au-pane" data-au-pane="3" aria-labelledby="au-pane-3">
-              <h2 class="au-pane__title" id="au-pane-3" tabindex="-1">Church profile</h2>
+            {# --- Step 2: the public profile ----------------------------------- #}
+            <section class="au-pane" data-au-pane="2" aria-labelledby="au-pane-2">
+              <h2 class="au-pane__title" id="au-pane-2" tabindex="-1">Church profile</h2>
               <p class="au-pane__intro">How the church appears on its public page and in the directory of churches.</p>
               <div class="au-grid2">
                 {% with field=church_form.logo %}
@@ -158,6 +129,42 @@
               </div>
             </section>
 
+            {# --- Step 3: the account ------------------------------------------- #}
+            <section class="au-pane" data-au-pane="3" aria-labelledby="au-pane-3">
+              <h2 class="au-pane__title" id="au-pane-3" tabindex="-1">Account information</h2>
+              {% if account_form %}
+                <p class="au-pane__intro">This account becomes the church’s first administrator.</p>
+                {% if account_form.non_field_errors %}
+                  <div class="au-alert" role="alert">{% include "includes/icons/alert-circle.html" %}<div>{% for error in account_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}</div></div>
+                {% endif %}
+                <div class="au-rg__account">
+                  <div class="au-names">
+                    {% include "accounts/includes/auth_field.html" with field=account_form.first_name %}
+                    {% include "accounts/includes/auth_field.html" with field=account_form.last_name %}
+                  </div>
+                  <div class="au-names au-names--middle">
+                    {% include "accounts/includes/auth_field.html" with field=account_form.middle_name optional=True %}
+                    {% include "accounts/includes/auth_field.html" with field=account_form.suffix optional=True %}
+                  </div>
+                  {% include "accounts/includes/auth_field.html" with field=account_form.email icon="mail" %}
+                  <div class="au-grid2">
+                    {% include "accounts/includes/auth_field.html" with field=account_form.password1 icon="lock" password=True rules=True %}
+                    {% include "accounts/includes/auth_field.html" with field=account_form.password2 icon="lock" password=True match=True %}
+                  </div>
+                </div>
+              {% else %}
+                <p class="au-pane__intro">You’re signed in, so the church is added to your account. You become its first administrator.</p>
+                <div class="au-signed">
+                  <div class="au-avatar" aria-hidden="true">{% if user.first_name or user.last_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.username|slice:":1"|upper }}{% endif %}</div>
+                  <div>
+                    <p><b>{{ user.get_full_name|default:user.username }}</b></p>
+                    <p class="au-signed__muted">{% if user.username|lower != user.email|lower %}{{ user.username }}{% if user.email %} · {% endif %}{% endif %}{{ user.email }}</p>
+                  </div>
+                </div>
+                <p class="au-help au-rg__notyou">Not you? <button type="submit" form="au-signout" class="au-linkbtn">Sign out</button> and register with another account.</p>
+              {% endif %}
+            </section>
+
             {# --- Step 4: review --------------------------------------------- #}
             <section class="au-pane" data-au-pane="4" aria-labelledby="au-pane-4">
               <h2 class="au-pane__title" id="au-pane-4" tabindex="-1">Review and confirm</h2>
@@ -165,7 +172,7 @@
               <p class="au-pane__intro" data-au-no-steps>Check the details above, then complete the registration.</p>
               <div class="au-rev" data-au-steps-only hidden>
                 <div class="au-box">
-                  <div class="au-box__head"><h3>Account</h3><button type="button" class="au-edit" data-au-goto="1">Edit<span class="visually-hidden"> the account</span></button></div>
+                  <div class="au-box__head"><h3>Account</h3><button type="button" class="au-edit" data-au-goto="3">Edit<span class="visually-hidden"> the account</span></button></div>
                   <dl class="au-kv" data-au-review="account">
                     {% if not account_form %}
                       <dt>Name</dt><dd>{{ user.get_full_name|default:"Not given" }}</dd>
@@ -176,11 +183,11 @@
                   </dl>
                 </div>
                 <div class="au-box">
-                  <div class="au-box__head"><h3>Church information</h3><button type="button" class="au-edit" data-au-goto="2">Edit<span class="visually-hidden"> the church information</span></button></div>
+                  <div class="au-box__head"><h3>Church information</h3><button type="button" class="au-edit" data-au-goto="1">Edit<span class="visually-hidden"> the church information</span></button></div>
                   <dl class="au-kv" data-au-review="church"></dl>
                 </div>
                 <div class="au-box au-box--wide">
-                  <div class="au-box__head"><h3>Church profile preview</h3><button type="button" class="au-edit" data-au-goto="3">Edit<span class="visually-hidden"> the church profile</span></button></div>
+                  <div class="au-box__head"><h3>Church profile preview</h3><button type="button" class="au-edit" data-au-goto="2">Edit<span class="visually-hidden"> the church profile</span></button></div>
                   <div class="au-pv">
                     <div class="au-pv__banner"></div>
                     <div class="au-pv__body">

@@ -39,8 +39,8 @@ of the core and can't be switched off. App: `apps/church`.
   ([[Code-Conventions]], "One church's records").
 - **Registering a church** (`/churches/register/`,
   `registration.register_church`): a four-step wizard on one page since
-  27 Nov 2026 ([[Design-System]], "Registering a church"): Account,
-  Church, Profile, Review. `ChurchRegistrationForm` needs only the name;
+  27 Nov 2026 ([[Design-System]], "Registering a church"): Church,
+  Profile, Account, Review. `ChurchRegistrationForm` needs only the name;
   address, contact number, email, logo, description and Public visibility
   (`show_in_directory`, public by default) are optional. Plus a new
   account for a visitor who isn't signed in (`SignUpForm`). Each page
@@ -146,8 +146,9 @@ of the core and can't be switched off. App: `apps/church`.
   who isn't signed in sees at `/`. It is the platform's page: the neutral
   default wording and every Module's features. Ways in: Sign in, Sign up,
   Explore churches and Churches (the Directory). It doesn't link
-  registering a church; the sign-in page (its Sign up), the personal
-  sign-up page and the no-church page do. Its
+  registering a church directly, but its Sign up opens it (since
+  27 Nov 2026 signing up is registering a church), as do the sign-in
+  page's Sign up and the no-church page. Its
   own styles and script: `static/css/landing.css`,
   `church/static/church/landing.js`. ([[Design-System]], "The landing
   page".)

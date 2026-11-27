@@ -1,7 +1,7 @@
 /*
- * The sign-in, sign-up and church registration pages (redesign, 27 Nov 2026; Design-System.md,
- * "The sign-in and sign-up pages" and "Registering a church"). Loaded only by
- * accounts/auth_base.html (login.html and signup.html) and church/register.html; every rule sits
+ * The sign-in and church registration pages (redesign, 27 Nov 2026; Design-System.md, "The
+ * sign-in page" and "Registering a church"). Loaded only by accounts/auth_base.html (login.html)
+ * and church/register.html; every rule sits
  * under body.au (classes au-*), so nothing here reaches another page. The page transition rules
  * (@view-transition, ::view-transition-*) only act between two pages that both load this file.
  * Colours are the design system's tokens. The registration wizard's own layout is in register.css.
@@ -105,7 +105,6 @@
 .au-panel__top { display: flex; justify-content: flex-end; }
 .au-panel__body { flex: 1 1 auto; display: grid; place-items: center; padding-block: 32px; }
 .au-col { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 22px; }
-.au-col--wide { max-width: 460px; }
 
 /* Back to Home: an outlined pill; on the photo, a light one. */
 .au .au-back { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 6px 16px; border: 1.5px solid var(--au-input-border); border-radius: 999px; font-weight: 600; font-size: .9375rem; text-decoration: none; color: var(--au-text); transition: border-color .18s ease, color .18s ease; }
@@ -121,7 +120,6 @@
 /* --- Fields -------------------------------------------------------------- */
 
 .au-form { display: flex; flex-direction: column; gap: 16px; }
-.au-names { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .au-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .au-label { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; font-weight: 600; font-size: .9375rem; }
 .au-optional { font-weight: 400; font-size: .8125rem; color: var(--au-text2); }
@@ -205,10 +203,8 @@
 .au-links { display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; font-size: .9375rem; color: var(--au-text2); }
 .au-links p { margin: 0; }
 .au-links a { font-weight: 600; }
-.au-choice { margin: 0; padding: 12px 14px; border: 1px solid var(--au-line); border-radius: 14px; background: var(--au-tertiary); font-size: .9375rem; color: var(--au-text2); }
-.au-choice a { font-weight: 600; }
 
-/* --- Switching between Sign In and Sign Up: the form side fades, the photo stays still --- */
+/* --- Moving between Sign In and Register your church: a short fade (both pages load this file) --- */
 
 @view-transition { navigation: auto; }
 .au-photo { view-transition-name: au-photo; }
@@ -239,10 +235,6 @@
   .au-panel__top { display: none; }
   .au-panel__body { padding-block: 26px 8px; place-items: start center; }
   .au-title { font-size: 1.75rem; }
-}
-
-@media (max-width: 479.98px) {
-  .au-names { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {

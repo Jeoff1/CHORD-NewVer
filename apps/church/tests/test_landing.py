@@ -73,11 +73,13 @@ class LandingRedesignTests(TestCase):
         response = self.client.get(HOME)
         directory = reverse("churches:directory")
         self.assertContains(response, f'href="{reverse("accounts:login")}"')
-        self.assertContains(response, f'href="{reverse("accounts:signup")}"')
         self.assertContains(response, f'href="{directory}">Explore churches')
         self.assertContains(response, f'href="{directory}">Churches')
-        # Registering a church is reached from sign-in, not from this page.
-        self.assertNotContains(response, reverse("churches:register"))
+        # Sign up is registering a church (owner, 27 Nov 2026): the nav, the
+        # call to action and the footer; never the old personal sign-up page.
+        register = reverse("churches:register")
+        self.assertContains(response, f'href="{register}">Sign up</a>', count=3)
+        self.assertNotContains(response, f'href="{reverse("accounts:signup")}"')
 
     def test_it_loads_its_own_stylesheet_script_and_images(self):
         response = self.client.get(HOME)

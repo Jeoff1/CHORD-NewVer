@@ -222,9 +222,9 @@ class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 
 class RegisterChurchView(TemplateView):
     """Register your church: a four-step wizard on one page (owner, 27 Nov
-    2026; Design-System.md, "Registering a church"). Account (a new one for
-    a visitor; a signed-in person uses their own), Church, Profile and
-    Review, all sent in one POST and checked here; the script only moves
+    2026; Design-System.md, "Registering a church"). Church, Profile,
+    Account (a new one for a visitor; a signed-in person uses their own)
+    and Review, all sent in one POST and checked here; the script only moves
     between the steps. The person becomes the church's first Administrator
     and goes on to the setup wizard.
 
@@ -258,12 +258,13 @@ class RegisterChurchView(TemplateView):
         return context
 
     def start_step(self, church_form, account_form):
-        """The step to open: the first one with an error."""
-        if account_form is not None and account_form.errors:
-            return 1
+        """The step to open: the first one with an error, in the steps'
+        order (Church 1, Profile 2, Account 3; owner, 27 Nov 2026)."""
         if self.CHURCH_STEP_FIELDS & set(church_form.errors):
-            return 2
+            return 1
         if church_form.errors:
+            return 2
+        if account_form is not None and account_form.errors:
             return 3
         return 1
 

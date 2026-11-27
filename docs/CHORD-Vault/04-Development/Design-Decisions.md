@@ -664,7 +664,7 @@ Designed as an interactive mockup first, approved by the UI/UX owner on 2026-11-
 Approved choices:
 - A modern, warm church-website look within the approved palette and fonts; a solid green nav (logo and links left; Sign in and Sign up right).
 - **Phase 9C wording:** the hero and How it works describe the four steps (Theme, Praise Team, Song Lineup, Confirm) and that suggestions assist.
-- **No "Register your church" on the landing page:** the hero's main button is Explore churches (the Directory), the call to action is Sign up. Registering stays on the sign-in and no-church pages.
+- **No "Register your church" on the landing page:** the hero's main button is Explore churches (the Directory), the call to action is Sign up. Registering stays on the sign-in and no-church pages. (Since 27 Nov 2026 its Sign up opens registering: "Sign up is registering a church".)
 - **Logo:** the owner's final green and gold artwork, unchanged and transparent, on light grounds; on green grounds its colour-swapped copy (gold letters and circle), also transparent, with no plate (the owner's choice, 2026-11-27). The owner confirms the cross and church in it (shared by most churches, naming none; decision 0001).
 - **Photography** as a new asset: CC0 photos from StockSnap and rawpixel, sources and licences in `static/images/landing/SOURCES.md`; the 960 and 1024 px copies for now, replaceable under the same names.
 - **Loading intro** once per browser session, with a **0.8 s minimum**: the owner's approved exception to "no deliberate delay" (2026-11-27). No minimum with reduced motion; the page loads underneath; it can never block the page.
@@ -698,7 +698,7 @@ Tests: `apps/church/tests/test_public_pages.py` (`HomepageTests`, `ProfileRedesi
 
 #### Sign-up page redesign (UI/UX owner, 27 Nov 2026)
 
-Designed as an interactive mockup first and approved by the owner after one round of changes; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in and sign-up pages"). The owner's choices:
+Designed as an interactive mockup first and approved by the owner after one round of changes; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in page"). The owner's choices:
 - **A split screen** after the owner's reference: the photo panel left (logo upper left, heading and tagline at the bottom), a compact centred form right with the Sign Up / Sign In toggle above it, one rounded container.
 - **The photograph follows the existing rule** (freely licensed, no recognisable faces): the owner's own photo was set aside for "Bearded guitar concert" (Austin Neill, CC0), at least 1600 px wide, the face softened into the stage haze; recorded in `static/images/landing/SOURCES.md`.
 - **Input outlines `#6E8A83`** on this page, which pass 3:1 on white ([[Design-System]], "Contrast", noted the light-mode `#9FA7A2` does not).
@@ -711,7 +711,7 @@ Tests: `apps/accounts/tests/test_signup_page.py` (`SignUpPageTests`, `SignUpVali
 
 #### Sign-in page redesign (UI/UX owner, 27 Nov 2026)
 
-Designed as an interactive mockup (normal, loading and invalid-credentials states) and approved by the owner; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in and sign-up pages"). The owner's choices, with the mockup's recommendations they approved:
+Designed as an interactive mockup (normal, loading and invalid-credentials states) and approved by the owner; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in page"). The owner's choices, with the mockup's recommendations they approved:
 - **The sign-up page's split screen, shared:** one layout (`accounts/auth_base.html`), the same photo, logo, words, inputs, buttons and toggle; "Welcome Back", "Sign in to continue to CHORD", Forgot your password? under the password field, the gold Sign In button, "Don't have an account? Sign up".
 - **The church registration link reads "Register your church"**, as the sign-up intro already says; "sign in your church" was easy to confuse with Sign In.
 - **One card size for both pages** (at least 990 px tall above 720 px, the sign-up form's tallest), so switching never moves the photo.
@@ -723,16 +723,42 @@ Tests: `apps/accounts/tests/test_signin_page.py` (`SignInPageTests`, `SignInBeha
 
 #### Authentication pages and the registration wizard (UI/UX owner, 27 Nov 2026)
 
-The owner then approved a second mockup of all three pages (its own conversation; "CHORD Church Registration"), replacing the card version of sign-in and sign-up the same day; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in and sign-up pages" and "Registering a church"). The owner's choices:
+The owner then approved a second mockup of all three pages (its own conversation; "CHORD Church Registration"), replacing the card version of sign-in and sign-up the same day; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in page" and "Registering a church"). The owner's choices:
 - **Full-page sign-in and sign-up:** the photograph fills the left half edge to edge, the form sits in the middle of the right; no card and no Sign Up / Sign In toggle. Green main buttons, Show / Hide words in password fields, an outlined Back to Home pill.
 - **"Sign up" means registering a church.** The sign-in page's Sign up opens Register your church; the personal account stays its own page, "Create your account", for joining a church that already uses CHORD, linked from the wizard and linking back to it.
-- **Registering is a four-step wizard** (Account, Church, Profile, Review) with a stepper, a progress bar, a check of each step before the next, and a review with Edit. It is one form, sent once and checked on the server.
+- **Registering is a four-step wizard** (since the owner's reorder the same day: Church, Profile, Account, Review) with a stepper, a progress bar, a check of each step before the next, and a review with Edit. It is one form, sent once and checked on the server.
 - **The name stays the only thing needed; the rest is optional while registering** (address, contact number, email, logo, description, public or not). This amends [[0014-church-platform]] and the Phase 9B rule "Registering a church asks for its name only" (owner's answer, 27 Nov 2026).
 - **No banner** for now: the mockup's banner needs a new field and a migration, which the owner left out. No database change.
 - **Never a second church from the same page:** each registration page carries a token; the same token sent again by the person who registered goes to that church's setup. The busy button stops a double press first.
 - Kept from the card version: the photograph, the password checklist, the busy buttons, the error box, the fade between sign-in and sign-up. First and last name stay optional, as `SignUpForm` has them.
 
 Tests: `apps/church/tests/test_register_wizard.py` (`WizardPageTests`, `WizardRegistrationTests`): the four steps and every field once, multipart, CSRF and the token; the name starts empty (never the model's "My Church"); only the name not marked Optional; Sign in with `next`, Create a personal account, Back to Home and Cancel; a signed-in person sees their own account and Sign out; its stylesheets and scripts, the wizard's before `auth.js`; `register.css` scoped to `.au`; the name alone registers a public church; every optional detail kept, the logo under a random name, Not public kept; a missing name or bad church email opens step 2, an account problem step 1 (the password never sent back), a non-image logo or a long description step 3, nothing created; a chosen logo asked for again after a correction; the same form sent twice, by a visitor or a signed-in person, makes one church and one account; a new page registers another church; someone else's used token never opens that church. `test_platform_accounts.py` now checks that only the name is required; `test_signin_page.py` and `test_signup_page.py` check the full-page wording and links.
+
+#### Sign up is registering a church (owner, 27 Nov 2026)
+
+The owner removed the separate personal sign-up page the same day: church registration is CHORD's sign-up ([[Design-System]], "The sign-in page" and "Registering a church").
+- **One sign-up.** The landing page's Sign up (nav, call to action, footer) and the sign-in page's Sign up open Register your church. The person's account is made in its first step (`SignUpForm`, unchanged). There is no second registration page.
+- **The old address redirects.** `/accounts/signup/` keeps its name (`accounts:signup`) and sends any request, with its query string, to `/churches/register/`; a form sent to it makes nothing. `SignUpView` and `accounts/signup.html` are gone.
+- **Joining an existing church** is the administrator's: Add user, batch accounts from the Members list, and Add an existing account all stay as they were.
+- **Requests from outside the church** (Phase 9B rule above): someone with no account can no longer make one just to request an occasion. The owner's plan (27 Nov 2026, to be built later): a request from outside will need no account, with its own form to fill in. Until then only people who already have an account can request from outside.
+- This replaces "the personal account stays its own page" in the entry above and the landing page's "No Register your church on the landing page": its Sign up now opens registering.
+- Unchanged: the full-page sign-in, the wizard's four steps, its validation, the duplicate-submit token, permissions and authentication.
+
+Tests: `apps/accounts/tests/test_signup_page.py` (`OldSignUpAddressTests`, `AccountStepTests`, `AccountValidationTests`): the old address redirects to registering, with its query string, for visitors and signed-in people, and a form sent to it makes nothing; no page links it or offers a personal account; the account step's fields, checklist, Show buttons and approved wording; mismatched passwords, each of Django's four password rules, a taken username and a missing email shown on step 1 with what was typed kept (never the passwords), nothing made; the CSRF token required. `test_landing.py`: the three Sign up links open registering. `test_register_wizard.py`: no "Create a personal account"; Sign in offered instead.
+
+#### The account step: names, and signing in with an email (owner, 27 Nov 2026)
+
+Asked first, both approved by the owner:
+- **First name and Last name side by side, Middle name and Suffix below** (both optional), at every width. First and last name are needed now: with no username of their own, the name is how the account shows.
+- **Middle name and Suffix are new optional fields on the account** (`accounts.User.middle_name`, 100 characters; `suffix`, 20; migration `0011_user_middle_name_suffix`), the same lengths as a Member's. They show in the review and on My profile. `get_full_name` is unchanged (first and last name).
+- **No username in registration; people sign in with their email.** The email must be no other account's (ignoring case); the username Django still needs is made from it. The sign-in field reads **Email or username**, so older accounts and those an administrator made still sign in with their username. An email two older accounts share signs neither in; they use their usernames.
+- Unchanged: administrators' Add user, batch accounts and Add an existing account (by username or email); Django's password rules; CSRF; the redirects.
+
+Tests: `test_signup_page.py`: no username field, the middle name and suffix fields and wording; a used email (any case) and a missing first name refused; the password too like the email refused; the username made from the email, never shared. `test_register_wizard.py`: the full name saved and the new account signing in with its email in another case; first and last name needed (step 1 opens). `test_signin_page.py`: the "Email or username" label and message; an email signs in whatever its case; an email two accounts share signs neither in.
+
+#### The order of the registration steps (owner, 27 Nov 2026)
+
+The owner reordered the wizard, without changing anything inside a step: **1 Church information, 2 Church profile, 3 Account information, 4 Review and confirm**. A correction from the server opens the first step with an error in this order. The review's Edit buttons go to the moved steps. Tests: `test_register_wizard.py` (the order of the stepper and the fields; a church problem opens step 1 before an account problem; the account step is 3, the profile step 2), `test_signup_page.py` (account errors open step 3).
 
 ---
 
@@ -787,6 +813,9 @@ these are the rules every slice keeps, and the tests that prove them.
   setting, "Accept requests from people outside the church", on by
   default. Any signed-in account may then request an Occasion Type the
   church offers publicly; the overlap check and approval are as in A5.
+  (Since 27 Nov 2026 there is no personal sign-up; the owner plans a
+  request form that needs no account, to be built later: "Sign up is
+  registering a church".)
 - **Nothing is lost in the migration.** The first church keeps every row;
   every existing user, active or not, gets a Membership there with exactly
   the roles in their `user.groups`, which is left in place so the

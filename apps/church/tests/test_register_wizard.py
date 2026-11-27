@@ -22,7 +22,6 @@ from apps.core.testing import complete_setup, make_user
 REGISTER = reverse("churches:register")
 SETUP = reverse("church:setup", kwargs={"section": "details"})
 ACCOUNT = {
-    "username": "ruth.ann",
     "first_name": "Ruth",
     "last_name": "Ann",
     "email": "ruth@example.com",
@@ -43,15 +42,23 @@ class WizardPageTests(TestCase):
 
     def test_a_visitor_sees_the_four_steps_and_every_field_once(self):
         response = self.client.get(REGISTER)
+        content = response.content.decode()
+        # The order (owner, 27 Nov 2026): church, profile, account, review.
+        self.assertLess(
+            content.index('name="church-name"'), content.index('name="church-logo"')
+        )
+        self.assertLess(
+            content.index('name="church-logo"'), content.index('name="email"')
+        )
         self.assertTemplateUsed(response, "church/register.html")
         self.assertTemplateNotUsed(response, "base.html")
         self.assertContains(response, "<h1", count=1)
         self.assertContains(response, ">Register your church</h1>")
         for number, title in enumerate(
             (
-                "Account information",
                 "Church information",
                 "Church profile",
+                "Account information",
                 "Review and confirm",
             ),
             start=1,
@@ -61,6 +68,8 @@ class WizardPageTests(TestCase):
                 self.assertContains(response, f'aria-label="Step {number}, {title}"')
         for name in (
             *ACCOUNT,
+            "middle_name",
+            "suffix",
             "church-name",
             "church-address",
             "church-phone",
@@ -70,6 +79,7 @@ class WizardPageTests(TestCase):
         ):
             with self.subTest(field=name):
                 self.assertContains(response, f'name="{name}"', count=1)
+        self.assertNotContains(response, 'name="username"')
         self.assertContains(response, 'name="church-show_in_directory"', count=2)
         self.assertContains(response, 'value="public" checked')
         self.assertContains(response, 'enctype="multipart/form-data"')
@@ -100,9 +110,10 @@ class WizardPageTests(TestCase):
         self.assertContains(
             response, f'Already have an account? <a href="{login}?next={REGISTER}">'
         )
+        # The account is made in step 1; there is no personal sign-up page.
+        self.assertNotContains(response, "Create a personal account")
         self.assertContains(
-            response,
-            f'<a href="{reverse("accounts:signup")}">Create a personal account</a>',
+            response, f'<a href="{login}?next={REGISTER}">Sign in</a> and your church'
         )
         self.assertContains(response, "Back to Home")
         self.assertContains(response, ">Cancel</a>")
@@ -170,6 +181,26 @@ class WizardRegistrationTests(TestCase):
         data.update(extra)
         return self.client.post(REGISTER, data)
 
+    def test_the_account_has_the_full_name_and_signs_in_with_its_email(self):
+        self.post({"church-name": "Grace Chapel"}, middle_name="Grace", suffix="Jr.")
+        user = get_user_model().objects.get(email="ruth@example.com")
+        self.assertEqual(
+            (user.first_name, user.middle_name, user.last_name, user.suffix),
+            ("Ruth", "Grace", "Ann", "Jr."),
+        )
+        self.client.logout()
+        self.assertTrue(
+            self.client.login(
+                username="RUTH@example.com", password=ACCOUNT["password1"]
+            )
+        )
+
+    def test_first_and_last_name_are_needed(self):
+        response = self.post({"church-name": "Grace"}, first_name="", last_name="")
+        self.assertContains(response, 'id="id_first_name_error"')
+        self.assertContains(response, 'id="id_last_name_error"')
+        self.assertContains(response, 'data-au-start="3"')
+
     def test_the_name_alone_registers_a_public_church(self):
         response = self.post({"church-name": "Grace Chapel"})
         self.assertRedirects(response, SETUP, fetch_redirect_response=False)
@@ -199,41 +230,48 @@ class WizardRegistrationTests(TestCase):
         self.assertFalse(church.show_in_directory)
         self.assertRegex(church.logo.name, r"^church/[0-9a-f]{32}\.png$")
         user = church.memberships.get().user
-        self.assertEqual(user.username, "ruth.ann")
+        self.assertEqual(user.username, "ruth@example.com")  # made from the email
         self.assertEqual([r.key for r in user.roles_in(church)], ["administrator"])
         self.assertEqual(self.client.session[SESSION_KEY], church.pk)
 
     def test_a_missing_name_opens_the_church_step(self):
         response = self.post({"church-name": "  "})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-au-start="2"')
+        self.assertContains(response, 'data-au-start="1"')
         self.assertContains(response, "data-au-bound")
         self.assertContains(response, 'id="id_church-name_error"')
-        self.assertFalse(get_user_model().objects.filter(username="ruth.ann").exists())
+        self.assertFalse(
+            get_user_model().objects.filter(email="ruth@example.com").exists()
+        )
 
     def test_a_bad_church_email_opens_the_church_step(self):
         response = self.post({"church-name": "Grace", "church-email": "nope"})
-        self.assertContains(response, 'data-au-start="2"')
+        self.assertContains(response, 'data-au-start="1"')
         self.assertContains(response, 'id="id_church-email_error"')
 
-    def test_an_account_problem_opens_the_account_step_first(self):
-        make_user(username="ruth.ann")
-        response = self.post({"church-name": ""})
-        self.assertContains(response, 'data-au-start="1"')
-        self.assertContains(response, "A user with that username already exists.")
+    def test_an_account_problem_opens_the_account_step(self):
+        make_user(email="Ruth@Example.com")
+        response = self.post({"church-name": "Grace"})
+        self.assertContains(response, 'data-au-start="3"')
+        self.assertContains(response, "An account already uses this email.")
         self.assertNotContains(response, ACCOUNT["password1"])
+
+    def test_the_first_step_with_a_problem_opens_in_the_steps_order(self):
+        make_user(email="Ruth@Example.com")
+        response = self.post({"church-name": ""})  # church (1) and account (3)
+        self.assertContains(response, 'data-au-start="1"')
 
     def test_a_logo_that_isnt_an_image_opens_the_profile_step(self):
         bad = SimpleUploadedFile("logo.png", b"not an image", content_type="image/png")
         count = ChurchProfile.objects.count()
         response = self.post({"church-name": "Grace", "church-logo": bad})
-        self.assertContains(response, 'data-au-start="3"')
+        self.assertContains(response, 'data-au-start="2"')
         self.assertContains(response, 'id="id_church-logo_error"')
         self.assertEqual(ChurchProfile.objects.count(), count)
 
     def test_a_long_description_opens_the_profile_step(self):
         response = self.post({"church-name": "Grace", "church-about": "x" * 2001})
-        self.assertContains(response, 'data-au-start="3"')
+        self.assertContains(response, 'data-au-start="2"')
 
     def test_a_chosen_logo_must_be_chosen_again_after_a_correction(self):
         response = self.post({"church-name": "", "church-logo": image()})
@@ -248,7 +286,7 @@ class WizardRegistrationTests(TestCase):
         self.assertRedirects(again, SETUP, fetch_redirect_response=False)
         self.assertEqual(ChurchProfile.objects.filter(name="Grace Chapel").count(), 1)
         self.assertEqual(
-            get_user_model().objects.filter(username="ruth.ann").count(), 1
+            get_user_model().objects.filter(email="ruth@example.com").count(), 1
         )
         church = ChurchProfile.objects.get(name="Grace Chapel")
         self.assertEqual(self.client.session[SESSION_KEY], church.pk)

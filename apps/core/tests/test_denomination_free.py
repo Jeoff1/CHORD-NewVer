@@ -114,7 +114,7 @@ class PlatformFieldsAndFormsTests(TestCase):
         from apps.core.testing import complete_setup, make_administrator, make_user
 
         complete_setup()
-        for url in (reverse("churches:register"), reverse("accounts:signup")):
+        for url in (reverse("churches:register"), reverse("accounts:login")):
             self.assert_clean(url, [self.client.get(url).content.decode()])
         self.client.force_login(make_administrator())
         for url in (

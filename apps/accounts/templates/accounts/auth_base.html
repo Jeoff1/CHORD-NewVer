@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   {% comment %}
-    The full-page split shared by Sign In and Create your account (Design-System.md, "The sign-in
-    and sign-up pages"): the photograph edge to edge on the left, the form centred on the right.
-    Its own stylesheet and script, so nothing here reaches another page. Only signed-out people
-    see these pages (both views send others home), so light or dark follows the device, as on
-    every signed-out page.
+    The full-page split of Sign In (Design-System.md, "The sign-in page"): the photograph edge to
+    edge on the left, the form centred on the right. Since 27 Nov 2026 Sign In is its only page:
+    signing up is registering a church (church/register.html). Its own stylesheet and script, so
+    nothing here reaches another page. Only signed-out people see it (LoginView sends others
+    home), so light or dark follows the device, as on every signed-out page.
     Blocks: title, description, photo_title, photo_tagline, col_class, heading, intro, form, after.
   {% endcomment %}
   <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); })();</script>
