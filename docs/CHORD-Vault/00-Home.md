@@ -11,11 +11,14 @@ development task.
 **Landing page redesign (A7), 2026-11-27, on branch `joy-ui-ux-v2`:**
 committed and pushed (`ee4fc60`), waiting for the lead developer's
 approval before it is merged ([[Design-System]], "The landing page").
-**Church directory redesign**, **church profile redesign**, **sign-up
-page redesign** and **sign-in page redesign**, the same day and branch:
-committed and pushed, waiting for the lead developer's approval before
-they are merged ([[Design-System]], "The church directory", "The church
-profile" and "The sign-in and sign-up pages"; [[Development-Log]]).
+**Church directory redesign**, **church profile redesign**, the
+**sign-in and sign-up pages** (now full-page) and the **church
+registration wizard**, the same day and branch: committed and pushed,
+waiting for the lead developer's approval before they are merged
+([[Design-System]], "The church directory", "The church profile", "The
+sign-in and sign-up pages" and "Registering a church";
+[[Development-Log]]). Registering now takes optional details too
+([[0014-church-platform]], amended 27 Nov).
 
 **Phase 9C (guided service planning), the top priority (owner,
 2026-11-26), is done and merged into `master` (2026-11-26) after the

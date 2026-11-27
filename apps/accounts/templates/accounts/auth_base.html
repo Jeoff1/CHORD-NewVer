@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   {% comment %}
-    The split-screen layout shared by Sign In and Create an account (Design-System.md, "The sign-in
-    and sign-up pages"): the photograph left, the form right. Its own stylesheet and script, so
-    nothing here reaches another page. Only signed-out people see these pages (both views send
-    others home), so light or dark follows the device, as on every signed-out page.
-    Blocks: title, description, heading, intro, form, after (the links under the form).
+    The full-page split shared by Sign In and Create your account (Design-System.md, "The sign-in
+    and sign-up pages"): the photograph edge to edge on the left, the form centred on the right.
+    Its own stylesheet and script, so nothing here reaches another page. Only signed-out people
+    see these pages (both views send others home), so light or dark follows the device, as on
+    every signed-out page.
+    Blocks: title, description, photo_title, photo_tagline, col_class, heading, intro, form, after.
   {% endcomment %}
   <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); })();</script>
   <title>{% block title %}{% endblock %} · CHORD</title>
   <meta name="description" content="{% block description %}{% endblock %}">
-  <link rel="preload" as="image" type="image/webp" imagesrcset="{% static 'images/landing/signup-worship-800.webp' %} 800w, {% static 'images/landing/signup-worship.webp' %} 1600w" imagesizes="(max-width: 719.98px) 100vw, (max-width: 991.98px) 42vw, 600px">
+  <link rel="preload" as="image" type="image/webp" imagesrcset="{% static 'images/landing/signup-worship-800.webp' %} 800w, {% static 'images/landing/signup-worship.webp' %} 1600w" imagesizes="(max-width: 719.98px) 100vw, (max-width: 991.98px) 42vw, 50vw">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/chord.css' %}">
   <link rel="stylesheet" href="{% static 'css/auth.css' %}">
@@ -23,51 +24,43 @@
 <body class="au">
   <a class="visually-hidden-focusable au-skip" href="#au-form">Skip to the form</a>
 
-  <div class="au-page">
-    <a class="au-back au-back--top" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" %}Back to Home</a>
-
-    <main class="au-card">
-      <aside class="au-photo">
+  <main class="au-split">
+    <aside class="au-photo">
+      <div class="au-photo__inner">
         <picture>
-          <source type="image/webp" srcset="{% static 'images/landing/signup-worship-800.webp' %} 800w, {% static 'images/landing/signup-worship.webp' %} 1600w" sizes="(max-width: 719.98px) 100vw, (max-width: 991.98px) 42vw, 600px">
+          <source type="image/webp" srcset="{% static 'images/landing/signup-worship-800.webp' %} 800w, {% static 'images/landing/signup-worship.webp' %} 1600w" sizes="(max-width: 719.98px) 100vw, (max-width: 991.98px) 42vw, 50vw">
           <img class="au-photo__img" src="{% static 'images/landing/signup-worship.jpg' %}" alt="" width="1600" height="2580" decoding="async" fetchpriority="high">
         </picture>
         <a class="au-logo" href="{% url 'home' %}" aria-label="CHORD, home">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
+        <a class="au-back au-back--light au-back--mobile" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" with size=16 %}Home</a>
         <div class="au-photo__text">
-          <p class="au-photo__title">Bringing Worship Together</p>
-          <p class="au-photo__tagline">A space for churches to connect, organize, and plan meaningful worship experiences.</p>
+          <p class="au-photo__title">{% block photo_title %}Bringing Worship Together{% endblock %}</p>
+          <p class="au-photo__tagline">{% block photo_tagline %}A space for churches to connect, organize, and plan meaningful worship experiences.{% endblock %}</p>
         </div>
-      </aside>
+      </div>
+    </aside>
 
-      <section class="au-panel" aria-labelledby="au-title">
-        <div class="au-panel__top">
-          <a class="au-back au-back--panel" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" %}Back to Home</a>
-        </div>
+    <section class="au-panel" aria-labelledby="au-title">
+      <div class="au-panel__top">
+        <a class="au-back" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" with size=16 %}Back to Home</a>
+      </div>
 
-        <div class="au-panel__body">
-          <div class="au-col">
-            {% with on=request.resolver_match.url_name %}
-            <nav class="au-tabs" aria-label="Account">
-              {% if on == "signup" %}<a class="au-tab au-tab--on" href="{% url 'accounts:signup' %}" aria-current="page">Sign Up</a>{% else %}<a class="au-tab" href="{% url 'accounts:signup' %}">Sign Up</a>{% endif %}
-              {% if on == "login" %}<a class="au-tab au-tab--on" href="{% url 'accounts:login' %}" aria-current="page">Sign In</a>{% else %}<a class="au-tab" href="{% url 'accounts:login' %}">Sign In</a>{% endif %}
-            </nav>
-            {% endwith %}
-
-            <div class="au-head">
-              <h1 class="au-title" id="au-title">{% block heading %}{% endblock %}</h1>
-              {% block intro %}{% endblock %}
-            </div>
-
-            {% for message in messages %}
-              <div class="alert alert-{{ message.tags|default:'info' }} mb-0" role="alert">{{ message }}</div>
-            {% endfor %}
-
-            {% block form %}{% endblock %}
-            {% block after %}{% endblock %}
+      <div class="au-panel__body">
+        <div class="au-col{% block col_class %}{% endblock %}">
+          <div class="au-head">
+            <h1 class="au-title" id="au-title">{% block heading %}{% endblock %}</h1>
+            {% block intro %}{% endblock %}
           </div>
+
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} mb-0" role="alert">{{ message }}</div>
+          {% endfor %}
+
+          {% block form %}{% endblock %}
+          {% block after %}{% endblock %}
         </div>
-      </section>
-    </main>
-  </div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

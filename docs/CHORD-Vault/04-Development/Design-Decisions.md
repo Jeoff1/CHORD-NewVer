@@ -721,6 +721,19 @@ Designed as an interactive mockup (normal, loading and invalid-credentials state
 
 Tests: `apps/accounts/tests/test_signin_page.py` (`SignInPageTests`, `SignInBehaviourTests`): the shared layout, its stylesheet, script and photo; one heading, the words, every field once with `next` and CSRF, the busy button; Django's `autocomplete` values and one show button; the toggle, Sign up, Register your church (not "sign in your church"), Forgot your password? between the password field and the button, Back to Home; no other sign-in services; the reset page still opens; wrong credentials and an inactive account shown in the error box with the username kept and the password never echoed; empty fields' errors under them; a good sign-in goes home, `next` is kept and followed, a `next` to another site is ignored; a POST without the CSRF token refused. `test_sign_in.py` keeps the old checks (its error box assertion now names the new box); `test_signup_page.py` now covers the shared files and the busy words.
 
+#### Authentication pages and the registration wizard (UI/UX owner, 27 Nov 2026)
+
+The owner then approved a second mockup of all three pages (its own conversation; "CHORD Church Registration"), replacing the card version of sign-in and sign-up the same day; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in and sign-up pages" and "Registering a church"). The owner's choices:
+- **Full-page sign-in and sign-up:** the photograph fills the left half edge to edge, the form sits in the middle of the right; no card and no Sign Up / Sign In toggle. Green main buttons, Show / Hide words in password fields, an outlined Back to Home pill.
+- **"Sign up" means registering a church.** The sign-in page's Sign up opens Register your church; the personal account stays its own page, "Create your account", for joining a church that already uses CHORD, linked from the wizard and linking back to it.
+- **Registering is a four-step wizard** (Account, Church, Profile, Review) with a stepper, a progress bar, a check of each step before the next, and a review with Edit. It is one form, sent once and checked on the server.
+- **The name stays the only thing needed; the rest is optional while registering** (address, contact number, email, logo, description, public or not). This amends [[0014-church-platform]] and the Phase 9B rule "Registering a church asks for its name only" (owner's answer, 27 Nov 2026).
+- **No banner** for now: the mockup's banner needs a new field and a migration, which the owner left out. No database change.
+- **Never a second church from the same page:** each registration page carries a token; the same token sent again by the person who registered goes to that church's setup. The busy button stops a double press first.
+- Kept from the card version: the photograph, the password checklist, the busy buttons, the error box, the fade between sign-in and sign-up. First and last name stay optional, as `SignUpForm` has them.
+
+Tests: `apps/church/tests/test_register_wizard.py` (`WizardPageTests`, `WizardRegistrationTests`): the four steps and every field once, multipart, CSRF and the token; the name starts empty (never the model's "My Church"); only the name not marked Optional; Sign in with `next`, Create a personal account, Back to Home and Cancel; a signed-in person sees their own account and Sign out; its stylesheets and scripts, the wizard's before `auth.js`; `register.css` scoped to `.au`; the name alone registers a public church; every optional detail kept, the logo under a random name, Not public kept; a missing name or bad church email opens step 2, an account problem step 1 (the password never sent back), a non-image logo or a long description step 3, nothing created; a chosen logo asked for again after a correction; the same form sent twice, by a visitor or a signed-in person, makes one church and one account; a new page registers another church; someone else's used token never opens that church. `test_platform_accounts.py` now checks that only the name is required; `test_signin_page.py` and `test_signup_page.py` check the full-page wording and links.
+
 ---
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
@@ -730,7 +743,10 @@ these are the rules every slice keeps, and the tests that prove them.
 
 ### Rules
 
-- **The core rule holds.** Registering a church asks for its name only.
+- **The core rule holds.** Registering a church needs only its name
+  (since 27 Nov 2026 the person may also give its details and public
+  profile while registering, all optional: "Authentication pages and the
+  registration wizard").
   No denomination, tradition or religion field in any new model, form,
   seed row or page; `test_denomination_free.py` covers the new forms.
 - **Permissions come only from the Current Church.** `ChurchRoleBackend`
@@ -791,7 +807,8 @@ these are the rules every slice keeps, and the tests that prove them.
   Occasion Type starts not offered publicly (existing and seeded), "Show
   upcoming services" starts off, and "Accept requests from people outside
   the church" starts on. A newly registered church is public from the
-  start, with its name only, as the plan said.
+  start, as the plan said, unless the person chooses Not public while
+  registering (27 Nov 2026).
 - **About** is plain text: stored as typed (trimmed), shown escaped with
   its line breaks (`church/includes/about.html`).
 - **The logo** is an image only (Pillow, PNG, JPEG, GIF or WebP), 2 MB at

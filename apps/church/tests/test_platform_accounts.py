@@ -74,8 +74,17 @@ class RegisterChurchTests(TestCase):
     def setUp(self):
         complete_setup()
 
-    def test_the_form_asks_only_the_churchs_name(self):
-        self.assertEqual(list(ChurchRegistrationForm().fields), ["name"])
+    def test_only_the_churchs_name_is_needed(self):
+        # The details and public profile are optional (owner, 27 Nov 2026).
+        form = ChurchRegistrationForm()
+        self.assertEqual(
+            list(form.fields),
+            ["name", "address", "phone", "email", "logo", "about", "show_in_directory"],
+        )
+        self.assertEqual(
+            [name for name, field in form.fields.items() if field.required], ["name"]
+        )
+        self.assertFalse(ChurchRegistrationForm({}, prefix="church").is_valid())
 
     def test_a_visitor_registers_a_church_and_their_account(self):
         response = self.client.post(

@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
@@ -219,16 +221,51 @@ class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 
 
 class RegisterChurchView(TemplateView):
-    """Sign in your church: its name, plus a new account for a visitor who
-    isn't signed in. The person becomes its first Administrator and goes
-    on to the setup wizard."""
+    """Register your church: a four-step wizard on one page (owner, 27 Nov
+    2026; Design-System.md, "Registering a church"). Account (a new one for
+    a visitor; a signed-in person uses their own), Church, Profile and
+    Review, all sent in one POST and checked here; the script only moves
+    between the steps. The person becomes the church's first Administrator
+    and goes on to the setup wizard.
+
+    Sending the same form twice (a double press, Back and send again) never
+    makes a second church: each page carries a token, and a token already
+    used goes to the church it made."""
 
     template_name = "church/register.html"
+    TOKEN_KEY = "church_registration_token"
+    DONE_KEY = "church_registrations_done"
+    CHURCH_STEP_FIELDS = {"name", "address", "phone", "email", "__all__"}
 
-    def forms(self, data=None):
-        church_form = ChurchRegistrationForm(data, prefix="church")
+    def forms(self, data=None, files=None):
+        church_form = ChurchRegistrationForm(data, files, prefix="church")
         account_form = None if self.request.user.is_authenticated else SignUpForm(data)
         return church_form, account_form
+
+    def token(self):
+        if self.TOKEN_KEY not in self.request.session:
+            self.request.session[self.TOKEN_KEY] = uuid.uuid4().hex
+        return self.request.session[self.TOKEN_KEY]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        church_form, account_form = context["church_form"], context["account_form"]
+        context["registration_token"] = self.token()
+        context["start_step"] = self.start_step(church_form, account_form)
+        context["logo_lost"] = church_form.is_bound and bool(
+            self.request.FILES.get("church-logo")
+        )
+        return context
+
+    def start_step(self, church_form, account_form):
+        """The step to open: the first one with an error."""
+        if account_form is not None and account_form.errors:
+            return 1
+        if self.CHURCH_STEP_FIELDS & set(church_form.errors):
+            return 2
+        if church_form.errors:
+            return 3
+        return 1
 
     def get(self, request, *args, **kwargs):
         church_form, account_form = self.forms()
@@ -236,8 +273,23 @@ class RegisterChurchView(TemplateView):
             self.get_context_data(church_form=church_form, account_form=account_form)
         )
 
+    def already_registered(self, request):
+        """The church a token already made, when it is this person's."""
+        token = request.POST.get("registration", "")
+        church_pk = request.session.get(self.DONE_KEY, {}).get(token)
+        if not church_pk or not request.user.is_authenticated:
+            return None
+        return ChurchProfile.objects.filter(
+            pk=church_pk, memberships__user=request.user
+        ).first()
+
     def post(self, request, *args, **kwargs):
-        church_form, account_form = self.forms(request.POST)
+        church = self.already_registered(request)
+        if church is not None:
+            request.session[SESSION_KEY] = church.pk
+            messages.info(request, f"{church.name} is already registered.")
+            return redirect("church:setup", section=SECTION_ORDER[0])
+        church_form, account_form = self.forms(request.POST, request.FILES)
         valid = church_form.is_valid()
         valid = (account_form is None or account_form.is_valid()) and valid
         if not valid:
@@ -250,10 +302,15 @@ class RegisterChurchView(TemplateView):
             church_form.cleaned_data["name"],
             user=request.user if request.user.is_authenticated else None,
             account_form=account_form,
+            details=church_form.details(),
         )
         if not request.user.is_authenticated:
             login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
         request.session[SESSION_KEY] = church.pk
+        done = request.session.get(self.DONE_KEY, {})
+        done[request.POST.get("registration", "")] = church.pk
+        request.session[self.DONE_KEY] = done
+        request.session[self.TOKEN_KEY] = uuid.uuid4().hex
         messages.success(request, f"{church.name} is registered. Let's set it up.")
         return redirect("church:setup", section=SECTION_ORDER[0])
 

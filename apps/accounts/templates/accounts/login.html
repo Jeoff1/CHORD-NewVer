@@ -1,9 +1,10 @@
 {% extends "accounts/auth_base.html" %}
 {% comment %}
   Sign in (redesigned 27 Nov 2026; Design-System.md, "The sign-in and sign-up pages"): the shared
-  split screen (accounts/auth_base.html) with Django's LoginView and AuthenticationForm,
+  full-page split (accounts/auth_base.html) with Django's LoginView and AuthenticationForm,
   unchanged. The field names and autocomplete values stay Django's, so password managers fill
-  them; "next" carries the page to return to.
+  them; "next" carries the page to return to. Sign up leads to registering a church, whose page
+  also offers a personal account.
 {% endcomment %}
 
 {% block title %}Sign in{% endblock %}
@@ -30,7 +31,6 @@
 
 {% block after %}
   <div class="au-links">
-    <p class="au-switch">Don’t have an account? <a href="{% url 'accounts:signup' %}">Sign up</a></p>
-    <p class="au-switch au-switch--minor">Setting up CHORD for your church? <a href="{% url 'churches:register' %}">Register your church</a></p>
+    <p>Don’t have an account? <a href="{% url 'churches:register' %}">Sign up</a></p>
   </div>
 {% endblock %}

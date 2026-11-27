@@ -38,8 +38,16 @@ of the core and can't be switched off. App: `apps/church`.
   `ChurchScopedMixin`, `ChurchFormMixin` and `ChurchFormKwargsMixin`
   ([[Code-Conventions]], "One church's records").
 - **Registering a church** (`/churches/register/`,
-  `registration.register_church`): the church's name only, plus a new
-  account for a visitor who isn't signed in. In one transaction it creates
+  `registration.register_church`): a four-step wizard on one page since
+  27 Nov 2026 ([[Design-System]], "Registering a church"): Account,
+  Church, Profile, Review. `ChurchRegistrationForm` needs only the name;
+  address, contact number, email, logo, description and Public visibility
+  (`show_in_directory`, public by default) are optional. Plus a new
+  account for a visitor who isn't signed in (`SignUpForm`). Each page
+  carries a token (`church_registration_token` in the session); a token
+  already used, sent again by the person who registered (a double press,
+  Back and send again), goes to that church's setup instead of making a
+  second one. In one transaction it creates
   the account, the church and slug, its defaults and the person's
   Administrator Membership; any failure leaves nothing. The person then
   works in the new church and goes on to the setup wizard.
@@ -138,7 +146,8 @@ of the core and can't be switched off. App: `apps/church`.
   who isn't signed in sees at `/`. It is the platform's page: the neutral
   default wording and every Module's features. Ways in: Sign in, Sign up,
   Explore churches and Churches (the Directory). It doesn't link
-  registering a church; the sign-in page and the no-church page do. Its
+  registering a church; the sign-in page (its Sign up), the personal
+  sign-up page and the no-church page do. Its
   own styles and script: `static/css/landing.css`,
   `church/static/church/landing.js`. ([[Design-System]], "The landing
   page".)

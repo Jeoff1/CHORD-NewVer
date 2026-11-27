@@ -610,12 +610,9 @@ class SignUpView(FormPageMixin, FormView):
     # Its own split-screen page (redesign, 27 Nov 2026; Design-System.md,
     # "The sign-in and sign-up pages"), not the shared form_page.html.
     template_name = "accounts/signup.html"
-    page_title = "Create an account"
-    intro = (
-        "Your account is yours. To plan worship, register your church, or ask "
-        "your church's administrator to add you by your username or email."
-    )
-    submit_label = "Create Account"
+    page_title = "Create your account"
+    intro = "For joining a church that already uses CHORD."
+    submit_label = "Create account"
     cancel_url = reverse_lazy("home")
 
     def dispatch(self, request, *args, **kwargs):

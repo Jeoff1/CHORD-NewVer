@@ -2,6 +2,66 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Full-page sign-in and sign-up, and the church registration wizard (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner approved a second mockup of the three pages:
+  full-page sign-in and sign-up, and registering a church as a four-step
+  wizard ([[Design-Decisions]], "Authentication pages and the registration
+  wizard"). Asked before building: the banner needs a new field (left
+  out, so no database change), and optional details while registering
+  amend [[0014-church-platform]] (approved; updated with Design-Decisions
+  and the workflow spec).
+- **Built:**
+  - **Sign in and Create your account:** `auth_base.html`, `login.html`,
+    `signup.html` and `auth.css` rewritten as a full-page split: the
+    photograph fills the left half, the form centred on the right; no
+    toggle; Show / Hide words; green pill buttons; Back to Home as an
+    outlined pill ("Home" on the photo on phones). Sign in's "Sign up"
+    opens Register your church. The personal sign-up is "Create your
+    account" with its own photo words and a Register your church box
+    (`SignUpView` wording only).
+  - **Register your church:** `church/register.html` (one form in four
+    steps, with `includes/register_step.html`), `static/css/register.css`
+    and `church/static/church/register.js` (the steps, a check per step,
+    the logo preview, the review), with `auth.js` for Show / Hide, the
+    checklist and the busy button.
+  - **Backend, no migration:**
+    - `ChurchRegistrationForm` is now a ModelForm with the name required
+      and address, phone, email, logo, about and Public visibility
+      optional. It never offers the model's default name "My Church",
+      which the browser check caught.
+    - `register_church(..., details=)` saves them in the same
+      transaction.
+    - `RegisterChurchView` takes files, reopens the first step with an
+      error, and asks for a chosen logo again after a correction. A
+      per-page token stops the same form making a second church.
+- **Checked in a browser** (headless Edge through DevTools, against
+  `manage.py testserver`, a throwaway database; light and dark at 1440,
+  1280, 834, 390 and 360 px, all three pages):
+  - **Layout:** no sideways scrolling, and every control at least 44 px
+    (the Show buttons were 40 px, and a step's slide-in pushed the phone
+    page wider; both fixed).
+  - **The wizard as a visitor:**
+    - An empty Next shows three errors and focuses the username.
+    - The checklist ticks as the password is typed.
+    - Enter moves to the next step without sending.
+    - Step 2 refuses an empty name.
+    - The description count works.
+    - The review lists everything, with Not public.
+    - Edit returns with what was typed, and the stepper reopens the
+      review.
+    - Complete shows "Registering…", disabled, and a second submit is
+      cancelled. It lands on the setup wizard of the new church.
+  - **Afterwards:** opening the page again shows the signed-in account
+    card. Signing in with a wrong password shows the error box (username
+    kept, password empty); the right one goes in.
+  - **A taken username sent through the form:** comes back on step 1
+    with Django's message.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1328 tests OK (19 new
+  in `test_register_wizard.py`; the sign-in, sign-up and registration
+  tests updated for the approved wording), 97% coverage.
+
 ## 2026-11-27: Sign-in page redesign (branch `joy-ui-ux-v2`)
 
 - **Why:** the UI/UX owner asked for Sign in to match the redesigned

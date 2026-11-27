@@ -34,7 +34,8 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
 | Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle; for the Directory x; for the church profile map-pin, phone, mail and globe | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
 | Landing page | `church/landing.html`, its own `static/css/landing.css` (classes `lp-*`) and `church/static/church/landing.js` | The public front page, redesigned 26-27 Nov 2026: see "The landing page" below |
-| Sign-in and sign-up pages | `accounts/auth_base.html` (shared by `login.html` and `signup.html`), its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/auth.js` | Sign in and Create an account, redesigned 27 Nov 2026: see "The sign-in and sign-up pages" below |
+| Sign-in and sign-up pages | `accounts/auth_base.html` (shared by `login.html` and `signup.html`), its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/auth.js` | Sign in and Create your account, full-page, redesigned 27 Nov 2026: see "The sign-in and sign-up pages" below |
+| Church registration | `church/register.html`, `auth.css` with its own `static/css/register.css` and `church/static/church/register.js` | Register your church as a four-step wizard, 27 Nov 2026: see "Registering a church" below |
 
 ## The landing page (redesign, 26-27 Nov 2026)
 
@@ -152,95 +153,130 @@ Designed as an interactive mockup and approved by the UI/UX owner on
 
 ## The sign-in and sign-up pages (redesign, 27 Nov 2026)
 
-Sign in (`/accounts/login/`) and Create an account (`/accounts/signup/`)
-share one split screen. Each was designed as an interactive mockup and
-approved by the UI/UX owner on 2026-11-27 (sign-up first, v2 after review:
-a freely licensed photo, a compact centred form, a short checklist; then
-sign-in to match it); built on branch `joy-ui-ux-v2`.
+Sign in (`/accounts/login/`) and Create your account (`/accounts/signup/`,
+the personal account) share one full-page split. Designed as interactive
+mockups and approved by the UI/UX owner on 2026-11-27 (a card version
+first, then the full-page version with the church registration wizard);
+built on branch `joy-ui-ux-v2`.
 
-- **Files:** `accounts/auth_base.html` holds the page (head, photo panel,
-  Back to Home, the toggle, heading, messages; blocks `title`,
-  `description`, `heading`, `intro`, `form`, `after`); `login.html` and
-  `signup.html` extend it. `accounts/includes/auth_field.html` draws each
-  field, `accounts/includes/auth_submit.html` the gold button. They load
-  their own `static/css/auth.css` (classes `au-*`, every rule under
-  `body.au`) and `accounts/static/accounts/auth.js`; no other page loads
-  them.
+- **Files:** `accounts/auth_base.html` holds the page (head, photo, Back to
+  Home, heading, messages; blocks `title`, `description`, `photo_title`,
+  `photo_tagline`, `col_class`, `heading`, `intro`, `form`, `after`);
+  `login.html` and `signup.html` extend it.
+  `accounts/includes/auth_field.html` draws each field (also on the
+  registration page), `accounts/includes/auth_submit.html` the main
+  button. They load their own `static/css/auth.css` (classes `au-*`, every
+  rule under `body.au`) and `accounts/static/accounts/auth.js`; no other
+  page loads them.
 - **Unchanged behind them:** Django's `LoginView` and
   `AuthenticationForm`, `SignUpView` and `SignUpForm`, CSRF protection,
   server-side validation, `next` and the redirects; no Google, Facebook or
   Apple sign-in.
-- **Card:** one rounded container (28 px, a soft shadow; a border in dark
-  mode) centred on the page background, at most 1200 px wide, at least
-  990 px tall above 720 px: the sign-up form's tallest (969 to 990 px by
-  width), so both pages are the same size and switching never moves the
-  photo. The shorter sign-in form sits in the middle of it.
-- **Photo panel (left, 48%):** the photograph
-  (`images/landing/signup-worship.*`, see `SOURCES.md`) with a deep-green
-  overlay, darker at the top for the gold logo (upper left, to `/`) and
-  darkest at the bottom for **Bringing Worship Together** (Raleway 800,
-  white) and the tagline. Decorative: `alt=""`. An 800 px WebP for phones,
-  1600 px for wide screens, a JPEG fallback.
-- **Form panel (right):** **Back to Home** (the new `arrow-left` icon) at
-  its top right; then a centred column, 420 px at most: the **Sign Up /
-  Sign In** toggle (a pill, in that order on both pages; the current one
-  green with gold text, gold in dark mode; real links to the two routes),
-  the heading, the form and the links under it.
-  - **Sign up:** "Create an account" and the view's intro, the fields, the
-    full-width gold **Create Account** button and "Already have an
-    account? Sign in".
-  - **Sign in:** "Welcome Back" and "Sign in to continue to CHORD";
-    Username (person icon) and Password (lock icon, eye button); **Forgot
-    your password?** right under the password field (to Reset your
-    password); the gold **Sign In** button; "Don't have an account? Sign
-    up" and "Setting up CHORD for your church? Register your church" (to
-    the church registration page; it used to read "sign in your church").
-    The fields keep Django's names and `autocomplete` (`username`,
-    `current-password`), so password managers fill them.
-- **Errors:** the form's own errors in a box above the fields (the new
-  `alert-circle` icon, the danger colour on a pale tint, `role="alert"`):
-  on sign-in, Django's "Please enter a correct username and password…".
-  The username stays; the password never comes back.
-- **While sending** (`auth.js`, both pages): the button shows a spinner
-  and "Signing in…" or "Creating account…", is disabled and marked
-  `aria-busy`, so a second press or Enter does nothing; a shown password
-  is hidden again before sending. No delay is added. Back from the next
-  page makes the button usable again.
+- **Layout:** two equal halves filling the window, with no card. The
+  photograph (`images/landing/signup-worship.*`, see `SOURCES.md`) fills
+  the left half edge to edge and stays in place while the form scrolls,
+  under a deep-green overlay: the gold logo upper left (to `/`), the
+  heading in gold and the tagline at the bottom. Decorative: `alt=""`. The
+  form sits in the middle of the right half, 420 px wide at most (460 px
+  for the longer sign-up form), with **Back to Home** (an outlined pill
+  with the `arrow-left` icon) at its top right.
+- **Sign in:** "Bringing Worship Together" and the tagline on the photo;
+  "Welcome Back" and "Sign in to continue to CHORD"; Username (person
+  icon) and Password (lock icon, Show button); **Forgot your password?**
+  right under the password field; the green **Sign In** button; "Don't
+  have an account? **Sign up**", which opens Register your church (that
+  page also offers the personal account). No Sign Up / Sign In toggle.
+- **Create your account** (personal): "Join your church on CHORD" and
+  "Make your own account, then your church's administrator adds you to its
+  team." on the photo; "Create your account" and "For joining a church
+  that already uses CHORD."; the fields with icons, help and the compact
+  password checklist; the green **Create account** button; a box
+  "Setting up CHORD for a new church? **Register your church**"; "Already
+  have an account? Sign in".
 - **Fields:** labels above; 48 px inputs, 12 px corners, outlines
-  `#6E8A83` (3.73:1 on white, the owner's choice for this page), a gold
-  focus ring; icons inside Username (person), Email (mail) and both
-  passwords (lock); First and Last name side by side above 480 px. Help
-  text under each field; the server's errors under it in the danger
-  colour (`id_<field>_error`, which Django's `aria-describedby` names),
-  the form's own errors above the fields.
-- **Password checklist:** Django's help list replaced by four short items
-  in two rows under the field, keeping its id: 8 or more characters, Not
-  only numbers, Unlike your name or email (the script ticks these as the
-  person types) and Not a common password (dashed: only the server knows
-  the list). They mirror `AUTH_PASSWORD_VALIDATORS`; the server still
-  checks every rule. Under Confirm password, "Passwords match" or "don't
-  match yet" while typing.
-- **Show password:** an eye button in each password field (44 px,
-  `aria-pressed`, "Show password" / "Hide password"), hidden until the
-  script runs.
-- **Wording** (approved): the username hint "Up to 150 letters, digits and
-  @ . + - _", "Confirm password" and "Enter the same password again."
-  (`SignUpForm`; the rules are Django's).
-- **Light or dark:** the device's (only signed-out people see the page);
-  the tokens of this note, with gold headings and links in dark mode.
-- **Responsive:** below 992 px the card is 786 px at most and the photo
-  42%; below 720 px the card stacks: Back to Home above it, a 184 px photo
-  banner (logo and heading, no tagline), then the form; names one per row
-  below 480 px. The page scrolls normally; nothing is clipped.
-- **Motion:** input focus and button hover (a 1 px lift); the spinner;
-  and a fade between the two pages through the browser's page transitions
-  (`@view-transition`; the photo panel and the form side are named, the
-  photo held still and the form side faded in 0.22 s). Chrome, Edge and
-  Safari fade; Firefox switches at once. With `prefers-reduced-motion`
-  none of it: no fade, no transitions, and the spinner stands still.
-- **Icons added:** `arrow-left` (Back to Home) and `alert-circle` (the
-  error box), solid like the rest. The directory and profile keep their
-  chevron Back links.
+  `#6E8A83` (3.73:1 on white, the owner's choice for these pages), a gold
+  focus ring; "Optional" beside the label of an optional field. Help text
+  under each field; the server's errors under it in the danger colour
+  (`id_<field>_error`, which Django's `aria-describedby` names); the
+  form's own errors above the fields in a box with the `alert-circle`
+  icon (`role="alert"`): on sign-in, Django's "Please enter a correct
+  username and password…", the username kept and the password never sent
+  back.
+- **Show password:** the word **Show** (then **Hide**) inside each password
+  field (44 px, `aria-pressed`, read as "Show password"), hidden until the
+  script runs; a shown password is hidden again before sending, so
+  password managers save it. Field names and `autocomplete` stay Django's.
+- **Password checklist** (sign-up and registration): Django's help list
+  replaced by four short items, keeping its id: 8 or more characters, Not
+  only numbers, Unlike your name or email (ticked as the person types) and
+  Not a common password (dashed: only the server knows the list). Under
+  Confirm password, "Passwords match" or "don't match yet".
+- **Buttons:** pills, 48 px; the main one green with gold text (gold with
+  dark text in dark mode); while sending, a spinner and "Signing in…" /
+  "Creating account…", disabled and `aria-busy`, so a second press or
+  Enter does nothing. No delay is added; Back makes it usable again.
+- **Light or dark:** the device's (only signed-out people see these
+  pages); gold headings and links in dark mode.
+- **Responsive:** below 992 px the photo takes 42%; below 720 px it becomes
+  a 230 px banner above the form, with a light **Home** pill on it in place
+  of Back to Home; names one per row below 480 px.
+- **Motion:** input focus and button hover (a 1 px lift); the spinner; a
+  fade between the two pages through the browser's page transitions, the
+  photo held still (Chrome, Edge and Safari; Firefox switches at once).
+  None of it with `prefers-reduced-motion`.
+- **Icons added:** `arrow-left` and `alert-circle`, solid like the rest.
+
+## Registering a church (redesign, 27 Nov 2026)
+
+Register your church (`/churches/register/`) as a four-step wizard on one
+page, approved with the full-page sign-in and sign-up. `church/register.html`
+loads `auth.css` (tokens, fields, buttons), its own `static/css/register.css`
+and `church/static/church/register.js`, then `auth.js`.
+
+- **One form, sent once.** The four steps are sections of one form;
+  `RegisterChurchView` checks everything when it is sent and comes back on
+  the first step with an error (`data-au-start`), with every step open in
+  the stepper. Without the script every step shows at once, with Complete
+  registration at the end.
+- **Layout:** a green header (gold logo; "Already have an account? Sign
+  in" for visitors; Back to Home); the stepper down the left on green
+  ("Register your church", "Four short steps. Nothing is saved until you
+  complete the registration.", the four steps with their icons, and for
+  visitors "Joining a church that already uses CHORD? **Create a personal
+  account**"); on the right a progress bar ("Step 2 of 4 · Church
+  information", 50%), the step, and Previous / Cancel / Step x of 4 / Next
+  pinned to the bottom. The last step's button is the gold **Complete
+  registration**, with a spinner and "Registering…" while sending.
+- **Steps:**
+  1. **Account information:** for a visitor, first and last name
+     (optional), username, email, password with the checklist, Confirm
+     password (`SignUpForm`). Signed in: their own account (initials, name,
+     username and email) and "Not you? Sign out".
+  2. **Church information:** Church name (the only field needed), address,
+     contact number and church email, all optional.
+  3. **Church profile:** logo (PNG, JPEG, GIF or WebP, 2 MB at most, with a
+     preview and Remove), description (2000 characters, with a count) and
+     Public visibility as two cards: **Public** (listed in the directory,
+     the default) or **Not public**.
+  4. **Review and confirm:** the account, the church information and a
+     preview of the public profile, each with **Edit**.
+- **Checking each step:** Next (or Enter) checks the step first: the
+  username's characters, a valid email, the password's length, not only
+  numbers, the two passwords the same, the church's name, the church
+  email, the logo's size. Errors show under the field and the first one
+  takes the focus. The server checks everything again.
+- **The stepper:** the current step gold, finished steps ticked; any step
+  reached can be opened again. Each step's heading takes the focus when it
+  opens. On a phone the stepper runs across the top, under the header.
+- **Not in it:** a banner image (no field for it; the owner chose to leave
+  it out), the public address in the preview (the server chooses the
+  slug) and the "registered" screen of the mockup: a registered church
+  goes straight to the setup wizard, as before.
+- **Responsive:** below 992 px a 250 px stepper without hints and one
+  column of fields; below 720 px the stepper across the top and Cancel and
+  the step count hidden from the bottom bar.
+- **Motion:** each step slides in 18 px and fades (from the left when
+  going back), the progress bar grows; none with `prefers-reduced-motion`.
 
 ## Tokens
 

@@ -1,7 +1,7 @@
 /*
- * The sign-in and sign-up pages (Design-System.md, "The sign-in and sign-up pages"): show or
- * hide a password, a busy button while the form is sent, and on sign-up the password checklist
- * and whether the two passwords match.
+ * The sign-in, sign-up and church registration pages (Design-System.md, "The sign-in and sign-up
+ * pages"): show or hide a password, a busy button while the form is sent, and where there is a
+ * new password, the password checklist and whether the two passwords match.
  * Only conveniences: the server checks everything and shows its own errors. Without this script
  * the pages still work; the show buttons stay hidden.
  */
@@ -16,14 +16,11 @@
   form.querySelectorAll("[data-au-reveal]").forEach(function (button) {
     var input = document.getElementById(button.getAttribute("data-au-reveal"));
     if (!input) return;
-    var show = button.querySelector(".au-eye__show");
-    var hide = button.querySelector(".au-eye__hide");
+    var word = button.querySelector("[data-au-reveal-word]");
     function set(visible) {
       input.type = visible ? "text" : "password";
       button.setAttribute("aria-pressed", visible ? "true" : "false");
-      button.setAttribute("aria-label", visible ? "Hide password" : "Show password");
-      show.hidden = visible;
-      hide.hidden = !visible;
+      word.textContent = visible ? "Hide" : "Show";
     }
     reveals.push(set);
     button.hidden = false;

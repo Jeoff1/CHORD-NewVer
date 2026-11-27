@@ -16,14 +16,19 @@ the core; it can't be switched off. App: `apps/accounts`.
   church, with their roles there and whether it is active. At most one per
   church. Users, Add user and Edit user work on the Current Church's
   memberships; a user from another church gives 404.
-- **Create an account** (`/accounts/signup/`, Phase 9B): anyone may make
-  their own account (username, name, email, password). It belongs to no
-  church; its home says so and offers "Sign in your church". Since 27 Nov
-  2026 a split-screen page shared with Sign in (`accounts/signup.html` on
-  `auth_base.html`, `auth.css`, `auth.js`; [[Design-System]], "The
-  sign-in and sign-up pages"): a photo panel, a Sign Up / Sign In toggle,
-  a short password checklist and show-password buttons. `SignUpForm` only changes wording (the username hint, "Confirm
-  password"); its fields and Django's validators are unchanged.
+- **Create your account** (`/accounts/signup/`, Phase 9B), the personal
+  account: anyone may make their own account (username, name, email,
+  password), for joining a church that already uses CHORD. It belongs to
+  no church; its home says so and offers "Sign in your church". Since
+  27 Nov 2026 a full-page split shared with Sign in (`accounts/signup.html`
+  on `auth_base.html`, `auth.css`, `auth.js`; [[Design-System]], "The
+  sign-in and sign-up pages"): the photograph, a short password checklist,
+  Show / Hide buttons and a box linking Register your church.
+  `SignUpView` names the page "Create your account" and the button
+  "Create account"; `SignUpForm` only changes wording (the username hint,
+  "Confirm password"); its fields and Django's validators are unchanged.
+  The same form makes a visitor's account in the church registration
+  wizard ([[Church-Setup]]).
 - **Add an existing account** (`/accounts/users/add-existing/`, needs
   `accounts.add_user`): finds one account by its exact username, or its
   exact email ignoring case (`memberships.find_account`); never a partial
@@ -95,9 +100,10 @@ the core; it can't be switched off. App: `apps/accounts`.
   - Nobody can deactivate their own account.
 - **Own account:**
   - sign in at `/accounts/login/` (Django's `LoginView`; since 27 Nov 2026
-    the same split screen as Create an account, `accounts/login.html`:
+    the same full-page split as Create your account, `accounts/login.html`:
     "Welcome Back", Forgot your password? under the password, a busy
-    button while sending, and links to Sign up and Register your church),
+    button while sending, and "Sign up", which opens Register your
+    church),
     and sign out with a POST to `/accounts/logout/`;
   - My profile (name and email) at `/accounts/profile/`;
   - change password;

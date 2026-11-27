@@ -1,0 +1,204 @@
+/*
+ * Registering a church (redesign, 27 Nov 2026; Design-System.md, "Registering a church"): a green
+ * header, the stepper down the left, the form and its progress on the right, Previous and Next
+ * pinned to the bottom. Loaded only by church/register.html, after auth.css, whose tokens, fields
+ * and buttons it uses; every rule sits under body.au.
+ */
+
+.au .au-rg { --au-hdr: 72px; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--au-surface); }
+
+/* --- Header ---------------------------------------------------------------- */
+
+.au-rg__hdr {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  min-height: var(--au-hdr);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: env(safe-area-inset-top, 0px) max(28px, env(safe-area-inset-right, 0px)) 0 max(28px, env(safe-area-inset-left, 0px));
+  background: var(--au-green);
+  border-bottom: 1px solid rgba(229, 198, 144, .22);
+  color: var(--au-side-text);
+}
+.au-rg__logo { display: flex; align-items: center; min-height: 44px; width: 128px; }
+.au-rg__logo .lp-logo { display: block; width: 100%; height: auto; }
+.au-rg__hdr-right { display: flex; align-items: center; gap: 18px; font-size: .9375rem; color: var(--au-side-muted); }
+.au .au-rg__ask a { color: #E5C690; font-weight: 600; }
+
+.au-rg__main { flex: 1 1 auto; display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr); }
+
+/* --- The stepper ----------------------------------------------------------- */
+
+.au-side { position: relative; padding: 40px 32px 32px max(32px, env(safe-area-inset-left, 0px)); background: var(--au-green); color: var(--au-side-text); }
+.au-side__in { position: sticky; top: calc(var(--au-hdr) + 40px); display: flex; flex-direction: column; gap: 32px; }
+.au-side__title { margin: 0 0 6px; font-family: var(--au-head); font-weight: 800; font-size: 1.5rem; line-height: 1.2; color: #E5C690; text-wrap: balance; }
+.au-side__intro { margin: 0; font-size: .9375rem; color: var(--au-side-muted); }
+.au-side__foot { padding-top: 18px; border-top: 1px solid rgba(230, 226, 225, .14); font-size: .875rem; color: var(--au-side-muted); }
+.au-side__foot p { margin: 0; }
+.au .au-side__foot a { color: #E5C690; font-weight: 600; }
+
+.au-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.au-step { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 14px; padding-bottom: 28px; }
+.au-step:last-child { padding-bottom: 0; }
+.au-step:not(:last-child)::before { content: ""; position: absolute; left: 21px; top: 48px; bottom: 4px; width: 2px; border-radius: 2px; background: rgba(230, 226, 225, .18); transition: background .3s ease; }
+.au-step.is-done:not(:last-child)::before { background: #E5C690; }
+.au .au-step__btn { width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: default; }
+.au .au-step__btn:not(:disabled) { cursor: pointer; }
+.au-step__dot { width: 44px; height: 44px; box-sizing: border-box; display: grid; place-items: center; border: 2px solid rgba(230, 226, 225, .3); border-radius: 50%; color: var(--au-side-muted); transition: background .25s ease, border-color .25s ease, color .25s ease; }
+.au-step__icon, .au-step__check { display: flex; }
+.au-step__check { display: none; }
+.au-step.is-done .au-step__icon { display: none; }
+.au-step.is-done .au-step__check { display: flex; }
+.au-step.is-active .au-step__dot { background: #E5C690; border-color: #E5C690; color: #173630; box-shadow: 0 0 0 5px rgba(229, 198, 144, .18); }
+.au-step.is-done .au-step__dot { border-color: #E5C690; color: #E5C690; }
+.au-step__num { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--au-side-muted); }
+.au-step__name { font-family: var(--au-head); font-weight: 700; font-size: 1rem; color: var(--au-side-text); }
+.au-step.is-active .au-step__name { color: #E5C690; }
+.au-step__hint { font-size: .875rem; color: var(--au-side-muted); }
+
+/* --- The form side --------------------------------------------------------- */
+
+.au-work { min-width: 0; display: flex; flex-direction: column; overflow-x: clip; background: var(--au-surface); }   /* the steps slide in from the side */
+.au .au-rg__form { flex: 1 1 auto; display: flex; flex-direction: column; gap: 0; }
+.au-work__in { flex: 1 1 auto; width: 100%; max-width: 760px; box-sizing: border-box; margin: 0 auto; padding: 40px max(40px, env(safe-area-inset-right, 0px)) 32px 40px; display: flex; flex-direction: column; gap: 22px; }
+
+.au-prog { display: flex; flex-direction: column; gap: 8px; }
+.au-prog[hidden] { display: none; }
+.au-prog__row { display: flex; justify-content: space-between; gap: 12px; font-size: .875rem; color: var(--au-text2); font-variant-numeric: tabular-nums; }
+.au-prog__row b { color: var(--au-text); font-weight: 600; }
+.au-prog__bar { height: 8px; overflow: hidden; border-radius: 999px; background: var(--au-tertiary); }
+.au-prog__fill { width: 25%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #1F463E, #E5C690); transition: width .45s ease; }
+
+.au-rg__summary { margin: 0; }
+
+/* Without the script every step shows; with it (.au-rg--steps), one at a time. */
+.au-pane { display: flex; flex-direction: column; gap: 0; }
+.au-pane + .au-pane { padding-top: 28px; border-top: 1px solid var(--au-line); }
+.au-rg--steps .au-pane { display: none; padding-top: 0; border-top: 0; }
+.au-rg--steps .au-pane.is-on { display: flex; animation: au-pane-in .32s ease both; }
+.au-rg--steps .au-pane.is-back.is-on { animation-name: au-pane-back; }
+@keyframes au-pane-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@keyframes au-pane-back { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+.au-rg--steps [data-au-no-steps] { display: none; }
+
+.au-pane__title { margin: 0 0 6px; font-family: var(--au-head); font-weight: 800; font-size: 1.875rem; line-height: 1.15; color: var(--au-heading); text-wrap: balance; }
+.au-pane__title:focus { outline: none; }
+.au-pane__intro { margin: 0 0 24px; max-width: 62ch; color: var(--au-text2); }
+
+.au-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
+.au-field--wide { grid-column: 1 / -1; }
+.au-grid2 .au-rules { grid-template-columns: minmax(0, 1fr); }
+.au-count { margin: 4px 0 0; text-align: right; font-size: .8125rem; color: var(--au-text2); font-variant-numeric: tabular-nums; }
+.au-count[hidden] { display: none; }
+
+/* Signed in: the account the church is added to. */
+.au-signed { display: flex; gap: 16px; align-items: center; padding: 18px; border: 1px solid var(--au-line); border-radius: 16px; background: var(--au-tertiary); }
+.au-signed p { margin: 0; }
+.au-signed__muted { font-size: .9375rem; color: var(--au-text2); }
+.au-avatar { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: #1F463E; color: #E5C690; font-family: var(--au-head); font-weight: 800; font-size: 1.1875rem; }
+.au-rg__notyou { margin-top: 12px; }
+.au .au-linkbtn { min-height: 44px; padding: 0 4px; border: 0; background: transparent; color: var(--au-link); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* The logo: a preview, a button to choose and one to remove. */
+.au-drop { display: flex; gap: 16px; align-items: center; padding: 16px; border: 1.5px dashed var(--au-input-border); border-radius: 14px; background: var(--au-tertiary); }
+.au-drop__thumb { flex: none; width: 72px; height: 72px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--au-line); border-radius: 50%; background: var(--au-surface); color: var(--au-text2); }
+.au-drop__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.au-drop__body { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.au-drop__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.au .au-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.au .au-filebtn { display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 6px 16px; border: 1.5px solid var(--au-input-border); border-radius: 999px; background: var(--au-surface); font-weight: 600; font-size: .875rem; cursor: pointer; }
+.au .au-file:focus-visible + .au-filebtn { outline: 3px solid var(--au-focus); outline-offset: 3px; }
+.au-field--error .au-drop { border-color: var(--au-err); }
+.au-rg__lost { margin-top: 4px; }
+
+/* Public or not: two cards. */
+.au .au-vis-field { margin: 0; padding: 0; border: 0; min-width: 0; }
+.au-vis-field legend { margin-bottom: 6px; padding: 0; float: none; }
+.au-vis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.au-vis__opt { position: relative; }
+.au-vis__opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.au-vis__card { height: 100%; box-sizing: border-box; display: grid; grid-template-columns: 22px 1fr; gap: 4px 12px; padding: 14px 16px; border: 1.5px solid var(--au-line); border-radius: 14px; transition: border-color .2s ease, background .2s ease; }
+.au-vis__card .chord-icon { margin-top: 1px; color: var(--au-text2); }
+.au-vis__card b { font-size: .9375rem; }
+.au-vis__card span { grid-column: 2; font-size: .875rem; color: var(--au-text2); }
+.au-vis__opt input:checked + .au-vis__card { border-color: #E5C690; background: var(--au-note-bg); box-shadow: inset 0 0 0 1px #E5C690; }
+.au-vis__opt input:checked + .au-vis__card .chord-icon { color: var(--au-text); }
+.au-vis__opt input:focus-visible + .au-vis__card { outline: 3px solid var(--au-focus); outline-offset: 2px; }
+
+/* Review: what was entered, and a preview of the public profile. */
+.au-rev { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.au-rev[hidden] { display: none; }
+.au-box { min-width: 0; padding: 16px 18px; border: 1px solid var(--au-line); border-radius: 16px; }
+.au-box--wide { grid-column: 1 / -1; }
+.au-box__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; }
+.au-box__head h3 { margin: 0; font-family: var(--au-head); font-size: 1rem; font-weight: 700; color: var(--au-heading); }
+.au .au-edit { min-height: 36px; padding: 3px 14px; border: 1px solid var(--au-input-border); border-radius: 999px; background: transparent; color: var(--au-text); font: 600 .875rem var(--au-body); cursor: pointer; }
+.au-kv { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; font-size: .9375rem; }
+.au-kv dt { font-weight: 400; color: var(--au-text2); }
+.au-kv dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+.au-kv .au-kv__none { font-style: italic; color: var(--au-text2); }
+.au-pv { overflow: hidden; border: 1px solid var(--au-line); border-radius: 16px; }
+.au-pv__banner { height: 104px; background: linear-gradient(120deg, #173630 0%, #1F463E 55%, #C9A867 100%); }
+.au-pv__body { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 4px 14px; padding: 0 18px 16px; }
+.au-pv__logo { grid-row: span 2; width: 72px; height: 72px; box-sizing: border-box; margin-top: -30px; display: grid; place-items: center; overflow: hidden; border: 3px solid var(--au-surface); border-radius: 50%; background: var(--au-surface); box-shadow: 0 4px 12px rgba(0, 0, 0, .15); color: var(--au-text2); }
+.au-pv__logo img { width: 100%; height: 100%; object-fit: cover; }
+.au-pv__name { margin-top: 8px; font-family: var(--au-head); font-weight: 800; font-size: 1.125rem; color: var(--au-heading); overflow-wrap: anywhere; }
+.au-pv__about { grid-column: 1 / -1; margin: 8px 0 0; font-size: .875rem; color: var(--au-text2); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.au-pv__vis { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0 0; }
+.au-pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: var(--au-tertiary); font-size: .8125rem; font-weight: 600; }
+.au-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--au-ok); }
+.au-pill.is-off i { background: var(--au-text2); }
+
+/* Previous and Next: pinned to the bottom of the screen, lined up with the form. */
+.au-navbar { position: sticky; bottom: 0; z-index: 4; padding-bottom: env(safe-area-inset-bottom, 0px); border-top: 1px solid var(--au-line); background: var(--au-surface); }
+.au-navbar__in { max-width: 760px; box-sizing: border-box; margin: 0 auto; padding: 14px max(40px, env(safe-area-inset-right, 0px)) 14px 40px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.au-navbar__left { display: flex; align-items: center; gap: 16px; }
+.au .au-navbar__cancel { display: inline-flex; align-items: center; min-height: 44px; font-size: .9375rem; color: var(--au-text2); }
+.au-navbar__step { font-size: .875rem; color: var(--au-text2); font-variant-numeric: tabular-nums; }
+.au-navbar__step[hidden] { display: none; }
+.au .au-navbar [hidden] { display: none; }
+
+/* --- Tablet ---------------------------------------------------------------- */
+
+@media (max-width: 991.98px) {
+  .au-rg__main { grid-template-columns: 250px minmax(0, 1fr); }
+  .au-side { padding: 32px 22px 28px max(22px, env(safe-area-inset-left, 0px)); }
+  .au-step__hint { display: none; }
+  .au-work__in, .au-navbar__in { padding-left: 32px; padding-right: max(32px, env(safe-area-inset-right, 0px)); }
+  .au-grid2 { grid-template-columns: minmax(0, 1fr); }
+  .au-rev { grid-template-columns: minmax(0, 1fr); }
+  .au-rg__ask { display: none; }
+}
+
+/* --- Phone: a compact stepper across the top -------------------------------- */
+
+@media (max-width: 719.98px) {
+  .au .au-rg { --au-hdr: 60px; }
+  .au-rg__hdr { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .au-rg__logo { width: 104px; }
+  .au .au-rg__hdr .au-back { padding: 4px 12px; font-size: .875rem; }
+  .au-rg__main { grid-template-columns: minmax(0, 1fr); }
+  .au-side { padding: 16px max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); }
+  .au-side__in { position: static; gap: 0; }
+  .au-side__head, .au-side__foot, .au-step__num { display: none; }
+  .au-steps { flex-direction: row; }
+  .au-step { flex: 1 1 0; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 6px; padding: 0; text-align: center; }
+  .au-step:not(:last-child)::before { left: calc(50% + 26px); right: calc(-50% + 26px); top: 21px; bottom: auto; width: auto; height: 2px; }
+  .au-step__name { font-size: .8125rem; }
+  .au-work__in { padding: 22px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+  .au-pane__title { font-size: 1.5rem; }
+  .au-vis { grid-template-columns: minmax(0, 1fr); }
+  .au-drop { flex-direction: column; align-items: flex-start; }
+  .au-navbar__in { padding: 12px max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+  .au .au-navbar__cancel, .au-navbar__step { display: none; }
+  .au .au-navbar .au-btn { padding: 10px 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .au-rg--steps .au-pane.is-on { animation: none; }
+  .au-prog__fill, .au-step__dot, .au-step::before { transition: none; }
+}

@@ -34,37 +34,41 @@ class SignUpPageTests(TestCase):
         self.assertContains(response, 'name="csrfmiddlewaretoken"')
         self.assertContains(response, 'method="post"')
         self.assertContains(response, "<h1", count=1)
-        self.assertContains(response, "Create an account")
+        self.assertContains(response, ">Create your account</h1>")
+        self.assertContains(response, "For joining a church that already uses CHORD.")
         self.assertContains(
-            response, "<span data-au-label>Create Account</span></button>"
+            response, "<span data-au-label>Create account</span></button>"
         )
         self.assertContains(response, 'data-au-busy="Creating account…"')
 
     def test_the_photo_panel_brand_and_words(self):
         response = self.client.get(SIGNUP)
-        self.assertContains(response, "Bringing Worship Together")
+        self.assertContains(response, "Join your church on CHORD")
         self.assertContains(
             response,
-            "A space for churches to connect, organize, and plan meaningful "
-            "worship experiences.",
+            "Make your own account, then your church’s administrator adds you "
+            "to its team.",
         )
         self.assertContains(response, "images/landing/chord-logo-gold.webp")
         self.assertContains(response, 'aria-label="CHORD, home"')
         # Every image is decorative.
         self.assertNotRegex(response.content.decode(), r'<img (?![^>]*alt="")')
 
-    def test_links_to_sign_in_and_home(self):
+    def test_links_to_sign_in_registering_a_church_and_home(self):
         response = self.client.get(SIGNUP)
         login, home = reverse("accounts:login"), reverse("home")
+        register = reverse("churches:register")
+        self.assertNotContains(response, "au-tab")  # no Sign Up / Sign In toggle
+        self.assertContains(response, f'Already have an account? <a href="{login}">')
         self.assertContains(
             response,
-            f'<a class="au-tab au-tab--on" href="{SIGNUP}" aria-current="page">',
+            "Setting up CHORD for a new church? "
+            f'<a href="{register}">Register your church</a>',
         )
-        self.assertContains(response, f'<a class="au-tab" href="{login}">Sign In</a>')
-        self.assertContains(response, f'Already have an account? <a href="{login}">')
         self.assertContains(response, f'href="{home}"', count=3)  # logo, two Back links
-        # One Back to Home for phones, one for wider screens.
-        self.assertContains(response, "Back to Home", count=2)
+        # "Back to Home" beside the form; "Home" on the photo, for phones.
+        self.assertContains(response, "Back to Home", count=1)
+        self.assertContains(response, "au-back--mobile")
         self.assertTemplateUsed(response, "includes/icons/arrow-left.html")
 
     def test_no_sign_in_with_other_services(self):
@@ -89,7 +93,9 @@ class SignUpPageTests(TestCase):
         self.assertContains(response, 'data-au-reveal="id_password1"')
         self.assertContains(response, 'data-au-reveal="id_password2"')
         self.assertContains(
-            response, 'aria-label="Show password" aria-pressed="false" hidden'
+            response,
+            'aria-pressed="false" hidden><span data-au-reveal-word>Show</span>'
+            '<span class="visually-hidden"> password</span></button>',
         )
 
     def test_the_approved_wording(self):

@@ -1,12 +1,16 @@
 {% extends "accounts/auth_base.html" %}
 {% comment %}
-  Create an account (redesigned 27 Nov 2026; Design-System.md, "The sign-in and sign-up pages"):
-  the shared split screen (accounts/auth_base.html) with SignUpForm. Server-side validation is
-  Django's, unchanged; the script only adds conveniences.
+  Create your account, the personal one (redesigned 27 Nov 2026; Design-System.md, "The sign-in and
+  sign-up pages"): the shared full-page split (accounts/auth_base.html) with SignUpForm, for
+  joining a church that already uses CHORD. Registering a new church is its own page, linked
+  here. Server-side validation is Django's, unchanged; the script only adds conveniences.
 {% endcomment %}
 
 {% block title %}{{ page_title }}{% endblock %}
-{% block description %}Create your CHORD account to plan worship with your church.{% endblock %}
+{% block description %}Create your CHORD account to join your church.{% endblock %}
+{% block photo_title %}Join your church on CHORD{% endblock %}
+{% block photo_tagline %}Make your own account, then your church’s administrator adds you to its team.{% endblock %}
+{% block col_class %} au-col--wide{% endblock %}
 {% block heading %}{{ page_title }}{% endblock %}
 {% block intro %}{% if intro %}<p class="au-intro">{{ intro }}</p>{% endif %}{% endblock %}
 
@@ -32,5 +36,8 @@
 {% endblock %}
 
 {% block after %}
-  <p class="au-switch">Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+  <p class="au-choice">Setting up CHORD for a new church? <a href="{% url 'churches:register' %}">Register your church</a></p>
+  <div class="au-links">
+    <p>Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+  </div>
 {% endblock %}

@@ -49,21 +49,18 @@ class SignInPageTests(TestCase):
             response, 'data-au-reveal="id_password"', count=1
         )  # one show button
         self.assertContains(
-            response, 'aria-label="Show password" aria-pressed="false" hidden'
+            response,
+            'aria-pressed="false" hidden><span data-au-reveal-word>Show</span>'
+            '<span class="visually-hidden"> password</span></button>',
         )
 
     def test_links(self):
         response = self.client.get(LOGIN)
-        signup, home = reverse("accounts:signup"), reverse("home")
+        home, register = reverse("home"), reverse("churches:register")
+        self.assertNotContains(response, "au-tab")  # no Sign Up / Sign In toggle
+        # Sign up leads to registering a church, which also offers a personal account.
         self.assertContains(
-            response,
-            f'<a class="au-tab au-tab--on" href="{LOGIN}" aria-current="page">',
-        )
-        self.assertContains(response, f'<a class="au-tab" href="{signup}">Sign Up</a>')
-        self.assertContains(response, f'Don’t have an account? <a href="{signup}">')
-        self.assertContains(
-            response,
-            f'<a href="{reverse("churches:register")}">Register your church</a>',
+            response, f'Don’t have an account? <a href="{register}">Sign up</a>'
         )
         self.assertNotContains(response, "sign in your church")
         # Forgot your password? sits right under the password field.
@@ -73,7 +70,7 @@ class SignInPageTests(TestCase):
         self.assertLess(content.index('name="password"'), content.index(forgot))
         self.assertLess(content.index(forgot), content.index("data-au-busy"))
         self.assertContains(response, f'href="{home}"', count=3)  # logo, two Back links
-        self.assertContains(response, "Back to Home", count=2)
+        self.assertContains(response, "Back to Home", count=1)
 
     def test_no_sign_in_with_other_services(self):
         content = self.client.get(LOGIN).content.decode().lower()
