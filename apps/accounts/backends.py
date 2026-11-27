@@ -12,6 +12,7 @@ A user object loaded outside a request has none, so it holds no
 permissions: code without a request asks ``users_with_perm(church, ...)``.
 """
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import Permission
 
@@ -21,8 +22,24 @@ def church_of(user):
 
 
 class ChurchRoleBackend(ModelBackend):
-    """Signs people in like ModelBackend; permissions come from the roles
-    of their Membership in the Current Church."""
+    """Signs people in like ModelBackend, by username or by email (owner,
+    27 Nov 2026); permissions come from the roles of their Membership in
+    the Current Church."""
+
+    def authenticate(self, request, username=None, password=None, **kwargs):
+        # An email that is no account's username finds the one account with
+        # that email (ignoring case). An email two accounts share finds
+        # none, so the sign-in fails as for a wrong password.
+        if username and "@" in username:
+            User = get_user_model()
+            text = username.strip()
+            if not User._default_manager.filter(username=text).exists():
+                found = list(User._default_manager.filter(email__iexact=text)[:2])
+                if len(found) == 1:
+                    username = found[0].get_username()
+        return super().authenticate(
+            request, username=username, password=password, **kwargs
+        )
 
     def get_user_permissions(self, user_obj, obj=None):
         return set()

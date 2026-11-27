@@ -32,8 +32,252 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Two columns | `.chord-columns` holding `.chord-main` and `.chord-side` | Main content and a side column; they stack on a phone |
 | Settings hub | Each app registers `SettingsPage`s in `apps/core/settings_menu.py`; `base.html` shows the hub on their pages. Every category is always shown (no dropdowns); the side menu scrolls on its own when it is taller than the window, stays in view beside the page on a wide screen, and opens scrolled to the current page | One place for every setting |
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
-| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle | Icon-only buttons carry an `aria-label` and are at least 44px |
-| Landing page | `church/landing.html`, `.chord-landing*` in `chord.css` | The public front page. Green hero and footer, gold call to action, pill buttons; the example lineup card is light in both modes. Wording from Labels, features only for switched-on Modules |
+| Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle; for the Directory x; for the church profile map-pin, phone, mail and globe | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
+| Landing page | `church/landing.html`, its own `static/css/landing.css` (classes `lp-*`) and `church/static/church/landing.js` | The public front page, redesigned 26-27 Nov 2026: see "The landing page" below |
+| Sign-in page | `accounts/auth_base.html` (with `login.html`), its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/auth.js` | Sign in, full-page, redesigned 27 Nov 2026: see "The sign-in page" below. Signing up is registering a church |
+| Church registration | `church/register.html`, `auth.css` with its own `static/css/register.css` and `church/static/church/register.js` | Register your church as a four-step wizard, 27 Nov 2026: see "Registering a church" below |
+
+## The landing page (redesign, 26-27 Nov 2026)
+
+Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's
+approval; built on branch `joy-ui-ux-v2` ([[Design-Decisions]], A7,
+"Landing page redesign"). Only `church/landing.html` loads `landing.css`
+and `landing.js`, so nothing here reaches a signed-in page.
+
+- **Sections:** a solid green nav that stays at the top (logo and links
+  left; Sign in, outlined, and Sign up, gold, right; a Menu on phones);
+  the hero, its photograph on the right fading into the green, the example
+  lineup card hanging over its lower edge; How it works (the Phase 9C
+  steps on one line); Features (an open 3 by 2 grid); Rehearsal (the
+  chord sheet with the Listen card overlapping it); Who it's for (green,
+  the hero photo faint behind); United in Worship (the church carousel);
+  the gold call to action (Sign up); the footer.
+- **Logo:** transparent, never on a plate
+  (`church/includes/landing_logo.html`). On light grounds (the gold call to
+  action) the owner's final artwork, unchanged
+  (`static/images/landing/chord-logo.webp`, `.png` fallback). On green
+  grounds (nav, intro, footer) its colour-swapped copy, `chord-logo-gold.*`
+  (`variant="gold"`): gold letters and circle, deep-green triangle and
+  church, the same shapes, made by exchanging the two colours pixel by
+  pixel (the owner's choice, 2026-11-27).
+- **Photography** (new kind of asset): freely licensed or owned, each
+  source, creator, licence and edit recorded in
+  `static/images/landing/SOURCES.md`; no recognisable faces and no symbol
+  that belongs to one particular church (decision 0001); decorative, so
+  `alt=""`. Fixed file names, so a photo is replaced without a code change.
+- **Landing-only effects:** photo fades (green overlays), warm glows, soft
+  shadows, gradient washes between sections, smooth scrolling, gentle hover
+  lifts. All motion stops with `prefers-reduced-motion`.
+- **Loading intro:** the logo, a seven-bar gold equalizer, "Bringing
+  worship together" and a thin loading line on the green. Only on the first
+  visit in a browser session (`sessionStorage`), never without JavaScript.
+  It stays at least **0.8 s** (the owner's approved exception to "no
+  deliberate delay", 2026-11-27; none with reduced motion), leaves on
+  `load`, goes after 4 s at most (script) or 6 s (CSS). No sound.
+- **United in Worship:** up to 12 churches that are public and finished
+  setup, newest first (`views.showcase_churches`), in a native-scrolling
+  carousel: three in view on desktop, two on tablet, one on a phone, with
+  snapping and arrow buttons the script shows only when there is more to
+  scroll. Name, address and logo only; each card opens the church's public
+  page, and "Explore all churches" the directory.
+- **Eyebrows** on light grounds use the chord-letter gold `#7A5A1E`; gold
+  `#E5C690` on green and in dark mode. The footer is `#0B1F1B` (the link
+  hover colour).
+- **Wording** is the platform's neutral default Labels ([[0014-church-platform]]).
+
+## The church directory (redesign, 27 Nov 2026)
+
+Designed as an interactive mockup and approved by the UI/UX owner on
+2026-11-27; built on branch `joy-ui-ux-v2`. `church/directory.html` loads
+`landing.css` (tokens, nav, logo, buttons) and its own
+`static/css/directory.css` (classes `dir-*`) and
+`church/static/church/directory.js`; no other page loads them.
+
+- **Nav:** the landing page's green nav with the gold logo, and **Back to
+  Home** (chevron-left), a real link to `/` (the landing page for a
+  visitor, the dashboard for a signed-in person); "Home" on narrow phones.
+  The same look for visitors and signed-in people, who keep their account
+  and their own light or dark choice.
+- **Header:** "Discover Churches" and the search, side by side on wide
+  screens, stacked below 900 px.
+- **Search:** a wide rounded bar (search icon, field, an X to clear, the
+  gold Search button), a gold outline on hover and while typing. It stays
+  in place: no overlay, dimming or movement. Suggestions open directly
+  beneath it, under the sticky nav: up to six, the typed text underlined in
+  gold, then "See all results". Arrow keys, Enter and Escape work; a click
+  elsewhere closes them.
+- **Results:** "N churches", or "Back to all churches", "Search results for
+  “…”" and "N churches found"; sort by Newest (default), Name A to Z or Z to
+  A. Cards in rows of 4, 3, 2 and 1 (1200, 900 and 560 px), the same size,
+  never stretched: the logo in a white circle on a warm gradient, or the
+  fallback (the people icon in gold on green, as on the landing page); the
+  name, the address and View church. Hover lifts the card and zooms the
+  image. 24 to a page.
+- **Loading:** a small gold spinner in the suggestions and beside the count
+  while waiting; placeholder cards only when an update takes longer than
+  0.2 s, so a quick answer never flickers. No added delay.
+- **Icon added:** `x` (the search's clear button), solid like the rest.
+
+## The church profile (redesign, 27 Nov 2026)
+
+A public website for each listed church: the same page for visitors,
+signed-in people and its own members, with no sign-in needed to view it.
+Designed as an interactive mockup and approved by the UI/UX owner on
+2026-11-27; built on branch `joy-ui-ux-v2`. `church/homepage.html` loads
+`landing.css` and its own `static/css/profile.css` (classes `pf-*`) and
+`church/static/church/profile.js`; no other page loads them.
+
+- **Nav:** the gold logo (to `/`) and **Back to Churches** (the
+  Directory); "Churches" on narrow phones.
+- **Cover:** a rounded banner with the default green-and-gold gradient,
+  no stock photos; a church's own banner image would go on `.pf-banner`
+  later with no layout change. The church's logo (or the CHORD fallback,
+  the people icon on green) in a circle overlapping its lower left.
+- **Sidebar, the only place for the church's details:** name, About
+  (clamped to five lines with Read more), then Contact: address (opens a
+  map search), phone (`tel:`), email (`mailto:`) and website, each with
+  its icon and only when filled in; then Upcoming services when the church
+  switches them on. Sticky beside the main area on wide screens.
+- **Main area, tabs** (ARIA tabs, arrow keys, Home and End; without
+  JavaScript every section shows): **Announcements** (date badge, title,
+  date, three lines with Read more, latest five, newest first; one panel
+  with dividers; a note when there are none) and **Available services**
+  (equal cards: calendar icon, name, description, usual length, the gold
+  Request this service). A tab appears only while its Module is on.
+- **Footer:** "Powered by CHORD".
+- **Responsive:** sidebar 340 px, then 290 px below 960 px; one column
+  below 760 px (cover, logo, sidebar, tabs, sections); tab icons drop
+  below 480 px so the labels stay on one line.
+- **Icons added:** `map-pin`, `phone`, `mail` and `globe` (the contact
+  rows), solid like the rest.
+
+## The sign-in page (redesign, 27 Nov 2026)
+
+Sign in (`/accounts/login/`) as a full-page split. Designed as interactive
+mockups and approved by the UI/UX owner on 2026-11-27 (a card version
+first, then the full-page version with the church registration wizard);
+built on branch `joy-ui-ux-v2`. **There is no separate sign-up page**
+(owner, 27 Nov 2026): signing up for CHORD is registering a church, whose
+first step makes the person's account ("Registering a church", below);
+the old address `/accounts/signup/` redirects there, keeping its query
+string.
+
+- **Files:** `accounts/auth_base.html` holds the page (head, photo, Back to
+  Home, heading, messages; blocks `title`, `description`, `photo_title`,
+  `photo_tagline`, `col_class`, `heading`, `intro`, `form`, `after`);
+  `login.html` extends it.
+  `accounts/includes/auth_field.html` draws each field (also on the
+  registration page), `accounts/includes/auth_submit.html` the main
+  button. They load their own `static/css/auth.css` (classes `au-*`, every
+  rule under `body.au`) and `accounts/static/accounts/auth.js`; no other
+  page loads them.
+- **Unchanged behind them:** Django's `LoginView` and
+  `AuthenticationForm`, CSRF protection,
+  server-side validation, `next` and the redirects; no Google, Facebook or
+  Apple sign-in.
+- **Layout:** two equal halves filling the window, with no card. The
+  photograph (`images/landing/signup-worship.*`, see `SOURCES.md`) fills
+  the left half edge to edge and stays in place while the form scrolls,
+  under a deep-green overlay: the gold logo upper left (to `/`), the
+  heading in gold and the tagline at the bottom. Decorative: `alt=""`. The
+  form sits in the middle of the right half, 420 px wide at most, with
+  **Back to Home** (an outlined pill
+  with the `arrow-left` icon) at its top right.
+- **Sign in:** "Bringing Worship Together" and the tagline on the photo;
+  "Welcome Back" and "Sign in to continue to CHORD"; **Email or
+  username** (person icon) and Password (lock icon, Show button); **Forgot your password?**
+  right under the password field; the green **Sign In** button; "Don't
+  have an account? **Sign up**", which opens Register your church. No
+  Sign Up / Sign In toggle.
+- **Fields:** labels above; 48 px inputs, 12 px corners, outlines
+  `#6E8A83` (3.73:1 on white, the owner's choice for these pages), a gold
+  focus ring; "Optional" beside the label of an optional field. Help text
+  under each field; the server's errors under it in the danger colour
+  (`id_<field>_error`, which Django's `aria-describedby` names); the
+  form's own errors above the fields in a box with the `alert-circle`
+  icon (`role="alert"`): on sign-in, Django's "Please enter a correct
+  username and password…", the username kept and the password never sent
+  back.
+- **Show password:** the word **Show** (then **Hide**) inside each password
+  field (44 px, `aria-pressed`, read as "Show password"), hidden until the
+  script runs; a shown password is hidden again before sending, so
+  password managers save it. Field names and `autocomplete` stay Django's.
+- **Password checklist** (the registration wizard's account step): Django's help list
+  replaced by four short items, keeping its id: 8 or more characters, Not
+  only numbers, Unlike your name or email (ticked as the person types) and
+  Not a common password (dashed: only the server knows the list). Under
+  Confirm password, "Passwords match" or "don't match yet".
+- **Buttons:** pills, 48 px; the main one green with gold text (gold with
+  dark text in dark mode); while sending, a spinner and "Signing in…" /
+  "Creating account…", disabled and `aria-busy`, so a second press or
+  Enter does nothing. No delay is added; Back makes it usable again.
+- **Light or dark:** the device's (only signed-out people see these
+  pages); gold headings and links in dark mode.
+- **Responsive:** below 992 px the photo takes 42%; below 720 px it becomes
+  a 230 px banner above the form, with a light **Home** pill on it in place
+  of Back to Home; names one per row below 480 px.
+- **Motion:** input focus and button hover (a 1 px lift); the spinner; a
+  fade between the two pages through the browser's page transitions, the
+  photo held still (Chrome, Edge and Safari; Firefox switches at once).
+  None of it with `prefers-reduced-motion`.
+- **Icons added:** `arrow-left` and `alert-circle`, solid like the rest.
+
+## Registering a church (redesign, 27 Nov 2026)
+
+Register your church (`/churches/register/`) as a four-step wizard on one
+page, approved with the full-page sign-in; since 27 Nov 2026 it is CHORD's
+only sign-up (the landing page's Sign up and the sign-in page's Sign up
+open it, and `/accounts/signup/` redirects to it). `church/register.html`
+loads `auth.css` (tokens, fields, buttons), its own `static/css/register.css`
+and `church/static/church/register.js`, then `auth.js`.
+
+- **One form, sent once.** The four steps are sections of one form;
+  `RegisterChurchView` checks everything when it is sent and comes back on
+  the first step with an error, in the steps' order (`data-au-start`), with every step open in
+  the stepper. Without the script every step shows at once, with Complete
+  registration at the end.
+- **Layout:** a green header (gold logo; "Already have an account? Sign
+  in" for visitors; Back to Home); the stepper down the left on green
+  ("Register your church", "Four short steps. Nothing is saved until you
+  complete the registration.", the four steps with their icons, and for
+  visitors "Already have an account? **Sign in** and your church is added
+  to it"); on the right a progress bar ("Step 2 of 4 · Church
+  information", 50%), the step, and Previous / Cancel / Step x of 4 / Next
+  pinned to the bottom. The last step's button is the gold **Complete
+  registration**, with a spinner and "Registering…" while sending.
+- **Steps** (in this order since 27 Nov 2026, the owner's choice: the church first, the account last before review):
+  1. **Church information:** Church name (the only field needed), address,
+     contact number and church email, all optional.
+  2. **Church profile:** logo (PNG, JPEG, GIF or WebP, 2 MB at most, with a
+     preview and Remove), description (2000 characters, with a count) and
+     Public visibility as two cards: **Public** (listed in the directory,
+     the default) or **Not public**.
+  3. **Account information:** for a visitor, First name and Last name side
+     by side, Middle name and Suffix (both optional) below them at every
+     width, Email address ("You sign in with it, and reset your
+     password."), Password with the checklist and Confirm password
+     (`SignUpForm`). No username: the person signs in with the email.
+     Signed in: their own account (initials, name, email, and the username
+     when it isn't the email) and "Not you? Sign out".
+  4. **Review and confirm:** the account, the church information and a
+     preview of the public profile, each with **Edit**.
+- **Checking each step:** Next (or Enter) checks the step first: the
+  first and last name, a valid email, the password's length, not only
+  numbers, the two passwords the same, the church's name, the church
+  email, the logo's size. Errors show under the field and the first one
+  takes the focus. The server checks everything again.
+- **The stepper:** the current step gold, finished steps ticked; any step
+  reached can be opened again. Each step's heading takes the focus when it
+  opens. On a phone the stepper runs across the top, under the header.
+- **Not in it:** a banner image (no field for it; the owner chose to leave
+  it out), the public address in the preview (the server chooses the
+  slug) and the "registered" screen of the mockup: a registered church
+  goes straight to the setup wizard, as before.
+- **Responsive:** below 992 px a 250 px stepper without hints and one
+  column of fields; below 720 px the stepper across the top and Cancel and
+  the step count hidden from the bottom bar.
+- **Motion:** each step slides in 18 px and fades (from the left when
+  going back), the progress bar grows; none with `prefers-reduced-motion`.
 
 ## Tokens
 

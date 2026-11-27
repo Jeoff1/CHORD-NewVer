@@ -1,13 +1,24 @@
-{# Public announcements of a church (Phase 9B). #}
-<section class="card shadow-sm mb-4" aria-labelledby="news-title">
-  <div class="card-body">
-    <h2 class="h5" id="news-title">Announcements</h2>
+{# The church profile's Announcements tab (Phase 9B; redesigned 27 Nov 2026): only Public announcements to everyone that aren't archived, newest first. Long ones open in place with Read more (church/profile.js). #}
+<div class="pf-panel__head">
+  <h2>Announcements</h2>
+  {% if section.public_announcements %}<p>Latest first</p>{% endif %}
+</div>
+{% if section.public_announcements %}
+  <ol class="pf-news">
     {% for note in section.public_announcements %}
-      <article class="{% if not forloop.last %}mb-3{% endif %}">
-        <h3 class="h6 mb-1">{{ note.title }}</h3>
-        <p class="small text-body-secondary mb-1">{{ note.created_at|date:"M j, Y" }}</p>
-        <p class="mb-0">{{ note.body|linebreaksbr }}</p>
-      </article>
+      <li class="pf-note">
+        <span class="pf-note__date" aria-hidden="true">{{ note.created_at|date:"j" }}<small>{{ note.created_at|date:"M" }}</small></span>
+        <h3>{{ note.title }}</h3>
+        <time datetime="{{ note.created_at|date:'c' }}">{{ note.created_at|date:"M j, Y" }}</time>
+        <p class="pf-note__body" id="pf-note-{{ forloop.counter }}">{{ note.body|linebreaksbr }}</p>
+        {% if note.body|length > 220 %}<button type="button" class="pf-more" data-more="pf-note-{{ forloop.counter }}" aria-controls="pf-note-{{ forloop.counter }}" aria-expanded="false" hidden>Read more</button>{% endif %}
+      </li>
     {% endfor %}
+  </ol>
+{% else %}
+  <div class="pf-empty">
+    <span class="pf-empty__mark" aria-hidden="true">{% include "includes/icons/megaphone.html" %}</span>
+    <strong>No announcements yet.</strong>
+    <p>News from this church will appear here.</p>
   </div>
-</section>
+{% endif %}

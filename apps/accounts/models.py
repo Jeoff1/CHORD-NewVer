@@ -13,6 +13,11 @@ class User(AbstractUser):
     # them to Change password (``middleware.PasswordChangeRequiredMiddleware``).
     must_change_password = models.BooleanField(default=False, editable=False)
 
+    # Optional parts of the person's name (owner, 27 Nov 2026), asked when
+    # they register a church; the same lengths as a Member's.
+    middle_name = models.CharField(max_length=100, blank=True)
+    suffix = models.CharField(max_length=20, blank=True, help_text="Jr., Sr., III")
+
     class Theme(models.TextChoices):
         DEVICE = "device", "Match my device"
         LIGHT = "light", "Light"

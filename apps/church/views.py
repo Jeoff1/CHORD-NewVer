@@ -1,7 +1,10 @@
+import uuid
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -18,7 +21,7 @@ from apps.core.views import FilteredListView
 
 from . import dashboard, homepage
 from .forms import SECTION_ORDER, SECTIONS, ChurchRegistrationForm
-from .labels import LABEL_DEFINITIONS
+from .labels import LABEL_DEFINITIONS, Labels
 from .middleware import SESSION_KEY
 from .models import ChurchProfile
 from .modules import MODULES_BY_CODE
@@ -50,13 +53,47 @@ def profile_audit_fields():
     return fields
 
 
-class LandingView(TemplateView):
-    """The public front page: what CHORD does, and the way to sign in.
+SHOWCASE_SIZE = 12
+LISTED_FIELDS = ("name", "slug", "address", "logo")
 
-    Its feature list shows only the switched-on Modules, and its wording
-    uses the church's Labels."""
+
+def listed_churches():
+    """The churches the landing page and the Directory list: public ones that
+    have also finished their setup (the owner's rule, 2026-11-27). Only what a
+    card shows is read: name, page address, street address and logo."""
+    return public_churches().filter(setup_completed=True).only(*LISTED_FIELDS)
+
+
+def with_place(churches):
+    """Each church's address on one line, for a card, as ``place``."""
+    churches = list(churches)
+    for listed in churches:
+        listed.place = ", ".join(
+            line.strip() for line in listed.address.splitlines() if line.strip()
+        )
+    return churches
+
+
+def showcase_churches():
+    """The landing page's "United in Worship" carousel: the newest listed
+    churches, at most ``SHOWCASE_SIZE``."""
+    return with_place(listed_churches().order_by("-created_at", "-pk")[:SHOWCASE_SIZE])
+
+
+class LandingView(TemplateView):
+    """The public front page: what CHORD does, the public churches, and the
+    ways to sign in or sign up.
+
+    It is the platform's page (decision 0014), so its wording is the neutral
+    default Labels, whatever any church calls things."""
 
     template_name = "church/landing.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["showcase"] = showcase_churches()
+        context["members_label"] = Labels({}).get("member", plural=True)
+        return context
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
@@ -184,16 +221,52 @@ class ProfileSectionView(LoginRequiredMixin, PermissionRequiredMixin, FormView):
 
 
 class RegisterChurchView(TemplateView):
-    """Sign in your church: its name, plus a new account for a visitor who
-    isn't signed in. The person becomes its first Administrator and goes
-    on to the setup wizard."""
+    """Register your church: a four-step wizard on one page (owner, 27 Nov
+    2026; Design-System.md, "Registering a church"). Church, Profile,
+    Account (a new one for a visitor; a signed-in person uses their own)
+    and Review, all sent in one POST and checked here; the script only moves
+    between the steps. The person becomes the church's first Administrator
+    and goes on to the setup wizard.
+
+    Sending the same form twice (a double press, Back and send again) never
+    makes a second church: each page carries a token, and a token already
+    used goes to the church it made."""
 
     template_name = "church/register.html"
+    TOKEN_KEY = "church_registration_token"
+    DONE_KEY = "church_registrations_done"
+    CHURCH_STEP_FIELDS = {"name", "address", "phone", "email", "__all__"}
 
-    def forms(self, data=None):
-        church_form = ChurchRegistrationForm(data, prefix="church")
+    def forms(self, data=None, files=None):
+        church_form = ChurchRegistrationForm(data, files, prefix="church")
         account_form = None if self.request.user.is_authenticated else SignUpForm(data)
         return church_form, account_form
+
+    def token(self):
+        if self.TOKEN_KEY not in self.request.session:
+            self.request.session[self.TOKEN_KEY] = uuid.uuid4().hex
+        return self.request.session[self.TOKEN_KEY]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        church_form, account_form = context["church_form"], context["account_form"]
+        context["registration_token"] = self.token()
+        context["start_step"] = self.start_step(church_form, account_form)
+        context["logo_lost"] = church_form.is_bound and bool(
+            self.request.FILES.get("church-logo")
+        )
+        return context
+
+    def start_step(self, church_form, account_form):
+        """The step to open: the first one with an error, in the steps'
+        order (Church 1, Profile 2, Account 3; owner, 27 Nov 2026)."""
+        if self.CHURCH_STEP_FIELDS & set(church_form.errors):
+            return 1
+        if church_form.errors:
+            return 2
+        if account_form is not None and account_form.errors:
+            return 3
+        return 1
 
     def get(self, request, *args, **kwargs):
         church_form, account_form = self.forms()
@@ -201,8 +274,23 @@ class RegisterChurchView(TemplateView):
             self.get_context_data(church_form=church_form, account_form=account_form)
         )
 
+    def already_registered(self, request):
+        """The church a token already made, when it is this person's."""
+        token = request.POST.get("registration", "")
+        church_pk = request.session.get(self.DONE_KEY, {}).get(token)
+        if not church_pk or not request.user.is_authenticated:
+            return None
+        return ChurchProfile.objects.filter(
+            pk=church_pk, memberships__user=request.user
+        ).first()
+
     def post(self, request, *args, **kwargs):
-        church_form, account_form = self.forms(request.POST)
+        church = self.already_registered(request)
+        if church is not None:
+            request.session[SESSION_KEY] = church.pk
+            messages.info(request, f"{church.name} is already registered.")
+            return redirect("church:setup", section=SECTION_ORDER[0])
+        church_form, account_form = self.forms(request.POST, request.FILES)
         valid = church_form.is_valid()
         valid = (account_form is None or account_form.is_valid()) and valid
         if not valid:
@@ -215,10 +303,15 @@ class RegisterChurchView(TemplateView):
             church_form.cleaned_data["name"],
             user=request.user if request.user.is_authenticated else None,
             account_form=account_form,
+            details=church_form.details(),
         )
         if not request.user.is_authenticated:
             login(request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
         request.session[SESSION_KEY] = church.pk
+        done = request.session.get(self.DONE_KEY, {})
+        done[request.POST.get("registration", "")] = church.pk
+        request.session[self.DONE_KEY] = done
+        request.session[self.TOKEN_KEY] = uuid.uuid4().hex
         messages.success(request, f"{church.name} is registered. Let's set it up.")
         return redirect("church:setup", section=SECTION_ORDER[0])
 
@@ -247,28 +340,102 @@ def public_churches():
     return ChurchProfile.objects.filter(show_in_directory=True)
 
 
+DIRECTORY_SORTS = {
+    "newest": ("Newest", ("-created_at", "-pk")),
+    "name": ("Name, A to Z", ("name", "pk")),
+    "-name": ("Name, Z to A", ("-name", "-pk")),
+}
+SUGGESTION_SIZE = 6
+SUGGESTION_MIN_LENGTH = 2
+
+
 class DirectoryView(FilteredListView):
-    """The public list of churches, searchable by name and address."""
+    """The public list of churches (redesigned 27 Nov 2026): the listed
+    churches, searchable by name and address, newest first or by name.
+
+    An HTMX request (the search, the sort, a page link, Back to all
+    churches) gets only the results part; any other request, the page."""
 
     template_name = "church/directory.html"
+    results_template = "church/includes/directory_results.html"
     search_fields = ("name", "address")
-    paginate_by = 20
+    paginate_by = 24  # rows of 4, 3, 2 and 1 cards come out even
+
+    def get_sort(self):
+        sort = self.request.GET.get("sort", "")
+        return sort if sort in DIRECTORY_SORTS else "newest"
+
+    def get_template_names(self):
+        if self.request.headers.get("HX-Request"):
+            return [self.results_template]
+        return [self.template_name]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["object_list"] = with_place(context["object_list"])
+        context["sort"] = self.get_sort()
+        context["sorts"] = [(key, label) for key, (label, _) in DIRECTORY_SORTS.items()]
+        return context
 
     def get_queryset(self):
-        self.queryset = public_churches().order_by("name", "pk")
+        self.queryset = listed_churches().order_by(*DIRECTORY_SORTS[self.get_sort()][1])
         return super().get_queryset()
 
 
+class ChurchSuggestView(TemplateView):
+    """The Directory's suggestions as a visitor types (an HTMX fragment): up to
+    ``SUGGESTION_SIZE`` listed churches whose name or address contains the
+    text, names starting with it first. Nothing for fewer than
+    ``SUGGESTION_MIN_LENGTH`` characters."""
+
+    template_name = "church/includes/directory_suggestions.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        q = self.request.GET.get("q", "").strip()
+        churches = []
+        if len(q) >= SUGGESTION_MIN_LENGTH:
+            matches = listed_churches().filter(
+                Q(name__icontains=q) | Q(address__icontains=q)
+            )
+            starts = list(matches.filter(name__istartswith=q).order_by("name", "pk"))
+            rest = matches.exclude(pk__in=[c.pk for c in starts]).order_by("name", "pk")
+            churches = with_place(
+                (starts + list(rest[:SUGGESTION_SIZE]))[:SUGGESTION_SIZE]
+            )
+            for listed in churches:
+                listed.name_parts = split_match(listed.name, q)
+                listed.place_parts = split_match(listed.place, q)
+        context.update(q=q, churches=churches, searched=len(q) >= SUGGESTION_MIN_LENGTH)
+        return context
+
+
+def split_match(text, q):
+    """``(before, match, after)``: the first place ``q`` appears in ``text``,
+    ignoring case, so a template can mark it; ``(text, "", "")`` if nowhere."""
+    at = text.lower().find(q.lower())
+    if at < 0:
+        return (text, "", "")
+    return (text[:at], text[at : at + len(q)], text[at + len(q) :])
+
+
 class ChurchHomepageView(TemplateView):
-    """A church's public page: only what it chose to publish."""
+    """A church's public profile (redesigned 27 Nov 2026): only what it chose
+    to publish, the same for everyone, no sign-in needed to view it.
+
+    The Modules' sections go in the sidebar (``slot="side"``) or become the
+    main area's tabs."""
 
     template_name = "church/homepage.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         public_church = get_object_or_404(public_churches(), slug=self.kwargs["slug"])
+        sections = homepage.sections(public_church, self.request)
         context.update(
             public_church=public_church,
-            sections=homepage.sections(public_church, self.request),
+            sections=sections,
+            side_sections=[s for s in sections if s.slot == "side"],
+            tab_sections=[s for s in sections if s.slot != "side"],
         )
         return context

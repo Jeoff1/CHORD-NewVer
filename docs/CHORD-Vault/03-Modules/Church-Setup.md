@@ -32,13 +32,22 @@ of the core and can't be switched off. App: `apps/church`.
   (`request.church` is None): a signed-in person without one sees only
   their own account pages and notifications, and "You're not part of a
   church yet" everywhere else (`church/no_church.html`). The landing page
-  is the platform's, with every Module and the neutral wording.
+  is the platform's, with every Module and the neutral wording; since
+  27 Nov it also shows public churches (below).
 - **Scoping** (`scoping.py`): `for_church`, `get_in_church`,
   `ChurchScopedMixin`, `ChurchFormMixin` and `ChurchFormKwargsMixin`
   ([[Code-Conventions]], "One church's records").
 - **Registering a church** (`/churches/register/`,
-  `registration.register_church`): the church's name only, plus a new
-  account for a visitor who isn't signed in. In one transaction it creates
+  `registration.register_church`): a four-step wizard on one page since
+  27 Nov 2026 ([[Design-System]], "Registering a church"): Church,
+  Profile, Account, Review. `ChurchRegistrationForm` needs only the name;
+  address, contact number, email, logo, description and Public visibility
+  (`show_in_directory`, public by default) are optional. Plus a new
+  account for a visitor who isn't signed in (`SignUpForm`). Each page
+  carries a token (`church_registration_token` in the session); a token
+  already used, sent again by the person who registered (a double press,
+  Back and send again), goes to that church's setup instead of making a
+  second one. In one transaction it creates
   the account, the church and slug, its defaults and the person's
   Administrator Membership; any failure leaves nothing. The person then
   works in the new church and goes on to the setup wizard.
@@ -131,13 +140,25 @@ of the core and can't be switched off. App: `apps/church`.
 - Tests: `apps/church/tests/test_dashboard_screen.py`,
   `apps/core/tests/test_settings_hub.py`.
 
-### The landing page (Phase 9A, A7)
+### The landing page (Phase 9A, A7; redesigned 26-27 Nov 2026)
 
 - **Landing page** (`church/landing.html`, `LandingView`): what a visitor
-  who isn't signed in sees at `/`, with links to sign in. Its copy uses
-  the church's Labels, its feature list shows only switched-on Modules
-  (Teams, Occasions, Announcements), and its footer names the church.
-  ([[Design-System]], "Landing page".)
+  who isn't signed in sees at `/`. It is the platform's page: the neutral
+  default wording and every Module's features. Ways in: Sign in, Sign up,
+  Explore churches and Churches (the Directory). It doesn't link
+  registering a church directly, but its Sign up opens it (since
+  27 Nov 2026 signing up is registering a church), as do the sign-in
+  page's Sign up and the no-church page. Its
+  own styles and script: `static/css/landing.css`,
+  `church/static/church/landing.js`. ([[Design-System]], "The landing
+  page".)
+- **United in Worship** (`views.showcase_churches`): up to 12
+  (`SHOWCASE_SIZE`) listed churches (`listed_churches()`: public **and**
+  finished setup, the same rule as the Directory), newest first, with
+  name, address on one line and logo only, each linking to its Church
+  Homepage. No new field or migration. With none, a short note.
+- **Settings it reads:** a church's "Show the church publicly"
+  (`show_in_directory`) and whether its setup is finished.
 - Tests: `apps/church/tests/test_landing.py`.
 
 ## Public pages (Phase 9B)
@@ -146,19 +167,40 @@ Only churches with "Show the church publicly" on have public pages; for
 any other church (and an unknown address) every public page is 404, to
 everyone, its own people too.
 
-- **Directory** (`/churches/`): the public churches, searched on name and
-  address (ignoring case), 20 to a page.
-- **Church Homepage** (`/churches/<slug>/`, `ChurchHomepageView`): name,
-  logo, contact details and About, then the sections the Modules register
-  in `homepage.py` (each only while its Module is on): upcoming services
-  if switched on, date, time and kind only (Worship); the Occasion Types
-  offered publicly with **Request this service** (Occasions); Public
-  announcements to everyone that aren't archived (Announcements). Never
-  lyrics, chord sheets, songs, lineups, themes, members or teams.
+- **Directory** (`/churches/`, `DirectoryView`; redesigned 27 Nov 2026,
+  [[Design-System]], "The church directory"): the **listed churches**
+  (`listed_churches()`: public **and** finished setup, the same rule as the
+  landing page's showcase, the owner's choice), searched on name and
+  address (ignoring case), sorted newest first (`?sort=newest`, the
+  default) or by name (`name`, `-name`), 24 to a page. An HTMX request gets
+  only `church/includes/directory_results.html`; without JavaScript it is a
+  plain GET form. Cards show the logo only (no profile photos or banners).
+- **Suggestions** (`/churches/suggest/?q=`, `ChurchSuggestView`): an HTML
+  fragment of up to six listed churches matching the name or address, from
+  two characters, names starting with the text first, the match marked.
+  "suggest" is a reserved word, so no church can take that address.
+- A Church Homepage still opens for any public church, finished setup or
+  not; only the lists need finished setup.
+- **Church Homepage**, the public profile (`/churches/<slug>/`,
+  `ChurchHomepageView`; redesigned 27 Nov 2026, [[Design-System]], "The
+  church profile"): open to everyone without signing in, the same page for
+  all. A cover banner with the logo, a sidebar with name, About and contact
+  details, then the sections the Modules register in `homepage.py` (each
+  only while its Module is on). A `Section` says where it goes:
+  `slot="side"` in the sidebar (upcoming services if switched on, date,
+  time and kind only: Worship), otherwise a tab with its `label`, `count`
+  and `icon`: **Announcements** (Public, to everyone, not archived, the
+  latest five; the tab shows "No announcements yet" when there are none)
+  and **Available services** (the Occasion Types offered publicly with
+  **Request this service**, which keeps the existing request form and its
+  sign-in). Never lyrics, chord sheets, songs, lineups, themes, members or
+  teams.
 - Request this service and My requests at every church are Occasions'
   ([[Occasions]]).
-- The landing page links the Directory ("Churches"); so do the user menu
-  and the home of people with no church.
+- The landing page links the Directory ("Churches", "Explore churches",
+  "Explore all churches", "Find a church") and shows up to 12 public
+  churches that finished setup; the user menu and the home of people with
+  no church link the Directory too.
 
 ## Church settings this module depends on
 

@@ -1,0 +1,133 @@
+/*
+ * A church's public profile (apps/church/templates/church/homepage.html and the
+ * Modules' homepage section templates), redesigned 27 Nov 2026 (Design-System.md,
+ * "The church profile"). Loaded only by that page, after landing.css, whose tokens
+ * (.chord-landing), nav, logo, buttons and focus styles it reuses. Classes start
+ * with "pf-".
+ */
+
+[hidden] { display: none !important; }
+
+/* --- Nav ------------------------------------------------------------------ */
+
+.pf-nav__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: var(--lp-nav-h); }
+.pf-back__short { display: none; }
+@media (max-width: 420px) {
+  .chord-profile .lp-brand .lp-logo { width: 100px; }
+  .pf-back__long { display: none; }
+  .pf-back__short { display: inline; }
+}
+
+/* --- Cover banner and logo -------------------------------------------------
+ * The default banner is a green-and-gold gradient. A church's own banner image,
+ * when that exists, goes on .pf-banner as a background-image. */
+
+.pf-cover { position: relative; z-index: 5; margin-top: 1.5rem; }
+.pf-banner {
+  position: relative; height: clamp(150px, 20vw, 240px); border-radius: 22px; overflow: hidden;
+  background-color: #173630;
+  background-image:
+    radial-gradient(ellipse 55% 90% at 85% 0%, rgba(229, 198, 144, .42), rgba(229, 198, 144, 0) 70%),
+    radial-gradient(ellipse 40% 70% at 15% 100%, rgba(229, 198, 144, .18), rgba(229, 198, 144, 0) 70%),
+    linear-gradient(120deg, #0B1F1B 0%, #173630 45%, #2E4A44 100%);
+  background-size: cover; background-position: center;
+}
+.pf-banner::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(229, 198, 144, .05) 0 1px, transparent 1px 26px); }
+.pf-logo { position: absolute; left: clamp(20px, 3.5vw, 44px); bottom: 0; transform: translateY(50%); display: grid; place-items: center; width: clamp(104px, 11vw, 140px); aspect-ratio: 1; border-radius: 50%; overflow: hidden; background: #FFFFFF; box-shadow: 0 0 0 6px var(--lp-page), 0 12px 30px rgba(23, 54, 48, .25); }
+.pf-logo img { width: 100%; height: 100%; object-fit: contain; padding: 14%; }
+.pf-logo--none { background: radial-gradient(circle at 50% 35%, rgba(229, 198, 144, .25), rgba(229, 198, 144, 0) 60%), linear-gradient(160deg, #1D4039, #0B1F1B); color: var(--lp-gold); font-size: 2.6rem; }
+
+/* --- Two columns: the sidebar, then the main area ------------------------ */
+
+.pf-layout { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 2rem; align-items: start; padding-block: 1rem 3.5rem; }
+@media (max-width: 959.98px) { .pf-layout { grid-template-columns: minmax(0, 290px) minmax(0, 1fr); gap: 1.5rem; } }
+@media (max-width: 759.98px) { .pf-layout { grid-template-columns: 1fr; } }
+
+.pf-side { position: sticky; top: calc(var(--lp-nav-h) + 20px); display: grid; gap: 1.1rem; padding: clamp(4.2rem, 7vw, 5rem) 1.5rem 1.6rem; border-radius: 20px; background: var(--lp-surface); box-shadow: var(--lp-card-shadow); }
+@media (max-width: 759.98px) { .pf-side { position: static; } }
+.pf-name { margin-top: .2rem !important; font-size: clamp(1.7rem, 3vw, 2.1rem); font-weight: 800; line-height: 1.12; color: var(--lp-heading) !important; overflow-wrap: anywhere; }
+.pf-about { color: var(--lp-muted); font-size: 1.02rem; }
+.pf-side hr { width: 100%; margin: .2rem 0; border: 0; border-top: 1px solid var(--lp-border); opacity: 1; }
+.pf-side__title { margin-bottom: .1rem !important; font-family: var(--lp-body) !important; font-size: .8rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--lp-muted) !important; }
+.pf-contact { display: grid; gap: .2rem; }
+.pf-contact a { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: .7rem; min-height: 46px; margin-inline: -.4rem; padding: .3rem .4rem; border-radius: 12px; color: var(--lp-text); line-height: 1.35; overflow-wrap: anywhere; transition: background-color .2s ease; }
+.pf-contact a:hover { background: var(--lp-tint); }
+.pf-contact__icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--lp-tint); color: var(--lp-accent-text); font-size: 1.05rem; }
+.pf-upcoming { display: grid; gap: .55rem; }
+.pf-upcoming li { display: grid; grid-template-columns: auto 1fr; gap: .05rem .75rem; align-items: center; }
+.pf-upcoming__date { grid-row: span 2; display: grid; place-items: center; width: 46px; padding: .25rem 0; border-radius: 10px; background: var(--lp-green); color: var(--lp-gold); font-family: var(--lp-display); font-weight: 800; line-height: 1.05; text-align: center; }
+.pf-upcoming__date small, .pf-note__date small { display: block; font-family: var(--lp-body); font-size: .68rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.pf-upcoming__date small { color: var(--lp-on-green-muted); }
+.pf-upcoming strong { font-size: 1rem; line-height: 1.3; }
+.pf-upcoming__when { font-size: .9rem; color: var(--lp-muted); }
+
+/* Read more: long text is clamped only once profile.js shows its button. */
+.pf-clamped { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.pf-about.pf-clamped { -webkit-line-clamp: 5; }
+.pf-note__body.pf-clamped { -webkit-line-clamp: 3; }
+.pf-more { justify-self: start; padding: 0; border: 0; background: none; color: var(--lp-accent-text); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* --- Tabs and panels ------------------------------------------------------ */
+
+.pf-tabs { display: inline-flex; gap: .3rem; padding: .3rem; margin-bottom: 1.25rem; border-radius: 999px; background: var(--lp-surface); box-shadow: var(--lp-card-shadow); }
+.pf-tab { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; padding: 0 1.15rem; border: 0; border-radius: 999px; background: transparent; color: var(--lp-muted); font: inherit; font-weight: 600; cursor: pointer; transition: background-color .2s ease, color .2s ease; }
+.pf-tab:hover { color: var(--lp-heading); }
+.pf-tab[aria-selected="true"] { background: var(--lp-green); color: var(--lp-gold); }
+.pf-tab__count { min-width: 1.6rem; padding: 0 .45rem; border-radius: 999px; background: var(--lp-tint); color: var(--lp-text); font-size: .82rem; line-height: 1.6rem; text-align: center; }
+.pf-tab[aria-selected="true"] .pf-tab__count { background: rgba(229, 198, 144, .2); color: var(--lp-gold); }
+.pf-tab { white-space: nowrap; }
+@media (max-width: 479.98px) {
+  .pf-tabs { display: flex; }
+  .pf-tab { flex: 1; justify-content: center; gap: .35rem; padding: 0 .5rem; font-size: .95rem; }
+  .pf-tab .chord-icon { display: none; }
+}
+.pf-panel + .pf-panel { margin-top: 2.5rem; }
+.pf-tabs:not([hidden]) ~ .pf-panel + .pf-panel { margin-top: 0; }
+.pf-panel:focus-visible { outline-offset: 6px; }
+.pf-panel__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1rem; margin-bottom: 1rem; }
+.pf-panel__head h2 { font-size: clamp(1.4rem, 2.6vw, 1.75rem); font-weight: 800; color: var(--lp-heading) !important; }
+.pf-panel__head p { color: var(--lp-muted); }
+
+/* --- Announcements: one panel with dividers -------------------------------- */
+
+.pf-news { padding: 0 1.5rem !important; border-radius: 20px; background: var(--lp-surface); box-shadow: var(--lp-card-shadow); }
+.pf-note { display: grid; grid-template-columns: auto 1fr; gap: .2rem 1.1rem; padding-block: 1.4rem; }
+.pf-note + .pf-note { border-top: 1px solid var(--lp-border); }
+.pf-note__date { grid-row: span 4; display: grid; place-items: center; align-self: start; width: 58px; padding: .4rem 0; border-radius: 14px; background: var(--lp-tint); color: var(--lp-heading); font-family: var(--lp-display); font-size: 1.35rem; font-weight: 800; line-height: 1.05; text-align: center; }
+.pf-note__date small { color: var(--lp-accent-text); }
+.pf-note h3 { font-size: 1.2rem; font-weight: 800; line-height: 1.25; color: var(--lp-heading) !important; }
+.pf-note time { font-size: .9rem; color: var(--lp-muted); }
+.pf-note .pf-more { margin-top: .2rem; }
+@media (max-width: 479.98px) {
+  .pf-news { padding: 0 1.1rem !important; }
+  .pf-note { grid-template-columns: 1fr; }
+  .pf-note__date { grid-row: auto; display: inline-flex; gap: .35rem; width: auto; padding: .2rem .6rem; font-size: .95rem; justify-self: start; }
+  .pf-note__date small { display: inline; }
+}
+
+/* --- Available services: equal cards --------------------------------------- */
+
+.pf-note-box { margin-bottom: 1rem !important; padding: .85rem 1.1rem; border-radius: 16px; background: var(--lp-tint); color: var(--lp-text); }
+.pf-note-box a { font-weight: 700; color: var(--lp-heading); text-decoration: underline; }
+.pf-services { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 1.1rem; }
+.pf-services > li { display: flex; }
+.pf-service { display: flex; flex: 1; flex-direction: column; gap: .55rem; padding: 1.4rem 1.3rem 1.3rem; border-radius: 20px; background: var(--lp-surface); box-shadow: var(--lp-card-shadow); transition: transform .25s ease, box-shadow .25s ease; }
+.pf-service:hover { transform: translateY(-4px); box-shadow: var(--lp-card-shadow-hover); }
+.pf-service__icon { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: .35rem; border-radius: 50%; background: var(--lp-tint); color: var(--lp-heading); font-size: 1.45rem; box-shadow: 0 0 0 6px var(--lp-ring); }
+.pf-service h3 { font-size: 1.25rem; font-weight: 800; color: var(--lp-heading) !important; }
+.pf-service p { flex: 1; color: var(--lp-muted); font-size: 1rem; }
+.pf-service__meta { font-size: .9rem; font-weight: 600; color: var(--lp-accent-text); }
+.pf-service .lp-btn { width: 100%; margin-top: .6rem; }
+
+/* --- Empty states and footer ----------------------------------------------- */
+
+.pf-empty { display: grid; justify-items: center; gap: .6rem; padding: 2.5rem 1.5rem; border-radius: 20px; background: var(--lp-surface); box-shadow: var(--lp-card-shadow); text-align: center; }
+.pf-empty__mark { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--lp-green); color: var(--lp-gold); font-size: 1.7rem; }
+.pf-empty strong { font-family: var(--lp-display); font-size: 1.2rem; color: var(--lp-heading); }
+.pf-empty p { color: var(--lp-muted); }
+.pf-footer { padding-block: 1.3rem; background: var(--lp-green-deep); color: var(--lp-on-green-muted); font-size: .95rem; text-align: center; }
+.pf-footer strong { font-family: var(--lp-display); letter-spacing: .06em; color: var(--lp-gold); }
+
+@media (prefers-reduced-motion: reduce) {
+  .chord-profile *, .chord-profile *::before, .chord-profile *::after { transition: none !important; }
+}

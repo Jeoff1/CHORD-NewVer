@@ -2,6 +2,365 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Registration steps reordered; the day's account changes committed (branch `joy-ui-ux-v2`)
+
+- **Why:** the owner reordered the registration wizard to Church, Profile,
+  Account, Review, with nothing inside a step changed, and asked to commit
+  it with the pending changes listed below: the personal sign-up page
+  removed, the account step's names, and email sign-in.
+- **Changed:** `church/register.html` (the steps' order, the stepper and the
+  review's Edit targets), `register.js` (step names and checks by step),
+  `RegisterChurchView.start_step` (the first step with an error in the new
+  order); tests and the vault notes to match.
+- **Checked:**
+  - **Migration:** `0011_user_middle_name_suffix` applied to the dev
+    database (it only adds two blank columns; 5 accounts kept), undone and
+    applied again cleanly.
+  - **Browser** (headless Edge, `manage.py testserver`, light and dark at
+    1440, 834 and 390 px; no sideways scrolling):
+    - The wizard opens on Church information, with the stepper reading
+      Church, Profile, Account, Review.
+    - An empty church name is refused. Profile, then Account (an empty Next
+      asks for the names, email and password), then the review with the
+      full name.
+    - Edit Account opens step 3 with the typed name kept. Complete reaches
+      setup.
+    - A second registration with the same email in capitals comes back on
+      step 3 with "An account already uses this email".
+    - A wrong password shows the error box. The email in capitals signs
+      in.
+    - `/accounts/signup/` lands on the wizard.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed before
+  committing; results in the commit report.
+
+## 2026-11-27: The account step's names, and signing in with an email (branch `joy-ui-ux-v2`)
+
+- **Why:** the owner asked for First and Last name on one line, Middle name
+  and Suffix (optional) below, and no username. Asked first and approved:
+  two new account fields (a migration) and signing in with the email
+  ([[Design-Decisions]], "The account step: names, and signing in with an
+  email").
+- **Changed:**
+  - `accounts.User` gets `middle_name` and `suffix` (migration `0011`).
+  - `SignUpForm` asks for no username: the email must be unique, the
+    username is made from it (`username_from_email`), and first and last
+    name are needed. `ProfileForm` gets the two new fields.
+  - `ChurchRoleBackend.authenticate` accepts an email, and
+    `EmailOrUsernameAuthenticationForm` labels the sign-in field "Email or
+    username".
+  - The wizard's step 1 has the new layout (`.au-names`, every width). Its
+    script checks the names, not a username, and the review shows the full
+    name. The signed-in card shows the username only when it isn't the
+    email.
+- **Checked in a browser** (headless Edge, `manage.py testserver`, light
+  and dark at 1440, 834, 390 and 360 px):
+  - First and Last name share a row at every width, with Middle name
+    (two-thirds) and Suffix (one third) below.
+  - There is no username field and no sideways scrolling.
+  - An empty Next asks for the first name, last name, email and password.
+  - A real registration with a middle name and suffix showed "Daniel Cruz
+    Reyes Jr." in the review and reached setup.
+  - Signing in with the email in capitals worked.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1329 tests OK, 97%
+  coverage.
+
+## 2026-11-27: Sign up is registering a church (branch `joy-ui-ux-v2`)
+
+- **Why:** the owner removed the separate personal sign-up page: church
+  registration is CHORD's sign-up, and the account is made in its first
+  step ([[Design-Decisions]], "Sign up is registering a church"). Asked
+  first: outsiders can no longer make an account just to request an
+  occasion; the owner plans a no-account request form for later.
+- **Changed:**
+  - `SignUpView` became `SignUpRedirectView`: `/accounts/signup/` (still
+    `accounts:signup`) redirects to `/churches/register/` with its query
+    string. `accounts/signup.html` is deleted. `SignUpForm` stays, since
+    the wizard's first step uses it.
+  - The landing page's three Sign up links open registering. The wizard's
+    side panel offers "Already have an account? Sign in" in place of
+    "Create a personal account".
+  - CSS only the old page used (`.au-choice`, `.au-col--wide`,
+    `.au-names`) was removed; comments were renamed to "The sign-in page".
+  - The sign-in page itself is unchanged.
+- **Tests:** `test_signup_page.py` was rewritten for the redirect and the
+  account step's validation (moved from the old page). The old
+  `CreateAnAccountTests` were removed: no page makes a church-less account
+  any more. The landing, wizard and denomination-free tests were updated.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1324 tests OK, 97%
+  coverage.
+
+## 2026-11-27: Full-page sign-in and sign-up, and the church registration wizard (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner approved a second mockup of the three pages:
+  full-page sign-in and sign-up, and registering a church as a four-step
+  wizard ([[Design-Decisions]], "Authentication pages and the registration
+  wizard"). Asked before building: the banner needs a new field (left
+  out, so no database change), and optional details while registering
+  amend [[0014-church-platform]] (approved; updated with Design-Decisions
+  and the workflow spec).
+- **Built:**
+  - **Sign in and Create your account:** `auth_base.html`, `login.html`,
+    `signup.html` and `auth.css` rewritten as a full-page split: the
+    photograph fills the left half, the form centred on the right; no
+    toggle; Show / Hide words; green pill buttons; Back to Home as an
+    outlined pill ("Home" on the photo on phones). Sign in's "Sign up"
+    opens Register your church. The personal sign-up is "Create your
+    account" with its own photo words and a Register your church box
+    (`SignUpView` wording only).
+  - **Register your church:** `church/register.html` (one form in four
+    steps, with `includes/register_step.html`), `static/css/register.css`
+    and `church/static/church/register.js` (the steps, a check per step,
+    the logo preview, the review), with `auth.js` for Show / Hide, the
+    checklist and the busy button.
+  - **Backend, no migration:**
+    - `ChurchRegistrationForm` is now a ModelForm with the name required
+      and address, phone, email, logo, about and Public visibility
+      optional. It never offers the model's default name "My Church",
+      which the browser check caught.
+    - `register_church(..., details=)` saves them in the same
+      transaction.
+    - `RegisterChurchView` takes files, reopens the first step with an
+      error, and asks for a chosen logo again after a correction. A
+      per-page token stops the same form making a second church.
+- **Checked in a browser** (headless Edge through DevTools, against
+  `manage.py testserver`, a throwaway database; light and dark at 1440,
+  1280, 834, 390 and 360 px, all three pages):
+  - **Layout:** no sideways scrolling, and every control at least 44 px
+    (the Show buttons were 40 px, and a step's slide-in pushed the phone
+    page wider; both fixed).
+  - **The wizard as a visitor:**
+    - An empty Next shows three errors and focuses the username.
+    - The checklist ticks as the password is typed.
+    - Enter moves to the next step without sending.
+    - Step 2 refuses an empty name.
+    - The description count works.
+    - The review lists everything, with Not public.
+    - Edit returns with what was typed, and the stepper reopens the
+      review.
+    - Complete shows "Registering…", disabled, and a second submit is
+      cancelled. It lands on the setup wizard of the new church.
+  - **Afterwards:** opening the page again shows the signed-in account
+    card. Signing in with a wrong password shows the error box (username
+    kept, password empty); the right one goes in.
+  - **A taken username sent through the form:** comes back on step 1
+    with Django's message.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1328 tests OK (19 new
+  in `test_register_wizard.py`; the sign-in, sign-up and registration
+  tests updated for the approved wording), 97% coverage.
+
+## 2026-11-27: Sign-in page redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner asked for Sign in to match the redesigned
+  sign-up page; an interactive mockup first (normal, loading and
+  invalid-credentials states), then approved with its recommendations
+  ([[Design-Decisions]], "Sign-in page redesign").
+- **Built:** one shared layout, `accounts/auth_base.html`, which
+  `login.html` and `signup.html` now extend; `signup_field.html` became
+  `auth_field.html` and `signup.js` became `auth.js` (both pages), with the
+  new `auth_submit.html` (the gold button) and the `alert-circle` icon.
+  - **Sign in:** "Welcome Back" and "Sign in to continue to CHORD",
+    Username and Password with icons and the eye button, Forgot your
+    password? under the password field, the gold Sign In button, "Don't
+    have an account? Sign up" and "Register your church" (it read "sign in
+    your church").
+  - **Both pages:** the form's errors in a box with an icon; a busy button
+    (spinner, "Signing in…" / "Creating account…", disabled so a second
+    press does nothing, usable again after Back); a fade between the two
+    pages through `@view-transition`, the photo held still, none with
+    reduced motion; one card size, at least 990 px above 720 px (the
+    sign-up form measured 969 to 990 px with the real fonts), so switching
+    never moves the photo.
+  - **Unchanged:** Django's `LoginView`, `AuthenticationForm`, CSRF, `next`
+    and the redirects; no model change or migration. `SignUpView` only
+    lost a comment's old section name.
+- **Checked in a browser** (headless Edge through DevTools, against
+  `runserver`, light and dark at 1440, 1280, 834, 390 and 360 px):
+  - **Layout:** no sideways scrolling, and every control at least 44 px.
+    Both cards are 990 px tall from 720 to 1440 px, and phones stack as on
+    sign-up.
+  - **Interactions:** the eye button switches the type, label and
+    `aria-pressed`; the gold focus ring shows. Pressing Sign In disables
+    the button and shows "Signing in…" and the spinner, a second submit is
+    cancelled, and a shown password is hidden before sending.
+  - **A real wrong password:** comes back with Django's message in the
+    `role="alert"` box, the username kept and the password empty, with no
+    overflow on phone, tablet or desktop.
+  - **Links and redirects:** Forgot your password? opens Reset your
+    password, and the Sign Up tab opens sign-up at the same card size. A
+    real sign-in with `?next=/accounts/profile/` lands there; visiting
+    sign-in while signed in goes home; a plain sign-in goes home.
+  - **The throwaway account** used for the check was deleted afterwards,
+    with its sign-in records.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1309 tests OK (13 new
+  in `test_signin_page.py`), 97% coverage.
+
+## 2026-11-27: Sign-up page redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned Create an account as a split-screen
+  page after their reference: an interactive mockup first (v2 after
+  review: a freely licensed photo instead of the owner's own, which showed
+  a face; a compact centred form; a short checklist), then approved with
+  the photo, the `#6E8A83` outlines, the `arrow-left` icon and the shorter
+  username hint.
+- **Built:** `accounts/signup.html` (standalone: the photo panel with the
+  gold logo, "Bringing Worship Together" and the tagline; Back to Home;
+  the Sign Up / Sign In toggle; the fields with icons, help, errors and
+  show-password buttons; the password checklist; the gold Create Account
+  button; "Already have an account? Sign in"),
+  `accounts/includes/signup_field.html`, `static/css/auth.css` (every
+  rule under `.au`), `accounts/static/accounts/signup.js` (show or hide,
+  the checklist, the match line); the photo
+  `images/landing/signup-worship.webp`, `.jpg` (1600 px) and `-800.webp`,
+  recorded in `SOURCES.md` (Austin Neill, CC0; cropped, face softened);
+  the `arrow-left` icon. `SignUpView` only names the template and the
+  button "Create Account"; `SignUpForm` changes wording only (the username
+  hint, "Confirm password", "Enter the same password again."), so the
+  church registration page's account fields read the same. Same fields,
+  CSRF, Django validators and redirect; no model change or migration.
+- **Checked in a browser** (headless Edge through DevTools, as a signed-out
+  visitor, light and dark at 1440, 1280, 834, 390 and 360 px): no
+  sideways scrolling; the photo left (48%, 42% on tablet) with the logo at
+  the top and the words at the bottom; the form column 420 px; on phones
+  the banner and Back to Home above the form; every control at least
+  44 px. Typing ticked the checklist (numbers only, too like the
+  username, then all three), the match line changed, the eye button showed
+  and hid the password with its label and `aria-pressed`, the focus ring
+  showed; a real POST with mismatched passwords came back with the error,
+  the name kept and the passwords empty. Fixed on the way: the logo sat
+  halfway down the photo (the `<picture>` was in the column) and its link
+  was 38 px tall on phones.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1296 tests OK (14 new
+  in `apps/accounts/tests/test_signup_page.py`), 97% coverage. Committed
+  and pushed to `origin/joy-ui-ux-v2` with the owner's permission; not
+  merged into `master` and no pull request.
+
+## 2026-11-27: Church profile redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned each church's public page as a
+  modern organisation profile, a public website for each listed church:
+  an interactive mockup first, then the owner's public-access rules and
+  choices (upcoming services in the sidebar, the website shown, no
+  announcement images, one service icon, the latest five announcements).
+- **Built:** `church/homepage.html` (standalone: the landing nav and gold
+  logo, Back to Churches, the cover banner and overlapping logo, the
+  sidebar with name, About, contact and upcoming services, the tabs, a
+  "Powered by CHORD" footer); the three Modules' section templates
+  restyled; `static/css/profile.css` and `church/static/church/profile.js`
+  (tabs, Read more); icons `map-pin`, `phone`, `mail`, `globe`.
+- **Sections:** `homepage.Section` gains `slot`, `label`, `count` and
+  `icon`, so each Module says where its section goes (Worship: the
+  sidebar; Announcements and Occasions: tabs) and Church Setup still
+  imports none of them. The Announcements section now shows while its
+  Module is on even with none, with a note. Same view, route and
+  `public_churches()` rule; no model change or migration.
+- **Checked in a browser** as a signed-out visitor (Edge, DevTools device
+  emulation, 1280, 820, 390 and 360 px, light and dark): the page opens
+  without signing in, the tabs switch by click and arrow keys, one section
+  shows at a time, nothing is wider than the screen. Fixed: on phones
+  "Available services" wrapped inside its tab; tab icons now drop below
+  480 px.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1282 tests OK, 97%
+  coverage. Committed and pushed to `origin/joy-ui-ux-v2` with the
+  owner's permission; not merged into `master` and no pull request.
+
+## 2026-11-27: Church directory redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned the public Church Directory that
+  the landing page links ("Churches", "Explore churches", "Explore all
+  churches"): an interactive mockup first (v2 after review: no overlay,
+  the search stays in place, "Search results for" with Back to all
+  churches), then the owner's choices: the showcase's rule, newest first
+  with A to Z and Z to A, logos only, the same page for signed-in people.
+- **Built:** `church/directory.html` (standalone: the landing nav and gold
+  logo, Back to Home, "Discover Churches", the search, the results, a slim
+  footer), `includes/directory_results.html` (the HTMX answer),
+  `includes/directory_suggestions.html`; `static/css/directory.css` and
+  `church/static/church/directory.js`; a new `x` icon.
+- **Views:** `listed_churches()` (public and finished setup) now serves the
+  showcase and the Directory; `DirectoryView` sorts (`?sort=`), 24 to a
+  page, and answers HTMX with the results only; `ChurchSuggestView` at
+  `/churches/suggest/` (up to six, names first, the match marked
+  server-side); "suggest" added to `RESERVED_SLUGS`. No model change or
+  migration.
+- **Checked in a browser** (Edge, DevTools device emulation, light and
+  dark, 1280, 820 and 390 px): suggestions arrive and are marked, the
+  arrow keys and Escape work, searching updates only the results and the
+  address (`?q=`), Back to all churches empties the field and restores
+  the list, the sort updates the address, the empty state shows, nothing
+  is wider than the screen, Back to Home stays visible. Found and fixed:
+  marking the match in the browser after HTMX settled was unreliable, so
+  the server marks it.
+- **Fixed after the owner's review:** the placeholder cards showed all the
+  time, below the real cards: they share `.dir-grid`, whose
+  `display: grid` came later in `directory.css` and beat their
+  `display: none`. The hiding rule is now the more specific one, and a test
+  guards it. The footer's "Back to Home" link was removed at the owner's
+  request (the nav keeps it).
+- **Before committing:** the full `scripts/check.ps1` passed on the final
+  code (1274 tests OK, 97% coverage). Committed and pushed to
+  `origin/joy-ui-ux-v2` with the owner's permission; not merged into
+  `master` and no pull request.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1273 tests OK, 97%
+  coverage. One test was first fixed: it looked for a suggested name as
+  plain text, which the marked match now splits.
+
+## 2026-11-27: Landing page redesign (Phase 9A, A7; branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner redesigned the public landing page: a warm,
+  modern church-website look in the approved palette and fonts, matching
+  Phase 9C. Designed as an interactive mockup first; approved by the UI/UX
+  owner on 2026-11-27, **subject to the lead developer's approval** (the
+  A7 rule). Not committed yet: the owner reviews it locally first.
+- **Built:** `church/landing.html` rewritten (nav with Sign in and Sign up,
+  hero with photograph, How it works with the Phase 9C steps, Features,
+  Rehearsal, Who it's for, United in Worship, call to action with Sign up,
+  footer, loading intro); its own `static/css/landing.css` and
+  `church/static/church/landing.js`; the old `.chord-landing*` styles
+  removed from `chord.css`. Logo include `church/includes/landing_logo.html`.
+- **United in Worship:** `views.showcase_churches()`: up to 12 public
+  churches that finished setup, newest first; name, address and logo only;
+  no new field or migration.
+- **Assets** in `static/images/landing/`: the owner's logo (unchanged,
+  transparent; trimmed and resized: 37 KB WebP, PNG fallback); two CC0
+  photos (StockSnap "Concert Stage", rawpixel guitar close-up; licences
+  checked on Openverse), 960 and 1024 px, 14 and 36 KB as WebP, with JPEG
+  fallbacks; `SOURCES.md` records sources, licences and edits.
+- **Approved exceptions and changes recorded:** the intro's 0.8 s minimum;
+  photography as a new asset; the landing page now names public churches;
+  no "Register your church" link on it ([[Design-Decisions]], A7,
+  "Landing page redesign"; [[Design-System]], "The landing page").
+- **Logo on green (owner's choice, same day):** the owner asked for the
+  logo transparent, with no plate. On green the deep-green letters
+  vanished, so the owner chose a colour-swapped copy for green grounds:
+  `chord-logo-gold.*`, the same pixels and transparency with deep green
+  and gold exchanged (33 KB WebP). The original stays on the gold call to
+  action.
+- **Before committing:** the full `scripts/check.ps1` passed again on the
+  final code (1261 tests OK, 97% coverage). Committed and pushed to
+  `origin/joy-ui-ux-v2` with the owner's permission; not merged into
+  `master` and no pull request yet (waiting for the lead developer).
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1261 tests OK, 97%
+  coverage. New tests in `apps/church/tests/test_landing.py`
+  (`LandingRedesignTests`, `ChurchShowcaseTests`).
+- **Mobile pass (same day):** the page was rendered in Edge with DevTools
+  device emulation at 320, 360, 390, 768, 820 and 1280 px, light and
+  dark. Nothing is wider than the screen at any width. Fixed: with the
+  carousel arrows hidden, the church row fell into the narrow arrow column
+  (each part now has its own grid column); the hero headline and section
+  headings are a little smaller below 420 px; the chord sheet's text is
+  smaller there so it fits from 360 px (at 320 px it scrolls inside its
+  own box). The intro was checked on a phone: it leaves within 3.5 s and
+  doesn't return in the same session. `check.ps1 -Quick` passed after the
+  fixes (1261 tests OK).
+
 ## 2026-11-27: Main scripture: browse the Bible
 
 - **Owner's request:** clicking the Main scripture field shows every book

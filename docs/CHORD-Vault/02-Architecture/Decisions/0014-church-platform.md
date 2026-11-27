@@ -13,8 +13,15 @@ Platform" brief, Option B, presentation version); the full design is
 [[Phase-9B-Plan]].
 
 The core rule still holds ([[0001-configure-behavior-not-identity]]): a
-church registers with its name only, never its denomination, and every
+church needs only its name to register, never its denomination, and every
 difference between churches stays a setting the church edits.
+
+**Amended 2026-11-27 (owner, with the registration wizard):** the name is
+still the only thing registering needs. While registering, the person may
+also give the church's address, contact number, email, logo, description
+and whether it is public, all optional and all editable later in the
+church settings ([[Design-Decisions]], "Authentication pages and the
+registration wizard").
 
 ## How it works
 

@@ -55,6 +55,7 @@ RESERVED_SLUGS = frozenset(
         "settings",
         "signup",
         "static",
+        "suggest",
         "media",
         "switch",
     }

@@ -8,6 +8,22 @@ development task.
 
 ## Current status
 
+**Landing page redesign (A7), 2026-11-27, on branch `joy-ui-ux-v2`:**
+committed and pushed (`ee4fc60`), waiting for the lead developer's
+approval before it is merged ([[Design-System]], "The landing page").
+**Church directory redesign**, **church profile redesign**, the
+**sign-in page** (now full-page) and the **church registration
+wizard**, the same day and branch: committed and pushed, waiting for the
+lead developer's approval before they are merged ([[Design-System]], "The
+church directory", "The church profile", "The sign-in page" and
+"Registering a church";
+[[Development-Log]]). Registering now takes optional details too
+([[0014-church-platform]], amended 27 Nov), and is CHORD's only sign-up:
+the personal sign-up page is gone and its address redirects there.
+Its steps run Church, Profile, Account, Review; the account asks a full
+name (middle name and suffix optional) and no username, and people sign
+in with their email or username.
+
 **Phase 9C (guided service planning), the top priority (owner,
 2026-11-26), is done and merged into `master` (2026-11-26) after the
 owner's [[Phase-9C-Click-Through]] passed.** Planning a service now

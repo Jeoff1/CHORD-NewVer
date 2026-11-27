@@ -14,11 +14,19 @@ _sections = []
 
 @dataclass
 class Section:
-    """One part of the homepage: a template and what it needs."""
+    """One part of the homepage: a template and what it needs, and where it
+    goes on the profile (redesign, 27 Nov 2026): ``"tab"`` is a tab beside
+    the others in the main area, with its ``label``, ``count`` and ``icon``
+    (an icon name from ``templates/includes/icons/``); ``"side"`` sits in the
+    information sidebar."""
 
     template: str
     context: dict = field(default_factory=dict)
     order: int = 0
+    slot: str = "tab"
+    label: str = ""
+    count: int | None = None
+    icon: str = ""
 
 
 def register(section):

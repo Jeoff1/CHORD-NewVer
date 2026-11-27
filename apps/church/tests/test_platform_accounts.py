@@ -29,7 +29,6 @@ from apps.core.testing import (
 from apps.teams.rostering import teams_church
 
 REGISTER = reverse("churches:register")
-SIGNUP = reverse("accounts:signup")
 USERS = reverse("accounts:user_list")
 ADD_EXISTING = reverse("accounts:user_add_existing")
 ACCOUNT = {
@@ -74,8 +73,17 @@ class RegisterChurchTests(TestCase):
     def setUp(self):
         complete_setup()
 
-    def test_the_form_asks_only_the_churchs_name(self):
-        self.assertEqual(list(ChurchRegistrationForm().fields), ["name"])
+    def test_only_the_churchs_name_is_needed(self):
+        # The details and public profile are optional (owner, 27 Nov 2026).
+        form = ChurchRegistrationForm()
+        self.assertEqual(
+            list(form.fields),
+            ["name", "address", "phone", "email", "logo", "about", "show_in_directory"],
+        )
+        self.assertEqual(
+            [name for name, field in form.fields.items() if field.required], ["name"]
+        )
+        self.assertFalse(ChurchRegistrationForm({}, prefix="church").is_valid())
 
     def test_a_visitor_registers_a_church_and_their_account(self):
         response = self.client.post(
@@ -90,7 +98,7 @@ class RegisterChurchTests(TestCase):
         self.assertEqual(church.slug, "grace-chapel")
         self.assertFalse(church.members_teams_unlocked)
         user = church.memberships.get().user
-        self.assertEqual(user.username, "ruth.ann")
+        self.assertEqual(user.username, "ruth@example.com")
         self.assertEqual([r.key for r in user.roles_in(church)], ["administrator"])
         self.assertEqual(self.client.session[SESSION_KEY], church.pk)
         self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
@@ -117,7 +125,9 @@ class RegisterChurchTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ChurchProfile.objects.count(), before)
-        self.assertFalse(Membership.objects.filter(user__username="ruth.ann").exists())
+        self.assertFalse(
+            Membership.objects.filter(user__email="ruth@example.com").exists()
+        )
 
     def test_a_failure_midway_leaves_nothing_behind(self):
         def fails(church):
@@ -135,7 +145,9 @@ class RegisterChurchTests(TestCase):
             with self.assertRaisesMessage(RuntimeError, "halfway"):
                 register_church("Grace Chapel", account_form=form)
         self.assertFalse(ChurchProfile.objects.filter(name="Grace Chapel").exists())
-        self.assertFalse(get_user_model().objects.filter(username="ruth.ann").exists())
+        self.assertFalse(
+            get_user_model().objects.filter(email="ruth@example.com").exists()
+        )
         self.assertEqual(
             counts,
             {
@@ -153,20 +165,6 @@ def _signup_form():
     form = SignUpForm(ACCOUNT)
     assert form.is_valid(), form.errors
     return form
-
-
-class CreateAnAccountTests(TestCase):
-    def test_a_new_account_has_no_church_and_sees_its_home(self):
-        response = self.client.post(SIGNUP, ACCOUNT, follow=True)
-        self.assertTemplateUsed(response, "church/no_church.html")
-        self.assertContains(response, "ruth.ann")
-        user = response.context["user"]
-        self.assertFalse(user.memberships.exists())
-
-    def test_signed_in_people_go_home(self):
-        complete_setup()
-        self.client.force_login(make_user())
-        self.assertRedirects(self.client.get(SIGNUP), reverse("home"))
 
 
 class AddExistingAccountTests(TestCase):

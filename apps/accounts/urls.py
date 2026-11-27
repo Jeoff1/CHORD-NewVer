@@ -3,6 +3,7 @@ from django.urls import path, reverse_lazy
 from django.views.generic import TemplateView
 
 from . import views
+from .forms import EmailOrUsernameAuthenticationForm
 
 app_name = "accounts"
 
@@ -24,12 +25,15 @@ urlpatterns = [
     path(
         "login/",
         auth_views.LoginView.as_view(
-            template_name="accounts/login.html", redirect_authenticated_user=True
+            template_name="accounts/login.html",
+            authentication_form=EmailOrUsernameAuthenticationForm,
+            redirect_authenticated_user=True,
         ),
         name="login",
     ),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
-    path("signup/", views.SignUpView.as_view(), name="signup"),
+    # Signing up is registering a church; the old address goes there.
+    path("signup/", views.SignUpRedirectView.as_view(), name="signup"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("appearance/", views.AppearanceView.as_view(), name="appearance"),
     path(

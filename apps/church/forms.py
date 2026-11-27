@@ -150,18 +150,64 @@ SECTIONS = {
 SECTION_ORDER = list(SECTIONS)
 
 
-class ChurchRegistrationForm(forms.Form):
-    """Register a church: its name only (decisions 0001 and 0014).
-    Everything else is set up afterwards, as settings."""
+class ChurchRegistrationForm(forms.ModelForm):
+    """Register a church (decisions 0001 and 0014): its name, which is all it
+    needs, and, if the person likes, the details and public profile they
+    could otherwise set later in the settings (owner, 27 Nov 2026). Never
+    who the church is, only what it does (decision 0001)."""
 
-    name = forms.CharField(
-        label="Church name",
-        max_length=200,
-        help_text="As people know it. You can change it later.",
+    show_in_directory = forms.TypedChoiceField(
+        label="Public visibility",
+        choices=[("public", "Public"), ("private", "Not public")],
+        coerce=lambda value: value == "public",
+        empty_value=True,
+        required=False,
+        initial="public",
+        widget=forms.RadioSelect,
     )
+
+    class Meta:
+        model = ChurchProfile
+        fields = ["name", "address", "phone", "email", "logo", "about"]
+        labels = {
+            "name": "Church name",
+            "address": "Church address",
+            "phone": "Contact number",
+            "email": "Church email address",
+            "logo": "Church logo",
+            "about": "Church description",
+        }
+        help_texts = {
+            "name": "As people know it. You can change it later.",
+            "logo": "PNG, JPEG, GIF or WebP, 2 MB at most.",
+        }
+        widgets = {
+            "address": forms.Textarea(attrs={"rows": 3}),
+            "about": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A new church's model default ("My Church") is never offered as its name.
+        if not self.is_bound:
+            self.initial["name"] = ""
+        self.fields["name"].required = True
+        self.fields["about"].max_length = ABOUT_MAX_LENGTH
+        self.fields["about"].validators.append(MaxLengthValidator(ABOUT_MAX_LENGTH))
+        self.fields["about"].widget.attrs["maxlength"] = ABOUT_MAX_LENGTH
 
     def clean_name(self):
         name = self.cleaned_data["name"].strip()
         if not name:
             raise forms.ValidationError("Give the church's name.")
         return name
+
+    def clean_about(self):
+        return self.cleaned_data["about"].strip()
+
+    def details(self):
+        """Everything but the name, for ``register_church``."""
+        data = {k: v for k, v in self.cleaned_data.items() if k != "name"}
+        if not data.get("logo"):
+            data.pop("logo", None)
+        return data

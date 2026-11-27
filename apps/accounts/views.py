@@ -1,9 +1,8 @@
 from itertools import groupby
 
 from django.apps import apps as django_apps
-from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login, update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -19,6 +18,7 @@ from django.views.generic import (
     DeleteView,
     FormView,
     ListView,
+    RedirectView,
     TemplateView,
     UpdateView,
 )
@@ -33,7 +33,6 @@ from .forms import (
     AppearanceForm,
     ProfileForm,
     RoleForm,
-    SignUpForm,
     UserCreateForm,
     UserEditForm,
 )
@@ -603,29 +602,15 @@ class PermissionMatrixView(StaffMixin, TemplateView):
 # --- Accounts and churches (Phase 9B, decision 0014) ---------------------------
 
 
-class SignUpView(FormPageMixin, FormView):
-    """Create an account: the person's own, with no church yet."""
+class SignUpRedirectView(RedirectView):
+    """The old personal sign-up address (owner, 27 Nov 2026): signing up for
+    CHORD is registering a church, whose first step makes the person's
+    account (``SignUpForm``), so old links and bookmarks go there, keeping
+    any query string."""
 
-    form_class = SignUpForm
-    page_title = "Create an account"
-    intro = (
-        "Your account is yours. To plan worship, register your church, or ask "
-        "your church's administrator to add you by your username or email."
-    )
-    submit_label = "Create account"
-    cancel_url = reverse_lazy("home")
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            return redirect("home")
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        user = form.save()
-        record_change(user, user, AuditEvent.Action.CREATED, church=None)
-        login(self.request, user, backend=settings.AUTHENTICATION_BACKENDS[0])
-        messages.success(self.request, "Your account is ready.")
-        return redirect("home")
+    pattern_name = "churches:register"
+    query_string = True
+    permanent = False
 
 
 class AddExistingAccountView(StaffMixin, FormPageMixin, FormView):

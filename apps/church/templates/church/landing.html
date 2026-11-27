@@ -1,201 +1,348 @@
 {% load static %}<!doctype html>
-<html lang="en">
+<html lang="en" class="lp-html">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
-  {% comment %}The public front page: nobody is signed in, so the device chooses light or dark mode.{% endcomment %}
-  <script>(function () { var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", dark.matches ? "dark" : "light"); } apply(); dark.addEventListener("change", apply); })();</script>
+  {% comment %}
+    The public front page (redesigned 26-27 Nov 2026; Design-System.md, "Landing page").
+    Nobody is signed in, so the device chooses light or dark mode.
+    The loading intro: only on the first visit in a browser session (sessionStorage), never
+    without JavaScript or when storage is blocked. It stays at least 0.8 s (the owner's approved
+    exception; not with reduced motion), leaves when the page has loaded, and goes after 4 s at
+    most; landing.css also fades it out after 6 s whatever happens. The page loads underneath.
+  {% endcomment %}
+  <script>(function () { var root = document.documentElement; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { root.setAttribute("data-bs-theme", dark.matches ? "dark" : "light"); } apply(); dark.addEventListener("change", apply);
+    try { if (sessionStorage.getItem("chord-intro-seen")) return; sessionStorage.setItem("chord-intro-seen", "1"); } catch (e) { return; }
+    root.classList.add("is-intro"); var start = Date.now(), reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches, done = false;
+    function hide() { if (done) return; done = true; var intro = document.getElementById("lp-intro"); if (!intro) { root.classList.remove("is-intro"); return; } root.classList.add("intro-reveal"); intro.classList.add("is-leaving"); setTimeout(function () { root.classList.remove("is-intro"); }, 800); setTimeout(function () { root.classList.remove("intro-reveal"); }, 1500); }
+    function loaded() { setTimeout(hide, reduced ? 0 : Math.max(0, 800 - (Date.now() - start))); }
+    if (document.readyState === "complete") loaded(); else window.addEventListener("load", loaded); setTimeout(hide, 4000); })();</script>
   <title>Worship planning · {{ church.name|default:"CHORD" }}</title>
   <meta name="description" content="CHORD turns the theme of a {{ labels.worship_service|lower }} into a song {{ labels.lineup|lower }}, with chord sheets, keys and playback for the whole team.">
+  <link rel="preload" as="image" type="image/webp" href="{% static 'images/landing/chord-logo-gold.webp' %}">
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/chord.css' %}">
+  <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+  <script src="{% static 'church/landing.js' %}" defer></script>
 </head>
 <body class="chord-landing">
-  <a class="visually-hidden-focusable chord-landing__skip" href="#main">Skip to content</a>
+  {% comment %}The intro: decorative, so hidden from screen readers. The logo's gold copy, for the green ground.{% endcomment %}
+  <div class="lp-intro" id="lp-intro" aria-hidden="true">
+    <div class="lp-intro__inner">
+      <span class="lp-logo-plate lp-intro__plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span>
+      <span class="lp-intro__eq"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+      <p class="lp-intro__tag">Bringing worship together</p>
+      <span class="lp-intro__progress"><span></span></span>
+    </div>
+  </div>
 
-  <header class="chord-landing__hero">
-    <nav class="container chord-landing__nav" aria-label="Main">
-      <a class="chord-landing__brand" href="{% url 'home' %}">{% include "includes/icons/music-note.html" with size=22 %}CHORD</a>
-      <ul class="chord-landing__links">
+  <a class="visually-hidden-focusable lp-skip" href="#main">Skip to content</a>
+
+  <nav class="lp-nav" aria-label="Main" id="top">
+    <div class="lp-wrap lp-nav__row">
+      <a class="lp-brand" href="{% url 'home' %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      <ul class="lp-nav__links">
         <li><a href="#how-it-works">How it works</a></li>
         <li><a href="#features">Features</a></li>
         <li><a href="#rehearsal">Rehearsal</a></li>
         <li><a href="{% url 'churches:directory' %}">Churches</a></li>
       </ul>
-      <a class="chord-landing__btn chord-landing__btn--gold chord-landing__btn--small" href="{% url 'accounts:login' %}">Sign in</a>
-    </nav>
+      <div class="lp-nav__end">
+        <details class="lp-menu">
+          <summary>Menu {% include "includes/icons/chevron-down.html" %}</summary>
+          <ul class="lp-menu__panel">
+            <li><a href="#how-it-works">How it works</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#rehearsal">Rehearsal</a></li>
+            <li><a href="{% url 'churches:directory' %}">Churches</a></li>
+            <li class="lp-menu__auth"><a href="{% url 'accounts:login' %}">Sign in</a></li>
+          </ul>
+        </details>
+        <a class="lp-btn lp-btn--ghost lp-btn--small lp-nav__signin" href="{% url 'accounts:login' %}">Sign in</a>
+        <a class="lp-btn lp-btn--gold lp-btn--small" href="{% url 'churches:register' %}">Sign up</a>
+      </div>
+    </div>
+  </nav>
 
-    <div class="container">
-      <div class="row g-5 align-items-center">
-        <div class="col-lg-6">
-          <p class="chord-landing__eyebrow">Worship planning, in one place</p>
-          <h1 class="chord-landing__title">From a {{ labels.sermon|lower }}'s theme to the songs you sing.</h1>
-          <p class="chord-landing__lead">CHORD reads the theme of your {{ labels.worship_service|lower }} and suggests a song {{ labels.lineup|lower }} that fits it. Your {{ labels.pastor|lower }} reviews and confirms it, and the whole team rehearses from the same chord sheets, keys and playback.</p>
-          <div class="chord-landing__actions">
-            <a class="chord-landing__btn chord-landing__btn--gold" href="{% url 'churches:register' %}">Sign in your church</a>
-            <a class="chord-landing__btn chord-landing__btn--outline" href="#how-it-works">See how it works</a>
+  <header class="lp-hero">
+    {% comment %}The photograph fades into the green; decorative. Replace the files in static/images/landing/ to change it (see SOURCES.md there).{% endcomment %}
+    <div class="lp-hero__media" aria-hidden="true">
+      <picture>
+        <source type="image/webp" srcset="{% static 'images/landing/hero-worship.webp' %}">
+        <img src="{% static 'images/landing/hero-worship.jpg' %}" alt="" width="960" height="640" fetchpriority="high" decoding="async">
+      </picture>
+    </div>
+    <div class="lp-wrap lp-hero__inner">
+      <div>
+        <p class="lp-eyebrow">Worship planning, in one place</p>
+        <h1 class="lp-hero__title"><span>From a {{ labels.sermon|lower }}'s theme</span><span>to the songs</span><em>you sing.</em></h1>
+        <p class="lp-hero__lead">Plan each {{ labels.worship_service|lower }} in four steps. Build the song {{ labels.lineup|lower }} slot by slot, with songs that fit the theme suggested beside you. Your {{ labels.pastor|lower }} reviews and confirms it, and the whole team rehearses from the same chord sheets, keys and playback.</p>
+        <div class="lp-hero__actions">
+          <a class="lp-btn lp-btn--gold" href="{% url 'churches:directory' %}">Explore churches</a>
+          <a class="lp-btn lp-btn--outline" href="#how-it-works">See how it works {% include "includes/icons/chevron-down.html" %}</a>
+        </div>
+        <ul class="lp-pillars">
+          <li>{% include "includes/icons/document.html" %}<strong>Chord sheets</strong><small>In any key</small></li>
+          <li>{% include "includes/icons/play.html" %}<strong>Playback</strong><small>Beside every song</small></li>
+          <li>{% include "includes/icons/gear.html" %}<strong>Your wording</strong><small>Set by your church</small></li>
+        </ul>
+      </div>
+
+      {% comment %}An example lineup: public-domain hymns only (AGENTS.md). Light inside in both modes.{% endcomment %}
+      <figure class="lp-lineup" aria-label="An example {{ labels.lineup|lower }}">
+        <div class="lp-lineup__head">
+          <div>
+            <p class="lp-lineup__kicker">{{ labels.worship_service }} · Example</p>
+            <p class="lp-lineup__title">Grace that forgives</p>
+            <p class="lp-lineup__meta">Ephesians 2:8–9</p>
+          </div>
+          <span class="lp-pill-ok">{% include "includes/icons/check-circle.html" with size=16 %}Confirmed</span>
+        </div>
+        <ol class="lp-steps-mini" aria-label="Planning steps, all done">
+          <li>Theme</li><li>{{ labels.team }}</li><li>Song {{ labels.lineup }}</li><li>Confirm</li>
+        </ol>
+        <ol class="lp-songs">
+          <li><span class="lp-slot">Opening</span><span class="lp-song">Holy, Holy, Holy</span><span class="lp-key" aria-label="Key of D">D</span></li>
+          <li><span class="lp-slot">Praise</span><span class="lp-song">Come Thou Fount</span><span class="lp-key" aria-label="Key of G">G</span></li>
+          <li><span class="lp-slot">Worship</span><span class="lp-song">Amazing Grace</span><span class="lp-key" aria-label="Key of G">G</span></li>
+          <li><span class="lp-slot">Response</span><span class="lp-song">It Is Well with My Soul</span><span class="lp-key" aria-label="Key of C">C</span></li>
+        </ol>
+        <div class="lp-playlist">
+          <span class="lp-playlist__btn" aria-hidden="true">{% include "includes/icons/play.html" with size=16 %}</span>
+          <div class="flex-grow-1">
+            <p>Playlist saved on Spotify <small>· 4 songs</small></p>
+            <span class="lp-bar" aria-hidden="true"><span style="width: 38%"></span></span>
           </div>
         </div>
-
-        <div class="col-lg-6">
-          {% comment %}An example lineup: public-domain hymns only (AGENTS.md). Light inside in both modes, so it reads as a card on the green.{% endcomment %}
-          <figure class="chord-landing__lineup" data-bs-theme="light" aria-label="An example {{ labels.lineup|lower }}">
-            <div class="chord-landing__lineup-head">
-              <div>
-                <p class="chord-landing__kicker">{{ labels.worship_service }} · Example</p>
-                <p class="chord-landing__lineup-title">Grace that forgives</p>
-                <p class="chord-landing__lineup-meta">Ephesians 2:8 · 4 songs suggested from the theme</p>
-              </div>
-              <span class="chord-pill chord-pill--success">Confirmed</span>
-            </div>
-            <ol class="chord-landing__songs">
-              <li><span class="chord-landing__slot">Opening</span><span class="chord-landing__song">Holy, Holy, Holy</span><span class="chord-landing__key" aria-label="Key of D">D</span></li>
-              <li><span class="chord-landing__slot">Praise</span><span class="chord-landing__song">Come Thou Fount</span><span class="chord-landing__key" aria-label="Key of G">G</span></li>
-              <li><span class="chord-landing__slot">Worship</span><span class="chord-landing__song">Amazing Grace</span><span class="chord-landing__key" aria-label="Key of G">G</span></li>
-              <li><span class="chord-landing__slot">Response</span><span class="chord-landing__song">It Is Well with My Soul</span><span class="chord-landing__key" aria-label="Key of C">C</span></li>
-            </ol>
-            <div class="chord-landing__playlist">
-              <span class="chord-landing__play" aria-hidden="true">{% include "includes/icons/play.html" with size=16 %}</span>
-              <div class="flex-grow-1">
-                <p class="mb-1">Playlist saved on Spotify</p>
-                <span class="chord-landing__bar" aria-hidden="true"><span style="width: 38%"></span></span>
-              </div>
-            </div>
-          </figure>
-        </div>
-      </div>
+      </figure>
     </div>
   </header>
 
   <main id="main">
-    <section class="chord-landing__section" id="how-it-works" aria-labelledby="how-title">
-      <div class="container">
-        <p class="chord-eyebrow">How it works</p>
-        <h2 class="chord-landing__h2" id="how-title">Four steps from a theme to a confirmed {{ labels.lineup|lower }}.</h2>
-        <ol class="chord-landing__steps">
-          <li class="chord-landing__step">
-            <span class="chord-landing__num" aria-hidden="true">1</span>
-            <h3>Post the theme</h3>
-            <p>The {{ labels.pastor|lower }} writes the {{ labels.worship_service|lower }}'s theme and Bible passage, with an optional {{ labels.sermon|lower }} series.</p>
+    <section class="lp-band lp-how" id="how-it-works" aria-labelledby="how-title">
+      <div class="lp-wrap">
+        <div class="lp-head">
+          <p class="lp-eyebrow">How it works</p>
+          <h2 class="lp-h2" id="how-title">Four steps from a theme to a confirmed {{ labels.lineup|lower }}.</h2>
+          <span class="lp-rule" aria-hidden="true"></span>
+          <p class="lp-lede">The {{ labels.worship_service|lower }} page walks the people who plan through each step, and tells them what to do next.</p>
+        </div>
+        {% comment %}The Phase 9C steps (decision 0015): Theme, Praise Team, Song Lineup, Confirm.{% endcomment %}
+        <ol class="lp-timeline">
+          <li class="lp-step">
+            <span class="lp-step__num" aria-hidden="true">1</span>
+            <h3 class="lp-step__title">{% include "includes/icons/document.html" %}Theme</h3>
+            <p>The {{ labels.pastor|lower }} posts the theme and the main scripture. Passages are suggested from a stored Bible as you type, and the {{ labels.sermon|lower }} can be attached as a PDF.</p>
           </li>
-          <li class="chord-landing__step">
-            <span class="chord-landing__num" aria-hidden="true">2</span>
-            <h3>Get suggestions</h3>
-            <p>CHORD compares the theme with each song's lyrics and your church's own tags, and ranks the songs that fit.</p>
+          <li class="lp-step">
+            <span class="lp-step__num" aria-hidden="true">2</span>
+            <h3 class="lp-step__title">{% include "includes/icons/people.html" %}{{ labels.team }}</h3>
+            <span class="lp-chip">Optional</span>
+            <p>Assign who serves that day. Skip it and go straight to the songs.</p>
           </li>
-          <li class="chord-landing__step">
-            <span class="chord-landing__num" aria-hidden="true">3</span>
-            <h3>Review and confirm</h3>
-            <p>The worship leader shapes the {{ labels.lineup|lower }}: lock, swap, set keys. The {{ labels.pastor|lower }} has the final word and confirms it.</p>
+          <li class="lp-step">
+            <span class="lp-step__num" aria-hidden="true">3</span>
+            <h3 class="lp-step__title">{% include "includes/icons/music-note.html" %}Song {{ labels.lineup }}</h3>
+            <p>Add the songs you have in mind, slot by slot, with songs that fit the theme suggested beside them. Swap, lock, reorder and set keys on the same page.</p>
           </li>
-          <li class="chord-landing__step">
-            <span class="chord-landing__num chord-landing__num--gold" aria-hidden="true">4</span>
-            <h3>Rehearse together</h3>
-            <p>The team sees the confirmed {{ labels.lineup|lower }} with chord sheets in each person's key, and a Spotify playlist to practise with.</p>
+          <li class="lp-step">
+            <span class="lp-step__num lp-step__num--gold" aria-hidden="true">4</span>
+            <h3 class="lp-step__title">{% include "includes/icons/check-circle.html" %}Confirm</h3>
+            <p>Check the rundown of theme, team and songs, then confirm. The {{ labels.pastor|lower }} has the final say, and the team sees the {{ labels.lineup|lower }} once it's confirmed.</p>
           </li>
         </ol>
+        <div class="lp-then"><a href="#rehearsal">Then the team rehearses {% include "includes/icons/chevron-down.html" %}</a></div>
       </div>
     </section>
 
-    <section class="chord-landing__section pt-0" id="features" aria-labelledby="features-title">
-      <div class="container">
-        <p class="chord-eyebrow">Features</p>
-        <h2 class="chord-landing__h2" id="features-title">Everything the worship team needs, nothing it doesn't.</h2>
+    <section class="lp-band lp-features-band" id="features" aria-labelledby="features-title">
+      <div class="lp-wrap">
+        <div class="lp-head">
+          <p class="lp-eyebrow">Features</p>
+          <h2 class="lp-h2" id="features-title">Everything the worship team needs, nothing it doesn't.</h2>
+          <span class="lp-rule" aria-hidden="true"></span>
+        </div>
         {% comment %}Only switched-on Modules are offered (AGENTS.md: a switched-off Module is hidden).{% endcomment %}
-        <ul class="chord-landing__features">
-          <li>
-            <span class="chord-landing__icon">{% include "includes/icons/document.html" %}</span>
-            <div><h3>Chord sheets in any key</h3><p>Paste a sheet once; CHORD stores it as ChordPro. Each person chooses their own key or a capo.</p></div>
-          </li>
-          <li>
-            <span class="chord-landing__icon">{% include "includes/icons/play.html" %}</span>
-            <div><h3>Spotify playback</h3><p>Listen to each song right beside its chord sheet, and get the {{ labels.lineup|lower }} saved as a playlist once it's confirmed.</p></div>
-          </li>
+        <ul class="lp-features">
+          <li class="lp-feature"><span class="lp-feature__icon">{% include "includes/icons/document.html" %}</span><h3>Chord sheets in any key</h3><p>Paste a sheet once; CHORD stores it as ChordPro. Each person chooses their own key or a capo.</p></li>
+          <li class="lp-feature"><span class="lp-feature__icon">{% include "includes/icons/play.html" %}</span><h3>Spotify playback</h3><p>Listen to each song right beside its chord sheet, and get the {{ labels.lineup|lower }} saved as a playlist once it's confirmed.</p></li>
           {% if "teams" in enabled_modules %}
-            <li>
-              <span class="chord-landing__icon">{% include "includes/icons/people.html" %}</span>
-              <div><h3>Team roster</h3><p>Assign each part for a {{ labels.worship_service|lower }}. People accept, mark when they're away, and ask for a swap.</p></div>
-            </li>
+            <li class="lp-feature"><span class="lp-feature__icon">{% include "includes/icons/people.html" %}</span><h3>Team roster</h3><p>Assign each part for a {{ labels.worship_service|lower }}. People accept, mark when they're away, and ask for a swap.</p></li>
           {% endif %}
           {% if "occasions" in enabled_modules %}
-            <li>
-              <span class="chord-landing__icon">{% include "includes/icons/calendar.html" %}</span>
-              <div><h3>Calendar and occasions</h3><p>Weddings, baptisms and funerals go on the same calendar as each {{ labels.worship_service|lower }}, so nothing gets double-booked.</p></div>
-            </li>
+            <li class="lp-feature"><span class="lp-feature__icon">{% include "includes/icons/calendar.html" %}</span><h3>Calendar and occasions</h3><p>Weddings, baptisms and funerals go on the same calendar as each {{ labels.worship_service|lower }}, so nothing gets double-booked.</p></li>
           {% endif %}
           {% if "announcements" in enabled_modules %}
-            <li>
-              <span class="chord-landing__icon">{% include "includes/icons/megaphone.html" %}</span>
-              <div><h3>Announcements</h3><p>Send a note to everyone, or only to the team serving at one {{ labels.worship_service|lower }}.</p></div>
-            </li>
+            <li class="lp-feature"><span class="lp-feature__icon">{% include "includes/icons/megaphone.html" %}</span><h3>Announcements</h3><p>Send a note to everyone, or only to the team serving at one {{ labels.worship_service|lower }}.</p></li>
           {% endif %}
-          <li>
-            <span class="chord-landing__icon">{% include "includes/icons/gear.html" %}</span>
-            <div><h3>Fits how your church works</h3><p>Your kinds of {{ labels.worship_service|lower }}, song slots, theme tags, seasons and wording are settings your church sets, not built in.</p></div>
-          </li>
+          <li class="lp-feature"><span class="lp-feature__icon">{% include "includes/icons/gear.html" %}</span><h3>Fits how your church works</h3><p>Your kinds of {{ labels.worship_service|lower }}, song slots, theme tags, seasons and wording are settings your church sets, not built in.</p></li>
         </ul>
       </div>
     </section>
 
-    <section class="chord-landing__section pt-0" id="rehearsal" aria-labelledby="rehearsal-title">
-      <div class="container">
-        <div class="row g-5 align-items-center">
-          <div class="col-lg-5">
-            <p class="chord-eyebrow">Rehearsal</p>
-            <h2 class="chord-landing__h2" id="rehearsal-title">The sheet, the key and the song, on one page.</h2>
-            <p class="chord-landing__text">Each song in a confirmed {{ labels.lineup|lower }} has its own page: the chord sheet in the key for everyone, your own key and capo, the leader's notes, and the track ready to play.</p>
-            <ul class="chord-landing__checks">
-              <li>{% include "includes/icons/check-circle.html" with size=18 %}Change your key without changing anyone else's</li>
-              <li>{% include "includes/icons/check-circle.html" with size=18 %}Previous and next song for a run-through</li>
-              <li>{% include "includes/icons/check-circle.html" with size=18 %}Practise along in the recording's key</li>
-            </ul>
-          </div>
-          <div class="col-lg-7">
-            {% comment %}Public-domain lyrics (John Newton, 1779), shown in A with "My key".{% endcomment %}
-            <div class="chord-landing__rehearsal" role="img" aria-label="A chord sheet for Amazing Grace in the key of A, beside a Spotify player">
-              <div class="chord-landing__sheet">
-                <div class="chord-landing__sheet-bar">
-                  <span>Key for everyone <strong>G</strong></span>
-                  <span>My key <strong>A</strong></span>
-                  <span>Capo <strong>None</strong></span>
-                </div>
-                <p class="chord-landing__kicker mb-2">Amazing Grace · Verse 1</p>
-<pre class="chord-landing__pre">  <b>A</b>     <b>A7</b>         <b>D</b>         <b>A</b>
+    <section class="lp-band lp-rehearsal" id="rehearsal" aria-labelledby="rehearsal-title">
+      <div class="lp-rehearsal__photo" aria-hidden="true">
+        <picture>
+          <source type="image/webp" srcset="{% static 'images/landing/rehearsal-ambient.webp' %}">
+          <img src="{% static 'images/landing/rehearsal-ambient.jpg' %}" alt="" width="1024" height="683" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <div class="lp-wrap lp-rehearsal__inner">
+        <div class="lp-rehearsal__text">
+          <p class="lp-eyebrow">Rehearsal</p>
+          <h2 class="lp-h2" id="rehearsal-title">The sheet, the key and the song, on one page.</h2>
+          <span class="lp-rule" aria-hidden="true"></span>
+          <p class="lp-rehearsal__lead">Each song in a confirmed {{ labels.lineup|lower }} has its own page. Everyone reads the same chord sheet, plays in the key that suits them, and listens to the track right beside it.</p>
+          <ul class="lp-points">
+            <li>{% include "includes/icons/check-circle.html" %}<strong>Your own key and capo</strong><span>Change yours without changing anyone else's.</span></li>
+            <li>{% include "includes/icons/check-circle.html" %}<strong>Play along with the track</strong><span>Practise in the recording's key, with Spotify beside the sheet.</span></li>
+            <li>{% include "includes/icons/check-circle.html" %}<strong>Run through the whole set</strong><span>Previous and next song, in the {{ labels.lineup|lower }}'s order.</span></li>
+          </ul>
+        </div>
+        {% comment %}Public-domain lyrics (John Newton, 1779), shown in A with "My key".{% endcomment %}
+        <div class="lp-stage" role="img" aria-label="A chord sheet for Amazing Grace in the key of A, with a Spotify player beside it">
+          <div class="lp-sheet">
+            <div class="lp-sheet__bar">
+              <span>Key for everyone <strong>G</strong></span>
+              <span class="lp-sheet__mine">My key <strong>A</strong></span>
+              <span>Capo <strong>None</strong></span>
+            </div>
+            <div class="lp-sheet__body">
+              <p class="lp-sheet__kicker">Amazing Grace · Verse 1</p>
+<pre>  <b>A</b>     <b>A7</b>         <b>D</b>         <b>A</b>
 Amazing grace, how sweet the sound
      <b>A</b>                   <b>E</b>
-That saved a wretch like me</pre>
-              </div>
-              <div class="chord-landing__listen">
-                <p class="chord-landing__listen-title">Listen</p>
-                <div class="d-flex align-items-center gap-2">
-                  <span class="chord-landing__cover"></span>
-                  <div><p class="chord-landing__listen-song">Amazing Grace</p><p class="chord-landing__listen-meta">Key of G</p></div>
-                </div>
-                <span class="chord-landing__bar chord-landing__bar--dark"><span style="width: 28%"></span></span>
-                <span class="chord-landing__pause">{% include "includes/icons/pause.html" with size=20 %}</span>
-              </div>
+That saved a wretch like me
+  <b>A</b>       <b>A7</b>          <b>D</b>       <b>A</b>
+I once was lost, but now am found
+     <b>F#m</b>     <b>E</b>        <b>A</b>
+Was blind, but now I see</pre>
+            </div>
+          </div>
+          <div class="lp-listen">
+            <div class="lp-listen__head"><span class="lp-listen__title">Listen</span><span class="lp-listen__brand">Spotify</span></div>
+            <div class="lp-listen__track">
+              <span class="lp-cover">{% include "includes/icons/music-note.html" %}</span>
+              <div><p class="lp-listen__song">Amazing Grace</p><p class="lp-listen__meta">Key of G</p></div>
+            </div>
+            <div>
+              <span class="lp-bar"><span style="width: 34%"></span></span>
+              <div class="lp-times"><span>1:02</span><span>3:04</span></div>
+            </div>
+            <div class="lp-controls">
+              <span>{% include "includes/icons/back-10.html" %}</span>
+              <span class="lp-controls__play">{% include "includes/icons/pause.html" %}</span>
+              <span>{% include "includes/icons/forward-10.html" %}</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="chord-landing__cta" aria-labelledby="cta-title">
-      <div class="container d-flex flex-wrap align-items-center justify-content-between gap-4">
-        <div>
-          <h2 class="chord-landing__h2 mb-1" id="cta-title">Plan your next {{ labels.worship_service|lower }} with CHORD.</h2>
-          <p class="mb-0">Already part of a church's team? Sign in with your account.</p>
+    <section class="lp-band lp-roles" aria-labelledby="roles-title">
+      <div class="lp-roles__photo" aria-hidden="true">
+        <picture>
+          <source type="image/webp" srcset="{% static 'images/landing/hero-worship.webp' %}">
+          <img src="{% static 'images/landing/hero-worship.jpg' %}" alt="" width="960" height="640" loading="lazy" decoding="async">
+        </picture>
+      </div>
+      <div class="lp-wrap">
+        <div class="lp-head">
+          <p class="lp-eyebrow">Who it's for</p>
+          <h2 class="lp-h2" id="roles-title">One place for everyone who serves.</h2>
+          <span class="lp-rule" aria-hidden="true"></span>
+          <p class="lp-lede">Each person sees what their part needs, and nothing before it's ready.</p>
         </div>
-        <a class="chord-landing__btn chord-landing__btn--green" href="{% url 'accounts:login' %}">Sign in</a>
+        <ul class="lp-roles__list">
+          <li class="lp-role"><span class="lp-role__icon">{% include "includes/icons/check-circle.html" %}</span><h3>{{ labels.pastor }}</h3><p>Posts the theme and has the final say on the {{ labels.lineup|lower }}.</p></li>
+          <li class="lp-role"><span class="lp-role__icon">{% include "includes/icons/music-note.html" %}</span><h3>Worship leader</h3><p>Builds the {{ labels.lineup|lower }}, sets the keys and approves chord sheets.</p></li>
+          <li class="lp-role"><span class="lp-role__icon">{% include "includes/icons/people.html" %}</span><h3>{{ labels.team }}</h3><p>Sees the confirmed {{ labels.lineup|lower }}, rehearses, and marks when they're away.</p></li>
+          <li class="lp-role"><span class="lp-role__icon">{% include "includes/icons/calendar.html" %}</span><h3>{{ members_label }}</h3><p>See the schedule and announcements, and request occasions.</p></li>
+        </ul>
+      </div>
+    </section>
+
+    {% comment %}United in Worship: public churches that finished setting up, newest first, at most 12 (views.showcase_churches; the directory's own rule). Only their name, address and logo, all already public.{% endcomment %}
+    <section class="lp-band lp-showcase" id="churches" aria-labelledby="churches-title">
+      <div class="lp-wrap">
+        <div class="lp-head">
+          <p class="lp-eyebrow">Churches</p>
+          <h2 class="lp-h2" id="churches-title">United in Worship</h2>
+          <span class="lp-rule" aria-hidden="true"></span>
+          <p class="lp-lede">Discover the churches bringing their worship teams together through CHORD.</p>
+        </div>
+        {% if showcase %}
+          <div class="lp-carousel">
+            <button type="button" class="lp-carousel__btn" id="lp-church-prev" aria-controls="lp-church-track" aria-label="Previous churches" hidden>{% include "includes/icons/chevron-left.html" %}</button>
+            <ul class="lp-churches" id="lp-church-track" tabindex="0" aria-label="Churches using CHORD. Scroll sideways for more.">
+              {% for listed in showcase %}
+                <li>
+                  <a class="lp-church" href="{% url 'churches:home' slug=listed.slug %}">
+                    {% if listed.logo %}
+                      <span class="lp-church__logo"><img src="{{ listed.logo.url }}" alt="" width="84" height="84" loading="lazy" decoding="async"></span>
+                    {% else %}
+                      <span class="lp-church__logo lp-church__logo--none" aria-hidden="true">{% include "includes/icons/people.html" %}</span>
+                    {% endif %}
+                    <span class="lp-church__name">{{ listed.name }}</span>
+                    {% if listed.place %}<span class="lp-church__place">{{ listed.place }}</span>{% endif %}
+                    <span class="lp-church__go">View church {% include "includes/icons/chevron-right.html" %}</span>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+            <button type="button" class="lp-carousel__btn" id="lp-church-next" aria-controls="lp-church-track" aria-label="Next churches" hidden>{% include "includes/icons/chevron-right.html" %}</button>
+          </div>
+          <div class="lp-showcase__more"><a class="lp-btn lp-btn--line" href="{% url 'churches:directory' %}">Explore all churches</a></div>
+        {% else %}
+          <div class="lp-showcase__empty">
+            <span class="lp-church__logo lp-church__logo--none" aria-hidden="true">{% include "includes/icons/people.html" %}</span>
+            <strong>No churches are listed here yet.</strong>
+            <p>Churches appear here once they choose to show themselves publicly.</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="lp-cta" aria-labelledby="cta-title">
+      <div class="lp-wrap lp-cta__inner">
+        <span class="lp-cta__logo">{% include "church/includes/landing_logo.html" %}</span>
+        <p class="lp-eyebrow">Get started</p>
+        <h2 id="cta-title">Plan your next {{ labels.worship_service|lower }} with CHORD.</h2>
+        <p>Create your account, then find your church in the directory.</p>
+        <a class="lp-btn lp-btn--green lp-btn--large" href="{% url 'churches:register' %}">Sign up</a>
       </div>
     </section>
   </main>
 
-  <footer class="chord-landing__footer">
-    <div class="container d-flex flex-wrap justify-content-between gap-2">
-      <span class="chord-landing__footer-brand">CHORD</span>
-      {% if church.name %}<span>A worship planning system for {{ church.name }}</span>{% endif %}
+  <footer class="lp-footer">
+    <div class="lp-wrap lp-footer__grid">
+      <div class="lp-footer__about">
+        <a class="lp-brand" href="#top" aria-label="CHORD, back to top"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+        <p>Worship planning for any church: from a {{ labels.worship_service|lower }}'s theme to a confirmed song {{ labels.lineup|lower }}, with chord sheets, keys and playback for the whole team.</p>
+      </div>
+      <div>
+        <h3>Explore</h3>
+        <ul>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#rehearsal">Rehearsal</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Get started</h3>
+        <ul>
+          <li><a href="{% url 'accounts:login' %}">Sign in</a></li>
+          <li><a href="{% url 'churches:register' %}">Sign up</a></li>
+          <li><a href="{% url 'churches:directory' %}">Find a church</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="lp-wrap">
+      <div class="lp-footer__base">
+        <span>CHORD · Worship planning</span>
+        <a href="#top">Back to top {% include "includes/icons/chevron-up.html" %}</a>
+      </div>
     </div>
   </footer>
 </body>

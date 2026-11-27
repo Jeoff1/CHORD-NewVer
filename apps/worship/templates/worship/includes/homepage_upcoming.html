@@ -1,11 +1,11 @@
-{# Upcoming services (Phase 9B): date, time and kind only. #}
-<section class="card shadow-sm mb-4" aria-labelledby="upcoming-title">
-  <div class="card-body">
-    <h2 class="h5" id="upcoming-title">Upcoming services</h2>
-    <ul class="list-unstyled mb-0">
-      {% for service in section.upcoming %}
-        <li class="mb-1"><span class="fw-semibold">{{ service.starts_at|date:"D, M j" }}</span> · {{ service.starts_at|time:"g:i A" }} · {{ service.kind }}</li>
-      {% endfor %}
-    </ul>
-  </div>
-</section>
+{# Upcoming services in the church profile's sidebar (Phase 9B; redesigned 27 Nov 2026): date, time and kind only, when the church switches it on. #}
+<h2 class="pf-side__title">Upcoming services</h2>
+<ul class="pf-upcoming">
+  {% for service in section.upcoming %}
+    <li>
+      <span class="pf-upcoming__date" aria-hidden="true">{{ service.starts_at|date:"j" }}<small>{{ service.starts_at|date:"M" }}</small></span>
+      <strong>{{ service.kind }}</strong>
+      <span class="pf-upcoming__when">{{ service.starts_at|date:"D, M j" }} · {{ service.starts_at|time:"g:i A" }}</span>
+    </li>
+  {% endfor %}
+</ul>

@@ -3,8 +3,12 @@
 Since 2026-11-25 (Phase 9B, [[0014-church-platform]]): one installation
 serves many churches. Everything below happens inside one church, the
 person's Current Church; their roles are those of their Membership there.
-A church registers itself with its name only; anyone may create an
-account, find a church in the Directory, and request an Occasion Type the
+A church registers itself, needing only its name (its details and public
+profile may be given then too, all optional); registering is how a person
+signs up, making their account in its first step (since 2026-11-27 there
+is no separate personal sign-up; a church's administrator adds its other
+people). Anyone may find a church in the Directory, and anyone signed in
+may request an Occasion Type the
 church offers publicly from its Church Homepage.
 
 Updated 2026-11-24 with the adviser's comments ([[Design-Decisions]],

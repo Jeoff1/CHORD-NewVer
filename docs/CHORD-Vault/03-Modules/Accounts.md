@@ -10,15 +10,29 @@ the core; it can't be switched off. App: `apps/accounts`.
 ## What exists
 
 - **User** (`accounts.User`): Django's standard user, shared across
-  churches. Users are deactivated, never deleted, so the audit trail keeps
-  its actors (there is no delete permission).
+  churches, with an optional `middle_name` (100 characters) and `suffix`
+  (20, "Jr., Sr., III"; migration `0011_user_middle_name_suffix`, 27 Nov
+  2026), also on My profile. Users are deactivated, never deleted, so the
+  audit trail keeps its actors (there is no delete permission).
 - **Membership** (`accounts.Membership`; Phase 9B): a user's place in one
   church, with their roles there and whether it is active. At most one per
   church. Users, Add user and Edit user work on the Current Church's
   memberships; a user from another church gives 404.
-- **Create an account** (`/accounts/signup/`, Phase 9B): anyone may make
-  their own account (username, name, email, password). It belongs to no
-  church; its home says so and offers "Sign in your church".
+- **Signing up** (owner, 27 Nov 2026): there is no personal sign-up page.
+  A person's own account is made in the first step of registering a
+  church ([[Church-Setup]]), with `SignUpForm`: first and last name
+  (needed), middle name and suffix (optional), email and password; **no
+  username**. The email must be no other account's (ignoring case), and
+  the username Django needs is made from it (`username_from_email`: the
+  email in lower case, Django's username characters only, "-2" and on if
+  taken). Django's password validators are unchanged. The old address
+  `/accounts/signup/` (`SignUpRedirectView`, still named
+  `accounts:signup`) redirects to `/churches/register/`, keeping its query
+  string; a form sent to it makes nothing. People joining a church that
+  already uses CHORD are added by its administrator: Add user, batch
+  accounts from the Members list, or Add an existing account. An account
+  with no church (removed from its last one) still sees the no-church
+  home, which offers "Sign in your church".
 - **Add an existing account** (`/accounts/users/add-existing/`, needs
   `accounts.add_user`): finds one account by its exact username, or its
   exact email ignoring case (`memberships.find_account`); never a partial
@@ -89,8 +103,17 @@ the core; it can't be switched off. App: `apps/accounts`.
   - The last active administrator can't be deactivated or lose the role.
   - Nobody can deactivate their own account.
 - **Own account:**
-  - sign in at `/accounts/login/`, and sign out with a POST to
-    `/accounts/logout/`;
+  - sign in at `/accounts/login/` with an **email or username** (Django's
+    `LoginView` with `EmailOrUsernameAuthenticationForm`;
+    `ChurchRoleBackend.authenticate` takes text that is no account's
+    username as an email, ignoring case; an email two accounts share signs
+    neither in, so older accounts with a shared email still use their
+    username). Since 27 Nov 2026 a full-page split, `accounts/login.html`
+    on `auth_base.html`:
+    "Welcome Back", Forgot your password? under the password, a busy
+    button while sending, and "Sign up", which opens Register your
+    church),
+    and sign out with a POST to `/accounts/logout/`;
   - My profile (name and email) at `/accounts/profile/`;
   - change password;
   - reset password by email: the reset email prints to the console in
@@ -127,7 +150,7 @@ the core; it can't be switched off. App: `apps/accounts`.
     needs view-role permission; saving needs change-role permission.
 - Every change to users, roles and permissions is in the audit trail.
   Passwords are recorded only as "(new password set)".
-- Tests: `apps/accounts/tests/` (sign in, own account, password reset,
+- Tests: `apps/accounts/tests/` (sign in and its page, the old sign-up address and the account step, own account, password reset,
   users, roles, matrix, default-role syncing, the Church Member role, role
   history); leaving the team in `apps/teams/tests/test_leaving_team.py`.
 

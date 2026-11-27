@@ -1,0 +1,14 @@
+{% comment %}
+  One step of the church registration stepper (church/register.html). The button lets the person go
+  back to a step they finished; register.js enables it. Takes: number, name, title, hint, icon.
+{% endcomment %}
+<li class="au-step" data-au-step="{{ number }}">
+  <button type="button" class="au-step__btn" data-au-goto="{{ number }}" aria-label="Step {{ number }}, {{ title }}" disabled>
+    <span class="au-step__dot" aria-hidden="true"><span class="au-step__icon">{% include "includes/icons/"|add:icon|add:".html" with size=18 %}</span><span class="au-step__check">{% include "includes/icons/check-circle.html" with size=18 %}</span></span>
+  </button>
+  <div>
+    <div class="au-step__num">Step {{ number }}</div>
+    <div class="au-step__name">{{ name }}</div>
+    <div class="au-step__hint">{{ hint }}</div>
+  </div>
+</li>

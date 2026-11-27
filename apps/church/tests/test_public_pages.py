@@ -8,6 +8,7 @@ ever shows lyrics, chord sheets, songs, lineups, members or teams.
 
 import datetime
 
+from django.contrib.staticfiles import finders
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -175,11 +176,134 @@ class DirectoryTests(PublicPagesTestCase):
 
     def test_it_is_paginated(self):
         for n in range(25):
-            make_church(f"Valley Church {n:02d}")
+            make_church(f"Valley Church {n:02d}", setup_completed=True)
         first = self.client.get(DIRECTORY, {"q": "valley"})
-        self.assertEqual(len(first.context["object_list"]), 20)
+        self.assertEqual(len(first.context["object_list"]), 24)
         second = self.client.get(DIRECTORY, {"q": "valley", "page": 2})
-        self.assertEqual(len(second.context["object_list"]), 5)
+        self.assertEqual(len(second.context["object_list"]), 1)
+
+
+class DirectoryRedesignTests(PublicPagesTestCase):
+    """The redesign (27 Nov 2026): the landing showcase's rule, sorting, the
+    HTMX results and suggestions, and the way home."""
+
+    def test_a_public_church_that_has_not_finished_setup_is_left_out(self):
+        make_church("Half Built Chapel", setup_completed=False)
+        page = self.client.get(DIRECTORY)
+        self.assertNotContains(page, "Half Built Chapel")
+        self.assertContains(page, "Riverside Church")
+
+    def test_newest_first_by_default_and_by_name_either_way(self):
+        make_church("Abbey Road Church", setup_completed=True)
+        make_church("Zion Hill Church", setup_completed=True)
+
+        def names(**params):
+            return [
+                c.name
+                for c in self.client.get(DIRECTORY, params).context["object_list"]
+            ]
+
+        self.assertEqual(names()[:2], ["Zion Hill Church", "Abbey Road Church"])
+        self.assertEqual(names(sort="name")[0], "Abbey Road Church")
+        self.assertEqual(names(sort="-name")[0], "Zion Hill Church")
+        self.assertEqual(names(sort="nonsense"), names())  # unknown: newest
+
+    def test_a_church_card_shows_its_page_logo_or_fallback_and_no_contact(self):
+        page = self.client.get(DIRECTORY)
+        self.assertContains(page, f'href="{home_url(self.church)}"')
+        self.assertContains(page, "1 River Road, Springfield")
+        self.assertContains(page, "dir-card__fallback")
+        self.assertContains(page, "View church")
+        self.church.logo.name = "church/riverside-logo.png"
+        self.church.save()
+        self.assertContains(self.client.get(DIRECTORY), "church/riverside-logo.png")
+
+    def test_an_htmx_request_gets_only_the_results(self):
+        page = self.client.get(DIRECTORY, {"q": "river"}, HTTP_HX_REQUEST="true")
+        self.assertTemplateUsed(page, "church/includes/directory_results.html")
+        self.assertTemplateNotUsed(page, "church/directory.html")
+        self.assertNotContains(page, "<html")
+        self.assertContains(page, "Search results for <q>river</q>", html=False)
+        self.assertContains(page, "1 church found")
+        self.assertContains(page, "Back to all churches")
+
+    def test_the_full_page_has_the_search_and_the_way_home(self):
+        page = self.client.get(DIRECTORY)
+        self.assertTemplateUsed(page, "church/directory.html")
+        self.assertContains(page, "Discover Churches")
+        self.assertContains(page, f'href="{reverse("home")}"')
+        self.assertContains(page, "Back to Home")
+        self.assertContains(page, f'hx-get="{reverse("churches:suggest")}"')
+        self.assertContains(page, "css/directory.css")
+        self.assertNotContains(page, "Back to all churches")
+
+    def test_the_placeholder_cards_stay_hidden_unless_loading_is_slow(self):
+        # They share .dir-grid (display: grid), so the hiding rule must be
+        # the more specific one, or they show under the real cards for good.
+        css = open(finders.find("css/directory.css"), encoding="utf-8").read()
+        self.assertIn(".dir-area .dir-grid.dir-skeleton { display: none; }", css)
+        self.assertIn(
+            ".dir-area.is-slow .dir-grid.dir-skeleton { display: grid; }", css
+        )
+        self.assertContains(self.client.get(DIRECTORY), 'class="dir-grid dir-skeleton"')
+
+    def test_an_empty_search_offers_every_church_again(self):
+        page = self.client.get(DIRECTORY, {"q": "nothing like this"})
+        self.assertContains(page, "No church matches")
+        self.assertContains(page, "Show all churches")
+
+    def test_signed_in_people_keep_their_account_and_theme(self):
+        self.member.theme = "dark"
+        self.member.save()
+        self.visit_as(self.member)
+        page = self.client.get(DIRECTORY)
+        self.assertContains(page, "Riverside Church")
+        self.assertContains(page, 'var choice = "dark"')
+        self.assertEqual(int(self.client.session["_auth_user_id"]), self.member.pk)
+
+
+class SuggestionTests(PublicPagesTestCase):
+    SUGGEST = reverse("churches:suggest")
+
+    def test_listed_churches_only_by_name_or_address(self):
+        make_church("Half Built Chapel", setup_completed=False)
+        by_name = self.client.get(self.SUGGEST, {"q": "chapel"})
+        # The match is marked, so look for each church by its page.
+        self.assertContains(by_name, f'href="{home_url(self.other_church)}"')
+        self.assertEqual(
+            [c.name for c in by_name.context["churches"]], ["Hilltop Chapel"]
+        )
+        hidden = self.client.get(self.SUGGEST, {"q": "hidden"})
+        self.assertEqual(hidden.context["churches"], [])
+        self.assertNotContains(hidden, home_url(self.hidden))
+        by_address = self.client.get(self.SUGGEST, {"q": "springfield"})
+        self.assertContains(by_address, "Riverside Church")
+        self.assertContains(by_address, f'href="{home_url(self.church)}"')
+        self.assertContains(by_address, "See all results for")
+
+    def test_nothing_for_one_letter_and_at_most_six(self):
+        self.assertNotContains(self.client.get(self.SUGGEST, {"q": "r"}), "Riverside")
+        for n in range(8):
+            make_church(f"Meadow Church {n}", setup_completed=True)
+        page = self.client.get(self.SUGGEST, {"q": "meadow"})
+        self.assertEqual(len(page.context["churches"]), 6)
+
+    def test_the_typed_text_is_marked_and_escaped(self):
+        page = self.client.get(self.SUGGEST, {"q": "river"})
+        self.assertContains(page, "<mark>River</mark>side Church", html=False)
+        make_church("<b>Bold</b> Chapel", setup_completed=True)
+        page = self.client.get(self.SUGGEST, {"q": "bold"})
+        self.assertContains(
+            page, "&lt;b&gt;<mark>Bold</mark>&lt;/b&gt; Chapel", html=False
+        )
+
+    def test_names_that_start_with_the_text_come_first(self):
+        make_church("Old Hilltop Fellowship", setup_completed=True)
+        page = self.client.get(self.SUGGEST, {"q": "hilltop"})
+        self.assertEqual(page.context["churches"][0].name, "Hilltop Chapel")
+
+    def test_no_church_can_take_the_suggest_address(self):
+        self.assertNotEqual(make_church("Suggest").slug, "suggest")
 
 
 class HomepageTests(PublicPagesTestCase):
@@ -241,6 +365,109 @@ class HomepageTests(PublicPagesTestCase):
         self.visit_as(self.member)
         self.assertContains(
             self.client.get(home_url(self.church)), "Request this service"
+        )
+
+
+class ProfileRedesignTests(PublicPagesTestCase):
+    """The public profile (redesign, 27 Nov 2026): a public website for each
+    church, the same for everyone, with no sign-in needed to view it."""
+
+    def test_everyone_views_the_same_profile_without_signing_in(self):
+        for who, user in self.visitors():
+            self.visit_as(user)
+            with self.subTest(who=who):
+                page = self.client.get(home_url(self.church))
+                self.assertEqual(page.status_code, 200)
+                self.assertTemplateUsed(page, "church/homepage.html")
+                # The cover, the sidebar and both tabs.
+                self.assertContains(page, 'class="pf-banner"')
+                self.assertContains(
+                    page,
+                    '<h1 class="pf-name" id="pf-name">Riverside Church</h1>',
+                    html=False,
+                )
+                self.assertContains(page, "Announcements")
+                self.assertContains(page, "Available services")
+                self.assertContains(page, "Picnic on Sunday")
+                self.assertContains(page, "Wedding")
+                self.assertContains(page, "Upcoming services")
+                self.assertContains(page, "Powered by")
+                # Nothing private, and no sign-in asked for just viewing.
+                self.assertNotContains(page, PRIVATE)
+                self.assertNotContains(page, "sign in to send one")
+
+    def test_the_sections_go_in_the_sidebar_and_the_tabs(self):
+        page = self.client.get(home_url(self.church))
+        tabs = [s.label for s in page.context["tab_sections"]]
+        self.assertEqual(tabs, ["Announcements", "Available services"])
+        self.assertEqual(
+            [s.template for s in page.context["side_sections"]],
+            ["worship/includes/homepage_upcoming.html"],
+        )
+        self.assertEqual(page.context["tab_sections"][0].count, 1)
+
+    def test_contact_shows_once_with_links(self):
+        self.set_church(
+            phone="0917 555 0100",
+            email="office@river.example",
+            website="https://river.example",
+        )
+        page = self.client.get(home_url(self.church))
+        content = page.content.decode()
+        self.assertIn('href="tel:09175550100"', content)
+        self.assertIn('href="mailto:office@river.example"', content)
+        self.assertIn('href="https://river.example"', content)
+        self.assertIn(
+            "https://www.google.com/maps/search/?api=1&amp;query=1%20River%20Road",
+            content,
+        )
+        self.assertEqual(content.count("0917 555 0100"), 1)
+        self.assertEqual(content.count(">office@river.example<"), 1)
+
+    def test_the_way_back_and_home(self):
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, f'href="{DIRECTORY}"')
+        self.assertContains(page, "Back to Churches")
+        self.assertContains(page, f'href="{reverse("home")}"')
+
+    def test_no_announcements_shows_a_note_while_the_module_is_on(self):
+        Announcement.objects.for_church(self.church).delete()
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, "No announcements yet.")
+        self.set_church(disabled_modules=["announcements"])
+        page = self.client.get(home_url(self.church))
+        self.assertNotContains(page, "No announcements yet.")
+        self.assertEqual(
+            [s.label for s in page.context["tab_sections"]], ["Available services"]
+        )
+
+    def test_a_long_announcement_gets_read_more(self):
+        Announcement.objects.create(
+            church=self.church,
+            title="Long news",
+            body="Word " * 80,
+            author=self.approver,
+            visibility=Announcement.Visibility.PUBLIC,
+        )
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, "Read more", count=1)
+
+    def test_a_visitor_is_offered_to_sign_in_only_to_request(self):
+        self.set_church(accept_outside_requests=False)
+        page = self.client.get(home_url(self.church))
+        self.assertNotContains(page, "Request this service")
+        self.assertContains(page, "If you belong to it")
+        self.assertContains(page, "Wedding")  # still visible to everyone
+
+    def test_its_own_styles_load_and_the_logo_or_fallback_shows(self):
+        page = self.client.get(home_url(self.church))
+        self.assertContains(page, "css/profile.css")
+        self.assertContains(page, "church/profile.js")
+        self.assertContains(page, "pf-logo--none")
+        self.church.logo.name = "church/riverside-logo.png"
+        self.church.save()
+        self.assertContains(
+            self.client.get(home_url(self.church)), "church/riverside-logo.png"
         )
 
 

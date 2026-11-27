@@ -1,0 +1,245 @@
+/*
+ * The sign-in and church registration pages (redesign, 27 Nov 2026; Design-System.md, "The
+ * sign-in page" and "Registering a church"). Loaded only by accounts/auth_base.html (login.html)
+ * and church/register.html; every rule sits
+ * under body.au (classes au-*), so nothing here reaches another page. The page transition rules
+ * (@view-transition, ::view-transition-*) only act between two pages that both load this file.
+ * Colours are the design system's tokens. The registration wizard's own layout is in register.css.
+ */
+
+/* --- Tokens ---------------------------------------------------------------- */
+
+.au {
+  --au-surface: #FFFFFF;
+  --au-text: #173630;
+  --au-heading: #173630;
+  --au-text2: #4A5E59;
+  --au-line: #DDD7D5;
+  --au-input-border: #6E8A83;   /* 3.73:1 on white: the owner's choice for these pages' outlines */
+  --au-input-bg: #FFFFFF;
+  --au-tertiary: #F4F1F0;
+  --au-green: #173630;
+  --au-green-2: #1F463E;
+  --au-side-text: #E6E2E1;
+  --au-side-muted: #A9BDB7;
+  --au-ok: #146C43;
+  --au-err: #B02A37;
+  --au-err-bg: #FBEDEE;
+  --au-focus: #173630;
+  --au-ring: rgba(229, 198, 144, .65);
+  --au-gold: #E5C690;
+  --au-link: #173630;
+  --au-link-hover: #0B1F1B;
+  --au-icon: #4A5E59;
+  --au-note-bg: #FFF8EA;
+  --au-note-border: #E5C690;
+  --au-btn-bg: #173630;
+  --au-btn-fg: #E5C690;
+  --au-btn-shadow: 0 12px 24px -14px rgba(23, 54, 48, .55);
+  --au-head: Raleway, "Fira Sans Condensed", system-ui, sans-serif;
+  --au-body: "Fira Sans Condensed", system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--au-surface);
+  color: var(--au-text);
+  font-family: var(--au-body);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+[data-bs-theme="dark"] .au {
+  --au-surface: #0F241F;
+  --au-text: #E6E2E1;
+  --au-heading: #E5C690;
+  --au-text2: #B9C4BF;
+  --au-line: #2E4A44;
+  --au-input-bg: #173630;
+  --au-tertiary: #173630;
+  --au-green: #0A1A16;
+  --au-green-2: #173630;
+  --au-side-muted: #94AAA3;
+  --au-ok: #75B798;
+  --au-err: #EA868F;
+  --au-err-bg: rgba(234, 134, 143, .10);
+  --au-focus: #E5C690;
+  --au-ring: rgba(229, 198, 144, .28);
+  --au-link: #E5C690;
+  --au-link-hover: #F3E6C9;
+  --au-icon: #B9C4BF;
+  --au-note-bg: #1B2A1E;
+  --au-note-border: #6B5B36;
+  --au-btn-bg: #E5C690;
+  --au-btn-fg: #060F00;
+  --au-btn-shadow: 0 12px 24px -14px rgba(0, 0, 0, .8);
+}
+
+.au a { color: var(--au-link); text-underline-offset: 3px; transition: color .18s ease; }
+.au a:hover { color: var(--au-link-hover); }
+.au a:focus-visible,
+.au button:focus-visible { outline: 3px solid var(--au-focus); outline-offset: 3px; border-radius: 10px; }
+.au .chord-icon { flex: 0 0 auto; }
+
+.au-skip { position: absolute; top: 8px; left: 8px; z-index: 10; padding: 10px 14px; border-radius: 10px; background: var(--au-surface); }
+
+/* --- The full-page split: the photograph left, the form right --------------- */
+
+.au-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 100vh; min-height: 100dvh; background: var(--au-surface); }
+
+.au-photo { position: relative; overflow: hidden; background: #0B1F1B; }
+.au-photo__inner { position: sticky; top: 0; height: 100vh; height: 100dvh; }
+.au-photo__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 45% 50%; }
+/* Deep green over the photo: darker at the top for the logo, darkest at the bottom for the words. */
+.au-photo__inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 26, 22, .55) 0%, rgba(10, 26, 22, .05) 30%, rgba(10, 26, 22, .25) 60%, rgba(10, 26, 22, .88) 100%);
+}
+.au-logo { position: absolute; z-index: 1; top: calc(28px + env(safe-area-inset-top, 0px)); left: max(36px, env(safe-area-inset-left, 0px)); display: flex; align-items: center; min-height: 44px; width: 150px; }
+.au-logo .lp-logo { display: block; width: 100%; height: auto; }
+.au-photo__text { position: absolute; z-index: 1; left: max(48px, env(safe-area-inset-left, 0px)); right: 48px; bottom: 56px; max-width: 34rem; }
+.au-photo__title { margin: 0 0 10px; font-family: var(--au-head); font-weight: 800; font-size: clamp(1.75rem, 3vw, 2.5rem); line-height: 1.1; color: #E5C690; text-wrap: balance; }
+.au-photo__tagline { margin: 0; max-width: 36ch; font-size: 1.0625rem; line-height: 1.5; color: #E6E2E1; }
+
+.au-panel { min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; padding: calc(24px + env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-right, 0px)) 32px 32px; }
+.au-panel__top { display: flex; justify-content: flex-end; }
+.au-panel__body { flex: 1 1 auto; display: grid; place-items: center; padding-block: 32px; }
+.au-col { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 22px; }
+
+/* Back to Home: an outlined pill; on the photo, a light one. */
+.au .au-back { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 6px 16px; border: 1.5px solid var(--au-input-border); border-radius: 999px; font-weight: 600; font-size: .9375rem; text-decoration: none; color: var(--au-text); transition: border-color .18s ease, color .18s ease; }
+.au .au-back:hover { border-color: var(--au-focus); color: var(--au-text); }
+.au .au-back--light { color: #E6E2E1; border-color: rgba(230, 226, 225, .45); background: rgba(10, 26, 22, .45); }
+.au .au-back--light:hover { color: #E5C690; border-color: #E5C690; }
+.au .au-back--mobile { display: none; position: absolute; z-index: 1; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); padding: 4px 14px; font-size: .875rem; }
+
+.au-head { display: flex; flex-direction: column; gap: 6px; }
+.au-title { margin: 0; font-family: var(--au-head); font-weight: 800; font-size: 2.125rem; line-height: 1.1; letter-spacing: -.01em; color: var(--au-heading); text-wrap: balance; }
+.au-intro { margin: 0; color: var(--au-text2); }
+
+/* --- Fields -------------------------------------------------------------- */
+
+.au-form { display: flex; flex-direction: column; gap: 16px; }
+.au-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.au-label { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; font-weight: 600; font-size: .9375rem; }
+.au-optional { font-weight: 400; font-size: .8125rem; color: var(--au-text2); }
+.au-control { position: relative; }
+.au-control__icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; color: var(--au-icon); pointer-events: none; }
+
+.au .au-form .form-control {
+  min-height: 48px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--au-input-border);
+  border-radius: 12px;
+  background-color: var(--au-input-bg);
+  background-image: none;
+  color: var(--au-text);
+  font-family: var(--au-body);
+  font-size: 1rem;
+  box-shadow: none;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.au .au-form textarea.form-control { min-height: 96px; resize: vertical; }
+.au .au-control--icon .form-control { padding-left: 42px; }
+.au .au-control--password .form-control { padding-right: 76px; }
+.au .au-form .form-control:hover { border-color: var(--au-focus); }
+.au .au-form .form-control:focus { border-color: var(--au-focus); box-shadow: 0 0 0 4px var(--au-ring); outline: none; }
+.au .au-form .form-control.is-invalid { border-color: var(--au-err); padding-right: 14px; }
+.au .au-control--password .form-control.is-invalid { padding-right: 76px; }
+.au .au-form .form-control.is-invalid:focus { box-shadow: 0 0 0 4px rgba(176, 42, 55, .18); }
+
+/* Show / Hide: a word, inside the password field. */
+.au .au-reveal { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); min-width: 60px; min-height: 44px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--au-link); font: 600 .875rem var(--au-body); cursor: pointer; }
+.au .au-reveal:hover { background: var(--au-tertiary); }
+.au-reveal[hidden] { display: none; }
+
+.au-help { margin: 0; font-size: .875rem; color: var(--au-text2); }
+.au-help--ok { color: var(--au-ok); }
+.au-errors { display: flex; flex-direction: column; gap: 2px; }
+.au-error { margin: 0; font-size: .875rem; font-weight: 500; color: var(--au-err); }
+.au-alert { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--au-err); background: var(--au-err-bg); color: var(--au-err); font-size: .875rem; font-weight: 500; line-height: 1.45; }
+.au-alert .chord-icon { margin-top: 1px; }
+.au-alert p { margin: 0; }
+
+/* The password checklist: two short rows under the field. */
+.au-rules { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.au-rule { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: .8125rem; line-height: 1.3; color: var(--au-text2); }
+.au-rule .chord-icon { display: none; color: var(--au-ok); }
+.au-rule__dot { flex: 0 0 auto; width: 15px; height: 15px; box-sizing: border-box; border: 2px solid currentColor; border-radius: 50%; }
+.au-rule--server .au-rule__dot { border-style: dashed; }
+.au-rule--met { color: var(--au-text); }
+.au-rule--met .chord-icon { display: block; }
+.au-rule--met .au-rule__dot { display: none; }
+
+/* --- Buttons ------------------------------------------------------------- */
+
+.au .au-submit,
+.au .au-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; box-sizing: border-box; padding: 12px 26px; border: 1.5px solid transparent; border-radius: 999px; font: 600 1rem var(--au-body); text-decoration: none; cursor: pointer; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.au .au-submit,
+.au .au-btn--primary { background: var(--au-btn-bg); color: var(--au-btn-fg); }
+.au .au-submit { width: 100%; }
+.au .au-btn--gold { background: var(--au-gold); color: #173630; }
+.au .au-btn--ghost { background: transparent; border-color: var(--au-input-border); color: var(--au-text); }
+.au .au-submit:hover,
+.au .au-btn--primary:hover,
+.au .au-btn--gold:hover { transform: translateY(-1px); box-shadow: var(--au-btn-shadow); }
+.au .au-btn--ghost:hover { border-color: var(--au-focus); }
+.au .au-submit:active,
+.au .au-btn:active { transform: none; box-shadow: none; }
+
+/* While the form is sent (auth.js): a spinner and the busy words, and no lift. */
+.au [aria-busy="true"] { cursor: progress; }
+.au .au-submit[aria-busy="true"]:hover,
+.au .au-btn[aria-busy="true"]:hover { transform: none; box-shadow: none; }
+.au-spinner { width: 18px; height: 18px; box-sizing: border-box; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: au-spin .75s linear infinite; }
+.au-spinner[hidden] { display: none; }
+@keyframes au-spin { to { transform: rotate(360deg); } }
+
+/* Sign in: Forgot your password? right under the password field. */
+.au-forgot { display: flex; justify-content: flex-end; margin: -10px 0 -4px; }
+.au .au-forgot a { display: inline-flex; align-items: center; min-height: 44px; font-size: .9375rem; font-weight: 600; }
+
+/* The links under the form. */
+.au-links { display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; font-size: .9375rem; color: var(--au-text2); }
+.au-links p { margin: 0; }
+.au-links a { font-weight: 600; }
+
+/* --- Moving between Sign In and Register your church: a short fade (both pages load this file) --- */
+
+@view-transition { navigation: auto; }
+.au-photo { view-transition-name: au-photo; }
+.au-panel { view-transition-name: au-panel; }
+::view-transition-group(au-photo), ::view-transition-old(au-photo), ::view-transition-new(au-photo) { animation: none; }
+::view-transition-old(au-panel), ::view-transition-new(au-panel) { animation-duration: .22s; }
+
+/* --- Tablet -------------------------------------------------------------- */
+
+@media (max-width: 991.98px) {
+  .au-split { grid-template-columns: minmax(0, 42fr) minmax(0, 58fr); }
+  .au-logo { width: 128px; }
+  .au-photo__text { left: max(32px, env(safe-area-inset-left, 0px)); right: 28px; bottom: 40px; }
+}
+
+/* --- Phone: a photo banner above the form -------------------------------- */
+
+@media (max-width: 719.98px) {
+  .au-split { grid-template-columns: minmax(0, 1fr); }
+  .au-photo__inner { position: relative; height: 230px; }
+  .au-photo__img { object-position: 45% 58%; }
+  .au-logo { top: calc(14px + env(safe-area-inset-top, 0px)); left: max(18px, env(safe-area-inset-left, 0px)); width: 112px; }
+  .au .au-back--mobile { display: inline-flex; }
+  .au-photo__text { left: max(20px, env(safe-area-inset-left, 0px)); right: 20px; bottom: 18px; }
+  .au-photo__title { margin-bottom: 4px; font-size: 1.5rem; }
+  .au-photo__tagline { font-size: .9375rem; }
+  .au-panel { padding: 0 max(18px, env(safe-area-inset-right, 0px)) 28px max(18px, env(safe-area-inset-left, 0px)); }
+  .au-panel__top { display: none; }
+  .au-panel__body { padding-block: 26px 8px; place-items: start center; }
+  .au-title { font-size: 1.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  .au *, .au *::before, .au *::after { transition: none !important; animation: none !important; }
+  .au .au-submit:hover, .au .au-btn:hover { transform: none; }
+  .au-spinner { border-right-color: currentColor; opacity: .55; }
+}
