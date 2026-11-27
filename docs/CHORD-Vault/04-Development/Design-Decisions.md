@@ -698,7 +698,7 @@ Tests: `apps/church/tests/test_public_pages.py` (`HomepageTests`, `ProfileRedesi
 
 #### Sign-up page redesign (UI/UX owner, 27 Nov 2026)
 
-Designed as an interactive mockup first and approved by the owner after one round of changes; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-up page"). The owner's choices:
+Designed as an interactive mockup first and approved by the owner after one round of changes; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in and sign-up pages"). The owner's choices:
 - **A split screen** after the owner's reference: the photo panel left (logo upper left, heading and tagline at the bottom), a compact centred form right with the Sign Up / Sign In toggle above it, one rounded container.
 - **The photograph follows the existing rule** (freely licensed, no recognisable faces): the owner's own photo was set aside for "Bearded guitar concert" (Austin Neill, CC0), at least 1600 px wide, the face softened into the stage haze; recorded in `static/images/landing/SOURCES.md`.
 - **Input outlines `#6E8A83`** on this page, which pass 3:1 on white ([[Design-System]], "Contrast", noted the light-mode `#9FA7A2` does not).
@@ -707,7 +707,19 @@ Designed as an interactive mockup first and approved by the owner after one roun
 - **Wording:** the username hint "Up to 150 letters, digits and @ . + - _", "Confirm password", "Enter the same password again." (`SignUpForm`, so the church registration page's account fields read the same).
 - No other sign-in services (CHORD has none).
 
-Tests: `apps/accounts/tests/test_signup_page.py` (`SignUpPageTests`, `SignUpValidationTests`): its own page with every form field once, CSRF and one heading; the photo panel's words and decorative images; the toggle, Sign in and Back to Home links; no other sign-in services; the checklist keeping the help text's id, the show buttons hidden without the script; the approved wording; its own stylesheet, script and photos exist, with their sources; its CSS scoped to `.au` and not loaded by the sign-in or home pages; mismatched passwords, each of Django's four password rules, a taken username and a missing email shown on the page with what was typed kept (never the passwords); a good account created as before; a POST without the CSRF token refused; signed-in people sent home.
+Tests: `apps/accounts/tests/test_signup_page.py` (`SignUpPageTests`, `SignUpValidationTests`): its own page with every form field once, CSRF and one heading; the photo panel's words and decorative images; the toggle, Sign in and Back to Home links; no other sign-in services; the checklist keeping the help text's id, the show buttons hidden without the script; the approved wording; its own stylesheet, script and photos exist, with their sources; its CSS scoped to `.au` (page transitions aside) and not loaded by the home or password reset pages; mismatched passwords, each of Django's four password rules, a taken username and a missing email shown on the page with what was typed kept (never the passwords); a good account created as before; a POST without the CSRF token refused; signed-in people sent home.
+
+#### Sign-in page redesign (UI/UX owner, 27 Nov 2026)
+
+Designed as an interactive mockup (normal, loading and invalid-credentials states) and approved by the owner; built on `joy-ui-ux-v2` ([[Design-System]], "The sign-in and sign-up pages"). The owner's choices, with the mockup's recommendations they approved:
+- **The sign-up page's split screen, shared:** one layout (`accounts/auth_base.html`), the same photo, logo, words, inputs, buttons and toggle; "Welcome Back", "Sign in to continue to CHORD", Forgot your password? under the password field, the gold Sign In button, "Don't have an account? Sign up".
+- **The church registration link reads "Register your church"**, as the sign-up intro already says; "sign in your church" was easy to confuse with Sign In.
+- **One card size for both pages** (at least 990 px tall above 720 px, the sign-up form's tallest), so switching never moves the photo.
+- **A fade between the two pages** through the browser's page transitions, the photo held still; none with reduced motion, and none in browsers without them (Firefox).
+- **A busy button on both pages:** a spinner and "Signing in…" / "Creating account…", disabled while sending so a second press does nothing; no added delay.
+- Django's sign-in is unchanged: `LoginView`, `AuthenticationForm`, CSRF, `next` and the redirects, the reset-password link; no new sign-in methods and no model change.
+
+Tests: `apps/accounts/tests/test_signin_page.py` (`SignInPageTests`, `SignInBehaviourTests`): the shared layout, its stylesheet, script and photo; one heading, the words, every field once with `next` and CSRF, the busy button; Django's `autocomplete` values and one show button; the toggle, Sign up, Register your church (not "sign in your church"), Forgot your password? between the password field and the button, Back to Home; no other sign-in services; the reset page still opens; wrong credentials and an inactive account shown in the error box with the username kept and the password never echoed; empty fields' errors under them; a good sign-in goes home, `next` is kept and followed, a `next` to another site is ignored; a POST without the CSRF token refused. `test_sign_in.py` keeps the old checks (its error box assertion now names the new box); `test_signup_page.py` now covers the shared files and the busy words.
 
 ---
 

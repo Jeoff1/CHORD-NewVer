@@ -25,7 +25,7 @@ class SignInTests(TestCase):
             reverse("accounts:login"),
             {"username": user.username, "password": "wrong"},
         )
-        self.assertContains(response, 'class="alert alert-danger"')
+        self.assertContains(response, '<div class="au-alert" role="alert">')
         self.assertNotIn(SESSION_KEY, self.client.session)
 
     def test_signed_in_user_skips_sign_in_page(self):

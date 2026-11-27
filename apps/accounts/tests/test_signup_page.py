@@ -1,6 +1,6 @@
-"""The sign-up page redesign (27 Nov 2026; Design-System.md, "The sign-up
-page"): a split screen with its own look, the same form, fields, CSRF
-protection and server-side validation as before."""
+"""The sign-up page redesign (27 Nov 2026; Design-System.md, "The sign-in
+and sign-up pages"): a split screen with its own look, the same form, fields,
+CSRF protection and server-side validation as before."""
 
 from django.contrib.auth import get_user_model
 from django.contrib.staticfiles import finders
@@ -25,6 +25,7 @@ class SignUpPageTests(TestCase):
     def test_it_has_its_own_page_with_every_field_of_the_form(self):
         response = self.client.get(SIGNUP)
         self.assertTemplateUsed(response, "accounts/signup.html")
+        self.assertTemplateUsed(response, "accounts/auth_base.html")
         self.assertTemplateNotUsed(response, "form_page.html")
         self.assertTemplateNotUsed(response, "base.html")
         for name in SignUpForm().fields:
@@ -34,7 +35,10 @@ class SignUpPageTests(TestCase):
         self.assertContains(response, 'method="post"')
         self.assertContains(response, "<h1", count=1)
         self.assertContains(response, "Create an account")
-        self.assertContains(response, ">Create Account</button>")
+        self.assertContains(
+            response, "<span data-au-label>Create Account</span></button>"
+        )
+        self.assertContains(response, 'data-au-busy="Creating account…"')
 
     def test_the_photo_panel_brand_and_words(self):
         response = self.client.get(SIGNUP)
@@ -99,7 +103,7 @@ class SignUpPageTests(TestCase):
         response = self.client.get(SIGNUP)
         for path in (
             "css/auth.css",
-            "accounts/signup.js",
+            "accounts/auth.js",
             "images/landing/signup-worship.webp",
             "images/landing/signup-worship-800.webp",
             "images/landing/signup-worship.jpg",
@@ -116,7 +120,9 @@ class SignUpPageTests(TestCase):
         css = open(finders.find("css/auth.css"), encoding="utf-8").read()
         for line in css.splitlines():
             selector = line.split("{")[0].strip()
-            if "{" in line and selector and not selector.startswith(("@", "}")):
+            # Page transitions only act between two pages that both load auth.css.
+            skip = ("@", "}", "::view-transition")
+            if "{" in line and selector and not selector.startswith(skip):
                 with self.subTest(selector=selector):
                     self.assertTrue(
                         all(
@@ -125,7 +131,7 @@ class SignUpPageTests(TestCase):
                         ),
                         selector,
                     )
-        for url in (reverse("accounts:login"), reverse("home")):
+        for url in (reverse("home"), reverse("accounts:password_reset")):
             with self.subTest(url=url):
                 self.assertNotContains(self.client.get(url), "css/auth.css")
 

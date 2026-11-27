@@ -1,7 +1,9 @@
 /*
- * The sign-up page (redesign, 27 Nov 2026; Design-System.md, "The sign-up page").
- * Loaded only by accounts/signup.html; every rule sits under body.au (classes au-*),
- * so nothing here reaches another page. Colours are the design system's tokens.
+ * The sign-in and sign-up pages (redesign, 27 Nov 2026; Design-System.md, "The sign-in and
+ * sign-up pages"). Loaded only by accounts/auth_base.html (login.html and signup.html); every
+ * rule sits under body.au (classes au-*), so nothing here reaches another page. The page
+ * transition rules (@view-transition, ::view-transition-*) only act between two pages that both
+ * load this file. Colours are the design system's tokens.
  */
 
 /* --- Tokens ---------------------------------------------------------------- */
@@ -20,6 +22,7 @@
   --au-tab-on-fg: #E5C690;
   --au-ok: #146C43;
   --au-err: #B02A37;
+  --au-err-bg: #FBEDEE;
   --au-focus: #173630;
   --au-ring: rgba(229, 198, 144, .65);
   --au-gold: #E5C690;
@@ -52,6 +55,7 @@
   --au-tab-on-fg: #060F00;
   --au-ok: #75B798;
   --au-err: #EA868F;
+  --au-err-bg: rgba(234, 134, 143, .10);
   --au-focus: #E5C690;
   --au-ring: rgba(229, 198, 144, .28);
   --au-on-gold: #060F00;
@@ -88,7 +92,7 @@
 .au-card {
   width: 100%;
   max-width: 1200px;
-  min-height: 820px;
+  min-height: 990px;   /* one size for both pages, the sign-up form's tallest (969-990 px by width), so switching never moves the photo */
   box-sizing: border-box;
   display: flex;
   padding: 12px;
@@ -220,7 +224,8 @@
 .au-help--ok { color: var(--au-ok); }
 .au-errors { display: flex; flex-direction: column; gap: 2px; }
 .au-error { margin: 0; font-size: .875rem; font-weight: 500; color: var(--au-err); }
-.au-alert { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--au-err); color: var(--au-err); font-size: .875rem; font-weight: 500; }
+.au-alert { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--au-err); background: var(--au-err-bg); color: var(--au-err); font-size: .875rem; font-weight: 500; line-height: 1.45; }
+.au-alert .chord-icon { margin-top: 1px; }
 .au-alert p { margin: 0; }
 
 /* The password checklist: two short rows under the field. */
@@ -251,14 +256,36 @@
 .au-submit:hover { transform: translateY(-1px); box-shadow: var(--au-btn-shadow); }
 .au-submit:active { transform: none; box-shadow: none; }
 
+/* While the form is sent (auth.js): a spinner and the busy words, and no lift. */
+.au-submit { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.au-submit[aria-busy="true"] { cursor: progress; }
+.au-submit[aria-busy="true"]:hover { transform: none; box-shadow: none; }
+.au-spinner { width: 18px; height: 18px; box-sizing: border-box; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: au-spin .75s linear infinite; }
+.au-spinner[hidden] { display: none; }
+@keyframes au-spin { to { transform: rotate(360deg); } }
+
+/* Sign in: Forgot your password? right under the password field. */
+.au-forgot { display: flex; justify-content: flex-end; margin: -8px 0 -4px; }
+.au .au-forgot a { display: inline-flex; align-items: center; min-height: 44px; margin-block: -6px; font-size: .875rem; font-weight: 600; }
+
 .au-switch { margin: 0; text-align: center; font-size: .9375rem; color: var(--au-text2); }
 .au-switch a { font-weight: 600; }
+.au-links { display: flex; flex-direction: column; gap: 4px; }
+.au-switch--minor { font-size: .875rem; }
+
+/* --- Switching between Sign In and Sign Up: the form side fades, the photo stays still --- */
+
+@view-transition { navigation: auto; }
+.au-photo { view-transition-name: au-photo; }
+.au-panel { view-transition-name: au-panel; }
+::view-transition-group(au-photo), ::view-transition-old(au-photo), ::view-transition-new(au-photo) { animation: none; }
+::view-transition-old(au-panel), ::view-transition-new(au-panel) { animation-duration: .22s; }
 
 /* --- Tablet -------------------------------------------------------------- */
 
 @media (max-width: 991.98px) {
   .au-page { padding-block: max(40px, env(safe-area-inset-top, 0px)) 40px; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px)); }
-  .au-card { max-width: 786px; min-height: 0; padding: 10px; border-radius: 24px; }
+  .au-card { max-width: 786px; padding: 10px; border-radius: 24px; }
   .au-photo { flex-basis: 42%; padding: 22px 22px 30px; border-radius: 18px; }
   .au-photo__img { object-position: 42% 45%; }
   .au-logo { width: 108px; }
@@ -275,7 +302,7 @@
   .au-page { justify-content: flex-start; padding-block: max(8px, env(safe-area-inset-top, 0px)) 28px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
   .au-back--top { display: inline-flex; }
   .au-panel__top { display: none; }
-  .au-card { flex-direction: column; padding: 8px; }
+  .au-card { flex-direction: column; min-height: 0; padding: 8px; }
   .au-photo { flex: 0 0 auto; min-height: 184px; padding: 16px 18px 18px; }
   .au-photo__img { object-position: 45% 58%; }
   .au-logo { width: 96px; }
@@ -291,6 +318,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
   .au *, .au *::before, .au *::after { transition: none !important; }
   .au-submit:hover { transform: none; }
+  .au-spinner { animation: none; border-right-color: currentColor; opacity: .55; }
 }

@@ -19,10 +19,10 @@ the core; it can't be switched off. App: `apps/accounts`.
 - **Create an account** (`/accounts/signup/`, Phase 9B): anyone may make
   their own account (username, name, email, password). It belongs to no
   church; its home says so and offers "Sign in your church". Since 27 Nov
-  2026 its own split-screen page (`accounts/signup.html`, `auth.css`,
-  `signup.js`; [[Design-System]], "The sign-up page"): a photo panel, a
-  Sign Up / Sign In toggle, a short password checklist and show-password
-  buttons. `SignUpForm` only changes wording (the username hint, "Confirm
+  2026 a split-screen page shared with Sign in (`accounts/signup.html` on
+  `auth_base.html`, `auth.css`, `auth.js`; [[Design-System]], "The
+  sign-in and sign-up pages"): a photo panel, a Sign Up / Sign In toggle,
+  a short password checklist and show-password buttons. `SignUpForm` only changes wording (the username hint, "Confirm
   password"); its fields and Django's validators are unchanged.
 - **Add an existing account** (`/accounts/users/add-existing/`, needs
   `accounts.add_user`): finds one account by its exact username, or its
@@ -94,8 +94,11 @@ the core; it can't be switched off. App: `apps/accounts`.
   - The last active administrator can't be deactivated or lose the role.
   - Nobody can deactivate their own account.
 - **Own account:**
-  - sign in at `/accounts/login/`, and sign out with a POST to
-    `/accounts/logout/`;
+  - sign in at `/accounts/login/` (Django's `LoginView`; since 27 Nov 2026
+    the same split screen as Create an account, `accounts/login.html`:
+    "Welcome Back", Forgot your password? under the password, a busy
+    button while sending, and links to Sign up and Register your church),
+    and sign out with a POST to `/accounts/logout/`;
   - My profile (name and email) at `/accounts/profile/`;
   - change password;
   - reset password by email: the reset email prints to the console in
@@ -132,7 +135,7 @@ the core; it can't be switched off. App: `apps/accounts`.
     needs view-role permission; saving needs change-role permission.
 - Every change to users, roles and permissions is in the audit trail.
   Passwords are recorded only as "(new password set)".
-- Tests: `apps/accounts/tests/` (sign in, own account, password reset,
+- Tests: `apps/accounts/tests/` (sign in and its page, the sign-up page, own account, password reset,
   users, roles, matrix, default-role syncing, the Church Member role, role
   history); leaving the team in `apps/teams/tests/test_leaving_team.py`.
 

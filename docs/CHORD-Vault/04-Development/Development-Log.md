@@ -2,6 +2,53 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-27: Sign-in page redesign (branch `joy-ui-ux-v2`)
+
+- **Why:** the UI/UX owner asked for Sign in to match the redesigned
+  sign-up page; an interactive mockup first (normal, loading and
+  invalid-credentials states), then approved with its recommendations
+  ([[Design-Decisions]], "Sign-in page redesign").
+- **Built:** one shared layout, `accounts/auth_base.html`, which
+  `login.html` and `signup.html` now extend; `signup_field.html` became
+  `auth_field.html` and `signup.js` became `auth.js` (both pages), with the
+  new `auth_submit.html` (the gold button) and the `alert-circle` icon.
+  - **Sign in:** "Welcome Back" and "Sign in to continue to CHORD",
+    Username and Password with icons and the eye button, Forgot your
+    password? under the password field, the gold Sign In button, "Don't
+    have an account? Sign up" and "Register your church" (it read "sign in
+    your church").
+  - **Both pages:** the form's errors in a box with an icon; a busy button
+    (spinner, "Signing in…" / "Creating account…", disabled so a second
+    press does nothing, usable again after Back); a fade between the two
+    pages through `@view-transition`, the photo held still, none with
+    reduced motion; one card size, at least 990 px above 720 px (the
+    sign-up form measured 969 to 990 px with the real fonts), so switching
+    never moves the photo.
+  - **Unchanged:** Django's `LoginView`, `AuthenticationForm`, CSRF, `next`
+    and the redirects; no model change or migration. `SignUpView` only
+    lost a comment's old section name.
+- **Checked in a browser** (headless Edge through DevTools, against
+  `runserver`, light and dark at 1440, 1280, 834, 390 and 360 px):
+  - **Layout:** no sideways scrolling, and every control at least 44 px.
+    Both cards are 990 px tall from 720 to 1440 px, and phones stack as on
+    sign-up.
+  - **Interactions:** the eye button switches the type, label and
+    `aria-pressed`; the gold focus ring shows. Pressing Sign In disables
+    the button and shows "Signing in…" and the spinner, a second submit is
+    cancelled, and a shown password is hidden before sending.
+  - **A real wrong password:** comes back with Django's message in the
+    `role="alert"` box, the username kept and the password empty, with no
+    overflow on phone, tablet or desktop.
+  - **Links and redirects:** Forgot your password? opens Reset your
+    password, and the Sign Up tab opens sign-up at the same card size. A
+    real sign-in with `?next=/accounts/profile/` lands there; visiting
+    sign-in while signed in goes home; a plain sign-in goes home.
+  - **The throwaway account** used for the check was deleted afterwards,
+    with its sign-in records.
+- **Checks:** `scripts/check.ps1` (full, with coverage) passed: Ruff lint
+  and format, Django checks, no missing migrations, 1309 tests OK (13 new
+  in `test_signin_page.py`), 97% coverage.
+
 ## 2026-11-27: Sign-up page redesign (branch `joy-ui-ux-v2`)
 
 - **Why:** the UI/UX owner redesigned Create an account as a split-screen

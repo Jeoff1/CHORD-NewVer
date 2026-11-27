@@ -34,7 +34,7 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Dashboard | Each Module registers sources in `apps/church/dashboard.py` | "Needs your attention", "Coming up" and side cards |
 | Icons | `templates/includes/icons/`: also chevron-right, chevron-up, chevron-down, lock and dots; for the landing page music-note, document, people, calendar, megaphone and check-circle; for the Directory x; for the church profile map-pin, phone, mail and globe | Icon-only buttons carry an `aria-label` and are at least 44px. On the landing page an icon takes its size from the text (`.chord-landing .chord-icon`) |
 | Landing page | `church/landing.html`, its own `static/css/landing.css` (classes `lp-*`) and `church/static/church/landing.js` | The public front page, redesigned 26-27 Nov 2026: see "The landing page" below |
-| Sign-up page | `accounts/signup.html`, its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/signup.js` | Create an account, redesigned 27 Nov 2026: see "The sign-up page" below |
+| Sign-in and sign-up pages | `accounts/auth_base.html` (shared by `login.html` and `signup.html`), its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/auth.js` | Sign in and Create an account, redesigned 27 Nov 2026: see "The sign-in and sign-up pages" below |
 
 ## The landing page (redesign, 26-27 Nov 2026)
 
@@ -150,20 +150,31 @@ Designed as an interactive mockup and approved by the UI/UX owner on
 - **Icons added:** `map-pin`, `phone`, `mail` and `globe` (the contact
   rows), solid like the rest.
 
-## The sign-up page (redesign, 27 Nov 2026)
+## The sign-in and sign-up pages (redesign, 27 Nov 2026)
 
-Create an account (`/accounts/signup/`) as a split screen. Designed as an
-interactive mockup (v2 after review: a freely licensed photo, a compact
-centred form, a short checklist) and approved by the UI/UX owner on
-2026-11-27; built on branch `joy-ui-ux-v2`. `accounts/signup.html`
-(standalone, with `accounts/includes/signup_field.html` for each field)
-loads its own `static/css/auth.css` (classes `au-*`, every rule under
-`body.au`) and `accounts/static/accounts/signup.js`; no other page loads
-them. Same `SignUpView`, `SignUpForm`, CSRF protection and server-side
-validation; no Google, Facebook or Apple sign-in.
+Sign in (`/accounts/login/`) and Create an account (`/accounts/signup/`)
+share one split screen. Each was designed as an interactive mockup and
+approved by the UI/UX owner on 2026-11-27 (sign-up first, v2 after review:
+a freely licensed photo, a compact centred form, a short checklist; then
+sign-in to match it); built on branch `joy-ui-ux-v2`.
 
+- **Files:** `accounts/auth_base.html` holds the page (head, photo panel,
+  Back to Home, the toggle, heading, messages; blocks `title`,
+  `description`, `heading`, `intro`, `form`, `after`); `login.html` and
+  `signup.html` extend it. `accounts/includes/auth_field.html` draws each
+  field, `accounts/includes/auth_submit.html` the gold button. They load
+  their own `static/css/auth.css` (classes `au-*`, every rule under
+  `body.au`) and `accounts/static/accounts/auth.js`; no other page loads
+  them.
+- **Unchanged behind them:** Django's `LoginView` and
+  `AuthenticationForm`, `SignUpView` and `SignUpForm`, CSRF protection,
+  server-side validation, `next` and the redirects; no Google, Facebook or
+  Apple sign-in.
 - **Card:** one rounded container (28 px, a soft shadow; a border in dark
-  mode) centred on the page background, at most 1200 px wide.
+  mode) centred on the page background, at most 1200 px wide, at least
+  990 px tall above 720 px: the sign-up form's tallest (969 to 990 px by
+  width), so both pages are the same size and switching never moves the
+  photo. The shorter sign-in form sits in the middle of it.
 - **Photo panel (left, 48%):** the photograph
   (`images/landing/signup-worship.*`, see `SOURCES.md`) with a deep-green
   overlay, darker at the top for the gold logo (upper left, to `/`) and
@@ -172,10 +183,29 @@ validation; no Google, Facebook or Apple sign-in.
   1600 px for wide screens, a JPEG fallback.
 - **Form panel (right):** **Back to Home** (the new `arrow-left` icon) at
   its top right; then a centred column, 420 px at most: the **Sign Up /
-  Sign In** toggle (a pill; the current one green with gold text, gold in
-  dark mode; real links to the two routes), "Create an account" and the
-  view's intro, the fields, the full-width gold **Create Account** button
-  and "Already have an account? Sign in".
+  Sign In** toggle (a pill, in that order on both pages; the current one
+  green with gold text, gold in dark mode; real links to the two routes),
+  the heading, the form and the links under it.
+  - **Sign up:** "Create an account" and the view's intro, the fields, the
+    full-width gold **Create Account** button and "Already have an
+    account? Sign in".
+  - **Sign in:** "Welcome Back" and "Sign in to continue to CHORD";
+    Username (person icon) and Password (lock icon, eye button); **Forgot
+    your password?** right under the password field (to Reset your
+    password); the gold **Sign In** button; "Don't have an account? Sign
+    up" and "Setting up CHORD for your church? Register your church" (to
+    the church registration page; it used to read "sign in your church").
+    The fields keep Django's names and `autocomplete` (`username`,
+    `current-password`), so password managers fill them.
+- **Errors:** the form's own errors in a box above the fields (the new
+  `alert-circle` icon, the danger colour on a pale tint, `role="alert"`):
+  on sign-in, Django's "Please enter a correct username and password…".
+  The username stays; the password never comes back.
+- **While sending** (`auth.js`, both pages): the button shows a spinner
+  and "Signing in…" or "Creating account…", is disabled and marked
+  `aria-busy`, so a second press or Enter does nothing; a shown password
+  is hidden again before sending. No delay is added. Back from the next
+  page makes the button usable again.
 - **Fields:** labels above; 48 px inputs, 12 px corners, outlines
   `#6E8A83` (3.73:1 on white, the owner's choice for this page), a gold
   focus ring; icons inside Username (person), Email (mail) and both
@@ -202,10 +232,15 @@ validation; no Google, Facebook or Apple sign-in.
   42%; below 720 px the card stacks: Back to Home above it, a 184 px photo
   banner (logo and heading, no tagline), then the form; names one per row
   below 480 px. The page scrolls normally; nothing is clipped.
-- **Motion:** input focus and button hover only (a 1 px lift); none with
-  `prefers-reduced-motion`.
-- **Icon added:** `arrow-left` (Back to Home here), solid like the rest.
-  The directory and profile keep their chevron Back links.
+- **Motion:** input focus and button hover (a 1 px lift); the spinner;
+  and a fade between the two pages through the browser's page transitions
+  (`@view-transition`; the photo panel and the form side are named, the
+  photo held still and the form side faded in 0.22 s). Chrome, Edge and
+  Safari fade; Firefox switches at once. With `prefers-reduced-motion`
+  none of it: no fade, no transitions, and the spinner stands still.
+- **Icons added:** `arrow-left` (Back to Home) and `alert-circle` (the
+  error box), solid like the rest. The directory and profile keep their
+  chevron Back links.
 
 ## Tokens
 

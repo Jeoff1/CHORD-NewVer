@@ -608,7 +608,7 @@ class SignUpView(FormPageMixin, FormView):
 
     form_class = SignUpForm
     # Its own split-screen page (redesign, 27 Nov 2026; Design-System.md,
-    # "The sign-up page"), not the shared form_page.html.
+    # "The sign-in and sign-up pages"), not the shared form_page.html.
     template_name = "accounts/signup.html"
     page_title = "Create an account"
     intro = (

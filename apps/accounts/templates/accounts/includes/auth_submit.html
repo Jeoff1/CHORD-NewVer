@@ -1,0 +1,6 @@
+{% comment %}
+  The gold button of the sign-in and sign-up pages. While the form is sent, auth.js disables it
+  (a second press does nothing) and shows the spinner and the busy words; it adds no delay.
+  Takes: label, busy.
+{% endcomment %}
+<button type="submit" class="au-submit" data-au-busy="{{ busy }}"><span class="au-spinner" aria-hidden="true" hidden></span><span data-au-label>{{ label }}</span></button>
