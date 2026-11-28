@@ -1167,16 +1167,22 @@ system rather than a social profile:
 
 #### Remaining UI/UX tasks (28 Nov 2026)
 
+The full plan, phase by phase, is [[UI-UX-Master-Plan]]; motion follows
+[[Animation-Plan]]. The simplified Phase 2 supersedes the original personal
+profile plan: personal profile pictures, bios and banners are rejected.
+
 1. Lead developer's approval of the private-church preview (above).
    Whatever the answer, everyone else keeps getting 404.
 2. Phase 2: the simplified personal profile (above): done, approved by
    the UI/UX owner and committed on `joy-ui-ux-v3`.
-3. Then, module by module, each shown running before the next: shared UI
-   components; Management, Requests and Bookings; Worship Planning and
-   Song Recommendations; Lineup; Song Pool and Find Songs; Chord Viewer
-   and Editor; Rehearsal; Calendar and My Schedule; Team Roster; Users,
-   Roles and Audit Log; Announcements; Notifications; Settings; Reports;
-   error and empty states.
+3. Phases 3 to 11 in the order of [[UI-UX-Master-Plan]]: Shared UI
+   Components; Management, Services and Bookings; Worship Planning, Song
+   Recommendations and Lineup Builder; Songs, Song Pool, Find Songs, Chord
+   Viewer, Chord Editor and Rehearsal; Calendar and Scheduling; Members and
+   Teams; Announcements and Notifications; Settings and Reports; the final
+   consistency, responsiveness, accessibility and animation audit. Each is
+   committed locally on its own; nothing is pushed before the UI/UX owner's
+   final review.
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 

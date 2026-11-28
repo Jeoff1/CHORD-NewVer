@@ -17,6 +17,11 @@ page in place (cover, logo, Edit profile modal, View as visitor)
 Church CMS"). Opening a private church's page for its managers awaits the
 lead developer's approval ([[Design-Decisions]], "Remaining UI/UX tasks").
 
+**UI/UX plan:** [[UI-UX-Master-Plan]] (phases 1 to 11, rules, backend
+restrictions, workflow) and [[Animation-Plan]]. Phase 3 (Shared UI
+Components) is next; it waits for the approved artifact's screens, which
+could not be read from Claude Code.
+
 **UI/UX Phase 2 (28 Nov 2026), branch `joy-ui-ux-v3`, approved by the
 UI/UX owner and committed locally (not pushed):** one account popover on
 every signed-in page (initials avatar, full name, role, church, Edit

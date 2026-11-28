@@ -2,6 +2,23 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX master plan and Animation Plan saved; Phase 3 waits for the artifact
+
+- **Why:** the UI/UX owner asked for the plan to live in the vault so any
+  session can continue without the conversation.
+- **What changed:** [[UI-UX-Master-Plan]] (sources, rules for every phase,
+  backend restrictions including the rejected profile pictures, bios and
+  banners, the phase table 1 to 11 with each phase's current screens, the
+  workflow) and [[Animation-Plan]] (rules and every approved motion as
+  built, with timings and easings). [[Design-Decisions]] and [[00-Home]]
+  link them.
+- **Where work stopped:** before Phase 3. The approved artifact
+  (`https://claude.ai/artifact/XjV7jeDC63if6mbVNw2q6t`) returned "not
+  found, or not shared with this account" to Claude Code, so its screens
+  and per-screen motion are marked "Awaiting the artifact" in both notes.
+  No code changed.
+- **Checks:** docs only (the pre-commit hook skips the checks for docs).
+
 ## 2026-11-28: UI/UX Phase 2: account popover and Edit Profile (branch `joy-ui-ux-v3`)
 
 - **Why:** the UI/UX owner's Phase 2, revised after the lead developer
