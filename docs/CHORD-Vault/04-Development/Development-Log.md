@@ -12,7 +12,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   Audit log with initials, action pills and before → after changes. No
   Member Directory or Households. Templates and CSS only; no permission,
   role or audit rule changed; no migration.
-- **Checks:** PHASE8_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `e7eaa42`: lint, format, Django checks, migrations (none), 1519 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 7: calendar and scheduling (branch `joy-ui-ux-v3`)
 
