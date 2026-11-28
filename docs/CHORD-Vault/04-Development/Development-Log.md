@@ -2,6 +2,19 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Trusted form origins for an HTTPS tunnel
+
+- **Why:** the owner wants to open CHORD through a Cloudflare quick
+  tunnel; forms sent over the tunnel's HTTPS address failed Django's CSRF
+  origin check.
+- **What changed:** `CSRF_TRUSTED_ORIGINS` in `config/settings.py`, read
+  from `DJANGO_CSRF_TRUSTED_ORIGINS` (comma-separated, empty by default),
+  added to `.env.example`. With it unset, nothing changes. For a tunnel,
+  `.env` sets it to `https://*.trycloudflare.com` and adds
+  `.trycloudflare.com` to `DJANGO_ALLOWED_HOSTS`.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations, 1467 tests passed, 97% coverage.
+
 ## 2026-11-28: UI/UX Phase 1: signed-in landing, sidebar links, Church CMS (branch `joy-ui-ux-v3`, not committed yet)
 
 - **Why:** the UI/UX owner's approved designs ([[Design-Decisions]],
