@@ -13,7 +13,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   rule changed; no migration. **Blocked:** album artwork needs a policy
   and backend decision (only the allowed Spotify fields are stored), so
   songs show a branded tile ([[UI-UX-Master-Plan]], "Blocked").
-- **Checks:** PHASE6_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `14dd588`: lint, format, Django checks, migrations (none), 1511 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 5: worship planning, suggestions and lineup builder (branch `joy-ui-ux-v3`)
 
