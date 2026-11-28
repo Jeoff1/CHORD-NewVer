@@ -1101,3 +1101,18 @@ a {
   .chord-toast, .chord-toast.is-leaving { animation: none; }
   .chord-toast__bar { animation: none; }
 }
+
+/* --- Modules page: a Module shown under another (the Praise Team under
+   Worship), with its own switch ------------------------------------------ */
+.chord-module--nested { position: relative; padding-left: 3rem; }
+.chord-module--nested::before {
+  content: "";
+  position: absolute;
+  left: 1.5rem;
+  top: 0;
+  width: .85rem;
+  height: 50%;
+  border-left: 2px solid var(--bs-border-color);
+  border-bottom: 2px solid var(--bs-border-color);
+  border-bottom-left-radius: 4px;
+}

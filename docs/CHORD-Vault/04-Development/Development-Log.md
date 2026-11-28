@@ -2,6 +2,21 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Simpler church setup and service form (branch `church-setup-simplify`)
+
+- **Why:** the owner's list of 28 Nov ([[Design-Decisions]], "Simpler
+  church setup and service form").
+- **What changed:** sermon series gone from the Theme form, theme card and
+  Settings; a new service's date and time filled in from the template
+  (`scheduling.suggested_start`, `worship/service_form.js`, `form_page.html`
+  now renders `form.media`); Church details without Website, Currency and
+  Time zone, and no website on the public homepage; the Labels page
+  removed (wizard now three steps; AGENTS.md and decision 0001 amended);
+  Teams shown as the Praise Team under Worship (`Module.parent`); the
+  Member Directory retired (`settings.RETIRED_MODULES`).
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations and 1414 tests passed, 97% coverage.
+
 ## 2026-11-28: Users, roles and the Audit log move under Members (branch `joy-ui-ux-v3`, not committed yet)
 
 - **Why:** the owner: the sidebar's Members links sent people into the

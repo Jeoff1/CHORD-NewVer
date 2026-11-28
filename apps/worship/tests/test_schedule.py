@@ -202,7 +202,6 @@ class ThemeTests(WorshipTestCase):
         data = {
             "title": "Grace that forgives",
             "scripture": "Ephesians 2:1-10",
-            "series": "",
             "notes": "We were dead in sin, but God made us alive.",
         }
         data.update(overrides)
@@ -231,15 +230,30 @@ class ThemeTests(WorshipTestCase):
     def test_editing_is_audited_and_keeps_the_poster(self):
         pastor = make_user()
         make_theme(self.service, title="Grace", posted_by=pastor)
-        series = SermonSeries.objects.create(church=first_church(), name="Ephesians")
         self.client.force_login(make_user(perms=THEME_EDITOR))
-        self.client.post(self.url, self.theme_data(series=series.pk))
+        self.client.post(self.url, self.theme_data(title="Grace upon grace"))
         theme = Theme.objects.get()
         self.assertEqual(theme.posted_by, pastor)
-        self.assertEqual(theme.series, series)
         event = AuditEvent.objects.get()
         self.assertEqual(event.action, AuditEvent.Action.CHANGED)
-        self.assertEqual(event.changes["Series"], ["", "Ephesians"])
+        self.assertEqual(event.changes["Title"], ["Grace", "Grace upon grace"])
+
+    def test_no_sermon_series(self):
+        # Sermon series are gone from the theme (the owner, 28 Nov 2026); a
+        # series chosen before stays saved when the theme is edited.
+        series = SermonSeries.objects.create(
+            church=first_church(), name="Walking in Light"
+        )
+        make_theme(self.service, title="Grace", series=series)
+        self.client.force_login(make_user(perms=THEME_EDITOR))
+        page = self.client.get(self.url)
+        self.assertNotContains(page, 'name="series"')
+        self.assertNotContains(page, "Sermon series")
+        self.client.post(self.url, self.theme_data(title="Grace upon grace"))
+        self.assertEqual(Theme.objects.get().series, series)
+        self.assertNotContains(
+            self.client.get(service_url(self.service)), "Walking in Light"
+        )
 
     def test_needs_permission(self):
         self.client.force_login(make_user(perms=VIEWER))
@@ -263,7 +277,6 @@ class ThemeTests(WorshipTestCase):
         self.client.force_login(make_user(perms=THEME_EDITOR))
         response = self.client.get(self.url)
         self.assertContains(response, "Homily notes")
-        self.assertContains(response, "Homily series")
 
 
 class AttendanceTests(WorshipTestCase):
@@ -513,29 +526,11 @@ class TemplateTests(WorshipTestCase):
 
 
 class SeriesTests(WorshipTestCase):
-    def test_list_is_named_in_the_church_words(self):
-        complete_setup(labels={"sermon": {"singular": "Message", "plural": "Messages"}})
+    def test_the_series_settings_page_is_gone(self):
         self.client.force_login(make_administrator())
-        response = self.client.get(reverse("worship:series_list"))
-        # In the Settings hub, the page's heading is an H2 (Phase 9A, A7).
-        self.assertContains(
-            response, '<h2 class="h3 mb-0">Message series</h2>', html=True
-        )
-        self.assertContains(response, "Service templates")  # the hub's menu
-
-    def test_add_a_series(self):
-        self.client.force_login(make_administrator())
-        self.client.post(
-            reverse("worship:series_create"),
-            {"name": "Advent", "sort_order": 0, "is_active": "on"},
-        )
-        self.assertTrue(SermonSeries.objects.filter(name="Advent").exists())
-
-    def test_needs_permission(self):
-        self.client.force_login(make_user(perms=VIEWER))
-        self.assertEqual(
-            self.client.get(reverse("worship:series_list")).status_code, 403
-        )
+        page = self.client.get(reverse("worship:template_list"))
+        self.assertNotContains(page, "Sermon series")
+        self.assertNotContains(page, "/settings/series/")
 
 
 class DefaultRoleTests(WorshipTestCase):

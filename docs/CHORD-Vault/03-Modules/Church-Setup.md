@@ -15,7 +15,10 @@ of the core and can't be switched off. App: `apps/church`.
   made from the name ("grace-chapel", then "grace-chapel-2"), address,
   phone, email, website, logo (2 MB maximum), currency (three-letter code,
   default PHP), time zone (default Asia/Manila), switched-off Modules,
-  Labels and whether setup is finished. Since Phase 9B it also has
+  Labels and whether setup is finished. Since 28 Nov 2026 Church details
+  edits only the name, address, phone, email and logo: website, currency
+  and time zone keep their saved values, the website isn't shown
+  publicly, and the time zone comes from registration. Since Phase 9B it also has
   `about`, `show_in_directory` (on), `show_upcoming_services` (off) and
   `members_teams_unlocked` (only the church migrated from before 9B). A
   new installation starts with one church.
@@ -94,18 +97,24 @@ of the core and can't be switched off. App: `apps/church`.
   Shown as the cover of the church's public page; never on directory or
   showcase cards (`LISTED_FIELDS` reads the logo only). Recorded in the
   audit trail as "Banner".
-- **Setup wizard** (details, Labels, Modules, Public homepage): a church
+- **Setup wizard** (details, Modules, Public homepage): a church
   whose setup isn't finished sends its Administrator role holders there
   from the dashboard; not a superuser looking in, nor anyone else holding
   the permission. Since 27 Nov 2026 a registered church is set up already
   (above), so the wizard only serves a church that isn't: the church from
   before Phase 9B until its administrator finishes it, or a registration
-  whose values failed the checks. Its four sections are also the Settings
+  whose values failed the checks. Its three sections are also the Settings
   pages (`/church/settings/<section>/`), where everything is changed
   later.
-- **Locked Modules**: on the Modules settings page, Members and Teams show
-  "Not available yet" for a church without `members_teams_unlocked`, with
-  no switch, and can't be posted on.
+- **Locked Modules**: on the Modules settings page, Teams shows "Not
+  available yet" for a church without `members_teams_unlocked`, with no
+  switch, and can't be posted on.
+- **Retired Modules** (`settings.RETIRED_MODULES`, `modules.is_retired`):
+  no church may use them and the Modules page doesn't list them; saving
+  the page keeps their saved choice. Members is retired (28 Nov 2026).
+- **The Praise Team under Worship:** Teams has `parent="worship"`, so the
+  Modules page shows it right under Worship, indented, named by the "team"
+  Label, with its own switch.
 - **Seeding** (`seeding.py`): `seed_church(church)` gives a new church its
   defaults. Each app registers a seeder in `AppConfig.ready()`: roles
   (Accounts), Theme Tags and Worship Check settings (`songs/defaults.py`),
@@ -133,15 +142,17 @@ of the core and can't be switched off. App: `apps/church`.
     when a Module is switched off.
 - **Labels** (`labels.py`): member, worship service, sermon, lineup and
   pastor (the people with the final say on a lineup; added in Phase 6).
-  - Each has a neutral default singular and plural, which the church can
-    edit.
+  - Each has a neutral default singular and plural. Since 28 Nov 2026
+    churches can't edit them (no Labels page); a church's earlier edits
+    still apply.
   - Use them in templates with `{% load church %}{% label "sermon" %}`
     (`plural=True` for the plural; `as word` stores it in a variable), and
     in Python with `profile.label_set.get(key)`.
   - Module names follow Labels: if the church calls members
     "Parishioners", the Module is shown as Parishioners.
 - **Setup wizard** (`/church/setup/<section>/`): three steps, Church
-  details, then Labels, then Modules. It never asks for a denomination.
+  details, then Modules, then Public homepage. It never asks for a
+  denomination.
   - Administrators are sent there from the home page until it's finished;
     other users see a notice.
   - After it's finished, the same forms live at

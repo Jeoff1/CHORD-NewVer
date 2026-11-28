@@ -1,8 +1,15 @@
 ---
-status: built
+status: retired
 ---
 
 # Members
+
+> **Retired on 2026-11-28** (the owner): `settings.RETIRED_MODULES =
+> ("members",)` keeps it off for every church, so none of the screens
+> below are reachable. It had no records. The code, tables and tests stay
+> (the tests run with the setting emptied); removing "members" from the
+> setting brings it back. A church's people are its Users, under Members
+> in the sidebar ([[Accounts]]).
 
 The church's people directory: everyone the church keeps a record of,
 including visitors, with their households. App: `apps/members`. Module code

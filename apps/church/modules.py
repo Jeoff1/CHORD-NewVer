@@ -7,6 +7,7 @@ pages return 404, while its data stays in the database.
 
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.http import Http404
 
 
@@ -34,6 +35,9 @@ class Module:
     # (Phase 9B, decision 0014): only a church with
     # ``members_teams_unlocked`` may switch it on.
     platform_ready: bool = True
+    # The Module it is shown under on the Modules page, with a switch of
+    # its own (Teams, the Praise Team, sits under Worship).
+    parent: str | None = None
 
     def can_open(self, user):
         if self.view_permission is None:
@@ -69,6 +73,7 @@ MODULES = (
         ("teams",),
         url_name="teams:my_schedule",
         requires=("worship",),
+        parent="worship",
         # My schedule is for the team. Notifications are core and have
         # their own link in the navigation.
         view_permission="teams.view_assignment",
@@ -99,8 +104,15 @@ MODULES_BY_CODE = {module.code: module for module in MODULES}
 MODULE_CHOICES = [(module.code, module.name) for module in MODULES]
 
 
+def is_retired(module):
+    """Whether no church may use ``module`` (``settings.RETIRED_MODULES``)."""
+    return module.code in getattr(settings, "RETIRED_MODULES", ())
+
+
 def is_available(module, profile):
     """Whether ``profile``'s church may use ``module`` at all."""
+    if is_retired(module):
+        return False
     return module.platform_ready or profile.members_teams_unlocked
 
 

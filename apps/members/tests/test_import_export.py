@@ -3,7 +3,7 @@ import io
 from unittest import mock
 
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.audit.models import AuditEvent
@@ -31,6 +31,9 @@ Jose,Santos,1970-05-01,,,,,
 """
 
 
+# The Member Directory is retired (settings.RETIRED_MODULES); its tests
+# keep the kept code working, for the day it comes back.
+@override_settings(RETIRED_MODULES=())
 class ImportTestCase(TestCase):
     def setUp(self):
         complete_setup()
@@ -159,6 +162,9 @@ class ImportFileTests(ImportTestCase):
         self.assertIsNone(Member.objects.get().birth_date)
 
 
+# The Member Directory is retired (settings.RETIRED_MODULES); its tests
+# keep the kept code working, for the day it comes back.
+@override_settings(RETIRED_MODULES=())
 class ExportTests(TestCase):
     def setUp(self):
         complete_setup()

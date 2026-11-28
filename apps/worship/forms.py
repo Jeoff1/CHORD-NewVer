@@ -13,14 +13,13 @@ from .models import (
     BibleSettings,
     LineupItem,
     Season,
-    SermonSeries,
     ServiceTemplate,
     SuggestionSettings,
     TemplateSlot,
     Theme,
     WorshipService,
 )
-from .scheduling import MAX_WEEKS_AHEAD
+from .scheduling import MAX_WEEKS_AHEAD, church_time_zone, suggested_start
 
 MOMENT_FORMAT = "%Y-%m-%dT%H:%M"
 
@@ -34,6 +33,21 @@ def moment_field(**kwargs):
         ),
         **kwargs,
     )
+
+
+class TemplateSelect(forms.Select):
+    """The template choice; each option carries when that template's next
+    service would start (``data-next-start``), so the form can fill in the
+    date when the template changes (worship/service_form.js)."""
+
+    next_starts = {}
+
+    def create_option(self, name, value, *args, **kwargs):
+        option = super().create_option(name, value, *args, **kwargs)
+        key = getattr(value, "value", value)
+        if key in self.next_starts:
+            option["attrs"]["data-next-start"] = self.next_starts[key]
+        return option
 
 
 class ServiceForm(ChurchFormMixin, forms.ModelForm):
@@ -50,7 +64,10 @@ class ServiceForm(ChurchFormMixin, forms.ModelForm):
             "notes",
             "is_cancelled",
         ]
-        widgets = {"notes": forms.Textarea(attrs={"rows": 3})}
+        widgets = {
+            "notes": forms.Textarea(attrs={"rows": 3}),
+            "template": TemplateSelect,
+        }
         help_texts = {
             "name": "Leave blank to use the template's name.",
             "is_cancelled": "A cancelled service stays on the schedule, crossed out.",
@@ -67,6 +84,27 @@ class ServiceForm(ChurchFormMixin, forms.ModelForm):
             templates = list(self.fields["template"].queryset[:2])
             if len(templates) == 1:
                 self.initial.setdefault("template", templates[0].pk)
+            self.suggest_start()
+
+    def suggest_start(self):
+        """A new service's date and time start filled in, still editable
+        (the owner, 28 Nov 2026): from the chosen template, and again by
+        the script when another template is chosen."""
+        zone = church_time_zone(self.church)
+        templates = list(self.fields["template"].queryset)
+        self.fields["template"].widget.next_starts = {
+            template.pk: suggested_start(self.church, template)
+            .astimezone(zone)
+            .strftime(MOMENT_FORMAT)
+            for template in templates
+        }
+        chosen = next(
+            (t for t in templates if t.pk == self.initial.get("template")), None
+        )
+        self.initial.setdefault("starts_at", suggested_start(self.church, chosen))
+
+    class Media:
+        js = ("worship/service_form.js",)
 
     def clean(self):
         cleaned = super().clean()
@@ -115,9 +153,11 @@ class ScriptureInput(forms.TextInput):
 
 
 class ThemeForm(ChurchFormMixin, forms.ModelForm):
+    # No sermon series (the owner, 28 Nov 2026): a theme's series, if one was
+    # chosen before, stays saved but isn't asked for or shown.
     class Meta:
         model = Theme
-        fields = ["title", "scripture", "series", "notes", "document"]
+        fields = ["title", "scripture", "notes", "document"]
         widgets = {"notes": forms.Textarea(attrs={"rows": 10})}
 
     def __init__(
@@ -140,10 +180,6 @@ class ThemeForm(ChurchFormMixin, forms.ModelForm):
             "one, such as Jn 3:16 or Ps 23. The passage's text helps song "
             "suggestions match."
         )
-        self.fields["series"].queryset = SermonSeries.objects.for_church(
-            self.church
-        ).usable(self.instance.series_id)
-        self.fields["series"].label = f"{sermon} series"
         self.fields["notes"].label = f"{sermon} notes"
         document = self.fields["document"]
         document.label = f"{sermon} PDF"

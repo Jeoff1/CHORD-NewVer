@@ -8,7 +8,7 @@ members' records.
 """
 
 from django.contrib.auth.models import Permission
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.accounts import roles
@@ -116,6 +116,7 @@ class ChurchMemberPagesTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Picnic on Saturday")
 
+    @override_settings(RETIRED_MODULES=())
     def test_own_member_record(self):
         make_member(first_name="Rosa", last_name="Lim", user=self.user)
         response = self.client.get(reverse("members:me"))
@@ -177,17 +178,16 @@ class ModuleNavigationTests(TestCase):
 
     def test_each_role_sees_the_modules_it_can_open(self):
         expected = {
-            "office_staff": ["members", "worship", "occasions", "announcements"],
+            # No "members": the Member Directory is retired.
+            "office_staff": ["worship", "occasions", "announcements"],
             "team_member": ["worship", "teams", "announcements"],
             "worship_leader": [
-                "members",
                 "worship",
                 "teams",
                 "occasions",
                 "announcements",
             ],
             "administrator": [
-                "members",
                 "worship",
                 "teams",
                 "occasions",
@@ -198,6 +198,7 @@ class ModuleNavigationTests(TestCase):
             with self.subTest(role):
                 self.assertEqual(self.codes(make_user(roles=[role])), codes)
 
+    @override_settings(RETIRED_MODULES=())
     def test_a_permission_given_to_one_user_shows_the_module(self):
         user = make_user(roles=["church_member"], perms=["members.view_member"])
         self.assertIn("members", self.codes(user))

@@ -1,7 +1,7 @@
 """The Members list (Phase 9A, A7, part 3): one primary button, the rest
 under More, tabs, one filter row and the columns."""
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.core.testing import complete_setup, make_administrator, make_member, make_user
@@ -10,6 +10,9 @@ LIST = reverse("members:list")
 VIEWER = ["members.view_member"]
 
 
+# The Member Directory is retired (settings.RETIRED_MODULES); its tests
+# keep the kept code working, for the day it comes back.
+@override_settings(RETIRED_MODULES=())
 class MembersScreenTests(TestCase):
     def setUp(self):
         complete_setup()

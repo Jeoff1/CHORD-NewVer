@@ -66,6 +66,13 @@ AUTHENTICATION_BACKENDS = ["apps.accounts.backends.ChurchRoleBackend"]
 
 ROOT_URLCONF = "config.urls"
 
+# Modules no church may switch on, whatever its settings. Their code, data
+# and tests stay, so taking a code out of this list brings the Module back.
+# The Member Directory (members, households, CSV import) is retired: the
+# sidebar's Members tab (Users, Roles and Permissions, Audit Log) lists a
+# church's people instead (the owner, 28 Nov 2026).
+RETIRED_MODULES = ("members",)
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",

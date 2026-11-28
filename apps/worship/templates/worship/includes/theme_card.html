@@ -9,7 +9,7 @@
     {% if theme %}
       <p class="fs-5 fw-semibold mb-1">{{ theme.title }}</p>
       <p class="text-body-secondary mb-0">
-        {% if theme.scripture %}{{ theme.scripture }}{% endif %}{% if theme.series %}{% if theme.scripture %} · {% endif %}{% label "sermon" %} series: {{ theme.series }}{% endif %}
+        {% if theme.scripture %}{{ theme.scripture }}{% endif %}
       </p>
       {% if scripture.passage %}
         {# The passage's text (Phase 9C): public domain, for everyone who sees the theme. #}

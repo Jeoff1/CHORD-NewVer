@@ -36,7 +36,6 @@ class MenuTests(TestCase):
             [category.title for category in menu.categories],
             [
                 "General",
-                "Members",
                 "Worship",
                 "Teams and occasions",
                 "Integrations",
@@ -46,7 +45,7 @@ class MenuTests(TestCase):
         found = labels(menu)
         self.assertEqual(
             found["General"],
-            ["Church details", "Labels", "Modules", "Public homepage"],
+            ["Church details", "Modules", "Public homepage"],
         )
         # Users, roles and the Audit log are sidebar pages, not settings.
         every_page = [label for pages in found.values() for label in pages]
@@ -64,7 +63,6 @@ class MenuTests(TestCase):
             groups,
             [
                 ("Services", "Service templates"),
-                ("Services", "Sermon series"),
                 ("Services", "Seasons"),
                 ("Services", "Bible"),
                 ("Songs and suggestions", "Theme tags"),

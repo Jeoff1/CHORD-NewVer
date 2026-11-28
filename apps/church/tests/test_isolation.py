@@ -109,8 +109,6 @@ OBJECT_URLS = {
         "action": "lock",
     },
     "worship:template_update": lambda o: {"pk": o["template"].pk},
-    "worship:series_update": lambda o: {"pk": o["series"].pk},
-    "worship:series_switch": lambda o: {"pk": o["series"].pk},
     "worship:seasons_update": lambda o: {"pk": o["season"].pk},
     "worship:seasons_switch": lambda o: {"pk": o["season"].pk},
     "occasions:detail": lambda o: {"public_id": o["occasion"].public_id},

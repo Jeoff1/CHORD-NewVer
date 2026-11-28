@@ -1,18 +1,26 @@
-"""Forms for the Church Profile sections: details, Labels, Modules and the
-public homepage.
+"""Forms for the Church Profile sections: details, Modules and the public
+homepage. Labels keep CHORD's default words: churches no longer edit them
+(the owner, 28 Nov 2026).
 
 All of them take ``instance`` (the Church Profile) and have ``save()``, so the
 settings pages and the setup wizard share one view.
 """
+
+from dataclasses import replace
 
 from django import forms
 from django.core.validators import MaxLengthValidator
 
 from .context_processors import module_entries
 from .images import BannerFieldMixin
-from .labels import LABEL_DEFINITIONS
 from .models import TIME_ZONE_CHOICES, ChurchProfile
-from .modules import MODULE_CHOICES, MODULES, MODULES_BY_CODE, is_available
+from .modules import (
+    MODULE_CHOICES,
+    MODULES,
+    MODULES_BY_CODE,
+    is_available,
+    is_retired,
+)
 
 ABOUT_MAX_LENGTH = 2000
 TIME_ZONES = {zone for zone, _ in TIME_ZONE_CHOICES}
@@ -26,19 +34,13 @@ class ChurchDetailsForm(forms.ModelForm):
             "address",
             "phone",
             "email",
-            "website",
             "logo",
-            "currency",
-            "time_zone",
         ]
         labels = {"name": "Church name"}
         help_texts = {
             "logo": "512 × 512 px recommended (1:1). PNG, JPEG, GIF or WebP, 2 MB at most."
         }
         widgets = {"address": forms.Textarea(attrs={"rows": 3})}
-
-    def clean_currency(self):
-        return self.cleaned_data["currency"].strip().upper()
 
 
 class ChurchHomepageForm(BannerFieldMixin, forms.ModelForm):
@@ -73,43 +75,6 @@ class ChurchHomepageForm(BannerFieldMixin, forms.ModelForm):
         return self.cleaned_data["about"].strip()
 
 
-class LabelsForm(forms.Form):
-    def __init__(self, *args, instance, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.instance = instance
-        labels = instance.label_set
-        for definition in LABEL_DEFINITIONS:
-            self.fields[f"{definition.key}__singular"] = forms.CharField(
-                label=f"{definition.singular}: singular",
-                initial=labels.get(definition.key),
-                max_length=60,
-            )
-            self.fields[f"{definition.key}__plural"] = forms.CharField(
-                label=f"{definition.singular}: plural",
-                initial=labels.get(definition.key, plural=True),
-                max_length=60,
-            )
-
-    def rows(self):
-        """(definition, singular field, plural field) for the labels table."""
-        return [
-            (d, self[f"{d.key}__singular"], self[f"{d.key}__plural"])
-            for d in LABEL_DEFINITIONS
-        ]
-
-    def save(self):
-        data = self.cleaned_data
-        self.instance.labels = {
-            d.key: {
-                "singular": data[f"{d.key}__singular"].strip(),
-                "plural": data[f"{d.key}__plural"].strip(),
-            }
-            for d in LABEL_DEFINITIONS
-        }
-        self.instance.save(update_fields=["labels", "updated_at"])
-        return self.instance
-
-
 class ModulesForm(forms.Form):
     enabled = forms.MultipleChoiceField(
         choices=MODULE_CHOICES,
@@ -134,21 +99,52 @@ class ModulesForm(forms.Form):
         ]
 
     def rows(self):
-        """(module entry in the church's words, is switched on, may be
-        switched on) per Module."""
+        """One row per Module no setting retires, in the church's words: the
+        entry, whether it is switched on, whether it may be switched on, and
+        whether it sits under another Module (Teams, shown as the Praise
+        Team, under Worship), right after that Module."""
         checked = set(self["enabled"].value() or [])
         everything_on = ChurchProfile(
             labels=self.instance.labels, members_teams_unlocked=True
         )
-        return [
-            (e, e.code in checked, e.code in self.available)
+        entries = {
+            e.code: e
             for e in module_entries(everything_on)
-        ]
+            if not is_retired(MODULES_BY_CODE[e.code])
+        }
+        team_word = self.instance.label_set.get("team")
+
+        def row(code, nested=False):
+            entry = entries[code]
+            if nested:
+                entry = replace(entry, name=team_word, requires=())
+            return {
+                "entry": entry,
+                "checked": code in checked,
+                "available": code in self.available,
+                "nested": nested,
+            }
+
+        rows = []
+        for code in entries:
+            if MODULES_BY_CODE[code].parent:
+                continue
+            rows.append(row(code))
+            rows += [
+                row(child, nested=True)
+                for child in entries
+                if MODULES_BY_CODE[child].parent == code
+            ]
+        return rows
 
     def save(self):
         enabled = set(self.cleaned_data["enabled"])
+        # A retired Module isn't on the page, so its saved choice is kept.
+        kept_off = set(self.instance.disabled_modules)
         self.instance.disabled_modules = [
-            code for code in MODULES_BY_CODE if code not in enabled
+            code
+            for code, module in MODULES_BY_CODE.items()
+            if (code in kept_off if is_retired(module) else code not in enabled)
         ]
         self.instance.save(update_fields=["disabled_modules", "updated_at"])
         return self.instance
@@ -156,7 +152,6 @@ class ModulesForm(forms.Form):
 
 SECTIONS = {
     "details": ("Church details", ChurchDetailsForm),
-    "labels": ("Labels", LabelsForm),
     "modules": ("Modules", ModulesForm),
     "homepage": ("Public homepage", ChurchHomepageForm),
 }

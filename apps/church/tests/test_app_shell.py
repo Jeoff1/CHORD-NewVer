@@ -204,8 +204,6 @@ class NoModuleTabsTests(TestCase):
             "worship:calendar",
             "worship:reports",
             "songs:list",
-            "members:list",
-            "members:household_list",
         ):
             with self.subTest(name):
                 page = self.client.get(reverse(name))
@@ -334,7 +332,8 @@ class DashboardFigureTests(TestCase):
         service = make_service(name="Sunday gathering")
         make_assignment(service, self.admin, make_team_part(), reply="accepted")
         page = self.page(self.admin)
-        self.assertContains(page, "<b>1</b> active members")
+        # The Member Directory is retired, so no member count.
+        self.assertNotContains(page, "active members")
         self.assertContains(page, "<b>1</b> booked services")
         self.assertContains(page, "<b>1</b> upcoming assignment for you")
 

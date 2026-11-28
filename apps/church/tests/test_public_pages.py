@@ -416,7 +416,8 @@ class ProfileRedesignTests(PublicPagesTestCase):
         content = page.content.decode()
         self.assertIn('href="tel:09175550100"', content)
         self.assertIn('href="mailto:office@river.example"', content)
-        self.assertIn('href="https://river.example"', content)
+        # No website on the homepage (the owner, 28 Nov 2026).
+        self.assertNotIn("https://river.example", content)
         self.assertIn(
             "https://www.google.com/maps/search/?api=1&amp;query=1%20River%20Road",
             content,

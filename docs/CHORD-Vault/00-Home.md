@@ -8,6 +8,13 @@ development task.
 
 ## Current status
 
+**Simpler church setup (28 Nov 2026), branch `church-setup-simplify`:**
+no sermon series, a service date that fills itself in, no Labels page,
+no Website, Currency or Time zone in Church details, the Praise Team as
+its own switch under Worship, and the Member Directory retired. Still to
+come on this branch: Teams kept per church (the Praise Team step for every
+church) and a location picker for the church address.
+
 **Dashboard and sidebar redesign (A7), 2026-11-27, on branch
 `joy-ui-ux-v3`: built and checked, not committed yet** (the UI/UX owner
 reviews the running site first). Every signed-in page now has a green
@@ -163,7 +170,7 @@ Each module gets a note in `03-Modules/` once work on it starts (template:
 | Church Setup (core) | Built       | [[Church-Setup]] |
 | Accounts (core)     | Built       | [[Accounts]]     |
 | Notifications (core) | Built      | [[Accounts]] ("Notifications") |
-| Members             | Built       | [[Members]]      |
+| Members             | Retired     | [[Members]]      |
 | Worship             | In progress | [[Worship]]      |
 | Teams               | Built       | [[Teams]]        |
 | Occasions           | Built       | [[Occasions]]    |

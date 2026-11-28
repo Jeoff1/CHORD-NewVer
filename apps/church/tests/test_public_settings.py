@@ -218,7 +218,7 @@ class SetupWizardForANewChurchTests(TestCase):
         self.church.refresh_from_db()
         self.assertTrue(self.church.setup_completed)
 
-    def test_its_fourth_step_is_the_public_homepage(self):
+    def test_its_last_step_is_the_public_homepage(self):
         # The wizard's pages stay at their addresses, though nothing sends
         # anyone there now.
         admin = make_user(church=self.church, roles=["administrator"])
@@ -227,10 +227,10 @@ class SetupWizardForANewChurchTests(TestCase):
         session[SESSION_KEY] = self.church.pk
         session.save()
         step = reverse("church:setup", kwargs={"section": "homepage"})
-        self.assertContains(self.client.get(step), "Step 4 of 4: Public homepage")
+        self.assertContains(self.client.get(step), "Step 3 of 3: Public homepage")
         self.assertContains(
             self.client.get(reverse("church:setup", kwargs={"section": "modules"})),
-            "Step 3 of 4: Modules",
+            "Step 2 of 3: Modules",
         )
         # Once set up, the step opens the settings page the hub links.
         complete_setup(self.church)

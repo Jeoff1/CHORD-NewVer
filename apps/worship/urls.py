@@ -3,20 +3,10 @@ from django.urls import path
 from apps.core.setting_lists import SettingList, setting_list_urls
 
 from .forms import SeasonForm
-from .models import Season, SermonSeries
+from .models import Season
 from .views import lineups, reports, schedule, suggestions
 
 app_name = "worship"
-
-SERIES_LIST = SettingList(
-    model=SermonSeries,
-    url_prefix="series",
-    title=lambda request: f"{request.church.label_set.get('sermon')} series",
-    item_name="Series",
-    intro="Groups of services whose themes belong together. Choose a series "
-    "when posting a service's theme.",
-    module="worship",
-)
 
 
 def _season_dates(season):
@@ -225,6 +215,5 @@ urlpatterns = [
         suggestions.SuggestionSettingsView.as_view(),
         name="suggestion_settings",
     ),
-    *setting_list_urls(SERIES_LIST, route_prefix="settings/"),
     *setting_list_urls(SEASONS_LIST, route_prefix="settings/"),
 ]

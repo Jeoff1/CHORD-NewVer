@@ -11,6 +11,12 @@ offers, each Service Type's Fee Mode, Requirements and steps, and the Labels it
 uses) instead of declaring what it *is*. Terms are defined in [[Glossary]]. Code branches only on these settings,
 never on a church's denomination or tradition.
 
+**Amended 2026-11-28 (the owner):** churches no longer edit Labels; every
+church uses CHORD's neutral defaults, read through the same helpers. Teams
+shows on the Modules page as the Praise Team under Worship, with its own
+switch. A Module can be retired for every church by a setting
+(`RETIRED_MODULES`), as the Member Directory now is; its data stays.
+
 ## Considered Options
 
 - **Tradition presets** (the first CHORD: a Tradition such as Roman Catholic or

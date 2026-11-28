@@ -39,11 +39,11 @@ worship workflow, in its smallest useful form:
   fees, requirements or church records
 - Church Member role, batch accounts, user history and printable member
   reports (Phase 9A)
-- Themes and sermon series
+- Themes (sermon series removed from the screens on 2026-11-28)
 - Team roster: assignments, availability and swap requests
-- Member directory: the Members module stays as built (households, CSV
-  import), plus the Phase 9A report, age groups and batch accounts; don't
-  extend it further without asking
+- Member directory: retired on 2026-11-28 (`settings.RETIRED_MODULES`;
+  its code, data and tests stay). A church's people are its Users, under
+  Members in the sidebar. Don't bring it back without asking
 - Announcements to the whole team or one service team
 - Attendance as a headcount per service
 - Song usage report
@@ -67,16 +67,20 @@ Every feature follows this:
   on or off; a switched-off Module is hidden, and its data stays intact.
 - **Church practice is data the church enters.** Anything that differs
   between churches (which kinds of service it holds, their song slots,
-  theme tags, seasons, team parts, search genres, ranking weights,
-  wording) is a model or setting the church edits, with neutral defaults.
+  theme tags, seasons, team parts, search genres, ranking weights) is a
+  model or setting the church edits, with neutral defaults. Wording is the
+  exception: see Labels below.
 - **Code branches only on settings.** Write `if template.repeats_weekly`,
   never a check on denomination, tradition or church name. When a feature
   seems to need "if church X does Y", add a setting for Y.
 - **Optional steps disappear when unused.** A church that defines no
   seasons gets no season scoring; one that never records a headcount sees
   no attendance report.
-- **Use the church's Labels in UI text** for concepts whose wording differs
-  between churches (member, worship service, sermon, lineup).
+- **Use the Labels in UI text** for concepts whose wording differs
+  between churches (member, worship service, sermon, lineup, team). Since
+  2026-11-28 churches no longer edit them: every church sees CHORD's
+  neutral defaults (the owner's decision), but code still reads them
+  through the Labels helpers, never as hard-coded words.
 - **Denomination-free.** Denomination, Tradition and religion stay out of
   models, forms, seed data, fixtures and UI copy.
 

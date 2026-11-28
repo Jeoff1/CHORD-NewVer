@@ -21,7 +21,7 @@ from apps.core.views import FilteredListView
 
 from . import dashboard, homepage
 from .forms import SECTION_ORDER, SECTIONS, ChurchRegistrationForm
-from .labels import LABEL_DEFINITIONS, Labels
+from .labels import Labels
 from .middleware import SESSION_KEY
 from .models import ChurchProfile
 from .modules import MODULES_BY_CODE
@@ -37,20 +37,14 @@ def profile_audit_fields():
         "Address": "address",
         "Phone": "phone",
         "Email": "email",
-        "Website": "website",
         "Logo": "logo",
         "Banner": "banner",
-        "Currency": "currency",
         "Time zone": "time_zone",
         "Switched-off modules": lambda p: [
             MODULES_BY_CODE[c].name for c in p.disabled_modules if c in MODULES_BY_CODE
         ],
         "Setup completed": "setup_completed",
     }
-    for d in LABEL_DEFINITIONS:
-        fields[f"Label: {d.singular}"] = lambda p, key=d.key: (
-            f"{p.label_set.get(key)} / {p.label_set.get(key, plural=True)}"
-        )
     return fields
 
 

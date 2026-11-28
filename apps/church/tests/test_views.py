@@ -46,25 +46,6 @@ def details_data(**overrides):
     return data
 
 
-def labels_data(**overrides):
-    data = {
-        "member__singular": "Member",
-        "member__plural": "Members",
-        "worship_service__singular": "Worship Service",
-        "worship_service__plural": "Worship Services",
-        "sermon__singular": "Homily",
-        "sermon__plural": "Homilies",
-        "lineup__singular": "Lineup",
-        "lineup__plural": "Lineups",
-        "pastor__singular": "Pastor",
-        "pastor__plural": "Pastors",
-        "team__singular": "Praise Team",
-        "team__plural": "Praise Teams",
-    }
-    data.update(overrides)
-    return data
-
-
 class DashboardTests(TestCase):
     def test_signing_in_opens_the_dashboard_not_the_setup_wizard(self):
         # No setup wizard any more (owner, 27 Nov 2026): a church whose
@@ -120,15 +101,11 @@ class SetupWizardTests(TestCase):
 
     def test_full_wizard(self):
         response = self.client.get(self.url("details"))
-        self.assertContains(response, "Step 1 of 4")
+        self.assertContains(response, "Step 1 of 3")
 
         response = self.client.post(self.url("details"), details_data())
-        self.assertRedirects(response, self.url("labels"))
-        response = self.client.post(self.url("labels"), labels_data())
         self.assertRedirects(response, self.url("modules"))
-        response = self.client.post(
-            self.url("modules"), {"enabled": ["members", "worship"]}
-        )
+        response = self.client.post(self.url("modules"), {"enabled": ["worship"]})
         self.assertRedirects(response, self.url("homepage"))
         response = self.client.post(
             self.url("homepage"),
@@ -139,20 +116,18 @@ class SetupWizardTests(TestCase):
         profile = first_church()
         self.assertTrue(profile.setup_completed)
         self.assertEqual(profile.name, "Grace Community Church")
-        self.assertEqual(profile.currency, "PHP")
-        self.assertEqual(profile.label_set.get("sermon"), "Homily")
         self.assertEqual(
             sorted(profile.disabled_modules), ["announcements", "occasions", "teams"]
         )
         self.assertEqual(profile.about, "We meet on Sundays.")
         self.assertFalse(profile.show_in_directory)
-        self.assertEqual(AuditEvent.objects.count(), 4)
+        self.assertEqual(AuditEvent.objects.count(), 3)
 
     def test_finished_wizard_redirects_to_settings(self):
         complete_setup()
-        response = self.client.get(self.url("labels"))
+        response = self.client.get(self.url("modules"))
         self.assertRedirects(
-            response, reverse("church:settings", kwargs={"section": "labels"})
+            response, reverse("church:settings", kwargs={"section": "modules"})
         )
 
     def test_unknown_section_is_404(self):
@@ -180,14 +155,33 @@ class SettingsTests(TestCase):
 
     def test_every_section_renders(self):
         details = self.client.get(self.url("details"))
-        self.assertContains(details, 'name="currency"')
-        labels = self.client.get(self.url("labels"))
-        self.assertContains(labels, "e.g. Sermon, Homily, Message")
-        self.assertContains(labels, 'name="sermon__plural"')
+        self.assertContains(details, 'name="address"')
         modules = self.client.get(self.url("modules"))
-        self.assertContains(modules, 'role="switch"', count=5)
-        self.assertContains(modules, " checked", count=5)
+        # Worship, the Praise Team, Occasions and Announcements; the retired
+        # Member Directory isn't listed.
+        self.assertContains(modules, 'role="switch"', count=4)
+        self.assertContains(modules, " checked", count=4)
         self.assertContains(modules, "Needs Worship switched on.")
+
+    def test_the_praise_team_sits_under_worship(self):
+        # The owner, 28 Nov 2026: Teams shows as the Praise Team under
+        # Worship, with its own switch.
+        page = self.client.get(self.url("modules")).content.decode()
+        worship = page.index('id="module-worship"')
+        team = page.index('id="module-teams"')
+        occasions = page.index('id="module-occasions"')
+        self.assertLess(worship, team)
+        self.assertLess(team, occasions)
+        row = page[page.rindex("<label", 0, team) : team]
+        self.assertIn("chord-module--nested", row)
+        self.assertIn(">Praise Team<", page[team : team + 600])
+        self.assertNotIn('value="members"', page)
+
+    def test_switching_the_praise_team_off_keeps_worship(self):
+        self.client.post(
+            self.url("modules"), {"enabled": ["worship", "occasions", "announcements"]}
+        )
+        self.assertEqual(first_church().disabled_modules, ["teams"])
 
     def test_settings_home_opens_details(self):
         response = self.client.get(reverse("church:settings_home"))
@@ -203,10 +197,18 @@ class SettingsTests(TestCase):
         )
         self.assertNotIn("Time zone", event.changes)
 
-    def test_invalid_currency_is_rejected(self):
-        response = self.client.post(self.url("details"), details_data(currency="PESO"))
-        self.assertContains(response, "is-invalid")
-        self.assertEqual(first_church().currency, "PHP")
+    def test_no_website_currency_or_time_zone(self):
+        # The owner, 28 Nov 2026. Saved values are kept; the time zone still
+        # comes from the browser when a church registers.
+        ChurchProfile.objects.update(website="https://grace.example")
+        details = self.client.get(self.url("details"))
+        for name in ("website", "currency", "time_zone"):
+            self.assertNotContains(details, f'name="{name}"')
+        self.client.post(self.url("details"), details_data(currency="PESO"))
+        profile = first_church()
+        self.assertEqual(profile.name, "Grace Community Church")
+        self.assertEqual(profile.currency, "PHP")
+        self.assertEqual(profile.website, "https://grace.example")
 
     def test_logo_upload(self):
         data = details_data(logo=image_file())
@@ -225,32 +227,24 @@ class SettingsTests(TestCase):
         response = self.client.post(self.url("details"), data)
         self.assertContains(response, "2 MB or smaller")
 
-    def test_labels_change_module_names(self):
-        self.client.post(
-            self.url("labels"),
-            labels_data(member__singular="Parishioner", member__plural="Parishioners"),
-        )
-        response = self.client.get(reverse("home"))
-        self.assertContains(response, "Parishioners")
-        event = AuditEvent.objects.get()
-        self.assertEqual(
-            event.changes["Label: Member"],
-            ["Member / Members", "Parishioner / Parishioners"],
-        )
+    def test_there_is_no_labels_page(self):
+        # The owner, 28 Nov 2026: CHORD's default words, not the church's.
+        self.assertEqual(self.client.get(self.url("labels")).status_code, 404)
+        self.assertNotContains(self.client.get(self.url("details")), ">Labels<")
 
     def test_switching_modules_off_and_on(self):
-        self.client.post(self.url("modules"), {"enabled": ["members"]})
+        self.client.post(self.url("modules"), {"enabled": ["announcements"]})
         profile = first_church()
-        self.assertEqual(len(profile.disabled_modules), 4)
+        self.assertEqual(len(profile.disabled_modules), 3)
         self.assertNotContains(self.client.get(reverse("home")), "Worship")
 
-        everything = ["members", "worship", "teams", "occasions", "announcements"]
+        everything = ["worship", "teams", "occasions", "announcements"]
         self.client.post(self.url("modules"), {"enabled": everything})
         self.assertEqual(first_church().disabled_modules, [])
 
     def test_stale_module_codes_do_not_break_the_audit_trail(self):
         ChurchProfile.objects.update(disabled_modules=["giving"])
-        self.client.post(self.url("modules"), {"enabled": ["members", "worship"]})
+        self.client.post(self.url("modules"), {"enabled": ["worship"]})
         self.assertEqual(
             sorted(first_church().disabled_modules),
             ["announcements", "occasions", "teams"],

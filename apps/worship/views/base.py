@@ -13,7 +13,6 @@ from ..models import WorshipService
 # may contain "{sermon}", filled in with the church's word.
 SETTINGS_PAGES = [
     ("Service templates", "worship.view_servicetemplate", "worship:template_list"),
-    ("{sermon} series", "worship.view_sermonseries", "worship:series_list"),
     ("Seasons", "worship.view_season", "worship:seasons_list"),
     ("Bible", "worship.change_biblesettings", "worship:bible_settings"),
     ("Theme tags", "songs.view_themetag", "songs:theme_tags_list"),
@@ -28,7 +27,6 @@ SETTINGS_PAGES = [
 # Their groups in the Settings hub's Worship category (Phase 9A, A7).
 SETTINGS_GROUPS = {
     "worship:template_list": "Services",
-    "worship:series_list": "Services",
     "worship:seasons_list": "Services",
     "worship:bible_settings": "Services",
     "songs:theme_tags_list": "Songs and suggestions",

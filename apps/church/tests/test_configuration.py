@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django.http import Http404, HttpResponse
 from django.template import Context, Template
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 from django.views import View
 
@@ -81,7 +81,17 @@ class ModuleSwitchingTests(TestCase):
         self.request.church = self.profile
 
     def test_every_module_starts_switched_on(self):
-        self.assertTrue(all(is_enabled(m.code, self.profile) for m in MODULES))
+        # All but a retired one: the Member Directory (settings.RETIRED_MODULES).
+        self.assertTrue(
+            all(
+                is_enabled(m.code, self.profile) for m in MODULES if m.code != "members"
+            )
+        )
+
+    def test_a_retired_module_is_off_for_every_church(self):
+        self.assertFalse(is_enabled("members", self.profile))
+        with self.settings(RETIRED_MODULES=()):
+            self.assertTrue(is_enabled("members", self.profile))
 
     def test_unknown_module_is_an_error(self):
         with self.assertRaises(ValueError):
@@ -102,15 +112,16 @@ class ModuleSwitchingTests(TestCase):
         codes = [entry.code for entry in module_entries(self.profile)]
         self.assertNotIn("announcements", codes)
         self.assertNotIn("teams", codes)
-        self.assertIn("members", codes)
+        self.assertIn("worship", codes)
 
     def test_module_counts_as_off_while_one_it_needs_is_off(self):
         self.profile.disabled_modules = ["worship"]
         self.assertFalse(is_enabled("teams", self.profile))
         self.assertTrue(is_enabled("announcements", self.profile))
         codes = [entry.code for entry in module_entries(self.profile)]
-        self.assertEqual(codes, ["members", "announcements"])
+        self.assertEqual(codes, ["announcements"])
 
+    @override_settings(RETIRED_MODULES=())
     def test_module_names_follow_labels(self):
         self.profile.labels = {
             "member": {"singular": "Parishioner", "plural": "Parishioners"}

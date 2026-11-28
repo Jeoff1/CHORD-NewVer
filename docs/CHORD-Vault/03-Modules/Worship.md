@@ -26,10 +26,15 @@ Built in Phase 3 (`apps/worship`):
   date and time, rehearsal time (must be earlier), notes, headcount and a
   cancelled flag. A template can't have two services at the same moment.
   Public UUID in URLs.
-- **Theme**: one per service, with title, main scripture, notes and an
-  optional **Series**. It records who posted it. The notes are shown only
+- **Theme**: one per service, with title, main scripture and notes. It
+  records who posted it. Its optional **Series** is no longer asked for or
+  shown (28 Nov 2026); one saved before stays. The notes are shown only
   to people who plan (those who can edit themes or lineups).
-- **Series**: a church-edited list.
+- **Series**: the model and its saved rows stay; there is no settings
+  page any more.
+- **New service form:** "Date and time" starts at the template's next
+  usual day and time (`scheduling.suggested_start`), and changes with the
+  template until the person edits it (`static/worship/service_form.js`).
 - **Screens** (`/worship/`):
   - the schedule: Upcoming and Past, with search over names and themes;
   - a month calendar (`/worship/calendar/?month=YYYY-MM`);
@@ -38,7 +43,7 @@ Built in Phase 3 (`apps/worship`):
   - **Schedule weeks ahead**: adds the chosen template's service on its
     usual day and time for up to 26 weeks, in the church's time zone, and
     skips dates that already have it;
-  - settings: Service templates (with their slots) and Series.
+  - settings: Service templates (with their slots).
 - **Rules** are in `scheduling.py` (weekly scheduling, the calendar grid,
   audit fields), and the forms in `forms.py`.
 - Every change to services, themes, headcounts and templates is in the

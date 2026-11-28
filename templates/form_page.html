@@ -2,6 +2,8 @@
 
 {% block title %}{{ page_title }}{% endblock %}
 
+{% block extra_head %}{{ form.media }}{% endblock %}
+
 {% block content %}
   <div class="{% if settings_menu.current %}d-block{% else %}row justify-content-center{% endif %}">
     <div class="{% if settings_menu.current %}d-block{% else %}col-lg-8 col-xl-7{% endif %}">

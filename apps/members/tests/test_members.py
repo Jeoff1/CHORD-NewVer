@@ -53,6 +53,9 @@ def member_data(**overrides):
     return data
 
 
+# The Member Directory is retired (settings.RETIRED_MODULES); its tests
+# keep the kept code working, for the day it comes back.
+@override_settings(RETIRED_MODULES=())
 class MemberTestCase(TestCase):
     def setUp(self):
         complete_setup()

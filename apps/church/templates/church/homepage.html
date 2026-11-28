@@ -54,7 +54,7 @@
           <div class="pf-about" id="pf-about">{% include "church/includes/about.html" with church=public_church %}</div>
           {% if public_church.about|length > 240 %}<button type="button" class="pf-more" data-more="pf-about" aria-controls="pf-about" aria-expanded="false" hidden>Read more</button>{% endif %}
         {% endif %}
-        {% if public_church.address or public_church.phone or public_church.email or public_church.website %}
+        {% if public_church.address or public_church.phone or public_church.email %}
           <hr>
           <h2 class="pf-side__title">Contact</h2>
           <ul class="pf-contact">
@@ -66,9 +66,6 @@
             {% endif %}
             {% if public_church.email %}
               <li><a href="mailto:{{ public_church.email }}"><span class="pf-contact__icon">{% include "includes/icons/mail.html" %}</span><span>{{ public_church.email }}</span></a></li>
-            {% endif %}
-            {% if public_church.website %}
-              <li><a href="{{ public_church.website }}" rel="nofollow noopener" target="_blank"><span class="pf-contact__icon">{% include "includes/icons/globe.html" %}</span><span>{{ public_church.website }}</span></a></li>
             {% endif %}
           </ul>
         {% endif %}

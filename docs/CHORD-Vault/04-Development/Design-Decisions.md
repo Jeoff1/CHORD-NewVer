@@ -921,6 +921,43 @@ Tests: `apps/church/tests/test_app_shell.py`
 `test_the_members_links_follow_permissions`) and
 `apps/core/tests/test_settings_hub.py`.
 
+#### Simpler church setup and service form (the owner, 28 Nov 2026)
+
+Built on branch `church-setup-simplify`.
+
+- **No sermon series:** the Theme form no longer asks for one, the theme
+  card doesn't show it, and the Settings page is gone. A series saved
+  before stays in the database, untouched when the theme is edited.
+- **The date fills itself in:** a new service's "Date and time" starts at
+  the chosen template's next usual day and time
+  (`scheduling.suggested_start`): the next matching weekday (today while
+  the time is still ahead); with a usual time but no day, today or
+  tomorrow; with neither, the next whole hour. Choosing another template
+  changes it (`worship/service_form.js`) until the person edits the date.
+- **Church details** no longer has Website, Currency or Time zone; the
+  public homepage no longer shows a website. Saved values stay; the time
+  zone is still taken from the browser when a church registers.
+- **No Labels page** (Settings and the setup wizard, now three steps).
+  Every church uses the default words; AGENTS.md and
+  [[0001-configure-behavior-not-identity]] are amended.
+- **The Praise Team under Worship:** on the Modules page Teams shows as
+  the Praise Team (the "team" Label), indented under Worship, with its own
+  switch (`Module.parent`).
+- **The Member Directory is retired** (`settings.RETIRED_MODULES =
+  ("members",)`): no church may switch it on, so its sidebar links,
+  dashboard count, quick action, settings pages and "My member record"
+  disappear, and its pages are 404. It had no records. Its code, tables and
+  tests stay (the tests run with the setting emptied); taking "members" out
+  of the setting brings it back. Batch accounts from member records go
+  with it; Users › Add user still adds people.
+
+Tests: `apps/worship/tests/test_service_date.py`; in
+`apps/church/tests/test_views.py` `test_the_praise_team_sits_under_worship`,
+`test_switching_the_praise_team_off_keeps_worship`,
+`test_no_website_currency_or_time_zone`, `test_there_is_no_labels_page`;
+`test_a_retired_module_is_off_for_every_church` (`test_configuration.py`);
+`test_no_sermon_series` and `SeriesTests` (`apps/worship/tests/test_schedule.py`).
+
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 
 Approved by the owner on 2026-11-25. The full design is [[Phase-9B-Plan]];

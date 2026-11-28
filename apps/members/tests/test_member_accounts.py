@@ -5,7 +5,7 @@ import re
 from urllib.parse import unquote
 
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.accounts.models import Role, User
@@ -23,6 +23,9 @@ from apps.members.models import Member
 URL = reverse("members:accounts")
 
 
+# The Member Directory is retired (settings.RETIRED_MODULES); its tests
+# keep the kept code working, for the day it comes back.
+@override_settings(RETIRED_MODULES=())
 class BatchAccountsTests(TestCase):
     def setUp(self):
         complete_setup()
@@ -171,6 +174,9 @@ class BatchAccountsTests(TestCase):
         self.assertContains(response, "Tick at least one person.")
 
 
+# The Member Directory is retired (settings.RETIRED_MODULES); its tests
+# keep the kept code working, for the day it comes back.
+@override_settings(RETIRED_MODULES=())
 class FirstSignInTests(TestCase):
     """A Temporary Password must be changed at first sign-in."""
 

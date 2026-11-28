@@ -63,6 +63,27 @@ TEMPLATE_AUDIT_FIELDS = {
 
 
 @transaction.atomic
+def suggested_start(church, template=None, *, now=None):
+    """When a new worship service most likely starts, to fill in the form so
+    people type less (the owner, 28 Nov 2026): the template's next usual day
+    at its usual time; without a usual day, today (tomorrow once the time has
+    passed) at its usual time; without either, the next whole hour."""
+    zone = church_time_zone(church)
+    now = timezone.localtime(now or timezone.now(), zone)
+    if template is not None and template.start_time is not None:
+        days = 0
+        if template.weekday is not None:
+            days = (template.weekday - now.weekday()) % 7
+        day = now.date() + datetime.timedelta(days=days)
+        start = datetime.datetime.combine(day, template.start_time, tzinfo=zone)
+        if start <= now:
+            step = 7 if template.weekday is not None else 1
+            start += datetime.timedelta(days=step)
+        return start
+    next_hour = now + datetime.timedelta(hours=1)
+    return next_hour.replace(minute=0, second=0, microsecond=0)
+
+
 def schedule_ahead(template, weeks, actor, *, today=None):
     """Create the template's services for the next ``weeks`` weeks.
 

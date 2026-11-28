@@ -26,7 +26,6 @@ class ChurchConfig(AppConfig):
                 for order, (section, title) in enumerate(
                     (
                         ("details", "Church details"),
-                        ("labels", "Labels"),
                         ("modules", "Modules"),
                         ("homepage", "Public homepage"),
                     )

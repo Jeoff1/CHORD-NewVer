@@ -462,14 +462,19 @@ class LockedModulesTests(TestCase):
 
     def test_they_work_in_the_unlocked_church(self):
         self.client.force_login(make_administrator())
-        self.assertEqual(self.client.get(reverse("members:list")).status_code, 200)
         self.assertEqual(self.client.get(reverse("teams:roster")).status_code, 200)
+        # The Member Directory is retired for every church.
+        self.assertEqual(self.client.get(reverse("members:list")).status_code, 404)
+        with self.settings(RETIRED_MODULES=()):
+            self.assertEqual(self.client.get(reverse("members:list")).status_code, 200)
 
     def test_settings_show_not_available_yet_and_cant_switch_them_on(self):
         self.client.force_login(self.admin_b)
         url = reverse("church:settings", kwargs={"section": "modules"})
         page = self.client.get(url)
-        self.assertContains(page, "Not available yet", count=2)
+        # Teams (the Praise Team, under Worship) isn't available yet; the
+        # retired Member Directory isn't listed at all.
+        self.assertContains(page, "Not available yet", count=1)
         self.assertNotContains(page, 'value="members"')
         self.assertNotContains(page, 'value="teams"')
         self.assertContains(page, 'role="switch"', count=3)
@@ -484,7 +489,8 @@ class LockedModulesTests(TestCase):
             reverse("church:settings", kwargs={"section": "modules"})
         )
         self.assertNotContains(page, "Not available yet")
-        self.assertContains(page, 'role="switch"', count=5)
+        self.assertContains(page, 'role="switch"', count=4)
+        self.assertNotContains(page, 'value="members"')
 
 
 class TeamsChurchTests(TestCase):
