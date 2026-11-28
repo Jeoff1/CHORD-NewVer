@@ -15,7 +15,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   order and flagged in [[UI-UX-Master-Plan]] ("Flagged conflicts"): the
   lineup stays on the left (decision 0015), and Add and reordering stay
   server actions.
-- **Checks:** PHASE5_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `1d9e4ff`: lint, format, Django checks, migrations (none), 1506 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 4: Management, Services and Bookings (branch `joy-ui-ux-v3`)
 
