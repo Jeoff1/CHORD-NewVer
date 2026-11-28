@@ -2,6 +2,18 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 10: settings and reports (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §16.
+- **What changed:** report cards, a back link, a segmented switch between
+  reports, the period in a toolbar card, real summary counts, Download CSV
+  as a button, empty states; the Settings hub's menu refined (shadow,
+  category titles, hover). Labels, Sermon Series, Website, Currency, Time
+  zone and the hidden member modules stay gone; the Praise Team switch
+  stays under Worship. No report figure, setting or rule changed; no
+  migration. One test now finds the average headcount as a summary count.
+- **Checks:** PHASE10_CHECKS
+
 ## 2026-11-28: UI/UX Phase 9: announcements and notifications (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §15.

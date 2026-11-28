@@ -6,11 +6,18 @@
   {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
   {% load ui %}
   {% page_header "Reports" subtitle="What the church's records show over a period you choose." %}{% endpage_header %}
+  {# UI/UX Phase 10: a card per report; the whole card is the link. #}
   {% if reports %}
-    <div class="list-group" style="max-width: 32rem">
-      {% for label, url in reports %}<a href="{{ url }}" class="list-group-item list-group-item-action">{{ label }}</a>{% endfor %}
+    <div class="chord-report-cards">
+      {% for label, url in reports %}
+        <a href="{{ url }}" class="card shadow-sm chord-card-link chord-report-card chord-reveal" style="--i: {{ forloop.counter0 }}">
+          <span class="chord-report-card__icon" aria-hidden="true">{% if label == "Attendance" %}{% include "includes/icons/people.html" with size=22 %}{% else %}{% include "includes/icons/music-note.html" with size=22 %}{% endif %}</span>
+          <span class="chord-report-card__label">{{ label }}</span>
+          <span class="chord-row__chev" aria-hidden="true">{% include "includes/icons/chevron-right.html" with size=18 %}</span>
+        </a>
+      {% endfor %}
     </div>
   {% else %}
-    <p class="text-body-secondary">No reports yet. The attendance report appears once a headcount has been recorded.</p>
+    <div class="card shadow-sm">{% include "includes/empty_state.html" with icon="document" title="No reports yet." text="The attendance report appears once a headcount has been recorded." %}</div>
   {% endif %}
 {% endblock %}

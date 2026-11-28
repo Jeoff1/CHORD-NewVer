@@ -107,6 +107,11 @@ Notifications and announcements (Phase 9, `components.css`):
 width under the header on phones), `.chord-feed` and `.chord-post`
 (`__head`, `__who`, `__meta`, `__title`, `__body`).
 
+Settings and reports (Phase 10, `components.css`): the Settings hub's
+menu gets a soft shadow, small-caps category titles and items that nudge
+on hover; `.chord-report-cards` and `.chord-report-card` (`__icon`,
+`__label`), `.chord-period` (the period toolbar), `.chord-report-summary`.
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

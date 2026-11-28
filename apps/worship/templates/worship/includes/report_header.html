@@ -1,13 +1,17 @@
-{# Tabs for the reports, and the period filter. Expects `links`, `form` and `title`. #}
-{# The Worship Module's tabs are gone: the sidebar holds them. The tabs below switch between reports, so they stay. #}
+{# The reports' switch and the period filter (UI/UX Phase 10). Expects `links`, `form` and `title`. #}
+{# The Worship Module's tabs are gone: the sidebar holds them. This switch moves between reports, so it stays. #}
+{% url 'worship:reports' as reports_url %}{% include "includes/back_link.html" with url=reports_url label="Reports" %}
+<h1 class="h3 mb-3">{{ title }}</h1>
 {% if links|length > 1 %}
-  <ul class="nav nav-tabs mb-3">
-    {% for label, url in links %}<li class="nav-item"><a class="nav-link{% if label == title %} active{% endif %}" href="{{ url }}">{{ label }}</a></li>{% endfor %}
-  </ul>
+  <nav aria-label="Reports">
+    <ul class="chord-seg">
+      {% for label, url in links %}<li><a href="{{ url }}"{% if label == title %} aria-current="page"{% endif %}>{{ label }}</a></li>{% endfor %}
+    </ul>
+  </nav>
 {% endif %}
-<h1 class="h3 mb-2">{{ title }}</h1>
-<form method="get" class="d-flex flex-wrap gap-2 align-items-end mb-3">
+<form method="get" class="card shadow-sm chord-period" aria-label="Period">
   <div><label for="id_start" class="form-label small mb-1">From</label><input type="date" name="start" id="id_start" value="{{ form.start.value|default_if_none:'' }}" class="form-control form-control-sm"></div>
   <div><label for="id_end" class="form-label small mb-1">To</label><input type="date" name="end" id="id_end" value="{{ form.end.value|default_if_none:'' }}" class="form-control form-control-sm"></div>
-  <button type="submit" class="btn btn-sm btn-outline-primary">Show</button>
+  <button type="submit" class="btn btn-sm btn-primary">Show</button>
+  {% if form.is_bound %}<a href="?" class="btn btn-sm btn-link">Clear</a>{% endif %}
 </form>

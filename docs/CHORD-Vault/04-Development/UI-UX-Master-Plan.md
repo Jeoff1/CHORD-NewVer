@@ -476,7 +476,7 @@ ministries, events, per-person attendance, SMS.
 | 7 | Calendar and scheduling | Done |
 | 8 | Members and teams | Done |
 | 9 | Announcements and notifications | Done |
-| 10 | Settings and reports | Not started |
+| 10 | Settings and reports | Done |
 | 11 | Final UI/UX audit | Not started |
 
 ### Blocked: needs backend approval
@@ -504,3 +504,8 @@ ministries, events, per-person attendance, SMS.
   down buttons (accessible; no drag and drop without a new endpoint). No
   invented scores or match percentages; the worker's real progress bar
   stays.
+- **Report charts (Phase 10).** The attendance report gives each headcount
+  and the average, not the largest headcount, so bars scaled to the data
+  would need a view change. Reports show real summary counts and tables
+  instead; a chart can come with a small view change if the owner wants
+  one.

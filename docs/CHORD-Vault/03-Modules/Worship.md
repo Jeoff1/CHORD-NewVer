@@ -716,6 +716,18 @@ chips (services green, occasions gold with a gold edge, hidden bookings
 dashed and labelled "Booked", cancelled struck through), each lifting on
 hover; the month fades in. Same data, links and visibility rules.
 
+### Reports (UI/UX Phase 10, 28 Nov 2026)
+
+`worship/reports.html` shows a card per report (icon, name, chevron; the
+whole card links) or an empty state. Each report
+(`includes/report_header.html`) has a back link, its title, a segmented
+switch between reports, and the period (From, To, Show, Clear) in a
+toolbar card. Song usage: summary counts (songs, sung again within the
+repeat window), Download CSV as a button, the table (repeats still
+highlighted), an empty state. Attendance: summary counts (services,
+average headcount), the table, an empty state. Same data and CSV.
+Tests: `apps/worship/tests/test_report_screens.py`.
+
 ## Permissions
 
 | Permission                                   | Allows                                   |
