@@ -29,7 +29,9 @@ service requests; [[Occasions]]) and Phase 5 (worship planning,
 suggestions, lineup; [[Worship]]) Phase 6 (songs, chord sheets,
 rehearsal) Phase 7 (calendar and scheduling) and Phase 8 (Users, Roles,
 Audit log) Phase 9 (announcements feed, notifications and the bell
-popover) and Phase 10 (settings and reports).**
+popover), Phase 10 (settings and reports) and Phase 11 (the final audit).
+All UI/UX phases are done and pushed; the UI/UX owner's whole-site review
+is next.**
 
 **UI/UX Phase 2 (28 Nov 2026), branch `joy-ui-ux-v3`, approved by the
 UI/UX owner and committed locally (not pushed):** one account popover on

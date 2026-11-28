@@ -233,10 +233,32 @@
     window.location.href = row.getAttribute("data-href");
   });
 
+  /* ---- Dashboard figures count up once per browser session (UI/UX Phase 11) ---- */
+  function countUp() {
+    var values = document.querySelectorAll(".chord-kpi__value");
+    if (!values.length || reduced) return;
+    try { if (sessionStorage.getItem("chord-kpi-counted")) return; sessionStorage.setItem("chord-kpi-counted", "1"); } catch (e) { return; }
+    values.forEach(function (el) {
+      var node = el.firstChild;
+      if (!node || node.nodeType !== 3) return;
+      var target = parseInt(node.nodeValue, 10);
+      if (!(target > 1) || String(target) !== node.nodeValue.trim()) return;
+      var began = null;
+      function step(now) {
+        if (began === null) began = now;
+        var t = Math.min(1, (now - began) / 600);
+        node.nodeValue = String(Math.round(target * (1 - Math.pow(1 - t, 3))));
+        if (t < 1) window.requestAnimationFrame(step); else node.nodeValue = String(target);
+      }
+      window.requestAnimationFrame(step);
+    });
+  }
+
   function start() {
     setUpToasts();
     setUpSearch();
     setUpBell();
+    countUp();
   }
   document.addEventListener("htmx:afterSwap", function (event) { setUpSearch(event.target); });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();

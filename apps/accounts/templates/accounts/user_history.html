@@ -20,7 +20,7 @@
         <ul class="list-group list-group-flush">
           {% for event in sign_ins %}
             <li class="list-group-item d-flex justify-content-between gap-2">
-              <span>{% if event.kind == "failed" %}<span class="badge text-bg-danger">{{ event.get_kind_display }}</span>{% else %}{{ event.get_kind_display }}{% endif %}</span>
+              <span>{% if event.kind == "failed" %}<span class="chord-pill chord-pill--danger">{{ event.get_kind_display }}</span>{% else %}{{ event.get_kind_display }}{% endif %}</span>
               <span class="small text-body-secondary text-nowrap">{{ event.occurred_at|date:"M j, Y g:i A" }}</span>
             </li>
           {% empty %}
@@ -39,7 +39,7 @@
             <li class="list-group-item">
               <div class="d-flex justify-content-between gap-2">
                 <span>
-                  <span class="badge {% if event.action == 'deleted' %}text-bg-danger{% elif event.action == 'created' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ event.get_action_display }}</span>
+                  <span class="chord-pill {% if event.action == 'deleted' %}chord-pill--danger{% elif event.action == 'created' %}chord-pill--success{% else %}chord-pill--neutral{% endif %}">{{ event.get_action_display }}</span>
                   {{ event.content_type.name|capfirst }}: <span class="fw-semibold">{{ event.object_repr }}</span>
                 </span>
                 <span class="small text-body-secondary text-nowrap">{{ event.occurred_at|date:"M j, Y g:i A" }}</span>

@@ -2,6 +2,23 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 11: final consistency, accessibility and animation audit (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §17 and [[Animation-Plan]].
+- **What changed:** remaining Bootstrap badges (user history, the locked
+  Modules, settings lists, service team, service templates) became status
+  pills; the part filter on Assign became a segmented filter; "Nothing here
+  yet" rows became empty states; 403 and 404 got the shared look; a global
+  gold focus outline; a phone overflow guard; the dashboard's figures count
+  up once per browser session. The retired Member Directory and Households
+  were left as they are. A smoke test of 27 pages as an administrator on
+  the development database answered 200 (Attendance 404s by design until
+  a headcount is recorded). No model, form, route or rule changed; no
+  migration.
+- **All UI/UX phases are done**; open items are listed in
+  [[UI-UX-Master-Plan]] ("Blocked", "Flagged conflicts").
+- **Checks:** PHASE11_CHECKS
+
 ## 2026-11-28: UI/UX Phase 10: settings and reports (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §16.

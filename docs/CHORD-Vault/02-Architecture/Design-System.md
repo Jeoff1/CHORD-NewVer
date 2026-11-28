@@ -112,6 +112,13 @@ menu gets a soft shadow, small-caps category titles and items that nudge
 on hover; `.chord-report-cards` and `.chord-report-card` (`__icon`,
 `__label`), `.chord-period` (the period toolbar), `.chord-report-summary`.
 
+Final audit (Phase 11): the last Bootstrap badges became status pills and
+the last tab-style filter a `.chord-seg`; empty table rows became empty
+states; `.chord-error` gives 403 and 404 the empty-state look; every link,
+summary and focusable element shows a 3 px gold focus outline; on phones
+the main area never scrolls sideways; the dashboard's figures count up once
+per browser session (real numbers, not with reduced motion).
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

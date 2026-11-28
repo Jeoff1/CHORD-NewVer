@@ -80,6 +80,19 @@ animation. Guidelines, adjustable for usability. Exits faster than entrances.
 | Landing reveal | sections rise 18 px and fade `.6s`–`.95s` | landing |
 | Landing intro | first visit per browser session only; at least 0.8 s (approved exception), leaves by 4 s, fails safe at 6 s; never without JavaScript | landing |
 
+## 4b. Audit (UI/UX Phase 11, 28 Nov 2026)
+
+Checked across `components.css`, `planning.css` and `account.css`: every
+redesign stylesheet ends with a `prefers-reduced-motion` block (tested);
+movement uses `transform` and `opacity`; durations sit in the standards
+above (hover 150–200 ms, dropdowns 180–200 ms, modals 240–260 ms, toasts
+280 ms in and 200–220 ms out, staggers 60 ms). Two loops exist and only
+while something real is happening: the suggestions waveform (while a run
+works) and spinners (while a request is in flight). Entrance animations run
+once per page: list staggers, the calendar month, the error page; the
+dashboard's figures count up once per browser session only. Nothing
+animates around a chord sheet being read.
+
 ## 5. Per-area plan
 
 - **Public website:** keep the landing animations (scroll fade-ins, image

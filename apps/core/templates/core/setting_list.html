@@ -24,8 +24,8 @@
               {% for cell, switch_url in cells %}
                 <td>
                   {% if switch_url %}{% include "core/includes/active_switch.html" with value=cell %}
-                  {% elif cell is True %}<span class="badge text-bg-success">Yes</span>
-                  {% elif cell is False %}<span class="badge text-bg-secondary">No</span>
+                  {% elif cell is True %}<span class="chord-pill chord-pill--success">Yes</span>
+                  {% elif cell is False %}<span class="chord-pill chord-pill--neutral">No</span>
                   {% elif cell is None or cell == "" %}—
                   {% else %}{{ cell }}{% endif %}
                 </td>
@@ -33,7 +33,7 @@
               <td class="text-end">{% if edit_url %}<a href="{{ edit_url }}" class="btn btn-sm btn-outline-primary">Edit</a>{% endif %}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="{{ config.columns|length|add:1 }}" class="text-center text-body-secondary py-4">Nothing here yet.</td></tr>
+            <tr><td colspan="{{ config.columns|length|add:1 }}" >{% include "includes/empty_state.html" with title="Nothing here yet." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

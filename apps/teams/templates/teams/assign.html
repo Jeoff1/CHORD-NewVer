@@ -33,9 +33,9 @@
         <p class="text-body-secondary">There are no team parts yet.{% if perms.teams.add_teampart %} <a href="{% url 'teams:parts_list' %}">Add team parts</a>.{% endif %}</p>
       {% else %}
         <p class="text-body-secondary mb-2">Choose a part:</p>
-        <ul class="nav nav-pills mb-3">
+        <ul class="chord-seg">
           {% for item in parts %}
-            <li class="nav-item"><a class="nav-link{% if item == part %} active{% endif %}" href="?part={{ item.pk }}">{{ item }}</a></li>
+            <li><a href="?part={{ item.pk }}"{% if item == part %} aria-current="page"{% endif %}>{{ item }}</a></li>
           {% endfor %}
         </ul>
 

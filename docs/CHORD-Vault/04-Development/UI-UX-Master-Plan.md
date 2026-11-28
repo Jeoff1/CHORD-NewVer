@@ -465,6 +465,12 @@ ministries, events, per-person attendance, SMS.
 
 ## 22. Phase status
 
+All eleven phases are built and pushed to `origin/joy-ui-ux-v3`; the UI/UX
+owner's whole-site review comes next, then the lead developer decides on
+merging. Open items: "Blocked" and "Flagged conflicts" below, the pending
+private-church preview (§5), and the visual check against the artifact,
+which nobody working from this note could open.
+
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Church CMS and public navigation | Done, pushed (`02b00ea`) |
@@ -477,7 +483,7 @@ ministries, events, per-person attendance, SMS.
 | 8 | Members and teams | Done |
 | 9 | Announcements and notifications | Done |
 | 10 | Settings and reports | Done |
-| 11 | Final UI/UX audit | Not started |
+| 11 | Final UI/UX audit | Done |
 
 ### Blocked: needs backend approval
 
