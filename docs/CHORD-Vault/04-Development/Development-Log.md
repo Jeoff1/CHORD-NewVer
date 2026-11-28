@@ -12,7 +12,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   zone and the hidden member modules stay gone; the Praise Team switch
   stays under Worship. No report figure, setting or rule changed; no
   migration. One test now finds the average headcount as a summary count.
-- **Checks:** PHASE10_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `815d914`: lint, format, Django checks, migrations (none), 1526 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 9: announcements and notifications (branch `joy-ui-ux-v3`)
 
