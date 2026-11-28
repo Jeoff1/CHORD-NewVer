@@ -18,7 +18,7 @@ def my_schedule(request):
         and user.has_perm(rostering.TEAM_PERMISSION)
     ):
         return None
-    upcoming = rostering.upcoming_assignments(user).filter(
+    upcoming = rostering.upcoming_assignments(user, request.church).filter(
         service__is_cancelled=False, service__starts_at__gte=timezone.now()
     )
     lines = []
@@ -51,7 +51,7 @@ def my_assignments(request):
         return []
     start, end = stat_window()
     count = (
-        rostering.upcoming_assignments(user)
+        rostering.upcoming_assignments(user, request.church)
         .filter(
             service__is_cancelled=False,
             service__starts_at__gte=start,

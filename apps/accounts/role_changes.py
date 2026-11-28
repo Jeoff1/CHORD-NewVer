@@ -33,8 +33,9 @@ class Consequence:
 
 
 def register(finder):
-    """Add ``finder(user, lost_permissions)``, which returns a Consequence
-    or None. Called once per Module, from its AppConfig.ready()."""
+    """Add ``finder(user, lost_permissions, church)``, which returns a
+    Consequence or None. Called once per Module, from its
+    AppConfig.ready()."""
     if finder not in _finders:
         _finders.append(finder)
 
@@ -75,5 +76,6 @@ def consequences(user, *, church, roles, is_active):
     lost = lost_permissions(user, church=church, roles=roles, is_active=is_active)
     if not lost:
         return []
-    found = (finder(type(user).objects.get(pk=user.pk), lost) for finder in _finders)
+    person = type(user).objects.get(pk=user.pk)
+    found = (finder(person, lost, church) for finder in _finders)
     return [consequence for consequence in found if consequence and consequence.items]

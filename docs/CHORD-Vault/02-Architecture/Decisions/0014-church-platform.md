@@ -90,7 +90,11 @@ registration wizard").
 - The **Members and Teams Modules are locked** for every church except the
   first (migrated) one, through the church setting
   `members_teams_unlocked`, until they are scoped. They show as "Not
-  available yet".
+  available yet". **Update 2026-11-28:** Teams is scoped (Team Parts, Team
+  Profiles and Blackout Dates hold their church; Assignments and Swap
+  Requests reach it through their service) and open to every church;
+  Members is retired for every church (`settings.RETIRED_MODULES`), so
+  `members_teams_unlocked` no longer unlocks anything a church can see.
 - Replaces "one church per installation and five users or fewer"
   ([[Project-Overview]], [[Concept-Brief]]); updates
   [[0003-editable-roles]] (roles per church, membership-based backend) and

@@ -1,35 +1,50 @@
 """Teams: who serves at each worship service, and when people can't.
 
 Design-Decisions, Phase 8. A Team Profile belongs to a user account, not to
-a Member record (the Members module stays as built).
+a Member record. Since 28 Nov 2026 every record belongs to one church
+(decision 0014): Team Parts, Team Profiles and Blackout Dates hold their
+church; Assignments and Swap Requests reach it through their service.
 """
 
 from django.conf import settings
 from django.db import models
 
+from apps.church.scoping import church_scoped_manager
 from apps.core.models import PublicIdModel, TimeStampedModel
 from apps.core.people import display_name
-from apps.core.setting_lists import ChoiceItem
+from apps.core.setting_lists import ChurchChoiceItem
 from apps.worship.models import WorshipService
 
 
-class TeamPart(ChoiceItem):
+class TeamPart(ChurchChoiceItem):
     """A voice or instrument someone can take at a worship service."""
 
-    class Meta(ChoiceItem.Meta):
+    class Meta(ChurchChoiceItem.Meta):
         pass
 
 
 class TeamProfile(TimeStampedModel):
-    """The Team Parts a person can take. Nothing else: no vocal range."""
+    """The Team Parts a person can take in one church. Nothing else: no
+    vocal range."""
 
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="team_profile"
+    church = models.ForeignKey(
+        "church.ChurchProfile", on_delete=models.CASCADE, related_name="+"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="team_profiles"
     )
     parts = models.ManyToManyField(TeamPart, blank=True, related_name="profiles")
 
+    objects = church_scoped_manager()
+    church_path = "church"
+
     class Meta:
         default_permissions = ("change", "view")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["church", "user"], name="one_team_profile_per_church"
+            )
+        ]
 
     def __str__(self):
         return f"Team profile: {display_name(self.user)}"
@@ -49,6 +64,9 @@ class Assignment(PublicIdModel, TimeStampedModel):
     part = models.ForeignKey(
         TeamPart, on_delete=models.PROTECT, related_name="assignments"
     )
+
+    objects = church_scoped_manager()
+    church_path = "service__church"
     person = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assignments"
     )
@@ -91,8 +109,12 @@ class Assignment(PublicIdModel, TimeStampedModel):
 
 
 class BlackoutDate(TimeStampedModel):
-    """Whole days, in the church's time zone, on which a person can't serve."""
+    """Whole days, in the church's time zone, on which a person can't serve
+    there."""
 
+    church = models.ForeignKey(
+        "church.ChurchProfile", on_delete=models.CASCADE, related_name="+"
+    )
     person = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -101,6 +123,9 @@ class BlackoutDate(TimeStampedModel):
     starts_on = models.DateField("From")
     ends_on = models.DateField("To", help_text="The last day you can't serve.")
     note = models.CharField(max_length=200, blank=True)
+
+    objects = church_scoped_manager()
+    church_path = "church"
 
     class Meta:
         ordering = ["starts_on", "ends_on", "pk"]
@@ -161,6 +186,9 @@ class SwapRequest(PublicIdModel, TimeStampedModel):
         related_name="+",
     )
     closed_at = models.DateTimeField(null=True, blank=True)
+
+    objects = church_scoped_manager()
+    church_path = "service__church"
 
     class Meta:
         ordering = ["service__starts_at", "pk"]

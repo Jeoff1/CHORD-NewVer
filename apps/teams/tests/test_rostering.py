@@ -9,6 +9,7 @@ from django.utils import timezone
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_assignment,
     make_service,
     make_team_part,
@@ -23,7 +24,7 @@ Reply = Assignment.Reply
 
 
 def days_ahead(days):
-    return rostering.church_today() + datetime.timedelta(days=days)
+    return rostering.church_today(first_church()) + datetime.timedelta(days=days)
 
 
 class RosterTestCase(TestCase):
@@ -69,7 +70,9 @@ class AssigningTests(RosterTestCase):
 
     def test_nobody_can_be_assigned_on_a_blackout_date(self):
         day = rostering.service_day(self.service)
-        BlackoutDate.objects.create(person=self.player, starts_on=day, ends_on=day)
+        BlackoutDate.objects.create(
+            church=first_church(), person=self.player, starts_on=day, ends_on=day
+        )
         message = self.refused(
             rostering.assign, self.service, self.bass, self.player, self.leader
         )
@@ -79,6 +82,7 @@ class AssigningTests(RosterTestCase):
     def test_a_blackout_range_covers_every_day_in_it(self):
         day = rostering.service_day(self.service)
         BlackoutDate.objects.create(
+            church=first_church(),
             person=self.player,
             starts_on=day - datetime.timedelta(days=2),
             ends_on=day + datetime.timedelta(days=2),
@@ -98,7 +102,10 @@ class AssigningTests(RosterTestCase):
         )
         march_2 = datetime.date(2031, 3, 2)
         BlackoutDate.objects.create(
-            person=self.player, starts_on=march_2, ends_on=march_2
+            church=first_church(),
+            person=self.player,
+            starts_on=march_2,
+            ends_on=march_2,
         )
         self.refused(rostering.assign, late, self.bass, self.player, self.leader)
         rostering.assign(early, self.bass, self.player, self.leader)
@@ -147,7 +154,9 @@ class AssigningTests(RosterTestCase):
         blocked = make_user(roles=["team_member"], first_name="Ana")
         make_team_profile(blocked, [self.bass])
         day = rostering.service_day(self.service)
-        BlackoutDate.objects.create(person=blocked, starts_on=day, ends_on=day)
+        BlackoutDate.objects.create(
+            church=first_church(), person=blocked, starts_on=day, ends_on=day
+        )
         reasons = dict(rostering.candidates(self.service, self.bass))
         self.assertEqual(reasons[self.player], "")
         self.assertIn("blackout date", reasons[blocked])
@@ -163,8 +172,12 @@ class AssigningTests(RosterTestCase):
                 rostering.assign, self.service, self.bass, office, self.leader
             ),
         )
-        self.refused(rostering.set_parts, office, [self.bass], self.leader)
-        self.refused(rostering.add_blackout, office, days_ahead(1), days_ahead(1))
+        self.refused(
+            rostering.set_parts, office, [self.bass], self.leader, first_church()
+        )
+        self.refused(
+            rostering.add_blackout, office, first_church(), days_ahead(1), days_ahead(1)
+        )
 
     def test_the_permission_may_be_given_to_one_user(self):
         helper = make_user(perms=["teams.view_assignment"])
@@ -231,7 +244,9 @@ class ReplyTests(RosterTestCase):
 
 class BlackoutTests(RosterTestCase):
     def test_adding_one_is_in_the_audit_trail(self):
-        blackout = rostering.add_blackout(self.player, days_ahead(1), days_ahead(3))
+        blackout = rostering.add_blackout(
+            self.player, first_church(), days_ahead(1), days_ahead(3)
+        )
         event = AuditEvent.objects.get(content_type__model="blackoutdate")
         self.assertEqual(event.actor, self.player)
         self.assertEqual(event.changes["Dates"][1], blackout.date_range())
@@ -239,7 +254,9 @@ class BlackoutTests(RosterTestCase):
     def test_one_over_a_pending_assignment_is_refused_pointing_to_decline(self):
         rostering.assign(self.service, self.bass, self.player, self.leader)
         day = rostering.service_day(self.service)
-        message = self.refused(rostering.add_blackout, self.player, day, day)
+        message = self.refused(
+            rostering.add_blackout, self.player, first_church(), day, day
+        )
         self.assertIn("Decline it", message)
         self.assertFalse(BlackoutDate.objects.exists())
 
@@ -250,6 +267,7 @@ class BlackoutTests(RosterTestCase):
         message = self.refused(
             rostering.add_blackout,
             self.player,
+            first_church(),
             day - datetime.timedelta(days=1),
             day + datetime.timedelta(days=1),
         )
@@ -264,18 +282,32 @@ class BlackoutTests(RosterTestCase):
             rostering.service_day(self.service), rostering.service_day(cancelled)
         )
         end = max(rostering.service_day(self.service), rostering.service_day(cancelled))
-        rostering.add_blackout(self.player, start, end)
+        rostering.add_blackout(self.player, first_church(), start, end)
         self.assertEqual(BlackoutDate.objects.count(), 1)
 
     def test_days_the_wrong_way_round_or_already_passed_are_refused(self):
-        self.refused(rostering.add_blackout, self.player, days_ahead(3), days_ahead(1))
         self.refused(
-            rostering.add_blackout, self.player, days_ahead(-5), days_ahead(-1)
+            rostering.add_blackout,
+            self.player,
+            first_church(),
+            days_ahead(3),
+            days_ahead(1),
         )
-        rostering.add_blackout(self.player, days_ahead(-1), days_ahead(0))
+        self.refused(
+            rostering.add_blackout,
+            self.player,
+            first_church(),
+            days_ahead(-5),
+            days_ahead(-1),
+        )
+        rostering.add_blackout(
+            self.player, first_church(), days_ahead(-1), days_ahead(0)
+        )
 
     def test_only_the_person_removes_theirs(self):
-        blackout = rostering.add_blackout(self.player, days_ahead(1), days_ahead(1))
+        blackout = rostering.add_blackout(
+            self.player, first_church(), days_ahead(1), days_ahead(1)
+        )
         self.refused(rostering.remove_blackout, blackout, self.leader)
         rostering.remove_blackout(blackout, self.player)
         self.assertFalse(BlackoutDate.objects.exists())
@@ -297,8 +329,13 @@ class BlackoutTests(RosterTestCase):
 
 class TeamProfileTests(RosterTestCase):
     def test_setting_parts_records_the_change(self):
-        rostering.set_parts(self.player, [self.bass, self.drums], self.player)
-        self.assertEqual(set(rostering.parts_of(self.player)), {self.bass, self.drums})
+        rostering.set_parts(
+            self.player, [self.bass, self.drums], self.player, first_church()
+        )
+        self.assertEqual(
+            set(rostering.parts_of(self.player, first_church())),
+            {self.bass, self.drums},
+        )
         event = AuditEvent.objects.get(content_type__model="teamprofile")
         self.assertEqual(
             event.changes["Team parts"], ["Bass guitar", "Bass guitar, Percussion"]
@@ -306,7 +343,7 @@ class TeamProfileTests(RosterTestCase):
 
     def test_a_new_profile_is_created_and_holds_only_parts(self):
         newcomer = make_user(roles=["team_member"])
-        rostering.set_parts(newcomer, [self.drums], self.leader)
+        rostering.set_parts(newcomer, [self.drums], self.leader, first_church())
         profile = TeamProfile.objects.get(user=newcomer)
         self.assertEqual(list(profile.parts.all()), [self.drums])
         fields = {field.name for field in TeamProfile._meta.get_fields()}

@@ -291,6 +291,10 @@ still runs without a network.
 
 ## 5. The Members and Teams Modules are locked
 
+> **Superseded on 2026-11-28:** Teams is kept apart per church and open to
+> every church; Members is retired ([[Design-Decisions]], "Teams for every
+> church").
+
 - A Module gets `platform_ready` (False for Members and Teams).
 - `is_enabled()` returns False for a church without
   `members_teams_unlocked`. This branches on a church setting, not on the

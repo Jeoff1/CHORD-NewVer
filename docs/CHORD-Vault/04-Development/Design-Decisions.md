@@ -958,6 +958,27 @@ Tests: `apps/worship/tests/test_service_date.py`; in
 `test_a_retired_module_is_off_for_every_church` (`test_configuration.py`);
 `test_no_sermon_series` and `SeriesTests` (`apps/worship/tests/test_schedule.py`).
 
+#### Teams for every church (the owner, 28 Nov 2026)
+
+- **Why:** the Praise Team step was missing for every church registered
+  after Phase 9B, because Teams' records weren't kept apart per church and
+  the Module was locked for them.
+- **Kept apart per church:** Team Parts, Team Profiles (one per person per
+  church) and Blackout Dates hold their church; Assignments and Swap
+  Requests reach it through their service. Every Teams page reads the
+  Current Church's records only (another church's opens as 404), and a
+  person on two churches' teams has separate parts and blackout dates in
+  each. Teams' `platform_ready` lock is gone.
+- **Existing data:** the first church keeps its team; every other church
+  gets the neutral starting parts, and Teams is switched on where it had
+  been locked (the church never had a switch for it).
+- No new numbered decision: it completes [[0014-church-platform]], whose
+  note now says so.
+
+Tests: `apps/teams/tests/test_church_teams.py`; the Teams pages are no
+longer exempt in `apps/church/tests/test_isolation.py`;
+`ModuleAvailabilityTests` (`apps/church/tests/test_platform_accounts.py`).
+
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 
 Approved by the owner on 2026-11-25. The full design is [[Phase-9B-Plan]];

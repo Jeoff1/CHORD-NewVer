@@ -28,6 +28,7 @@ from apps.announcements.models import Announcement
 from apps.core.testing import (
     complete_setup,
     first_church,
+    make_assignment,
     make_chord_sheet,
     make_church,
     make_lineup,
@@ -41,6 +42,7 @@ from apps.core.testing import (
 from apps.notifications.models import Notification
 from apps.occasions.models import OccasionRequest, OccasionType
 from apps.songs.models import ThemeTag, TrustedArtist
+from apps.teams.models import BlackoutDate, SwapRequest, TeamPart
 from apps.worship.models import Season, SermonSeries, ServiceTemplate
 
 # Every URL taking an object: its name, and its arguments from one church's
@@ -126,6 +128,17 @@ OBJECT_URLS = {
         "public_id": o["service"].public_id,
         "assignment_id": uuid.uuid4(),
     },
+    # Teams' records are kept apart per church (28 Nov 2026).
+    "teams:blackout_delete": lambda o: {"pk": o["blackout"].pk},
+    "teams:reply": lambda o: {"public_id": o["assignment"].public_id},
+    "teams:swap_request": lambda o: {"public_id": o["assignment"].public_id},
+    "teams:swap_action": lambda o: {
+        "public_id": o["swap"].public_id,
+        "action": "withdraw",
+    },
+    "teams:person_parts": lambda o: {"pk": o["admin"].pk},
+    "teams:parts_update": lambda o: {"pk": o["part"].pk},
+    "teams:parts_switch": lambda o: {"pk": o["part"].pk},
 }
 NOT_CHECKED_WITH_OWN = {
     "teams:assignment_remove",  # needs a real assignment
@@ -143,13 +156,6 @@ EXEMPT = {
     "public_requests:request": "Request this service from a public homepage: "
     "public by design (apps/church/tests/test_public_pages.py).",
     "members": "Members is locked to the church from before Phase 9B (§5).",
-    "teams:blackout_delete": "A person's own Blackout Date; Teams is locked (§5).",
-    "teams:reply": "A person's own assignment; Teams is locked (§5).",
-    "teams:swap_request": "A person's own assignment; Teams is locked (§5).",
-    "teams:swap_action": "Teams' Swap Requests; Teams is locked (§5).",
-    "teams:person_parts": "Teams' roster; Teams is locked (§5).",
-    "teams:parts_update": "Team Parts aren't per church yet; Teams is locked (§5).",
-    "teams:parts_switch": "Team Parts aren't per church yet; Teams is locked (§5).",
     None: "Media files (the media URL).",
 }
 
@@ -193,6 +199,9 @@ def build(church, marker):
     OccasionType.objects.for_church(church).update(
         name=Concat(Value(f"{marker} "), F("name")), is_active=True
     )
+    TeamPart.objects.for_church(church).update(
+        name=Concat(Value(f"{marker} "), F("name"))
+    )
     for role in Role.objects.filter(church=church):
         role.title = f"{marker} {role.title}"
         role.save()
@@ -211,7 +220,24 @@ def build(church, marker):
     lineup = make_lineup(service, [song], confirmed=False)
     occasion_type = OccasionType.objects.for_church(church).first()
     soon = timezone.now() + datetime.timedelta(days=30)
+    part = TeamPart.objects.for_church(church).first()
+    assignment = make_assignment(service, admin, part)
     return {
+        "part": part,
+        "assignment": assignment,
+        "blackout": BlackoutDate.objects.create(
+            church=church,
+            person=admin,
+            starts_on=datetime.date(2031, 1, 5),
+            ends_on=datetime.date(2031, 1, 6),
+            note=f"{marker} away",
+        ),
+        "swap": SwapRequest.objects.create(
+            assignment=assignment,
+            service=service,
+            part=part,
+            requested_by=admin,
+        ),
         "church": church,
         "admin": admin,
         "role": Role.objects.create(church=church, title=f"{marker} Ushers"),
@@ -312,8 +338,7 @@ class ChurchIsolationTests(TestCase):
     def checks_with_own(name, church):
         if name in NOT_CHECKED_WITH_OWN:
             return False
-        # Teams is locked for a church without members_teams_unlocked (§5).
-        return church.members_teams_unlocked or not name.startswith("teams:")
+        return True
 
     def rolled_back_post_or_get(self, url):
         class Rollback(Exception):

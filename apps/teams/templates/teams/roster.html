@@ -5,7 +5,7 @@
 
 {% block content %}
   {% load ui %}
-  {% page_header "Team roster" subtitle="Everyone with an account, and the parts in their Team Profile." %}{% endpage_header %}
+  {% page_header "Team roster" subtitle="Everyone on the team, and the parts in their Team Profile." %}{% endpage_header %}
   {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
   <div class="card shadow-sm">
@@ -19,10 +19,10 @@
           </tr>
         </thead>
         <tbody>
-          {% for person in object_list %}
+          {% for person, parts in rows %}
             <tr>
               <td>{{ person|person_name }}</td>
-              <td>{% if person.team_profile %}{{ person.team_profile.parts.all|join:", "|default:"None" }}{% else %}None{% endif %}</td>
+              <td>{{ parts|join:", "|default:"None" }}</td>
               <td class="text-end">{% if perms.teams.change_teamprofile %}<a href="{% url 'teams:person_parts' pk=person.pk %}">Edit parts</a>{% endif %}</td>
             </tr>
           {% endfor %}

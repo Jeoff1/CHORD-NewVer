@@ -77,7 +77,7 @@ MODULES = (
         # My schedule is for the team. Notifications are core and have
         # their own link in the navigation.
         view_permission="teams.view_assignment",
-        platform_ready=False,
+        # Kept apart per church since 28 Nov 2026, so every church may use it.
     ),
     Module(
         "occasions",

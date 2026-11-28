@@ -19,7 +19,7 @@ from apps.worship.views.base import service_url
 
 from . import rostering
 from .forms import AssignForm, BlackoutForm, PartsForm, SwapRequestForm
-from .models import Assignment, BlackoutDate, SwapRequest, TeamPart
+from .models import Assignment, BlackoutDate, SwapRequest, TeamPart, TeamProfile
 
 MY_SCHEDULE = reverse_lazy("teams:my_schedule")
 NOTIFICATIONS = reverse_lazy("notifications:list")
@@ -66,13 +66,13 @@ class MyScheduleView(TeamsPageMixin, TemplateView):
     template_name = "teams/my_schedule.html"
 
     def get(self, request, *args, **kwargs):
-        if not rostering.may_serve(request.user):
+        if not rostering.may_serve(request.user, request.church):
             return redirect(NOTIFICATIONS)
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
+        user, church = self.request.user, self.request.church
         context.update(
             assignments=[
                 (
@@ -80,11 +80,11 @@ class MyScheduleView(TeamsPageMixin, TemplateView):
                     rostering.roster_closed(assignment.service),
                     rostering.open_swap(assignment),
                 )
-                for assignment in rostering.upcoming_assignments(user)
+                for assignment in rostering.upcoming_assignments(user, church)
             ],
-            parts=rostering.parts_of(user),
-            blackouts=rostering.upcoming_blackouts(user),
-            open_swaps=rostering.swaps_open_to(user),
+            parts=rostering.parts_of(user, church),
+            blackouts=rostering.upcoming_blackouts(user, church),
+            open_swaps=rostering.swaps_open_to(user, church),
         )
         return context
 
@@ -100,12 +100,16 @@ class MyPartsView(TeamMemberMixin, FormPageMixin, FormView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["current"] = rostering.parts_of(self.request.user)
+        kwargs["church"] = self.request.church
+        kwargs["current"] = rostering.parts_of(self.request.user, self.request.church)
         return kwargs
 
     def form_valid(self, form):
         rostering.set_parts(
-            self.request.user, form.cleaned_data["parts"], self.request.user
+            self.request.user,
+            form.cleaned_data["parts"],
+            self.request.user,
+            self.request.church,
         )
         messages.success(self.request, "Your team parts were saved.")
         return super().form_valid(form)
@@ -143,7 +147,11 @@ class BlackoutCreateView(TeamMemberMixin, FormPageMixin, FormView):
         data = form.cleaned_data
         try:
             blackout = rostering.add_blackout(
-                self.request.user, data["starts_on"], data["ends_on"], data["note"]
+                self.request.user,
+                self.request.church,
+                data["starts_on"],
+                data["ends_on"],
+                data["note"],
             )
         except rostering.RosterRefused as refused:
             self.conflict = refused.assignment
@@ -157,7 +165,9 @@ class BlackoutCreateView(TeamMemberMixin, FormPageMixin, FormView):
 
 class BlackoutDeleteView(TeamMemberMixin, View):
     def post(self, request, pk):
-        blackout = get_object_or_404(BlackoutDate, pk=pk, person=request.user)
+        blackout = get_in_church(
+            BlackoutDate, request.church, pk=pk, person=request.user
+        )
         rostering.remove_blackout(blackout, request.user)
         messages.success(request, f"Blackout dates removed: {blackout.date_range()}.")
         return redirect(MY_SCHEDULE)
@@ -167,8 +177,9 @@ class ReplyView(TeamsMixin, View):
     """The assigned person accepts or declines. Other people get a 404."""
 
     def post(self, request, public_id):
-        assignment = get_object_or_404(
+        assignment = get_in_church(
             Assignment.objects.select_related("service", "part"),
+            request.church,
             public_id=public_id,
             person=request.user,
         )
@@ -201,10 +212,11 @@ class SwapRequestView(TeamMemberMixin, FormPageMixin, FormView):
 
     @cached_property
     def assignment(self):
-        return get_object_or_404(
+        return get_in_church(
             Assignment.objects.select_related("service", "part").prefetch_related(
                 "swap_requests"
             ),
+            self.request.church,
             public_id=self.kwargs["public_id"],
             person=self.request.user,
         )
@@ -237,8 +249,10 @@ class SwapActionView(TeamMemberMixin, View):
     """Withdraw your own open request, or take someone else's."""
 
     def post(self, request, public_id, action):
-        swap = get_object_or_404(
-            SwapRequest.objects.select_related("service", "part"), public_id=public_id
+        swap = get_in_church(
+            SwapRequest.objects.select_related("service", "part"),
+            request.church,
+            public_id=public_id,
         )
         try:
             if action == "withdraw":
@@ -281,7 +295,7 @@ class AssignView(ServiceTeamMixin, TemplateView):
         if not pk:
             return None
         try:
-            return TeamPart.objects.active().get(pk=pk)
+            return TeamPart.objects.for_church(self.request.church).active().get(pk=pk)
         except (TeamPart.DoesNotExist, ValueError) as error:
             raise Http404("No such team part.") from error
 
@@ -298,7 +312,7 @@ class AssignView(ServiceTeamMixin, TemplateView):
         context.update(
             service=self.service,
             closed=rostering.roster_closed(self.service),
-            parts=TeamPart.objects.active(),
+            parts=TeamPart.objects.for_church(self.request.church).active(),
             part=self.part,
             form=kwargs.get("form") or self.get_form(),
             unavailable=[(person, reason) for person, reason in people if reason],
@@ -332,8 +346,9 @@ class RemoveAssignmentView(ServiceTeamMixin, View):
     permission_required = "teams.delete_assignment"
 
     def post(self, request, public_id, assignment_id):
-        assignment = get_object_or_404(
+        assignment = get_in_church(
             Assignment.objects.select_related("person", "part", "service"),
+            request.church,
             public_id=assignment_id,
             service=self.service,
         )
@@ -372,18 +387,30 @@ def service_team_context(service, user):
 
 
 class RosterView(TeamsPageMixin, PermissionRequiredMixin, ListView):
-    """Everyone active, with the parts in their Team Profile."""
+    """Everyone active on the church's team, with the parts in their Team
+    Profile there."""
 
     permission_required = "teams.view_teamprofile"
     template_name = "teams/roster.html"
 
     def get_queryset(self):
-        return (
-            rostering.team_people()
-            .select_related("team_profile")
-            .prefetch_related("team_profile__parts")
-            .order_by("first_name", "last_name", "username")
+        church = self.request.church
+        return rostering.team_people(church).order_by(
+            "first_name", "last_name", "username"
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profiles = (
+            TeamProfile.objects.for_church(self.request.church)
+            .filter(user__in=[person.pk for person in context["object_list"]])
+            .prefetch_related("parts")
+        )
+        parts = {profile.user_id: list(profile.parts.all()) for profile in profiles}
+        context["rows"] = [
+            (person, parts.get(person.pk, [])) for person in context["object_list"]
+        ]
+        return context
 
 
 class PersonPartsView(TeamsMixin, PermissionRequiredMixin, FormPageMixin, FormView):
@@ -394,18 +421,26 @@ class PersonPartsView(TeamsMixin, PermissionRequiredMixin, FormPageMixin, FormVi
 
     @cached_property
     def person(self):
-        return get_object_or_404(rostering.team_people(), pk=self.kwargs["pk"])
+        return get_object_or_404(
+            rostering.team_people(self.request.church), pk=self.kwargs["pk"]
+        )
 
     def get_page_title(self):
         return f"Team parts: {display_name(self.person)}"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["current"] = rostering.parts_of(self.person)
+        kwargs["church"] = self.request.church
+        kwargs["current"] = rostering.parts_of(self.person, self.request.church)
         return kwargs
 
     def form_valid(self, form):
-        rostering.set_parts(self.person, form.cleaned_data["parts"], self.request.user)
+        rostering.set_parts(
+            self.person,
+            form.cleaned_data["parts"],
+            self.request.user,
+            self.request.church,
+        )
         messages.success(
             self.request, f"{display_name(self.person)}'s team parts were saved."
         )

@@ -2,6 +2,21 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Teams for every church (branch `church-setup-simplify`)
+
+- **Why:** the Praise Team step was missing in churches registered after
+  Phase 9B ([[Design-Decisions]], "Teams for every church").
+- **What changed:** Team Parts, Team Profiles and Blackout Dates got a
+  church (migrations `teams.0005`-`0007`: existing rows to the church that
+  used Teams, starting parts for every other church, Teams switched on
+  where it was locked); every rule and page in `apps/teams` works inside
+  one church; `role_changes` finders get the church; new churches are
+  seeded with Team Parts; Teams' lock removed.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations and 1421 tests passed, 97% coverage. Migrations applied to
+  the local database: all three churches have their own Team Parts and
+  Teams on.
+
 ## 2026-11-28: Simpler church setup and service form (branch `church-setup-simplify`)
 
 - **Why:** the owner's list of 28 Nov ([[Design-Decisions]], "Simpler

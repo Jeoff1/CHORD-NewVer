@@ -12,6 +12,7 @@ from django.utils import timezone
 from apps.audit.models import AuditEvent
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_assignment,
     make_service,
     make_team_part,
@@ -105,7 +106,7 @@ class AskingTests(SwapTestCase):
         rostering.remove(self.assignment, self.leader)
         other.refresh_from_db()
         self.assertEqual(other.status, SwapRequest.Status.WITHDRAWN)
-        self.assertEqual(rostering.swaps_open_to(self.taker), [])
+        self.assertEqual(rostering.swaps_open_to(self.taker, first_church()), [])
 
 
 class WhoSeesItTests(SwapTestCase):
@@ -114,28 +115,34 @@ class WhoSeesItTests(SwapTestCase):
         self.swap = rostering.request_swap(self.assignment, self.asker)
 
     def test_eligible_people_see_it_and_others_dont(self):
-        self.assertEqual(rostering.swaps_open_to(self.taker), [self.swap])
-        self.assertEqual(rostering.swaps_open_to(self.asker), [])
+        self.assertEqual(
+            rostering.swaps_open_to(self.taker, first_church()), [self.swap]
+        )
+        self.assertEqual(rostering.swaps_open_to(self.asker, first_church()), [])
 
         no_part = make_user(roles=["team_member"])
         make_team_profile(no_part, [make_team_part()])
         blacked_out = make_user(roles=["team_member"])
         make_team_profile(blacked_out, [self.bass])
         day = rostering.service_day(self.service)
-        BlackoutDate.objects.create(person=blacked_out, starts_on=day, ends_on=day)
+        BlackoutDate.objects.create(
+            church=first_church(), person=blacked_out, starts_on=day, ends_on=day
+        )
         already_on = make_user(roles=["team_member"])
         make_team_profile(already_on, [self.bass])
         make_assignment(self.service, already_on, make_team_part())
         not_on_team = make_user(roles=["office_staff"])
         make_team_profile(not_on_team, [self.bass])
         for person in (no_part, blacked_out, already_on, not_on_team):
-            self.assertEqual(rostering.swaps_open_to(person), [], person)
+            self.assertEqual(
+                rostering.swaps_open_to(person, first_church()), [], person
+            )
             self.refused(rostering.take_swap, self.swap, person)
 
     def test_a_cancelled_service_takes_no_swaps(self):
         self.service.is_cancelled = True
         self.service.save()
-        self.assertEqual(rostering.swaps_open_to(self.taker), [])
+        self.assertEqual(rostering.swaps_open_to(self.taker, first_church()), [])
         self.assertIn(
             "cancelled", self.refused(rostering.take_swap, self.swap, self.taker)
         )

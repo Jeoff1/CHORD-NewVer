@@ -12,6 +12,12 @@ class TeamsConfig(AppConfig):
     def ready(self):
         from apps.accounts import role_changes
         from apps.church import dashboard as church_dashboard
+        from apps.church import seeding
+
+        from . import defaults
+
+        # A new church starts with the neutral Team Parts (28 Nov 2026).
+        seeding.register(defaults.seed)
 
         from .dashboard import my_assignments, my_schedule
 

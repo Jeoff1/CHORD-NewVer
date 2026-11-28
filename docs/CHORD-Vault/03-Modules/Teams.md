@@ -8,8 +8,24 @@ Who serves at each worship service, when people can't, and swaps between
 them; it sends in-app Notifications about them (the Notifications
 themselves are core since Phase 9A: `apps/notifications`). Module code
 `teams`; app `apps/teams`. It needs
-[[Worship]]: Teams counts as switched off while Worship is off. Decisions:
-[[Design-Decisions]], Phase 8 (2026-11-23).
+[[Worship]]: Teams counts as switched off while Worship is off; on the
+Modules page it shows as the Praise Team under Worship, with its own
+switch. Decisions: [[Design-Decisions]], Phase 8 (2026-11-23).
+
+**Every church has its own team (28 Nov 2026,
+[[0014-church-platform]]):** Team Parts (a `ChurchChoiceItem`), Team
+Profiles (one per person per church) and Blackout Dates hold their church;
+Assignments and Swap Requests reach it through their service
+(`church_path = "service__church"`). Every rule in `rostering.py` takes the
+service's church or a `church` argument (`team_people(church)`,
+`may_serve(user, church)`, `parts_of`, `set_parts`, `add_blackout`,
+`upcoming_assignments`, `swaps_open_to`, `usable_parts`); a part of
+another church can't go in a profile or an assignment. A new church gets
+the neutral parts from `defaults.seed`. Migrations `0005`-`0006` gave the
+existing rows to the church that used Teams and the starting parts to
+every other church; `0007` switched Teams on where it had been locked.
+Tests: `apps/teams/tests/test_church_teams.py` and the Teams pages in
+`apps/church/tests/test_isolation.py`.
 
 ## What exists
 
@@ -24,9 +40,10 @@ Phase 8, parts A and B, built 2026-11-23:
 - **Team Parts** (`TeamPart`, a [[Code-Conventions#Church-edited lists|church-edited list]]):
   voices and instruments, at `/teams/settings/parts/`. Seeded with neutral
   defaults: Vocals, Acoustic guitar, Electric guitar, Bass, Keys, Drums
-  (migration `0002_default_team_parts`). Switched off, never deleted.
-- **Team Profile** (`TeamProfile`): one per user account on the team,
-  holding only the person's parts (no vocal range). Not linked to a Member
+  (migration `0002_default_team_parts`; `defaults.py` for a new church).
+  Switched off, never deleted. Each church has its own.
+- **Team Profile** (`TeamProfile`): one per user account on a church's
+  team, holding only the person's parts there (no vocal range). Not linked to a Member
   record; the [[Members]] module is unchanged. Each person edits their own
   ("My team parts"); holders of `teams.change_teamprofile` edit anyone's on
   the team from the **Roster** (`/teams/roster/`, `teams.view_teamprofile`).

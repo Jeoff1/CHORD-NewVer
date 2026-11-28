@@ -18,9 +18,9 @@ class PartsForm(forms.Form):
         widget=forms.CheckboxSelectMultiple,
     )
 
-    def __init__(self, *args, current=(), **kwargs):
+    def __init__(self, *args, church, current=(), **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["parts"].queryset = usable_parts(current)
+        self.fields["parts"].queryset = usable_parts(church, current)
         self.initial.setdefault("parts", [part.pk for part in current])
 
 

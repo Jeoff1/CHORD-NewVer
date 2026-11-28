@@ -22,11 +22,12 @@ from . import rostering
 from .models import Assignment
 
 
-def coming_assignments(person):
-    """The person's Pending or Accepted assignments on services that haven't
-    started and aren't cancelled, soonest first."""
+def coming_assignments(person, church):
+    """The person's Pending or Accepted assignments in ``church`` on
+    services that haven't started and aren't cancelled, soonest first."""
     return (
-        Assignment.objects.filter(
+        Assignment.objects.for_church(church)
+        .filter(
             person=person,
             reply__in=rostering.SERVING,
             service__is_cancelled=False,
@@ -46,28 +47,29 @@ def describe(assignment):
     )
 
 
-def end_assignments(person, actor):
-    """End the person's coming assignments; returns how many ended."""
+def end_assignments(person, actor, church):
+    """End the person's coming assignments in ``church``; returns how many
+    ended."""
     with transaction.atomic():
-        assignments = list(coming_assignments(person))
+        assignments = list(coming_assignments(person, church))
         for assignment in assignments:
             rostering.remove(assignment, actor)
     return len(assignments)
 
 
-def leaving_team(user, lost_permissions):
+def leaving_team(user, lost_permissions, church):
     """The Consequence for the user form, or None when the person stays on
-    the team, Teams is off, or they have no coming assignments."""
-    church = rostering.teams_church()
+    ``church``'s team, Teams is off there, or they have no coming
+    assignments there."""
     if rostering.TEAM_PERMISSION not in lost_permissions or not is_enabled(
         "teams", church
     ):
         return None
-    items = [describe(assignment) for assignment in coming_assignments(user)]
+    items = [describe(assignment) for assignment in coming_assignments(user, church)]
     if not items:
         return None
     return Consequence(
         title="Assignments on coming services",
         items=items,
-        end=lambda actor: end_assignments(user, actor),
+        end=lambda actor: end_assignments(user, actor, church),
     )

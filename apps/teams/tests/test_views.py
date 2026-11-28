@@ -9,6 +9,7 @@ from django.utils import timezone
 from apps.accounts.roles import DEFAULT_ROLE_PERMISSIONS
 from apps.core.testing import (
     complete_setup,
+    first_church,
     make_assignment,
     make_service,
     make_team_part,
@@ -104,9 +105,12 @@ class MySchedulePageTests(TeamsViewTestCase):
         other = make_user()
         make_assignment(make_service(), other, self.bass)
         BlackoutDate.objects.create(
+            church=first_church(),
             person=self.member,
-            starts_on=rostering.church_today() + datetime.timedelta(days=30),
-            ends_on=rostering.church_today() + datetime.timedelta(days=31),
+            starts_on=rostering.church_today(first_church())
+            + datetime.timedelta(days=30),
+            ends_on=rostering.church_today(first_church())
+            + datetime.timedelta(days=31),
             note="Away",
         )
         self.client.force_login(self.member)
@@ -121,16 +125,19 @@ class MySchedulePageTests(TeamsViewTestCase):
         self.client.force_login(self.member)
         response = self.client.post(reverse("teams:my_parts"), {"parts": [drums.pk]})
         self.assertRedirects(response, MY_SCHEDULE)
-        self.assertEqual(rostering.parts_of(self.member), [drums])
+        self.assertEqual(rostering.parts_of(self.member, first_church()), [drums])
 
     def test_people_not_on_the_team_are_refused_my_parts_and_blackouts(self):
         """Only holders of teams.view_assignment have a Team Profile or
         Blackout Dates; Office Staff don't."""
-        day = (rostering.church_today() + datetime.timedelta(days=60)).isoformat()
+        day = (
+            rostering.church_today(first_church()) + datetime.timedelta(days=60)
+        ).isoformat()
         own = BlackoutDate.objects.create(
+            church=first_church(),
             person=self.office,
-            starts_on=rostering.church_today(),
-            ends_on=rostering.church_today(),
+            starts_on=rostering.church_today(first_church()),
+            ends_on=rostering.church_today(first_church()),
         )
         self.client.force_login(self.office)
         for url in (reverse("teams:my_parts"), reverse("teams:blackout_create")):
@@ -170,7 +177,7 @@ class MySchedulePageTests(TeamsViewTestCase):
         self.assertFalse(BlackoutDate.objects.exists())
 
     def test_adding_and_removing_a_blackout(self):
-        day = rostering.church_today() + datetime.timedelta(days=60)
+        day = rostering.church_today(first_church()) + datetime.timedelta(days=60)
         self.client.force_login(self.member)
         response = self.client.post(
             reverse("teams:blackout_create"),
@@ -279,7 +286,9 @@ class AssignViewTests(TeamsViewTestCase):
 
     def test_a_blacked_out_person_is_listed_with_the_reason_and_not_offered(self):
         day = rostering.service_day(self.service)
-        BlackoutDate.objects.create(person=self.member, starts_on=day, ends_on=day)
+        BlackoutDate.objects.create(
+            church=first_church(), person=self.member, starts_on=day, ends_on=day
+        )
         self.client.force_login(self.leader)
         page = self.client.get(assign_page(self.service), {"part": self.bass.pk})
         self.assertContains(page, "Can't be assigned")
@@ -392,7 +401,7 @@ class RosterAndPartsTests(TeamsViewTestCase):
         self.client.force_login(self.leader)
         self.assertContains(self.client.get(url), "Team parts: Kim Cruz")
         self.assertRedirects(self.client.post(url, {"parts": [drums.pk]}), ROSTER)
-        self.assertEqual(rostering.parts_of(self.member), [drums])
+        self.assertEqual(rostering.parts_of(self.member, first_church()), [drums])
 
     def test_the_leader_keeps_the_team_parts_list(self):
         self.client.force_login(self.leader)

@@ -26,7 +26,7 @@ from apps.core.testing import (
     make_church,
     make_user,
 )
-from apps.teams.rostering import teams_church
+from apps.teams.models import TeamPart
 
 REGISTER = reverse("churches:register")
 USERS = reverse("accounts:user_list")
@@ -432,8 +432,9 @@ def module_urls(namespace):
         )
 
 
-class LockedModulesTests(TestCase):
-    """Members and Teams aren't kept apart per church yet (§5)."""
+class ModuleAvailabilityTests(TestCase):
+    """Teams is kept apart per church since 28 Nov 2026, so every church may
+    use it; the Member Directory is retired for every church."""
 
     def setUp(self):
         self.a = complete_setup()
@@ -452,57 +453,38 @@ class LockedModulesTests(TestCase):
                     )
                     self.assertEqual(module, namespace)
 
-    def test_every_members_and_teams_url_is_404_for_another_church(self):
-        self.client.force_login(self.admin_b)
-        for namespace in ("members", "teams"):
-            for pattern, url in module_urls(namespace):
+    def test_every_members_url_is_404_in_every_church(self):
+        for admin in (self.admin_b, make_administrator()):
+            self.client.force_login(admin)
+            for pattern, url in module_urls("members"):
                 with self.subTest(url=url):
                     self.assertEqual(self.client.get(url).status_code, 404)
                     self.assertEqual(self.client.post(url).status_code, 404)
-
-    def test_they_work_in_the_unlocked_church(self):
-        self.client.force_login(make_administrator())
-        self.assertEqual(self.client.get(reverse("teams:roster")).status_code, 200)
-        # The Member Directory is retired for every church.
-        self.assertEqual(self.client.get(reverse("members:list")).status_code, 404)
         with self.settings(RETIRED_MODULES=()):
             self.assertEqual(self.client.get(reverse("members:list")).status_code, 200)
 
-    def test_settings_show_not_available_yet_and_cant_switch_them_on(self):
+    def test_teams_works_in_a_church_registered_later(self):
         self.client.force_login(self.admin_b)
-        url = reverse("church:settings", kwargs={"section": "modules"})
-        page = self.client.get(url)
-        # Teams (the Praise Team, under Worship) isn't available yet; the
-        # retired Member Directory isn't listed at all.
-        self.assertContains(page, "Not available yet", count=1)
-        self.assertNotContains(page, 'value="members"')
-        self.assertNotContains(page, 'value="teams"')
-        self.assertContains(page, 'role="switch"', count=3)
-        self.client.post(url, {"enabled": ["members", "teams", "worship"]})
-        self.b.refresh_from_db()
-        self.assertFalse(is_enabled("members", self.b))
-        self.assertFalse(is_enabled("teams", self.b))
-
-    def test_the_unlocked_church_switches_them_as_before(self):
-        self.client.force_login(make_administrator())
-        page = self.client.get(
-            reverse("church:settings", kwargs={"section": "modules"})
+        self.assertTrue(is_enabled("teams", self.b))
+        self.assertEqual(self.client.get(reverse("teams:roster")).status_code, 200)
+        parts = self.client.get(reverse("teams:parts_list"))
+        self.assertContains(parts, "Vocals")
+        self.assertEqual(
+            TeamPart.objects.for_church(self.b).count(),
+            TeamPart.objects.for_church(self.a).count(),
         )
-        self.assertNotContains(page, "Not available yet")
-        self.assertContains(page, 'role="switch"', count=4)
-        self.assertNotContains(page, 'value="members"')
 
-
-class TeamsChurchTests(TestCase):
-    def test_it_is_the_church_with_the_setting_not_a_pk_or_a_name(self):
-        first = first_church()
-        other = make_church("My Church")  # the first church's default name
-        self.assertEqual(teams_church(), first)
-        first.members_teams_unlocked = False
-        first.save()
-        other.members_teams_unlocked = True
-        other.save()
-        self.assertEqual(teams_church(), other)
-        other.members_teams_unlocked = False
-        other.save()
-        self.assertIsNone(teams_church())
+    def test_every_church_switches_the_praise_team(self):
+        for admin, church in ((self.admin_b, self.b), (make_administrator(), self.a)):
+            self.client.force_login(admin)
+            url = reverse("church:settings", kwargs={"section": "modules"})
+            page = self.client.get(url)
+            self.assertNotContains(page, "Not available yet")
+            self.assertContains(page, 'role="switch"', count=4)
+            self.assertNotContains(page, 'value="members"')
+            self.client.post(url, {"enabled": ["worship"]})
+            church.refresh_from_db()
+            self.assertFalse(is_enabled("teams", church))
+            self.client.post(url, {"enabled": ["worship", "teams"]})
+            church.refresh_from_db()
+            self.assertTrue(is_enabled("teams", church))

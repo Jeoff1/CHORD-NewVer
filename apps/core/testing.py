@@ -349,29 +349,37 @@ def make_chord_sheet(song, *, chordpro=HYMN_SHEET, key="G", approved=True, **fie
     )
 
 
-def make_team_part(name=None, **fields):
-    """A Team Part with a unique name (the seeded ones also exist)."""
+def make_team_part(name=None, *, church=None, **fields):
+    """A Team Part of ``church`` (the first church by default) with a
+    unique name (the seeded ones also exist)."""
     from apps.teams.models import TeamPart
 
-    return TeamPart.objects.create(name=name or f"Part {next(_sequence)}", **fields)
+    return TeamPart.objects.create(
+        church=church or first_church(),
+        name=name or f"Part {next(_sequence)}",
+        **fields,
+    )
 
 
-def make_team_profile(user, parts=()):
-    """Give ``user`` a Team Profile with ``parts``."""
+def make_team_profile(user, parts=(), *, church=None):
+    """Give ``user`` a Team Profile in ``church`` (the parts' church, else
+    the first church) with ``parts``."""
     from apps.teams.models import TeamProfile
 
-    profile, _ = TeamProfile.objects.get_or_create(user=user)
+    parts = list(parts)
+    church = church or (parts[0].church if parts else first_church())
+    profile, _ = TeamProfile.objects.get_or_create(user=user, church=church)
     profile.parts.set(parts)
     return profile
 
 
 def make_assignment(service, person, part=None, *, reply="pending"):
     """An Assignment stored directly (the rules refuse past services); the
-    person gets the part in their Team Profile."""
+    person gets the part in their Team Profile in the service's church."""
     from apps.teams.models import Assignment, TeamProfile
 
-    part = part or make_team_part()
-    profile, _ = TeamProfile.objects.get_or_create(user=person)
+    part = part or make_team_part(church=service.church)
+    profile, _ = TeamProfile.objects.get_or_create(user=person, church=service.church)
     profile.parts.add(part)
     return Assignment.objects.create(
         service=service, part=part, person=person, reply=reply

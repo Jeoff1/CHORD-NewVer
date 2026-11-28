@@ -22,6 +22,11 @@
 Assigning, taking a swap and adding a blackout lock the person's row, so
 they can't pass each other; taking a swap also locks the request's row, so
 only the first of two people pressing at once gets it.
+
+Every rule works inside one church (28 Nov 2026, decision 0014): a
+service's own church, or the ``church`` given for a person's records. A
+person on two churches' teams has a Team Profile and Blackout Dates in
+each.
 """
 
 import datetime
@@ -35,7 +40,7 @@ from django.utils import timezone
 from apps.accounts.roles import users_with_perm
 from apps.audit.models import AuditEvent
 from apps.audit.services import diff, record_change, snapshot
-from apps.church.models import ChurchProfile
+from apps.church.modules import is_enabled
 from apps.core.people import display_name
 from apps.worship.scheduling import church_time_zone
 
@@ -81,16 +86,6 @@ class RosterRefused(Exception):
         self.assignment = assignment
 
 
-def teams_church():
-    """The church whose team these records are (decision 0014). Teams'
-    records aren't kept apart per church yet, so only a church with
-    ``members_teams_unlocked`` (the one from before Phase 9B) may use the
-    Module; person-level records (Team Profiles, Blackout Dates) are its."""
-    return (
-        ChurchProfile.objects.filter(members_teams_unlocked=True).order_by("pk").first()
-    )
-
-
 def _service_word(church):
     return church.label_set.get("worship_service").lower()
 
@@ -98,8 +93,9 @@ def _service_word(church):
 def roster_closed(service):
     """Why the service's team can't change any more, or "" when it can."""
     word = _service_word(service.church)
-    if service.church_id != getattr(teams_church(), "pk", None):
-        return f"This {word}'s church doesn't have the Teams module."
+    if not is_enabled("teams", service.church):
+        team = service.church.label_set.get("team")
+        return f"This {word}'s church has the {team} switched off."
     if service.is_cancelled:
         return f"This {word} is cancelled, so its team can't change."
     if service.has_started:
@@ -107,8 +103,8 @@ def roster_closed(service):
     return ""
 
 
-def church_today():
-    return timezone.localdate(timezone=church_time_zone(teams_church()))
+def church_today(church):
+    return timezone.localdate(timezone=church_time_zone(church))
 
 
 def service_day(service):
@@ -118,10 +114,10 @@ def service_day(service):
     ).date()
 
 
-def day_bounds(starts_on, ends_on):
+def day_bounds(church, starts_on, ends_on):
     """The moments that start ``starts_on`` and end ``ends_on``, in the
-    team's church's time zone."""
-    zone = church_time_zone(teams_church())
+    church's time zone."""
+    zone = church_time_zone(church)
     start = datetime.datetime.combine(starts_on, datetime.time.min, tzinfo=zone)
     end = datetime.datetime.combine(
         ends_on + datetime.timedelta(days=1), datetime.time.min, tzinfo=zone
@@ -129,8 +125,10 @@ def day_bounds(starts_on, ends_on):
     return start, end
 
 
-def _blacked_out(day):
-    return BlackoutDate.objects.filter(starts_on__lte=day, ends_on__gte=day)
+def _blacked_out(church, day):
+    return BlackoutDate.objects.for_church(church).filter(
+        starts_on__lte=day, ends_on__gte=day
+    )
 
 
 def _lock(person):
@@ -141,20 +139,19 @@ def _lock(person):
 # --- The team -------------------------------------------------------------------
 
 
-def team_people():
-    """Active users holding ``TEAM_PERMISSION`` through a role in the
-    team's church, or as superusers."""
-    church = teams_church()
+def team_people(church):
+    """Active users holding ``TEAM_PERMISSION`` through a role in
+    ``church``, or as superusers."""
     if church is None:
         return get_user_model().objects.none()
     return users_with_perm(church, TEAM_PERMISSION, include_superusers=True)
 
 
-def may_serve(user):
-    """Whether ``user`` is on the team: active, holding ``TEAM_PERMISSION``
-    in the team's church. Asked of other people too, so it never relies on
-    the person's own Current Church."""
-    return user.is_active and team_people().filter(pk=user.pk).exists()
+def may_serve(user, church):
+    """Whether ``user`` is on ``church``'s team: active, holding
+    ``TEAM_PERMISSION`` there. Asked of other people too, so it never relies
+    on the person's own Current Church."""
+    return user.is_active and team_people(church).filter(pk=user.pk).exists()
 
 
 def _not_on_team(person):
@@ -164,16 +161,19 @@ def _not_on_team(person):
 # --- Team Profiles ------------------------------------------------------------
 
 
-def parts_of(person):
-    profile = TeamProfile.objects.filter(user=person).first()
+def parts_of(person, church):
+    profile = TeamProfile.objects.for_church(church).filter(user=person).first()
     return list(profile.parts.all()) if profile else []
 
 
-def set_parts(person, parts, actor):
-    """Make ``parts`` the person's Team Profile, with an audit entry."""
-    if not may_serve(person):
+def set_parts(person, parts, actor, church):
+    """Make ``parts`` the person's Team Profile in ``church``, with an audit
+    entry. Only that church's parts can be in it."""
+    if not may_serve(person, church):
         raise RosterRefused(_not_on_team(person))
-    profile, is_new = TeamProfile.objects.get_or_create(user=person)
+    if any(part.church_id != church.pk for part in parts):
+        raise RosterRefused("Choose this church's team parts.")
+    profile, is_new = TeamProfile.objects.get_or_create(user=person, church=church)
     before = {} if is_new else snapshot(profile, PROFILE_AUDIT_FIELDS)
     profile.parts.set(parts)
     record_change(
@@ -192,10 +192,13 @@ def candidates(service, part):
     """The team people whose Team Profile has ``part``, each with the reason
     they can't be assigned to it at ``service`` ("" when they can). People
     without ``TEAM_PERMISSION`` are left out, even with a profile."""
-    people = team_people().filter(team_profile__parts=part)
+    church = service.church
+    people = team_people(church).filter(
+        team_profiles__church=church, team_profiles__parts=part
+    )
     people = sorted(people, key=lambda p: (p.first_name, p.last_name, p.get_username()))
     blacked_out = set(
-        _blacked_out(service_day(service)).values_list("person_id", flat=True)
+        _blacked_out(church, service_day(service)).values_list("person_id", flat=True)
     )
     assigned = set(
         Assignment.objects.filter(service=service, part=part).values_list(
@@ -221,13 +224,21 @@ def unavailable_reason(service, part, person):
     """Why ``person`` can't take ``part`` at ``service``, or ""."""
     if not person.is_active:
         return f"{display_name(person)}'s account is deactivated."
-    if not may_serve(person):
+    church = service.church
+    if not may_serve(person, church):
         return f"{display_name(person)} isn't on the team."
-    if not TeamProfile.objects.filter(user=person, parts=part).exists():
+    if (
+        part.church_id != church.pk
+        or not TeamProfile.objects.for_church(church)
+        .filter(user=person, parts=part)
+        .exists()
+    ):
         return f"{display_name(person)}'s Team Profile doesn't have {part}."
     mine = {person.pk}
     blacked_out = (
-        mine if _blacked_out(service_day(service)).filter(person=person) else set()
+        mine
+        if _blacked_out(church, service_day(service)).filter(person=person)
+        else set()
     )
     assigned = (
         mine
@@ -245,6 +256,8 @@ def assign(service, part, person, actor):
     closed = roster_closed(service)
     if closed:
         raise RosterRefused(closed)
+    if part.church_id != service.church_id:
+        raise RosterRefused(f"{part} isn't one of this church's team parts.")
     if not part.is_active:
         raise RosterRefused(f"{part} is switched off, so nobody can be assigned to it.")
     try:
@@ -323,11 +336,13 @@ def service_team(service):
     )
 
 
-def upcoming_assignments(person):
-    """The person's assignments from today on, soonest first."""
-    start, _ = day_bounds(church_today(), church_today())
+def upcoming_assignments(person, church):
+    """The person's assignments in ``church`` from today on, soonest first."""
+    today = church_today(church)
+    start, _ = day_bounds(church, today, today)
     return (
-        Assignment.objects.filter(person=person, service__starts_at__gte=start)
+        Assignment.objects.for_church(church)
+        .filter(person=person, service__starts_at__gte=start)
         .select_related("service", "part")
         .prefetch_related("swap_requests")
         .order_by("service__starts_at", "part__sort_order", "pk")
@@ -437,29 +452,39 @@ def take_refusal(swap, person):
     closed = roster_closed(swap.service)
     if closed:
         return closed
+    church = swap.service.church
     if swap.requested_by_id == person.pk:
         return "This is your own swap request."
-    if not may_serve(person):
+    if not may_serve(person, church):
         return "Only people on the team can take a swap."
-    if not TeamProfile.objects.filter(user=person, parts=swap.part).exists():
+    if (
+        not TeamProfile.objects.for_church(church)
+        .filter(user=person, parts=swap.part)
+        .exists()
+    ):
         return f"Your Team Profile doesn't have {swap.part}."
-    if _blacked_out(service_day(swap.service)).filter(person=person).exists():
+    if _blacked_out(church, service_day(swap.service)).filter(person=person).exists():
         return "That day is one of your blackout dates."
     if Assignment.objects.filter(service=swap.service, person=person).exists():
         return f"You're already on this {_service_word(swap.service.church)}."
     return ""
 
 
-def swaps_open_to(person):
-    """The open swap requests ``person`` may take, soonest first."""
-    if not may_serve(person):
+def swaps_open_to(person, church):
+    """The open swap requests in ``church`` ``person`` may take, soonest
+    first."""
+    if not may_serve(person, church):
         return []
-    swaps = SwapRequest.objects.filter(
-        status=SwapRequest.Status.OPEN,
-        service__is_cancelled=False,
-        service__starts_at__gt=timezone.now(),
-        part__profiles__user=person,
-    ).select_related("service", "part", "requested_by")
+    swaps = (
+        SwapRequest.objects.for_church(church)
+        .filter(
+            status=SwapRequest.Status.OPEN,
+            service__is_cancelled=False,
+            service__starts_at__gt=timezone.now(),
+            part__profiles__user=person,
+        )
+        .select_related("service", "part", "requested_by")
+    )
     return [swap for swap in swaps if not take_refusal(swap, person)]
 
 
@@ -502,12 +527,14 @@ def take_swap(swap, person):
 # --- Blackout Dates -----------------------------------------------------------
 
 
-def blackout_conflicts(person, starts_on, ends_on):
-    """The person's assignments a blackout from ``starts_on`` to ``ends_on``
-    would cover: Pending or Accepted, at services that aren't cancelled."""
-    start, end = day_bounds(starts_on, ends_on)
+def blackout_conflicts(person, church, starts_on, ends_on):
+    """The person's assignments in ``church`` a blackout from ``starts_on``
+    to ``ends_on`` would cover: Pending or Accepted, at services that aren't
+    cancelled."""
+    start, end = day_bounds(church, starts_on, ends_on)
     return (
-        Assignment.objects.filter(
+        Assignment.objects.for_church(church)
+        .filter(
             person=person,
             reply__in=SERVING,
             service__is_cancelled=False,
@@ -533,23 +560,28 @@ def _conflict_message(conflicts):
     )
 
 
-def add_blackout(person, starts_on, ends_on, note=""):
-    """Add a Blackout Date for ``person``. Raises ``RosterRefused`` when the
-    person isn't on the team, or the days are the wrong way round, already
-    passed, or cover an assignment (named in ``RosterRefused.assignment``)."""
-    if not may_serve(person):
+def add_blackout(person, church, starts_on, ends_on, note=""):
+    """Add a Blackout Date for ``person`` in ``church``. Raises
+    ``RosterRefused`` when the person isn't on its team, or the days are the
+    wrong way round, already passed, or cover an assignment (named in
+    ``RosterRefused.assignment``)."""
+    if not may_serve(person, church):
         raise RosterRefused("Only people on the team have blackout dates.")
     if ends_on < starts_on:
         raise RosterRefused("The last day can't be before the first.")
-    if ends_on < church_today():
+    if ends_on < church_today(church):
         raise RosterRefused("These days have already passed.")
     with transaction.atomic():
         _lock(person)
-        conflicts = list(blackout_conflicts(person, starts_on, ends_on))
+        conflicts = list(blackout_conflicts(person, church, starts_on, ends_on))
         if conflicts:
             raise RosterRefused(_conflict_message(conflicts), assignment=conflicts[0])
         blackout = BlackoutDate.objects.create(
-            person=person, starts_on=starts_on, ends_on=ends_on, note=note
+            church=church,
+            person=person,
+            starts_on=starts_on,
+            ends_on=ends_on,
+            note=note,
         )
     record_change(
         person,
@@ -572,14 +604,17 @@ def remove_blackout(blackout, person):
     blackout.delete()
 
 
-def upcoming_blackouts(person):
-    return BlackoutDate.objects.filter(person=person, ends_on__gte=church_today())
+def upcoming_blackouts(person, church):
+    return BlackoutDate.objects.for_church(church).filter(
+        person=person, ends_on__gte=church_today(church)
+    )
 
 
-def usable_parts(current=()):
-    """Active Team Parts, plus ``current`` ones so editing keeps them."""
+def usable_parts(church, current=()):
+    """``church``'s active Team Parts, plus ``current`` ones so editing
+    keeps them."""
     ids = [part.pk for part in current]
-    return TeamPart.objects.filter(Q(is_active=True) | Q(pk__in=ids))
+    return TeamPart.objects.for_church(church).filter(Q(is_active=True) | Q(pk__in=ids))
 
 
 def swap_url(assignment):
