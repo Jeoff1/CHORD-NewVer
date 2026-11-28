@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static church %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -12,12 +12,13 @@
     also get the editing tools: the camera buttons on the cover and logo, Edit profile, and View as
     visitor. Saving goes to church:profile_edit, which checks the permission again.
   {% endcomment %}
-  <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); })();</script>
+  <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); window.chordSetTheme = function (next) { choice = next; apply(); }; })();</script>
   <title>{{ public_church.name }} · CHORD</title>
   {% if public_church.about %}<meta name="description" content="{{ public_church.about|truncatechars:155 }}">{% endif %}
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/chord.css' %}">
   <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+  {% if user.is_authenticated %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endif %}
   <link rel="stylesheet" href="{% static 'css/profile.css' %}">
   <script src="{% static 'church/profile.js' %}" defer></script>
   {% if can_edit %}
@@ -30,7 +31,7 @@
 
   <nav class="lp-nav" aria-label="Main">
     <div class="lp-wrap pf-nav__row">
-      <a class="lp-brand" href="{% if user.is_authenticated %}{% url 'landing' %}{% else %}{% url 'home' %}{% endif %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      <a class="lp-brand chord-home-tip" href="{% homepage_url %}" aria-label="CHORD, go to the homepage" data-home-tip="Go to Homepage"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
       {% if user.is_authenticated %}{% include "includes/public_account.html" %}{% endif %}
     </div>
   </nav>

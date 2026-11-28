@@ -34,5 +34,6 @@ class AccountsConfig(AppConfig):
             # Everyone's own light or dark mode (Phase 9A, A7). Users and
             # Roles and permissions are pages of their own, under Members in
             # the sidebar (apps/church/navigation.py), not settings.
+            SettingsPage("personal", "Account", "accounts:profile", None, order=-1),
             SettingsPage("personal", "Appearance", "accounts:appearance", None),
         )

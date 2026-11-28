@@ -1170,3 +1170,16 @@ a {
   cursor: pointer;
 }
 @media (max-width: 359.98px) { .chord-moment { grid-template-columns: minmax(0, 1fr); } }
+
+/* "Go to Homepage" on the official CHORD logo (UI/UX owner, 28 Nov 2026): every page outside the app
+ * shell (the sidebar has its own, sidebar.css). Only where a pointer can hover, or on keyboard focus. */
+.chord-home-tip { position: relative; }
+.chord-home-tip::after { content: attr(data-home-tip); position: absolute; left: 0; top: calc(100% + 8px); z-index: 1100; padding: 4px 10px; border-radius: 8px; background: #0B1F1B; color: #F4F1F0; font: 600 12.5px/1.4 system-ui, sans-serif; white-space: nowrap; pointer-events: none; opacity: 0; transform: translateY(2px); transition: opacity .18s ease, transform .18s ease; box-shadow: 0 6px 18px -8px rgba(0, 0, 0, .5); }
+[data-bs-theme=dark] .chord-home-tip::after { background: #E5C690; color: #173630; }
+@media (hover: hover) { .chord-home-tip:hover::after { opacity: 1; transform: none; } }
+.chord-home-tip:focus-visible::after { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .chord-home-tip::after { transition: none; } }
+
+/* A light or dark switch from the account popover cross-fades the page (account_menu.js adds the class
+ * for 300 ms; never with reduced motion). */
+html.chord-theme-fade, html.chord-theme-fade *, html.chord-theme-fade *::before, html.chord-theme-fade *::after { transition: background-color .3s ease, color .3s ease, border-color .3s ease, fill .3s ease !important; }

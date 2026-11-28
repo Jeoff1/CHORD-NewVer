@@ -13,7 +13,7 @@
     <div class="chord-sb__top">
       <div class="chord-sb__brand">
         {# The CHORD logo opens the landing page and keeps the person signed in (UI/UX owner, 28 Nov 2026). #}
-        <a class="chord-sb__logo" href="{% url 'landing' %}" aria-label="CHORD, go to the homepage" data-tip="Go to Homepage">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
+        <a class="chord-sb__logo" href="{% homepage_url %}" aria-label="CHORD, go to the homepage" data-tip="Go to Homepage">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
         <button type="button" class="chord-sb__icon-btn chord-sb__collapse" data-chord-sidebar-toggle aria-pressed="false" aria-label="Shrink the menu to icons" title="Shrink the menu to icons">{% include "includes/icons/sidebar.html" %}</button>
         <button type="button" class="chord-sb__icon-btn chord-sb__close" data-bs-dismiss="offcanvas" data-bs-target="#chord-sidebar" aria-label="Close the menu">{% include "includes/icons/x.html" %}</button>
       </div>

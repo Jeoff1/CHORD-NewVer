@@ -1072,7 +1072,8 @@ by the UI/UX owner; branch `joy-ui-ux-v3`).
   everyone. Signed in, its nav shows an account button (initials) with a
   menu: name and role line, **Dashboard**, **My Church** (only when the
   church's page can be opened: public, or the person manages it) and
-  **Sign Out** (POST). No hero buttons and no "signed in" banner; the
+  **Sign Out** (POST). Since Phase 2 this is the shared account popover
+  ("Personal profile", below). No hero buttons and no "signed in" banner; the
   footer's Sign in and Sign up become Dashboard and My Church.
 - **Sidebar:** the CHORD logo opens the landing page (tooltip "Go to
   Homepage"); there is no View Website link. The church panel links to the
@@ -1105,28 +1106,77 @@ by the UI/UX owner; branch `joy-ui-ux-v3`).
   you use** (was "Your wording / Set by your church", untrue since Labels
   stopped being editable on 28 Nov 2026).
 
-#### Personal profile (UI/UX owner, approved 28 Nov 2026; not built yet)
+#### Personal profile (UI/UX Phase 2; revised 28 Nov 2026)
 
-A Discord-style popover from the account button, with **no personal
-banner**: avatar (profile picture), name, role line and a short bio; and a
-two-column **Edit Profile** modal with a live preview and hover-to-edit
-avatar. It needs two new fields on `accounts.User` (picture and bio) and a
-migration: **postponed** until the UI/UX owner agrees them with the lead
-developer. Don't add the fields before that.
+**The lead developer rejected personal profile pictures and bios (28 Nov
+2026).** The UI/UX owner revised Phase 2 to fit: no new fields on
+`accounts.User` and no migration. Out of the design for good: personal
+profile picture upload, About Me or bio, a personal banner, a camera
+overlay on personal avatars, and the picture and bio fields with their
+migrations. Don't add them back without the lead developer's agreement.
+The church's logo and cover (the Church CMS, above) are a separate
+feature and stay as they are.
+
+What Phase 2 builds instead, kept professional for a church management
+system rather than a social profile:
+
+- **One account popover** for every signed-in page
+  (`templates/includes/account_popover.html`, `static/css/account.css`,
+  `static/js/account_menu.js`): in the app header it replaces the old
+  dropdown (initials and name); on the landing page and church pages it
+  replaces Phase 1's menu (initials only, on the green bar). A compact card
+  with the **initials avatar** (first and last name, else the username's
+  first letter: `User.initials`), the **full name** (first, middle, last,
+  suffix: `User.display_name`), the **role line** (as in the sidebar) and the
+  **church**; then **Edit Profile**, the church switcher (only with more than
+  one church), the person's own links (app: My schedule, My requests at any
+  church, Spotify account, Churches; public: Dashboard, My Church),
+  **Appearance** (a Light, Dark, Device switch: the page changes at once
+  with a short cross-fade, the thumb slides, and the choice saves in the
+  background to `accounts:appearance`; without JavaScript each choice is a
+  form button that returns to the page), **Account Settings** and
+  **Sign Out**. Edit Profile is a text-only button (no icon). It slides in, closes on a click
+  outside, Escape, Tab or choosing an item, and arrow keys, Home and End move
+  through it.
+- **Edit Profile** is a native dialog with a live preview of the initials
+  and full name and four fields only: first name and last name (required),
+  middle name and suffix (optional). It posts to `accounts:profile_edit`
+  (`/accounts/profile/edit/`, `PersonalInfoForm`), which changes only the
+  person's own name fields, tidies extra spaces and records the audit trail
+  (Middle name and Suffix now recorded too). The modal saves in the
+  background (JSON), updates the name and initials on the page and shows a
+  toast; errors show under each field; closing with unsaved changes asks
+  first. Without JavaScript it posts normally and returns to the page
+  (`next`, same site only); errors show on an "Edit profile" page. On phones
+  it opens as a bottom sheet.
+- **Account Settings** is the old "My profile" page, renamed, with links to
+  Change password and Appearance, and now in the Settings hub as
+  **Personal › Account** (before Appearance), so a person without church
+  settings gets Account settings from the gear.
+- **The official CHORD logo goes home everywhere** (UI/UX owner, 28 Nov
+  2026): signed in, to the landing page at `/welcome/` (never the
+  dashboard), still signed in; a guest, to the landing page at `/`. One
+  template tag, `{% homepage_url %}` (`apps/church/templatetags/church.py`),
+  for the sidebar, the landing page's nav, the church directory, the church
+  page, the sign-in pages and the registration wizard, each with a "Go to
+  Homepage" tooltip (`chord-home-tip` in `chord.css`; the sidebar keeps its
+  own). The landing page's footer logo still goes back to the top, and church
+  logos keep their own links. The landing page now follows a signed-in
+  person's own Appearance choice; a guest's follows the device.
+- Tests: `apps/accounts/tests/test_account_popover.py`.
 
 #### Remaining UI/UX tasks (28 Nov 2026)
 
 1. Lead developer's approval of the private-church preview (above).
    Whatever the answer, everyone else keeps getting 404.
-2. Phase 2: the personal profile (above), after the fields are agreed.
+2. Phase 2: the simplified personal profile (above): done, approved by
+   the UI/UX owner and committed on `joy-ui-ux-v3`.
 3. Then, module by module, each shown running before the next: shared UI
    components; Management, Requests and Bookings; Worship Planning and
    Song Recommendations; Lineup; Song Pool and Find Songs; Chord Viewer
    and Editor; Rehearsal; Calendar and My Schedule; Team Roster; Users,
    Roles and Audit Log; Announcements; Notifications; Settings; Reports;
    error and empty states.
-4. Phase 1 is uncommitted on `joy-ui-ux-v3`; the UI/UX owner commits and
-   pushes it.
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 

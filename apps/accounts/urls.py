@@ -35,6 +35,7 @@ urlpatterns = [
     # Signing up is registering a church; the old address goes there.
     path("signup/", views.SignUpRedirectView.as_view(), name="signup"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    path("profile/edit/", views.PersonalInfoView.as_view(), name="profile_edit"),
     path("appearance/", views.AppearanceView.as_view(), name="appearance"),
     path(
         "password/change/",

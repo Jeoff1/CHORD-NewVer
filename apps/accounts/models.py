@@ -33,6 +33,25 @@ class User(AbstractUser):
     class Meta(AbstractUser.Meta):
         default_permissions = ("add", "change", "view")
 
+    @property
+    def display_name(self):
+        """The whole name as the account popover shows it: first, middle,
+        last and suffix (UI/UX Phase 2), else the username."""
+        parts = [self.first_name, self.middle_name, self.last_name, self.suffix]
+        return " ".join(p.strip() for p in parts if p.strip()) or self.get_username()
+
+    @property
+    def initials(self):
+        """Up to two letters for the initials avatar: first and last name,
+        else the start of the username. There is no profile picture (the
+        lead developer's decision, 28 Nov 2026)."""
+        letters = "".join(
+            name.strip()[0]
+            for name in (self.first_name, self.last_name)
+            if name.strip()
+        )
+        return (letters or self.get_username()[:1]).upper()
+
     def roles_in(self, church):
         """The roles this user holds in ``church`` (none without an active
         Membership there)."""

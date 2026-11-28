@@ -2,7 +2,35 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
-## 2026-11-28: UI/UX Phase 1: signed-in landing, sidebar links, Church CMS (branch `joy-ui-ux-v3`, not committed yet)
+## 2026-11-28: UI/UX Phase 2: account popover and Edit Profile (branch `joy-ui-ux-v3`)
+
+- **Why:** the UI/UX owner's Phase 2, revised after the lead developer
+  rejected personal profile pictures and bios ([[Design-Decisions]],
+  "Personal profile").
+- **What changed:** one account popover on every signed-in page
+  (`includes/account_popover.html`, `static/css/account.css`,
+  `static/js/account_menu.js`) replacing the app header's dropdown and
+  Phase 1's public menu: initials avatar, full name, role line, church,
+  a text-only Edit Profile, the church switcher (more than one church
+  only), the person's links, a Light, Dark, Device switch, Account Settings
+  and Sign Out. Edit Profile (`includes/profile_modal.html`,
+  `PersonalInfoView` at `accounts:profile_edit`, `PersonalInfoForm`): the
+  four name fields with a live preview, saved in the background and
+  audited (the audit trail now records Middle name and Suffix). "My
+  profile" became Account settings, in the Settings hub as Personal ›
+  Account. `AppearanceView` answers JSON and honours `next`. The official
+  CHORD logo goes to `/welcome/` when signed in and `/` for a guest on
+  every page (`{% homepage_url %}`), with a "Go to Homepage" tooltip; the
+  landing page follows a signed-in person's Appearance. `User.display_name`
+  and `User.initials` are properties: **no new field, no migration**.
+- **After the UI/UX owner's review:** the pencil icon left Edit Profile,
+  Appearance moved into the popover, the logo rule above.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations (none needed), 1487 tests passed, 97% coverage. The UI/UX
+  owner reviewed the running site (popover, Edit Profile, Appearance, logo
+  links, light and dark, phone width) before approving.
+
+## 2026-11-28: UI/UX Phase 1: signed-in landing, sidebar links, Church CMS (branch `joy-ui-ux-v3`, committed `02b00ea`)
 
 - **Why:** the UI/UX owner's approved designs ([[Design-Decisions]],
   "Signed-in website access and the Church CMS").

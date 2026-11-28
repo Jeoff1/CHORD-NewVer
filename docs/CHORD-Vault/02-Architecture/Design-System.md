@@ -174,11 +174,23 @@ Designed as an interactive mockup and approved by the UI/UX owner on
   the top (`.pf-toast`, a timer bar, gone after 5 s or on dismiss). Motion
   follows the Animation Plan (150–250 ms) and stops under
   `prefers-reduced-motion`.
-- **Account menu (landing and profile, 28 Nov 2026):** initials button,
-  a menu card (name, role line, Dashboard, My Church, Sign Out) that fades
-  and slides in (160 ms), closes on outside click or Escape and moves with
-  the arrow keys; a sheet anchored under the nav on phones
-  (`.lp-acct*` in `landing.css`).
+- **Account popover (UI/UX Phase 2, 28 Nov 2026; every signed-in page):**
+  `static/css/account.css` (`.acct*`). A 300 px card that fades and scales
+  in (200 ms) from the initials button: initials avatar (48 px), full name,
+  role line, a tinted church card (logo or initials, name), a full-width
+  text-only Edit Profile button, the links, a Light | Dark | Device
+  segmented switch whose thumb slides (260 ms) while the page cross-fades
+  (300 ms), Account Settings, and Sign Out (red on hover). Items nudge right
+  on hover. In the app header the button shows initials and name (initials
+  only on phones); on the green public nav, initials on gold. Edit Profile
+  is a native `<dialog>` (520 px; a bottom sheet on phones): a preview card
+  with a 72 px avatar whose initials pop when they change, a two-column
+  name grid, errors that shake in under the field, a spinning Save, and a
+  "saved" toast. No picture, bio, banner or camera overlay. Every animation
+  stops under `prefers-reduced-motion`.
+- **The CHORD logo goes home** on every page that shows it: `/welcome/`
+  signed in, `/` for a guest (`{% homepage_url %}`), with a "Go to
+  Homepage" tooltip (`.chord-home-tip` in `chord.css`).
 
 ## The sign-in page (redesign, 27 Nov 2026)
 

@@ -484,30 +484,4 @@ html.intro-reveal .lp-hero__inner > :nth-child(2) { animation-delay: .14s; }
   html.intro-reveal .lp-hero__inner > * { animation: none; }
 }
 
-/* --- Account menu (signed-in visitors on public pages; 28 Nov 2026) ----------------------------
- * templates/includes/public_account.html and static/js/account_menu.js. Replaces Sign in and
- * Sign up for a signed-in person: their initials, then Dashboard, My Church and Sign Out. */
-.lp-acct { position: relative; }
-.lp-acct__btn { display: inline-flex; align-items: center; gap: .35rem; min-height: 44px; padding: 3px .7rem 3px 3px; border: 1.5px solid rgba(229, 198, 144, .45); border-radius: 999px; background: rgba(229, 198, 144, .08); color: var(--lp-on-green); cursor: pointer; transition: background-color .18s ease, border-color .18s ease, transform .12s ease; }
-.lp-acct__btn:hover { background: rgba(229, 198, 144, .16); border-color: var(--lp-gold); }
-.lp-acct__btn:active { transform: scale(.97); }
-.lp-acct__btn:focus-visible { outline: 3px solid var(--lp-gold); outline-offset: 2px; }
-.lp-acct__btn .chord-icon { transition: transform .2s ease; }
-.lp-acct__btn[aria-expanded="true"] .chord-icon { transform: rotate(180deg); }
-.lp-acct__av { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--lp-gold); color: #173630; font-family: var(--lp-display); font-weight: 800; font-size: .85rem; }
-.lp-acct__av--lg { width: 42px; height: 42px; font-size: .95rem; }
-.lp-acct__menu { position: absolute; right: 0; top: calc(100% + 10px); z-index: 60; width: 260px; padding: .4rem; border: 1px solid var(--lp-border); border-radius: 16px; background: var(--lp-surface); color: var(--lp-text); box-shadow: 0 24px 50px -20px rgba(11, 31, 27, .45), 0 2px 8px rgba(11, 31, 27, .08); transform-origin: top right; animation: lp-acct-in .2s cubic-bezier(.2, .8, .2, 1) both; }
-.lp-acct__menu.is-closing { animation: lp-acct-out .15s ease both; }
-@keyframes lp-acct-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-@keyframes lp-acct-out { to { opacity: 0; transform: translateY(-4px); } }
-.lp-acct__head { display: flex; align-items: center; gap: .7rem; margin-bottom: .35rem; padding: .6rem .6rem .75rem; border-bottom: 1px solid var(--lp-border); }
-.lp-acct__who { min-width: 0; display: flex; flex-direction: column; }
-.lp-acct__name { font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; }
-.lp-acct__role { font-size: .8rem; color: var(--lp-muted); }
-.lp-acct__menu a, .lp-acct__menu button { display: flex; align-items: center; gap: .65rem; width: 100%; padding: .55rem .6rem; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; transition: background-color .18s ease; }
-.lp-acct__menu a:hover, .lp-acct__menu button:hover, .lp-acct__menu a:focus-visible, .lp-acct__menu button:focus-visible { background: var(--lp-tint); outline: none; }
-.lp-acct__menu .chord-icon { color: var(--lp-muted); }
-.lp-acct__menu hr { margin: .35rem .25rem; border: 0; border-top: 1px solid var(--lp-border); opacity: 1; }
-.lp-acct__menu form { margin: 0; }
-@media (max-width: 600px) { .lp-acct__menu { position: fixed; left: .5rem; right: .5rem; top: calc(var(--lp-nav-h, 64px) + 6px); width: auto; } }
-@media (prefers-reduced-motion: reduce) { .lp-acct__menu, .lp-acct__menu.is-closing { animation: none; } }
+/* The account popover on public pages moved to account.css (UI/UX Phase 2, 28 Nov 2026). */

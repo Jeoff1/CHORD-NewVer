@@ -17,6 +17,19 @@ def label(context, key, plural=False):
 
 
 @register.simple_tag(takes_context=True)
+def homepage_url(context):
+    """Where the official CHORD logo goes (UI/UX owner, 28 Nov 2026): the
+    landing page at /welcome/ for a signed-in person, so "/" (their
+    dashboard) is never the logo's target; for a guest, "/" is the landing
+    page itself. Church logos keep their own links."""
+    from django.urls import reverse
+
+    request = context.get("request")
+    user = getattr(request, "user", None)
+    return reverse("landing" if user and user.is_authenticated else "home")
+
+
+@register.simple_tag(takes_context=True)
 def app_navigation(context):
     """The signed-in sidebar's menu: ``{% app_navigation as nav %}``
     (apps/church/navigation.py)."""

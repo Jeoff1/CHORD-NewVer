@@ -118,19 +118,18 @@ class ThemeTests(TestCase):
             self.assertTrue(finders.find(f"vendor/fonts/{name}"), name)
         self.assertTrue(finders.find("vendor/fonts/OFL-Raleway.txt"))
 
-    def test_the_profile_letter_is_the_first_letter_of_the_name(self):
+    def test_the_avatar_shows_the_initials_of_the_name(self):
+        # UI/UX Phase 2: first and last initials, else the username's first letter.
         self.client.force_login(
             make_user(roles=["church_member"], first_name="rosa", last_name="Lim")
         )
         page = self.client.get(reverse("home"))
-        self.assertContains(
-            page, '<span class="chord-avatar" aria-hidden="true">R</span>rosa Lim'
-        )
+        self.assertContains(page, "data-account-initials>RL</span>")
+        self.assertContains(page, "data-account-name>rosa Lim</span>")
         self.client.force_login(make_user(username="zed", roles=["church_member"]))
         page = self.client.get(reverse("home"))
-        self.assertContains(
-            page, '<span class="chord-avatar" aria-hidden="true">Z</span>zed'
-        )
+        self.assertContains(page, "data-account-initials>Z</span>")
+        self.assertContains(page, "data-account-name>zed</span>")
 
     def test_back_links_are_the_shared_pill(self):
         self.client.force_login(make_user(roles=["pastoral_staff"]))

@@ -82,13 +82,14 @@ class DashboardTests(TestCase):
         # Settings sits at the foot of the sidebar (dashboard redesign).
         self.assertContains(response, 'title="Settings"')
 
-    def test_plain_users_gear_opens_their_appearance(self):
-        # Everyone has Settings › Personal › Appearance (Phase 9A, A7).
+    def test_plain_users_gear_opens_their_account_settings(self):
+        # Everyone has Settings › Personal (Phase 9A, A7); Account comes first
+        # since UI/UX Phase 2.
         complete_setup()
         self.client.force_login(make_user())
         self.assertContains(
             self.client.get(reverse("home")),
-            f'href="{reverse("accounts:appearance")}" title="Settings"',
+            f'href="{reverse("accounts:profile")}" title="Settings"',
         )
 
 

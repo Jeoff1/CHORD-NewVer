@@ -60,9 +60,10 @@ class AppearanceTests(TestCase):
         response = self.client.get(APPEARANCE)
         self.assertEqual(response.status_code, 302)
 
-    def test_the_user_menu_links_it(self):
+    def test_account_settings_links_it(self):
+        # UI/UX Phase 2: the popover's Account Settings, then Appearance.
         self.client.force_login(self.person)
+        self.assertContains(self.client.get(reverse("home")), ">Account Settings</a>")
         self.assertContains(
-            self.client.get(reverse("home")),
-            f'<a class="dropdown-item" href="{APPEARANCE}">Appearance</a>',
+            self.client.get(reverse("accounts:profile")), f'href="{APPEARANCE}"'
         )
