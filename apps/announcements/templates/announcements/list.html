@@ -1,35 +1,38 @@
 {% extends "base.html" %}
-{% load people %}
+{% load people church ui %}
 
 {% block title %}Announcements{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">Announcements</h1>
-    {% if perms.announcements.add_announcement %}<a href="{% url 'announcements:create' %}" class="btn btn-primary">Post an announcement</a>{% endif %}
-  </div>
+  {# UI/UX Phase 9: a church news feed: the author's initials, who it is for as a chip, the date, the text; Archive asks first. These are the team's announcements; only public ones reach the church page (announcements/includes/homepage_public.html). #}
+  {% page_header "Announcements" subtitle="News for the whole team, or for one service's team." %}
+    {% if perms.announcements.add_announcement %}<a href="{% url 'announcements:create' %}" class="btn btn-primary">{% include "includes/icons/megaphone.html" with size=18 %}Post an announcement</a>{% endif %}
+  {% endpage_header %}
 
-  {% for announcement in object_list %}
-    <div class="card shadow-sm mb-3">
-      <div class="card-body">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
-          <h2 class="h5 mb-1">{{ announcement.title }}</h2>
-          {% if announcement.author_id == user.pk %}
-            <form method="post" action="{% url 'announcements:archive' public_id=announcement.public_id %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-outline-secondary">Archive</button>
-            </form>
-          {% endif %}
+  <div class="chord-feed">
+    {% for announcement in object_list %}
+      <article class="card shadow-sm chord-post chord-reveal" style="--i: {{ forloop.counter0 }}" aria-labelledby="post-{{ announcement.pk }}">
+        <div class="card-body">
+          <header class="chord-post__head">
+            {% with name=announcement.author|person_name %}<span class="chord-person chord-person--sm" aria-hidden="true">{{ name|initials|default:"?" }}</span>
+            <div class="chord-post__who">
+              <span class="chord-post__author">{{ name }}</span>
+              <span class="chord-post__meta">{{ announcement.created_at|date:"M j, Y · g:i A" }} · {% if announcement.service %}<span class="chord-chip">To the team of <a href="{% url 'worship:service' public_id=announcement.service.public_id %}">{{ announcement.service }}</a></span>{% else %}<span class="chord-chip">To everyone</span>{% endif %}</span>
+            </div>{% endwith %}
+            {% if announcement.author_id == user.pk %}
+              <form method="post" action="{% url 'announcements:archive' public_id=announcement.public_id %}" class="ms-auto" data-confirm="It leaves the feed for everyone." data-confirm-title="Archive this announcement?" data-confirm-action="Archive">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Archive</button>
+              </form>
+            {% endif %}
+          </header>
+          <h2 class="chord-post__title" id="post-{{ announcement.pk }}">{{ announcement.title }}</h2>
+          <p class="chord-post__body">{{ announcement.body|linebreaksbr }}</p>
         </div>
-        <p class="small text-body-secondary mb-2">
-          {{ announcement.author|person_name }} · {{ announcement.created_at|date:"M j, Y · g:i A" }} ·
-          {% if announcement.service %}To the team of <a href="{% url 'worship:service' public_id=announcement.service.public_id %}">{{ announcement.service }}</a>{% else %}To everyone{% endif %}
-        </p>
-        <p class="mb-0">{{ announcement.body|linebreaksbr }}</p>
-      </div>
-    </div>
-  {% empty %}
-    <p class="text-body-secondary">There are no announcements.</p>
-  {% endfor %}
+      </article>
+    {% empty %}
+      <div class="card shadow-sm">{% if perms.announcements.add_announcement %}{% url 'announcements:create' as create_url %}{% include "includes/empty_state.html" with icon="megaphone" title="There are no announcements." text="Post news for the whole team, or for one service's team." action_url=create_url action_label="Post an announcement" %}{% else %}{% include "includes/empty_state.html" with icon="megaphone" title="There are no announcements." %}{% endif %}</div>
+    {% endfor %}
+  </div>
   {% include "includes/pagination.html" %}
 {% endblock %}

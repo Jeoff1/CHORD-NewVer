@@ -12,6 +12,14 @@
     {% if nav.section %}<span class="chord-hd__section">{{ nav.section }}</span>{% endif %}
     <span class="chord-hd__page">{% firstof nav.current.label church.name %}</span>
   </div>
-  <a class="chord-hd__btn chord-hd__bell" href="{% url 'notifications:list' %}"><span class="visually-hidden">Notifications</span>{% include "includes/icons/bell.html" %}{% if unread_notifications %}<span class="chord-hd__count" aria-label="{{ unread_notifications }} unread">{{ unread_notifications }}</span>{% endif %}</a>
+  {# UI/UX Phase 9: the bell opens a popover of the latest notifications (the Notifications page's own list, loaded in the background by components.js); without JavaScript it is the plain link. #}
+  <div class="chord-bell" data-chord-bell>
+    <a class="chord-hd__btn chord-hd__bell" href="{% url 'notifications:list' %}" aria-haspopup="dialog" aria-expanded="false" aria-controls="chord-bell-pop" data-bell-button><span class="visually-hidden">Notifications</span>{% include "includes/icons/bell.html" %}{% if unread_notifications %}<span class="chord-hd__count" aria-label="{{ unread_notifications }} unread">{{ unread_notifications }}</span>{% endif %}</a>
+    <div class="chord-bell__pop" id="chord-bell-pop" role="dialog" aria-label="Notifications" hidden>
+      <div class="chord-bell__head"><span class="chord-bell__title">Notifications</span>{% if unread_notifications %}<form method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-link">Mark all as read</button></form>{% endif %}</div>
+      <div class="chord-bell__body" data-bell-body aria-live="polite"><div class="chord-bell__loading"><span class="chord-spinner" aria-hidden="true"></span> Loading…</div></div>
+      <a class="chord-bell__all" href="{% url 'notifications:list' %}">See all notifications</a>
+    </div>
+  </div>
   {% include "includes/account_popover.html" with variant="app" %}
 </header>

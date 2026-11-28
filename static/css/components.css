@@ -282,3 +282,46 @@ td > .chord-empty { padding-block: 1.75rem; }
 .chord-diff__new { padding: 0 .25rem; border-radius: 4px; background: rgba(20, 108, 67, .1); text-decoration: none; }
 [data-bs-theme=dark] .chord-diff__old { background: rgba(234, 134, 143, .12); }
 [data-bs-theme=dark] .chord-diff__new { background: rgba(117, 183, 152, .14); }
+
+/* --- Notifications and announcements (UI/UX Phase 9) ------------------------------------------ */
+.chord-notifs { margin: 0; padding: 0; list-style: none; }
+.chord-notif { display: flex; align-items: center; gap: .75rem; padding: .8rem 1rem; border-bottom: 1px solid var(--bs-border-color); transition: background-color .2s ease; }
+.chord-notif:last-child { border-bottom: 0; }
+.chord-notif:hover { background: var(--chord-row-hover); }
+.chord-notif form { margin: 0; }
+.chord-notif__icon { position: relative; display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--bs-secondary-bg); color: var(--bs-secondary-color); }
+.chord-notif.is-unread { background: linear-gradient(90deg, rgba(229, 198, 144, .14), transparent 70%); }
+.chord-notif.is-unread .chord-notif__icon { background: var(--chord-gold-tint); color: #173630; }
+.chord-notif.is-unread .chord-notif__icon::after { content: ""; position: absolute; top: 0; right: 0; width: 10px; height: 10px; border: 2px solid var(--bs-body-bg); border-radius: 50%; background: #B02A37; }
+.chord-notif__body { flex: 1; min-width: 0; }
+.chord-notif__text { margin: 0; overflow-wrap: anywhere; }
+.chord-notif.is-unread .chord-notif__text { font-weight: 600; }
+.chord-notif__time { color: var(--bs-secondary-color); font-size: .82rem; }
+.chord-bell { position: relative; }
+.chord-bell__pop { position: absolute; right: 0; top: calc(100% + 10px); z-index: 1060; width: 380px; max-width: calc(100vw - 24px); border: 1px solid var(--bs-border-color); border-radius: 16px; background: var(--chord-raised); box-shadow: var(--chord-shadow-lg); overflow: hidden; transform-origin: top right; animation: chord-drop .2s var(--chord-ease) both; }
+.chord-bell__pop.is-closing { animation: chord-pop-out .15s ease both; }
+.chord-bell__head { display: flex; align-items: center; justify-content: space-between; padding: .7rem .9rem; border-bottom: 1px solid var(--bs-border-color); }
+.chord-bell__head form { margin: 0; }
+.chord-bell__title { font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 800; color: var(--chord-heading); }
+.chord-bell__body { max-height: 26rem; overflow-y: auto; }
+.chord-bell__body .chord-notif { padding: .65rem .9rem; animation: chord-fade-up .2s ease both; }
+.chord-bell__body .chord-notif form .btn { min-height: 30px; }
+.chord-bell__body .chord-empty { padding-block: 1.5rem; }
+.chord-bell__loading { display: flex; align-items: center; justify-content: center; gap: .5rem; margin: 0; padding: 1.5rem; color: var(--bs-secondary-color); }
+.chord-bell__all { display: block; padding: .7rem; border-top: 1px solid var(--bs-border-color); font-weight: 600; text-align: center; text-decoration: none; }
+.chord-bell__all:hover { background: var(--chord-row-hover); }
+@media (max-width: 575.98px) { .chord-bell__pop { position: fixed; left: .5rem; right: .5rem; top: 64px; width: auto; } }
+.chord-feed { display: grid; gap: 1rem; max-width: 52rem; }
+.chord-post { transition: box-shadow .2s ease; }
+.chord-post:hover { box-shadow: var(--chord-shadow-md) !important; }
+.chord-post__head { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin-bottom: .75rem; }
+.chord-post__who { display: flex; flex-direction: column; min-width: 0; }
+.chord-post__author { font-weight: 700; }
+.chord-post__meta { color: var(--bs-secondary-color); font-size: .85rem; }
+.chord-post__meta .chord-chip { margin: 0; }
+.chord-post__title { margin: 0 0 .4rem; font-size: 1.2rem; font-weight: 800; }
+.chord-post__body { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) {
+  .chord-notif, .chord-post { transition: none; }
+  .chord-bell__pop, .chord-bell__pop.is-closing, .chord-bell__body .chord-notif { animation: none; }
+}

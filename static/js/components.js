@@ -172,6 +172,58 @@
     });
   }
 
+  /* ---- The header bell's popover (UI/UX Phase 9) ---- */
+  function setUpBell() {
+    var root = document.querySelector("[data-chord-bell]");
+    if (!root || !window.fetch || !window.DOMParser) return;
+    var button = root.querySelector("[data-bell-button]");
+    var pop = root.querySelector(".chord-bell__pop");
+    var body = root.querySelector("[data-bell-body]");
+    var loaded = false;
+    function failed() {
+      body.innerHTML = "";
+      var note = document.createElement("p");
+      note.className = "chord-bell__loading";
+      note.textContent = "Notifications couldn't be loaded. ";
+      var link = document.createElement("a");
+      link.href = button.href;
+      link.textContent = "Open the page";
+      note.appendChild(link);
+      body.appendChild(note);
+    }
+    function open() {
+      pop.hidden = false;
+      pop.classList.remove("is-closing");
+      button.setAttribute("aria-expanded", "true");
+      if (loaded) return;
+      fetch(button.href, { credentials: "same-origin", headers: { Accept: "text/html" } })
+        .then(function (response) { if (!response.ok) throw new Error("status"); return response.text(); })
+        .then(function (html) {
+          var list = new DOMParser().parseFromString(html, "text/html").querySelector("[data-notif-list]");
+          if (!list) throw new Error("list");
+          Array.prototype.slice.call(list.children, 8).forEach(function (extra) { extra.remove(); });
+          body.innerHTML = "";
+          body.appendChild(document.importNode(list, true));
+          loaded = true;
+        })
+        .catch(failed);
+    }
+    function close(focus) {
+      if (pop.hidden) return;
+      button.setAttribute("aria-expanded", "false");
+      pop.classList.add("is-closing");
+      later(function () { pop.hidden = true; pop.classList.remove("is-closing"); }, 150);
+      if (focus) button.focus();
+    }
+    button.addEventListener("click", function (event) {
+      if (event.ctrlKey || event.metaKey || event.shiftKey) return;
+      event.preventDefault();
+      if (pop.hidden) open(); else close(false);
+    });
+    document.addEventListener("click", function (event) { if (!root.contains(event.target)) close(false); });
+    root.addEventListener("keydown", function (event) { if (event.key === "Escape") close(true); });
+  }
+
   /* ---- Clickable rows ---- */
   document.addEventListener("click", function (event) {
     var row = event.target.closest("tr[data-href]");
@@ -184,6 +236,7 @@
   function start() {
     setUpToasts();
     setUpSearch();
+    setUpBell();
   }
   document.addEventListener("htmx:afterSwap", function (event) { setUpSearch(event.target); });
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();

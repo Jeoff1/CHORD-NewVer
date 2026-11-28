@@ -101,6 +101,12 @@ People (Phase 8, `components.css`): `.chord-matrix` (sticky header and
 first column, `__section` rows, roomy checkboxes), `.chord-matrix-save`
 (sticky Save), `.chord-diff` with `__old` and `__new`.
 
+Notifications and announcements (Phase 9, `components.css`):
+`.chord-notifs` and `.chord-notif` (`is-unread`: dot, wash, bold),
+`.chord-bell` and `.chord-bell__pop` (head, body, loading, See all; full
+width under the header on phones), `.chord-feed` and `.chord-post`
+(`__head`, `__who`, `__meta`, `__title`, `__body`).
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

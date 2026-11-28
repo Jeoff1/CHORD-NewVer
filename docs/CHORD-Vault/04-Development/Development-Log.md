@@ -2,6 +2,17 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 9: announcements and notifications (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §15.
+- **What changed:** announcements as a news feed (initials, audience chip,
+  Archive asks first, empty state); notifications with unread dots,
+  washes and icons; the header bell opens a popover that loads the
+  Notifications page's own list in the background (no new endpoint; the
+  bell stays a link without JavaScript). No notification or announcement
+  rule changed; no migration.
+- **Checks:** PHASE9_CHECKS
+
 ## 2026-11-28: UI/UX Phase 8: members and teams (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §14 (Members: Users, Roles and

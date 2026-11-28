@@ -28,7 +28,8 @@ from Claude Code), one commit per phase, each pushed to
 service requests; [[Occasions]]) and Phase 5 (worship planning,
 suggestions, lineup; [[Worship]]) Phase 6 (songs, chord sheets,
 rehearsal) Phase 7 (calendar and scheduling) and Phase 8 (Users, Roles,
-Audit log).**
+Audit log) and Phase 9 (announcements feed, notifications and the bell
+popover).**
 
 **UI/UX Phase 2 (28 Nov 2026), branch `joy-ui-ux-v3`, approved by the
 UI/UX owner and committed locally (not pushed):** one account popover on

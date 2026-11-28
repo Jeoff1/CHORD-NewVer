@@ -475,7 +475,7 @@ ministries, events, per-person attendance, SMS.
 | 6 | Songs, chord sheets and rehearsal | Done |
 | 7 | Calendar and scheduling | Done |
 | 8 | Members and teams | Done |
-| 9 | Announcements and notifications | Not started |
+| 9 | Announcements and notifications | Done |
 | 10 | Settings and reports | Not started |
 | 11 | Final UI/UX audit | Not started |
 
