@@ -10,7 +10,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   date tiles, reply pills, chips and side cards; removing blackout dates
   asks first; `.chord-person` in `components.css`. Templates and CSS only;
   no scheduling, availability or blackout rule changed; no migration.
-- **Checks:** PHASE7_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `6da9bf6`: lint, format, Django checks, migrations (none), 1514 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 6: songs, chord sheets and rehearsal (branch `joy-ui-ux-v3`)
 
