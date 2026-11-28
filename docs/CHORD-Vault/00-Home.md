@@ -18,9 +18,10 @@ Church CMS"). Opening a private church's page for its managers awaits the
 lead developer's approval ([[Design-Decisions]], "Remaining UI/UX tasks").
 
 **UI/UX plan:** [[UI-UX-Master-Plan]] (phases 1 to 11, rules, backend
-restrictions, workflow) and [[Animation-Plan]]. Phase 3 (Shared UI
-Components) is next; it waits for the approved artifact's screens, which
-could not be read from Claude Code.
+restrictions, workflow) and [[Animation-Plan]], both holding the UI/UX
+owner's full written handoff (28 Nov 2026). Phases 3 to 11 are built from
+it and the existing design system (the artifact itself can't be opened
+from Claude Code), one local commit per phase, nothing pushed.
 
 **UI/UX Phase 2 (28 Nov 2026), branch `joy-ui-ux-v3`, approved by the
 UI/UX owner and committed locally (not pushed):** one account popover on

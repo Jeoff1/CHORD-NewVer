@@ -2,6 +2,17 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX plans completed from the owner's written handoff
+
+- **What changed:** [[UI-UX-Master-Plan]] and [[Animation-Plan]] now hold
+  the full written handoff (design system, preserved Phase 1 and lead
+  developer updates, Phase 2 as built, detailed Phases 3 to 11, research,
+  responsive and accessibility rules, backend restrictions, timing
+  standards, per-area motion, workflow). The UI/UX owner authorised
+  building from it and the existing design system, since the artifact
+  can't be opened from Claude Code.
+- **Checks:** docs only.
+
 ## 2026-11-28: UI/UX master plan and Animation Plan saved; Phase 3 waits for the artifact
 
 - **Why:** the UI/UX owner asked for the plan to live in the vault so any

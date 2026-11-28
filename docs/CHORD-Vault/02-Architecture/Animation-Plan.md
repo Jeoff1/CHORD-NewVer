@@ -1,82 +1,150 @@
 # Animation Plan
 
-How CHORD moves: the UI/UX owner's approved motion rules for every screen
-redesigned on `joy-ui-ux-v3` ([[UI-UX-Master-Plan]]). Motion explains a
-change (something opened, saved, moved or failed); it is never decoration
-for its own sake, and it never delays someone doing their work.
+How CHORD moves: the UI/UX owner's approved animation and microinteraction
+plan (the handoff of 28 Nov 2026, Part F), with the motion already built
+and approved. Applies to every screen redesigned on `joy-ui-ux-v3`
+([[UI-UX-Master-Plan]]).
 
-## Sources and how complete this note is
+**Sources:** the written plan (authoritative) and the built baseline,
+measured from the stylesheets. The approved artifact
+(`https://claude.ai/artifact/XjV7jeDC63if6mbVNw2q6t`) could not be opened
+from Claude Code, so nothing here was checked against it.
 
-- **The approved interactive artifact** (`https://claude.ai/artifact/XjV7jeDC63if6mbVNw2q6t`)
-  holds the animation plan as approved. It could not be read from Claude
-  Code on 28 Nov 2026 (not shared with this account), so the values below
-  are the ones **already approved and built** (Phases 1 and 2, the
-  landing, directory, church profile, sign-in, registration, welcome toast,
-  sidebar and dashboard), measured from the stylesheets. They are binding.
-  **Awaiting the artifact:** any per-screen motion the artifact specifies
-  for Phases 3 to 11 that isn't covered here; add it under "Per-phase
-  motion" when the artifact is available. Don't invent new motion styles
-  in the meantime: reuse the ones below.
+## 1. Direction
 
-## Rules
+Purposeful motion that improves feedback, navigation, loading, content
+transitions, workflow progress and understanding. Polished and interactive,
+never slow or distracting. Don't animate elements for decoration.
 
-1. **Short.** Interface feedback 120 to 260 ms; the Design System's band
-   is **150 to 250 ms** for most transitions ([[Design-System]], "The
-   church profile"). Larger surfaces (a modal, a sheet) at most 260 ms in,
-   160 ms out. Exits are faster than entrances.
-2. **Only cheap properties:** `opacity` and `transform` for movement;
-   `background-color`, `border-color`, `color` and `box-shadow` for state.
-   Never animate `width`, `height`, `top` or `left` of large areas.
-3. **Small distances:** slides of 4 to 18 px, scales between .97 and 1.1.
-4. **Easing:** entrances `cubic-bezier(.2, .8, .2, 1)` (a soft
-   ease-out, `--acct-ease`); simple state changes `ease`; long reveals
-   `cubic-bezier(.2, .7, .2, 1)`; the landing intro `cubic-bezier(.4, 0,
-   .2, 1)`; spinners and countdowns `linear`.
-5. **Reduced motion is total.** Under `prefers-reduced-motion: reduce`
-   every animation and transition in the redesign stops (each stylesheet
-   ends with its own block); timed behaviour still happens (a toast still
-   closes after 5 s), only without movement. Scripts read
-   `matchMedia("(prefers-reduced-motion: reduce)")` and skip their waits.
-6. **Nothing blocks.** Content is usable while it animates; no animation
-   hides a control the person needs; toasts don't take clicks from the page
-   around them. The only deliberate delay is the landing intro (below).
-7. **Keyboard and screen readers first.** Focus moves when a menu or dialog
-   opens and returns when it closes; motion never replaces an
-   `aria-live` message or a visible state.
+## 2. Timing standards
 
-## Standard motions (as built)
+| Interaction | Duration |
+|---|---|
+| Button press and input feedback | 100–150 ms |
+| Hover effects | 150–200 ms |
+| Camera overlay | 150–200 ms |
+| Dropdowns and popovers | 150–250 ms |
+| Sidebar transitions | 200–300 ms |
+| Modals | 200–350 ms |
+| Planning step transitions | 200–350 ms |
+| Song addition and removal | 150–250 ms |
+| Song reordering | 150–250 ms |
+| Staggered reveal | 40–80 ms between items |
+| Toast entrance and dismissal | 200–300 ms |
+
+Natural easing (the built standard: entrances `cubic-bezier(.2, .8, .2, 1)`,
+state changes `ease`, long reveals `cubic-bezier(.2, .7, .2, 1)`, spinners
+and countdowns `linear`). No exaggerated bouncing, needless rotation or slow
+animation. Guidelines, adjustable for usability. Exits faster than entrances.
+
+## 3. Technical requirements
+
+- Prefer CSS transitions and keyframes, Bootstrap transitions, SVG
+  animation, minimal vanilla JavaScript and HTMX lifecycle events
+  (`htmx:beforeRequest`, `htmx:afterSwap`…). No animation libraries (no
+  Framer Motion, no GSAP).
+- **Performance:** `transform` and `opacity`; minimal layout shift and
+  repaint; no artificial loading delays; loading indicators stop when the
+  request finishes; don't replay entrance animations on every HTMX update
+  or navigation; clean up listeners and states; fine on low-end devices.
+- **Accessibility:** `prefers-reduced-motion` turns every animation and
+  transition off (timed behaviour still happens without movement, such as
+  a toast closing after 5 s); visible focus; keyboard paths; mobile
+  alternatives to hover; never information by motion alone; no flashing;
+  no distracting continuous animation.
+- Animations never interfere with authentication, authorisation,
+  validation, database operations, workflow rules or server-confirmed
+  state: a status changes on screen only after the server confirms it.
+
+## 4. Built and approved motions (the baseline)
 
 | Motion | Spec | Where |
 |---|---|---|
-| Hover and focus on buttons, links, cards | `.15s` to `.2s ease` on colour, border, shadow; buttons lift 1 px; press scales to `.97` (`.12s`) | everywhere (`dashboard.css`, `landing.css`, `account.css`, `auth.css`) |
-| Card hover | lift 2 to 4 px and a stronger shadow, `.2s` to `.25s`; directory cards zoom the cover slightly | landing, directory, dashboard |
-| Menu or popover open | fade and slide down 6 px (scale `.98` to 1), `.2s cubic-bezier(.2,.8,.2,1)`; close `.15s ease` up 4 px | account popover, CMS camera menus (`pf-drop`), public menus |
-| Chevron | rotates 180° in `.2s` to `.22s` when its menu opens | account button, sidebar categories, landing menu |
-| Menu item hover | background tint `.16s`; account items nudge right by .15 rem | account popover |
-| Modal open | backdrop fades `.26s`; dialog rises 12 px and scales `.97` to 1 in `.26s cubic-bezier(.2,.8,.2,1)`; close `.16s` | Edit Profile, Church CMS editor |
-| Sheet (phones) | modal slides up from the bottom (`translateY(100%)` to 0) | Edit Profile below 576 px |
+| Hover and focus | `.15s`–`.2s ease` on colour, border, shadow; buttons lift 1 px; press scales to `.97` (`.12s`) | everywhere |
+| Card hover | lift 2–4 px, stronger shadow, `.2s`–`.25s`; directory covers zoom slightly | landing, directory, dashboard |
+| Menu or popover | fade and slide 6 px (scale `.98`→1), `.2s cubic-bezier(.2,.8,.2,1)`; close `.15s` | account popover, CMS camera menus, public menus |
+| Chevron | rotates 180° in `.2s`–`.22s` | account button, sidebar, landing menu |
+| Menu item hover | tint `.16s`, nudge right .15 rem | account popover |
+| Modal | backdrop fades `.26s`; dialog rises 12 px, scale `.97`→1, `.26s`; close `.16s` | Edit Profile, CMS editor |
+| Sheet on phones | slides up from the bottom | Edit Profile below 576 px |
 | Close button | rotates 90° on hover or focus | Edit Profile |
-| Inline error | fades in `.2s`; a field error shakes 3 px once (`.32s`) | CMS editor, Edit Profile |
-| Button busy | label changes to "Saving…" and a 1 em spinner turns (`.7s` to `.8s linear`) | CMS editor, Edit Profile, sign-in |
-| Value changed | the changed avatar or figure pops (scale 1.1 at 40 %, `.32s`) | Edit Profile initials |
-| Segmented switch | thumb slides to the choice `.26s cubic-bezier(.2,.8,.2,1)` | Appearance in the account popover |
-| Theme change | the page cross-fades colours `.3s` (class `chord-theme-fade` for 300 ms) | Appearance switch |
-| Toast in and out | in: slide 12 px and fade `.28s`; out `.2s` to `.25s`; a 3 px gold countdown bar over 5 s; hover or focus pauses it | CMS toasts, welcome toast, account toast |
-| Tooltip | fades and rises 2 px in `.18s`, on hover (pointer devices) or keyboard focus | "Go to Homepage", back arrow |
-| Wizard step | the step slides 18 px and fades (from the left when going back); the progress bar grows | church registration |
-| Sidebar collapse | Bootstrap collapse; icon-only mode switch; off under reduced motion | app sidebar |
-| Landing reveal | sections rise 18 px and fade as they enter, `.6s` to `.95s cubic-bezier(.2,.7,.2,1)` | landing page |
-| Landing intro | first visit in a browser session only: logo scales in `.9s`, equaliser bars, a progress line; stays at least 0.8 s (the owner's approved exception), leaves by 4 s at most, fails safe at 6 s; never without JavaScript | landing page |
+| Inline error | fades `.2s`; field error shakes 3 px once (`.32s`) | CMS editor, Edit Profile |
+| Busy button | "Saving…" and a 1 em spinner (`.7s`–`.8s linear`) | CMS editor, Edit Profile, sign-in |
+| Value changed | pop to scale 1.1 at 40 %, `.32s` | Edit Profile initials |
+| Segmented switch | thumb slides `.26s` | Appearance selector |
+| Theme change | colours cross-fade `.3s` (`chord-theme-fade`) | Appearance selector |
+| Toast | slide 12 px and fade `.28s`; out `.2s`–`.25s`; 3 px gold countdown bar over 5 s; hover or focus pauses | CMS toasts, welcome toast, account toast |
+| Tooltip | fade and rise 2 px `.18s`, hover (pointer devices) or focus | "Go to Homepage", back arrow |
+| Wizard step | slides 18 px and fades (from the left going back); progress bar grows | registration |
+| Sidebar | Bootstrap collapse; icon-only switch; remembered state | app sidebar |
+| Landing reveal | sections rise 18 px and fade `.6s`–`.95s` | landing |
+| Landing intro | first visit per browser session only; at least 0.8 s (approved exception), leaves by 4 s, fails safe at 6 s; never without JavaScript | landing |
 
-## Per-phase motion
+## 5. Per-area plan
 
-- **Phase 3 (shared components):** the motions above become shared
-  classes so every Module uses the same timings (menus, modals, toasts,
-  tooltips, busy buttons, inline errors, hover lifts). **Awaiting the
-  artifact** for any component-specific motion (skeleton shimmer, tab
-  indicator, table row states).
-- **Phases 4 to 10:** reuse the shared motions. **Awaiting the artifact**
-  for screen-specific motion (for example drag-and-drop in the lineup
-  builder, transposing chords, calendar view changes).
-- **Phase 11:** audit every screen against this note: durations within the
-  band, only cheap properties, reduced motion total, nothing blocking.
+- **Public website:** keep the landing animations (scroll fade-ins, image
+  hover, carousel, nav hover indicators, button feedback) and the branded
+  intro, not replayed on ordinary navigation. **Directory:** smooth result
+  transitions, real search loading, gentle card elevation, subtle empty
+  state; don't re-animate the whole directory for minor changes.
+- **Sign in:** subtle entrance, input focus, password-visibility feedback,
+  real button loading, validation transitions. **Registration:** animated
+  progress bar, step transitions, completed-step checks, image previews,
+  upload feedback, real submission loading, messages; entered data kept.
+- **Sidebar and navigation:** smooth expand and collapse, nested
+  dropdowns, chevron rotation, active-page transition, hover, off-canvas,
+  account popover; state preserved; no flicker or re-render.
+- **Dashboard:** a subtle initial KPI count-up where appropriate (real
+  numbers only, not replayed on every visit), chart reveal from real data,
+  event card elevation, smooth Action Required updates, loading and empty
+  transitions.
+- **Church CMS:** camera and pencil overlays fade in, image replacement
+  previews, real upload progress, modal fade and scale, dismissal, live
+  preview transitions, saving feedback, toasts, validation; editing
+  reachable without hover.
+- **Personal profile:** popover slide, fade and chevron; hover; smooth
+  dismissal; into Edit Profile naturally; modal open and close, live
+  preview, real saving, toast. No picture or banner animation (rejected).
+- **Shared components:** buttons (hover, press, loading, success,
+  disabled); forms (focus borders, validation, saving); tables (row hover,
+  filter transitions, loading, status updates after the server confirms);
+  cards (elevation or border, selection); dropdowns (fade and slide,
+  chevron, selected state); loading (branded spinner, skeletons, content
+  reveal, real upload progress); empty states (subtle appearance,
+  explanation, action).
+- **Public service request and verification:** modal transitions into
+  verification, code-entry focus, invalid-code feedback, an accurate resend
+  countdown, real loading, email-error feedback, a success check, a
+  submission toast. Security unchanged; no fake timers.
+- **Management:** filtering and search transitions, real loading
+  skeletons, clickable row hover, status change after server confirmation,
+  details expansion, busy buttons, toasts.
+- **Worship planning:** animated stepper, progress transitions, completed
+  checks, short fade or slide between steps, selection feedback,
+  confirmation transition, real processing feedback; entered data and
+  validation untouched.
+- **Song recommendations:** processing (music-inspired waveform or dots,
+  skeleton cards, an accurate message); results (staggered reveal, artwork
+  hover, selected highlight, filter transitions, expandable explanations);
+  adding (Add → Added check, smooth insertion, brief highlight, count);
+  removing (fade or collapse, Add restored, count); reordering (position
+  transitions, handle feedback, accessible controls); preview (detail
+  reveal, Spotify control feedback, chord sheet expansion); confirmation
+  (review transition, completion check, toast after the real save).
+- **Songs and rehearsal:** result transitions, artwork hover, real
+  retrieval loading, selection, editor preview transitions, playback
+  feedback, lineup navigation; no continuous animation near a chord sheet
+  being read.
+- **Calendar:** date and view transitions, event hover, event popovers,
+  assignment feedback, real loading.
+- **Members and teams:** row hover, detail transitions and expansion, role
+  change feedback, real saving.
+- **Announcements and notifications:** card reveal, content expansion,
+  image hover, publishing feedback, notification popover, read and unread
+  transitions, dismissal. **Toasts:** slide and fade, dismissal, semantic
+  icons, close button, countdown where appropriate. The five-second
+  "Welcome to CHORD" toast after registration stays and is never replayed
+  on ordinary sign-in.
+- **Settings and reports:** category transitions, input focus, real
+  saving, success messages, chart reveal from real data, filter
+  transitions, detail expansion.
