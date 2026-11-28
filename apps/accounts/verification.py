@@ -12,6 +12,7 @@ the earlier ones.
 """
 
 import datetime
+import logging
 import secrets
 
 from django.conf import settings
@@ -21,6 +22,8 @@ from django.utils import timezone
 from django.utils.crypto import constant_time_compare, salted_hmac
 
 from .models import EmailCode
+
+logger = logging.getLogger(__name__)
 
 CODE_MINUTES = 10
 MAX_ATTEMPTS = 5
@@ -32,6 +35,10 @@ _SALT = "chord.accounts.verification"
 class CodeRefused(Exception):
     """Why a code can't be sent or doesn't match; the message is for the
     person."""
+
+
+class EmailNotSent(CodeRefused):
+    """The mail server refused the email or couldn't be reached."""
 
 
 def _hash(email, code):
@@ -84,12 +91,22 @@ def start(email, pending):
         expires_at=now + datetime.timedelta(minutes=CODE_MINUTES),
     )
     context = {"code": code, "minutes": CODE_MINUTES}
-    send_mail(
-        render_to_string("accounts/email/signup_code_subject.txt", context).strip(),
-        render_to_string("accounts/email/signup_code_email.txt", context),
-        settings.DEFAULT_FROM_EMAIL,
-        [email],
-    )
+    try:
+        send_mail(
+            render_to_string("accounts/email/signup_code_subject.txt", context).strip(),
+            render_to_string("accounts/email/signup_code_email.txt", context),
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+        )
+    except Exception as error:
+        # The mail server refused or couldn't be reached (the email settings
+        # in .env): the code is never usable, and doesn't count against the
+        # person's limits.
+        EmailCode.objects.filter(email=email, created_at__gte=now).delete()
+        logger.exception("Couldn't send a sign-up code email")
+        raise EmailNotSent(
+            "We couldn't send the email just now. Please try again in a few minutes."
+        ) from error
 
 
 def resend(email):

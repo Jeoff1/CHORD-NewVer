@@ -293,6 +293,8 @@ class PublicRequestView(FormView):
                     "password": make_password(data["password"]),
                 },
             )
+        except verification.EmailNotSent as refusal:
+            return self.show_step("account", form, notice=str(refusal))
         except verification.CodeRefused as refusal:
             return self.show_step("code", EmailCodeForm(), notice=str(refusal))
         return self.show_step("code", EmailCodeForm())

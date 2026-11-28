@@ -217,6 +217,25 @@ class SignUpFlowTests(VisitorSignUpTestCase):
         self.assertNotContains(page, 'id="signup-modal"')
 
 
+class MailServerTests(VisitorSignUpTestCase):
+    def test_a_mail_server_failure_says_so_and_keeps_the_details(self):
+        from unittest import mock
+
+        with mock.patch(
+            "apps.accounts.verification.send_mail",
+            side_effect=OSError("connection refused"),
+        ):
+            self.ask()
+            with self.assertLogs("apps.accounts.verification", "ERROR"):
+                page = self.account()
+        self.assertContains(page, "We couldn&#x27;t send the email just now.")
+        self.assertContains(page, "Create your account to send it")
+        self.assertContains(page, 'value="ana@example.com"')
+        # No code is left over, so trying again isn't held back.
+        self.assertFalse(EmailCode.objects.exists())
+        self.assertEqual(verification.seconds_until_resend("ana@example.com"), 0)
+
+
 class ExistingAccountTests(VisitorSignUpTestCase):
     def test_an_email_with_an_account_signs_in_and_sends(self):
         other = complete_setup(make_church("Hilltop Chapel"))
