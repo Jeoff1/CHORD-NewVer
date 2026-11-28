@@ -2,6 +2,22 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Sign up while requesting a service (branch `public-service-signup`)
+
+- **Why:** the owner: visitors should request a church's services and make
+  their account on the spot ([[Design-Decisions]], "Sign up while
+  requesting a service").
+- **What changed:** `EmailCode` (migration `accounts.0012`),
+  `accounts/verification.py`, `accounts/visitors.py`, the visitor forms in
+  `accounts/forms.py`, the code email templates; `PublicRequestView` takes
+  visitors at churches that accept outside requests and runs the pop-up's
+  steps; `occasions/includes/signup_modal.html` and
+  `occasions/request_signup.js`.
+- **Checks:** `scripts/check.ps1` (full): 1448 tests passed, 97% coverage.Headless Chrome on Test Church's Wedding:
+  the pop-up opened over the filled-in form, the code step followed, and
+  "Send a new code" counted down; the test code row was removed afterwards
+  and no account was made.
+
 ## 2026-11-28: Date and time as two boxes (branch `church-setup-simplify`)
 
 - **Why:** the owner asked for a date box and a time box with icons, as

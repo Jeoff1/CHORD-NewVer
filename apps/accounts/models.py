@@ -117,3 +117,26 @@ class Membership(models.Model):
 
     def __str__(self):
         return f"{self.user} in {self.church}"
+
+
+class EmailCode(models.Model):
+    """A 6-digit code emailed to prove an address is the person's, before
+    their account is made (signing up while requesting a service, 28 Nov
+    2026; ``verification.py``). Only a keyed hash of the code is kept, and
+    ``pending`` holds what the account will need (the name and a hashed
+    password, never the password itself)."""
+
+    email = models.EmailField(db_index=True)
+    code_hash = models.CharField(max_length=128)
+    pending = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+        default_permissions = ()
+
+    def __str__(self):
+        return f"Code for {self.email}"

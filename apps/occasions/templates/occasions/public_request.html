@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
-{% block title %}Request: {{ occasion_type.name }}{% endblock %}
+{% block title %}Request: {{ occasion_type.name }}  {% if signup_step %}{% include "occasions/includes/signup_modal.html" %}{% endif %}
+{% endblock %}
 
 {% block content %}
   <div class="row justify-content-center">
@@ -8,6 +9,7 @@
       <a class="small" href="{% url 'churches:home' slug=public_church.slug %}">{{ public_church.name }}</a>
       <h1 class="h3 mb-2">Request: {{ occasion_type.name }}</h1>
       <p class="text-body-secondary">{{ public_church.name }} decides on your request, and you get a notification either way. It usually takes {{ occasion_type.length_minutes }} minutes. Times are in the church's time zone.</p>
+      {% if not user.is_authenticated %}<p class="text-body-secondary small">No account yet? Fill this in and press Send request: you'll make one in a moment, with a code sent to your email.</p>{% endif %}
       <div class="card shadow-sm">
         <div class="card-body">
           <form method="post" novalidate>
@@ -22,4 +24,5 @@
       </div>
     </div>
   </div>
+  {% if signup_step %}{% include "occasions/includes/signup_modal.html" %}{% endif %}
 {% endblock %}

@@ -8,6 +8,13 @@ development task.
 
 ## Current status
 
+**Sign up while requesting a service (28 Nov 2026), branch
+`public-service-signup`:** a visitor without an account fills in a public
+church's service request and makes their account in a pop-up (name, email,
+password, a 6-digit code emailed to them); the account joins that church
+as a Church Member and the request is sent ([[Design-Decisions]], "Sign up
+while requesting a service").
+
 **Simpler church setup (28 Nov 2026), branch `church-setup-simplify`:**
 no sermon series, a service date that fills itself in, no Labels page,
 no Website, Currency or Time zone in Church details, the Praise Team as
@@ -35,8 +42,10 @@ lead developer's approval before they are merged ([[Design-System]], "The
 church directory", "The church profile", "The sign-in page" and
 "Registering a church";
 [[Development-Log]]). Registering now takes optional details too
-([[0014-church-platform]], amended 27 Nov), and is CHORD's only sign-up:
-the personal sign-up page is gone and its address redirects there.
+([[0014-church-platform]], amended 27 Nov). The personal sign-up page is
+gone and its address redirects there; since 28 Nov a visitor can also make
+an account while requesting a service from a church's public page (an
+emailed code proves the address).
 Its steps run Church, Profile, Account, Review; the account asks a full
 name (middle name and suffix optional) and no username, and people sign
 in with their email or username.

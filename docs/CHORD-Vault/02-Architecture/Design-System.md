@@ -163,7 +163,8 @@ built on branch `joy-ui-ux-v2`. **There is no separate sign-up page**
 (owner, 27 Nov 2026): signing up for CHORD is registering a church, whose
 first step makes the person's account ("Registering a church", below);
 the old address `/accounts/signup/` redirects there, keeping its query
-string.
+string. Since 28 Nov 2026 a visitor can also make an account in the
+sign-up pop-up of a public service request ([[Occasions]]).
 
 - **Files:** `accounts/auth_base.html` holds the page (head, photo, Back to
   Home, heading, messages; blocks `title`, `description`, `photo_title`,
