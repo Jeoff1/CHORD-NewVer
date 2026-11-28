@@ -72,6 +72,18 @@ classes; this layer shapes them, so every Module looks and behaves the same.
 Everything stops under `prefers-reduced-motion`. Tests:
 `apps/core/tests/test_shared_components.py`.
 
+## Worship planning (UI/UX Phase 5, 28 Nov 2026)
+
+`static/css/planning.css`: `.chord-steps` (stepper cards, thread, check
+pop, current ring), `.chord-next-step__icon`, `.chord-when` (date tile in a
+table cell), `form.chord-seg` (segmented GET buttons, `aria-pressed`),
+`.chord-list-bar`, `.chord-lineup-head` and `.chord-lineup-count`,
+`.chord-song-row` states (`is-locked`, `:target` flash), `.chord-finding`
+with `.chord-wave` (five bars, 1.1 s loop, only while a run works),
+`.chord-skel-song`, `.chord-suggest-list` and `.chord-suggest` (numbered
+cards, `is-in`), `.chord-in-lineup`, `.chord-rundown` (numbered rows),
+`.chord-theme-title` and `.chord-theme-scripture`. Details in [[Worship]].
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

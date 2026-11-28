@@ -2,6 +2,21 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 5: worship planning, suggestions and lineup builder (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §11.
+- **What changed:** `static/css/planning.css`; the stepper, next-step
+  panel, worship service list (segmented control, date tiles, whole-row
+  links, empty states), theme card, Song Lineup (count, anchors, locked
+  marks, empty state), suggestions (waveform, skeletons, numbered cards
+  that stagger in, the in-lineup check) and the numbered rundowns.
+  Templates and CSS only: no view, form, route, permission, rule or
+  recommendation change; no migration. Two plan items resolved by source
+  order and flagged in [[UI-UX-Master-Plan]] ("Flagged conflicts"): the
+  lineup stays on the left (decision 0015), and Add and reordering stay
+  server actions.
+- **Checks:** PHASE5_CHECKS
+
 ## 2026-11-28: UI/UX Phase 4: Management, Services and Bookings (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §10.

@@ -471,7 +471,7 @@ ministries, events, per-person attendance, SMS.
 | 2 | Personal profile (simplified) | Done, pushed (`2d51a37`) |
 | 3 | Shared UI components | Done |
 | 4 | Management: Services and Bookings | Done |
-| 5 | Worship planning, recommendations, lineup builder | Not started |
+| 5 | Worship planning, recommendations, lineup builder | Done |
 | 6 | Songs, chord sheets and rehearsal | Not started |
 | 7 | Calendar and scheduling | Not started |
 | 8 | Members and teams | Not started |
@@ -482,3 +482,19 @@ ministries, events, per-person attendance, SMS.
 ### Blocked: needs backend approval
 
 None yet.
+
+### Flagged conflicts (resolved by source order, not by preference)
+
+- **Lineup builder sides (Phase 5).** §11 puts recommendations on the
+  left and the lineup on the right. Decision 0015 ("the lineup comes
+  first; suggestions assist", a numbered decision, which outranks this
+  plan) and the built Song Lineup page put the lineup first, on the left,
+  with suggestions beside it on the right. Kept as built; the UI/UX owner
+  may ask to swap the columns (a template change only).
+- **Add → Added and drag and drop (Phase 5).** Adding a song and moving it
+  are server actions that reload the page, so "Added" appears as the "In
+  the lineup" pill (with a check that pops) after the server confirms, the
+  button shows the busy spinner meanwhile, and reordering keeps the up and
+  down buttons (accessible; no drag and drop without a new endpoint). No
+  invented scores or match percentages; the worker's real progress bar
+  stays.

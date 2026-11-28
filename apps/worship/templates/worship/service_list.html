@@ -7,11 +7,12 @@
   {% include "worship/includes/schedule_header.html" %}
   {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <form method="get" role="group" aria-label="Show" class="btn-group">
+  {# UI/UX Phase 5: a segmented Upcoming and Past, date tiles, whole rows that open the service, empty states. #}
+  <div class="chord-list-bar">
+    <form method="get" role="group" aria-label="Show" class="chord-seg">
       {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
       {% for key, title in when_choices %}
-        <button type="submit" name="when" value="{{ key }}" aria-pressed="{% if when == key %}true{% else %}false{% endif %}" class="btn chord-btn {% if when == key %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ title }}</button>
+        <button type="submit" name="when" value="{{ key }}" aria-pressed="{% if when == key %}true{% else %}false{% endif %}">{{ title }}</button>
       {% endfor %}
     </form>
     {% include "includes/list_toolbar.html" with placeholder="Search by name or theme" %}
@@ -33,8 +34,8 @@
         <tbody>
           {% for service in object_list %}
             {% url 'worship:service' public_id=service.public_id as service_url %}
-            <tr{% if service.is_cancelled %} class="text-body-secondary"{% endif %}>
-              <td class="text-nowrap">{{ service.starts_at|date:"D, M j, Y" }}<br><span class="small text-body-secondary">{{ service.starts_at|date:"g:i A" }}</span></td>
+            <tr data-href="{{ service_url }}"{% if service.is_cancelled %} class="text-body-secondary"{% endif %}>
+              <td class="text-nowrap"><span class="chord-when"><span class="chord-date{% if service.is_cancelled or when == 'past' %} chord-date--muted{% endif %}" aria-hidden="true"><span class="chord-date__month">{{ service.starts_at|date:"M" }}</span><span class="chord-date__day">{{ service.starts_at|date:"j" }}</span></span><span>{{ service.starts_at|date:"D, M j, Y" }}<br><span class="small text-body-secondary">{{ service.starts_at|date:"g:i A" }}</span></span></span></td>
               <td>
                 <a href="{{ service_url }}" class="fw-semibold{% if service.is_cancelled %} text-decoration-line-through{% endif %}">{{ service.name }}</a>
                 {% if service.is_cancelled %}{% include "includes/status_pill.html" with status="cancelled" %}{% endif %}
@@ -61,8 +62,10 @@
               <td class="text-end"><a href="{{ service_url }}" aria-label="Open {{ service }}">Open</a></td>
             </tr>
           {% empty %}
-            <tr><td colspan="6" class="text-center text-body-secondary py-4">
-              {% if q %}Nothing matches your search.{% elif when == "past" %}No past {{ labels.worship_service|lower }} yet.{% else %}Nothing is scheduled yet.{% endif %}
+            <tr><td colspan="6">
+              {% if q %}{% include "includes/empty_state.html" with icon="search" title="Nothing matches your search." text="Try another name or theme." %}
+              {% elif when == "past" %}{% with past_title="No past "|add:labels.worship_service|lower|add:" yet." %}{% include "includes/empty_state.html" with icon="calendar" title=past_title %}{% endwith %}
+              {% else %}{% include "includes/empty_state.html" with icon="calendar" title="Nothing is scheduled yet." %}{% endif %}
             </td></tr>
           {% endfor %}
         </tbody>

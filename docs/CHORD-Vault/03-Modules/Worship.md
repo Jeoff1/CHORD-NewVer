@@ -653,6 +653,35 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_views.py`,
   `test_suggestion_views.py`.
 
+### Screens (UI/UX Phase 5, 28 Nov 2026)
+
+`static/css/planning.css` (loaded by `base.html`), from
+[[UI-UX-Master-Plan]] §11:
+
+- **Planning stepper** (`includes/planning_steps.html`): raised step cards,
+  a thread between them on wide screens (green once done), the done check
+  pops in, the current step's mark rings twice, the step of the page shown
+  carries a gold underline; whole steps stay links.
+- **Next-step panel**: a flag (or a check when done) and a gold wash.
+- **Worship services** (`service_list.html`): Upcoming and Past as a
+  segmented control (the same GET buttons with `aria-pressed`), date tiles,
+  rows that open the service from anywhere (`data-href`), empty states.
+- **Theme card**: the title in Raleway, the scripture as a gold pill with a
+  book icon.
+- **Song Lineup** (`lineup_detail.html`): a Songs heading with the count,
+  row anchors (`#item-<pk>`, highlighted when targeted), locked rows marked
+  with a gold edge, dashed empty slots, an empty state. Lineup on the left,
+  suggestions on the right (decision 0015).
+- **Suggestions** (`includes/suggestions.html`): while a run works, a
+  music waveform, "Finding songs for your worship theme…" and three
+  skeleton songs above the worker's own progress bar; results as numbered
+  cards that stagger in, with the slot, title, artist and reasons; a song
+  already chosen gets a green card and the "In the lineup" pill with a
+  popping check.
+- **Rundowns** (lineup card on the service page, Confirm): numbered song
+  rows.
+- Tests: `apps/worship/tests/test_planning_screens.py`.
+
 ## Permissions
 
 | Permission                                   | Allows                                   |

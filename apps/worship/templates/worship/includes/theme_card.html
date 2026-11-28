@@ -7,10 +7,8 @@
       {% if perms.worship.change_theme %}<a href="{% url 'worship:theme' public_id=service.public_id %}" class="fw-semibold">{% if theme %}Edit theme{% else %}Post the theme{% endif %}</a>{% endif %}
     </div>
     {% if theme %}
-      <p class="fs-5 fw-semibold mb-1">{{ theme.title }}</p>
-      <p class="text-body-secondary mb-0">
-        {% if theme.scripture %}{{ theme.scripture }}{% endif %}
-      </p>
+      <p class="chord-theme-title">{{ theme.title }}</p>
+      {% if theme.scripture %}<p class="mb-0"><span class="chord-theme-scripture">{% include "includes/icons/book.html" with size=16 %}{{ theme.scripture }}</span></p>{% endif %}
       {% if scripture.passage %}
         {# The passage's text (Phase 9C): public domain, for everyone who sees the theme. #}
         <details class="mt-3">

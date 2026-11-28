@@ -1182,7 +1182,7 @@ profile plan: personal profile pictures, bios and banners are rejected.
    Teams; Announcements and Notifications; Settings and Reports; the final
    consistency, responsiveness, accessibility and animation audit. Each is
    committed on its own and pushed to `origin/joy-ui-ux-v3`; the UI/UX
-   owner reviews the whole site at the end. Phases 3 and 4 are done.
+   owner reviews the whole site at the end. Phases 3 to 5 are done.
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 

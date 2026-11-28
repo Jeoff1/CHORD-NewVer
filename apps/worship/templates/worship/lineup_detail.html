@@ -66,11 +66,12 @@
 
         {% if lineup_items %}<p class="small{% if lineup.is_confirmed and sheets_ready < lineup_items|length %} text-warning-emphasis{% else %} text-body-secondary{% endif %}">{{ sheets_ready }} of {{ lineup_items|length }} song{{ lineup_items|length|pluralize }} {{ lineup_items|length|pluralize:"has,have" }} a chord sheet.{% if lineup.is_confirmed and sheets_ready < lineup_items|length %} Every song needs one now that it is confirmed.{% endif %}</p>{% endif %}
 
-        <section class="card shadow-sm mb-3" aria-label="Songs">
+        <section class="card shadow-sm mb-3" aria-labelledby="lineup-songs-title">
+          <div class="chord-lineup-head"><h2 id="lineup-songs-title">Songs</h2><span class="chord-lineup-count" aria-label="{{ lineup_items|length }} song{{ lineup_items|length|pluralize }} chosen">{{ lineup_items|length }}</span></div>
           <ol class="list-unstyled mb-0">
             {% for kind, item in slot_rows %}
               {% if kind == "song" %}
-                <li class="chord-song-row">
+                <li class="chord-song-row{% if item.locked %} is-locked{% endif %}" id="item-{{ item.pk }}">
                   {% if can_change_lineup %}
                     <div class="chord-song-row__move">
                       {% if not item.locked and item.can_move_up %}
@@ -127,7 +128,7 @@
                 </li>
               {% endif %}
             {% empty %}
-              <li class="chord-song-row text-body-secondary">No songs yet.</li>
+              <li>{% include "includes/empty_state.html" with icon="music-note" title="No songs yet." text="Add the songs you have in mind, or pick from the suggestions." %}</li>
             {% endfor %}
           </ol>
           {% if can_add_songs %}

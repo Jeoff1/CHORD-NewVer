@@ -17,9 +17,9 @@
         {% if lineup.edited_at %}<p class="small text-body-secondary mb-2">{% include "worship/includes/lineup_mark.html" %}</p>{% endif %}
         {% if lineup.is_confirmed %}{% include "worship/includes/spotify_playlist.html" %}{% endif %}
         {% if lineup_items %}<p class="small text-body-secondary mb-1">{{ sheets_ready }} of {{ lineup_items|length }} song{{ lineup_items|length|pluralize }} {{ lineup_items|length|pluralize:"has,have" }} a chord sheet.</p>{% endif %}
-        <ol class="mb-0">
+        <ol class="chord-rundown">
           {% for item in lineup_items %}
-            <li class="py-1">{% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}<a href="{% url 'worship:lineup_song' public_id=service.public_id pk=item.pk %}">{{ item.song.title }}</a>{% if item.key %} · key of {{ item.key }}{% endif %}{% if not item.has_sheet %} <span class="chord-pill chord-pill--warning">No chord sheet</span>{% endif %}</li>
+            <li><span class="chord-rundown__body">{% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}<a href="{% url 'worship:lineup_song' public_id=service.public_id pk=item.pk %}">{{ item.song.title }}</a>{% if item.key %} · key of {{ item.key }}{% endif %}{% if not item.has_sheet %} <span class="chord-pill chord-pill--warning">No chord sheet</span>{% endif %}</span></li>
           {% empty %}
             <li class="text-body-secondary">No songs yet.</li>
           {% endfor %}
