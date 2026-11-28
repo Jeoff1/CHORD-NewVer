@@ -6,8 +6,11 @@
   <meta name="color-scheme" content="light dark">
   {% comment %}
     A church's public profile (Phase 9B; redesigned 27 Nov 2026, Design-System.md, "The church
-    profile"): only what it chose to publish, the same for visitors, signed-in people and its own
-    members, with no sign-in needed to view it. A signed-in person keeps their own light or dark choice.
+    profile"; Facebook-style header and Church CMS, 28 Nov 2026): only what it chose to publish, the
+    same for visitors, signed-in people and its own members, with no sign-in needed to view it. The
+    people who manage the church (its Current Church and the permission church.change_churchprofile)
+    also get the editing tools: the camera buttons on the cover and logo, Edit profile, and View as
+    visitor. Saving goes to church:profile_edit, which checks the permission again.
   {% endcomment %}
   <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { document.documentElement.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); })();</script>
   <title>{{ public_church.name }} · CHORD</title>
@@ -17,42 +20,124 @@
   <link rel="stylesheet" href="{% static 'css/landing.css' %}">
   <link rel="stylesheet" href="{% static 'css/profile.css' %}">
   <script src="{% static 'church/profile.js' %}" defer></script>
+  {% if can_edit %}
+    <script src="{% static 'vendor/bootstrap-5.3.3/bootstrap.bundle.min.js' %}" defer></script>
+    <script src="{% static 'church/profile_edit.js' %}" defer></script>
+  {% endif %}
 </head>
-<body class="chord-landing chord-profile">
+<body class="chord-landing chord-profile{% if can_edit %} pf-can-edit{% endif %}">
   <a class="visually-hidden-focusable lp-skip" href="#pf-main">Skip to the church's page</a>
 
   <nav class="lp-nav" aria-label="Main">
     <div class="lp-wrap pf-nav__row">
-      <a class="lp-brand" href="{% url 'home' %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
-      <a class="lp-btn lp-btn--ghost lp-btn--small pf-back" href="{% url 'churches:directory' %}">{% include "includes/icons/chevron-left.html" %}<span class="pf-back__long">Back to Churches</span><span class="pf-back__short">Churches</span></a>
+      <a class="lp-brand" href="{% if user.is_authenticated %}{% url 'landing' %}{% else %}{% url 'home' %}{% endif %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      {% if user.is_authenticated %}{% include "includes/public_account.html" %}{% endif %}
     </div>
   </nav>
 
+  {% if messages %}
+    <div class="pf-toasts" aria-live="polite">
+      {% for message in messages %}
+        <div class="pf-toast pf-toast--{{ message.tags|default:'info' }}" role="{% if message.level_tag == 'error' %}alert{% else %}status{% endif %}">
+          <span class="pf-toast__icon" aria-hidden="true">{% if message.level_tag == 'error' %}{% include "includes/icons/alert-circle.html" with size=18 %}{% else %}{% include "includes/icons/check-circle.html" with size=18 %}{% endif %}</span>
+          <span class="pf-toast__text">{{ message }}</span>
+          <button type="button" class="pf-toast__close" aria-label="Dismiss" data-toast-close>{% include "includes/icons/x.html" with size=18 %}</button>
+          <span class="pf-toast__bar" aria-hidden="true"></span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <main class="lp-wrap" id="pf-main">
-    {% comment %}The cover: the church's own banner when it has one (27 Nov 2026; the image fills a 3:1 cover, at most 360 px tall, without stretching), else the green-and-gold banner.{% endcomment %}
+    {% if can_edit %}
+      <div class="pf-adminbar pf-edit" role="region" aria-label="Editing">
+        <span class="pf-adminbar__text">{% include "includes/icons/pencil.html" with size=18 %}{% if public_church.show_in_directory %}You manage this page. Visitors don't see the editing tools.{% else %}Only your church's managers can see this page: it isn't public yet.{% endif %}</span>
+        <button type="button" class="pf-btn pf-btn--ghost pf-btn--sm" data-visitor-preview>{% include "includes/icons/eye.html" with size=16 %}View as visitor</button>
+      </div>
+      <div class="pf-adminbar pf-adminbar--preview" role="region" aria-label="Preview" hidden data-preview-bar>
+        <span class="pf-adminbar__text">{% include "includes/icons/eye.html" with size=18 %}Previewing as a visitor</span>
+        <button type="button" class="pf-btn pf-btn--ghost pf-btn--sm" data-visitor-exit>Exit preview</button>
+      </div>
+    {% endif %}
+
+    <div class="pf-top">
+      <a class="pf-back" href="{% url 'churches:directory' %}" aria-label="Back to Churches" data-tip="Back to Churches">{% include "includes/icons/arrow-left.html" with size=20 %}</a>
+    </div>
+
+    {% comment %}The cover: the church's own banner when it has one (27 Nov 2026; the image fills a 3:1 cover, at most 360 px tall, without stretching), else the green-and-gold banner. The logo overlaps its lower left (28 Nov 2026).{% endcomment %}
     <div class="pf-cover">
       {% if public_church.banner %}
-        <div class="pf-banner pf-banner--image" aria-hidden="true"><img class="pf-banner__img" src="{{ public_church.banner.url }}" alt="" fetchpriority="high" decoding="async"></div>
+        <div class="pf-banner pf-banner--image" aria-hidden="true"><img class="pf-banner__img" src="{{ public_church.banner.url }}" alt="" fetchpriority="high" decoding="async" data-banner-img></div>
       {% else %}
         <div class="pf-banner" aria-hidden="true"></div>
       {% endif %}
-      {% if public_church.logo %}
+      {% if can_edit %}
+        <div class="pf-pic-menu pf-edit pf-pic-menu--cover" data-pic-menu>
+          <button type="button" class="pf-cover-edit" aria-haspopup="menu" aria-expanded="false" data-pic-toggle>{% include "includes/icons/camera.html" with size=18 %}<span class="pf-cover-edit__label">Edit cover photo</span></button>
+          <div class="pf-pic-menu__list" role="menu" hidden>
+            <p class="pf-pic-menu__note">1920 × 640 px recommended (3:1). JPG, PNG or WebP, 5 MB at most.</p>
+            <form method="post" action="{% url 'church:profile_edit' %}" enctype="multipart/form-data" data-pic-upload>
+              {% csrf_token %}<input type="hidden" name="part" value="banner">
+              <label class="pf-pic-menu__item" role="menuitem" tabindex="0">{% include "includes/icons/upload.html" with size=18 %}Upload photo<input type="file" name="homepage-banner" accept="image/jpeg,image/png,image/webp" class="visually-hidden" data-pic-input="banner"></label>
+            </form>
+            {% if public_church.banner %}
+              <form method="post" action="{% url 'church:profile_edit' %}">
+                {% csrf_token %}<input type="hidden" name="part" value="banner-remove">
+                <button type="submit" class="pf-pic-menu__item pf-pic-menu__item--danger" role="menuitem">{% include "includes/icons/x.html" with size=18 %}Remove cover photo</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+      {% if can_edit %}
+        <div class="pf-pic-menu pf-pic-menu--logo" data-pic-menu>
+          <button type="button" class="pf-logo pf-logo--editable{% if not public_church.logo %} pf-logo--none{% endif %}" aria-haspopup="menu" aria-expanded="false" aria-label="Change the church logo" data-pic-toggle>
+            {% if public_church.logo %}<img src="{{ public_church.logo.url }}" alt="{{ public_church.name }} logo" data-logo-img>{% else %}<span data-logo-fallback>{% include "includes/icons/people.html" %}</span>{% endif %}
+            <span class="pf-logo__overlay pf-edit" aria-hidden="true">{% include "includes/icons/camera.html" with size=22 %}<span>Change logo</span></span>
+            <span class="pf-logo__badge pf-edit" aria-hidden="true">{% include "includes/icons/camera.html" with size=15 %}</span>
+          </button>
+          <div class="pf-pic-menu__list pf-edit" role="menu" hidden>
+            <p class="pf-pic-menu__note">512 × 512 px recommended (1:1). PNG, JPEG, GIF or WebP, 2 MB at most.</p>
+            <form method="post" action="{% url 'church:profile_edit' %}" enctype="multipart/form-data" data-pic-upload>
+              {% csrf_token %}<input type="hidden" name="part" value="logo">
+              <label class="pf-pic-menu__item" role="menuitem" tabindex="0">{% include "includes/icons/upload.html" with size=18 %}Upload logo<input type="file" name="details-logo" accept="image/png,image/jpeg,image/gif,image/webp" class="visually-hidden" data-pic-input="logo"></label>
+            </form>
+            {% if public_church.logo %}
+              <form method="post" action="{% url 'church:profile_edit' %}">
+                {% csrf_token %}<input type="hidden" name="part" value="logo-remove">
+                <button type="submit" class="pf-pic-menu__item pf-pic-menu__item--danger" role="menuitem">{% include "includes/icons/x.html" with size=18 %}Remove logo</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% elif public_church.logo %}
         <span class="pf-logo"><img src="{{ public_church.logo.url }}" alt="{{ public_church.name }} logo"></span>
       {% else %}
         <span class="pf-logo pf-logo--none" aria-hidden="true">{% include "includes/icons/people.html" %}</span>
       {% endif %}
     </div>
 
+    {% comment %}The name beside the logo, Facebook-style (28 Nov 2026).{% endcomment %}
+    <div class="pf-head">
+      <div class="pf-head__text">
+        <p class="lp-eyebrow">Church</p>
+        <h1 class="pf-name" id="pf-name">{{ public_church.name }}</h1>
+      </div>
+      {% if can_edit %}
+        <div class="pf-head__actions pf-edit">
+          <button type="button" class="pf-btn pf-btn--primary" data-bs-toggle="modal" data-bs-target="#pf-editor">{% include "includes/icons/pencil.html" with size=17 %}Edit profile</button>
+        </div>
+      {% endif %}
+    </div>
+
     <div class="pf-layout">
       {% comment %}The sidebar: the only place for the church's details and contact.{% endcomment %}
       <aside class="pf-side" aria-labelledby="pf-name">
-        <div>
-          <p class="lp-eyebrow">Church</p>
-          <h1 class="pf-name" id="pf-name">{{ public_church.name }}</h1>
-        </div>
         {% if public_church.about %}
           <div class="pf-about" id="pf-about">{% include "church/includes/about.html" with church=public_church %}</div>
           {% if public_church.about|length > 240 %}<button type="button" class="pf-more" data-more="pf-about" aria-controls="pf-about" aria-expanded="false" hidden>Read more</button>{% endif %}
+        {% elif can_edit %}
+          <p class="pf-hint pf-edit">No description yet. <button type="button" class="pf-linkbtn" data-bs-toggle="modal" data-bs-target="#pf-editor">Add one</button> so visitors know who you are.</p>
         {% endif %}
         {% if public_church.address or public_church.phone or public_church.email %}
           <hr>
@@ -76,6 +161,13 @@
       </aside>
 
       <section class="pf-main" aria-label="Announcements and services">
+        {% if can_edit %}
+          {% comment %}The existing pages that manage what shows here; nothing is duplicated on this page.{% endcomment %}
+          <div class="pf-manage pf-edit">
+            {% if perms.announcements.add_announcement %}<a class="pf-btn pf-btn--ghost pf-btn--sm" href="{% url 'announcements:create' %}">{% include "includes/icons/megaphone.html" with size=16 %}New announcement</a>{% endif %}
+            {% if perms.occasions.view_occasiontype %}<a class="pf-btn pf-btn--ghost pf-btn--sm" href="{% url 'occasions:types_list' %}">{% include "includes/icons/gear.html" with size=16 %}Manage services</a>{% endif %}
+          </div>
+        {% endif %}
         {% if tab_sections %}
           {% comment %}The tabs: shown by profile.js; without it every section shows, one under another.{% endcomment %}
           <div class="pf-tabs" role="tablist" aria-label="Church sections" hidden>
@@ -102,5 +194,9 @@
   </main>
 
   <footer class="pf-footer"><div class="lp-wrap"><span>Powered by <strong>CHORD</strong></span></div></footer>
+
+  {% if can_edit %}
+    {% include "church/includes/profile_editor.html" %}
+  {% endif %}
 </body>
 </html>

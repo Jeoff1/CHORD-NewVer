@@ -460,3 +460,15 @@
   .chord-sb__cat-btn > .chord-icon:last-child,
   .chord-sb__group > .chord-icon { transition: none; }
 }
+
+/* The logo's tooltip, and the church panel as a link to its public page (28 Nov 2026). */
+.chord-sb__logo { position: relative; }
+.chord-sb__logo::after { content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 8px); z-index: 1100; padding: 4px 10px; border-radius: 8px; background: #0B1F1B; color: #F4F1F0; font-size: 12.5px; white-space: nowrap; pointer-events: none; opacity: 0; transform: translateY(2px); transition: opacity .18s ease, transform .18s ease; }
+.chord-sb__logo:hover::after, .chord-sb__logo:focus-visible::after { opacity: 1; transform: none; }
+.chord-sb__church--link { text-decoration: none; transition: border-color .18s ease, background-color .18s ease; }
+.chord-sb__church--link:hover { border-color: rgba(229, 198, 144, .55); background: rgba(229, 198, 144, .08); }
+.chord-sb__church--link:focus-visible { outline: 3px solid #E5C690; outline-offset: 2px; }
+.chord-sb__church-view { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 12px; color: #E5C690; }
+.chord-sb__church-view .chord-icon { transition: transform .18s ease; }
+.chord-sb__church--link:hover .chord-sb__church-view .chord-icon { transform: translate(2px, -2px); }
+@media (prefers-reduced-motion: reduce) { .chord-sb__logo::after, .chord-sb__church-view .chord-icon { transition: none; } }

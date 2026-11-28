@@ -46,3 +46,17 @@
   });
   select(tabs[0]);
 })();
+
+/* The page's messages as toasts (28 Nov 2026): each leaves after five seconds or when dismissed.
+ * They slide in from the top (profile.css); reduced motion skips the movement. */
+(function () {
+  "use strict";
+  function arm(toast) {
+    var gone = function () { toast.classList.add("is-leaving"); window.setTimeout(function () { toast.remove(); }, 260); };
+    var timer = window.setTimeout(gone, 5000);
+    var close = toast.querySelector("[data-toast-close]");
+    if (close) close.addEventListener("click", function () { window.clearTimeout(timer); gone(); });
+  }
+  function start() { document.querySelectorAll(".pf-toast").forEach(arm); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+})();

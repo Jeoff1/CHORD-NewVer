@@ -8,6 +8,16 @@ development task.
 
 ## Current status
 
+**UI/UX Phase 1 (28 Nov 2026), branch `joy-ui-ux-v3`, not committed
+yet:** signed-in people get an account menu on the landing page
+(`/welcome/`); the sidebar logo opens the landing page and the church
+panel opens the church's page; the people who manage a church edit its
+page in place (cover, logo, Edit profile modal, View as visitor)
+([[Church-Setup]], [[Design-Decisions]], "Signed-in website access and the
+Church CMS"). Opening a private church's page for its managers awaits the
+lead developer's approval; the personal profile waits for its fields to be
+agreed ([[Design-Decisions]], "Remaining UI/UX tasks").
+
 **Sign up while requesting a service (28 Nov 2026), branch
 `public-service-signup`:** a visitor without an account fills in a public
 church's service request and makes their account in a pop-up (name, email,

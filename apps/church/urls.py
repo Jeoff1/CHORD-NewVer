@@ -18,6 +18,12 @@ urlpatterns = [
         views.ProfileSectionView.as_view(),
         name="settings",
     ),
+    # The church page's editor and its camera buttons (Church CMS, 28 Nov 2026).
+    path(
+        "profile/edit/",
+        views.ChurchProfileEditView.as_view(),
+        name="profile_edit",
+    ),
     path(
         "setup/<slug:section>/",
         views.ProfileSectionView.as_view(wizard=True),

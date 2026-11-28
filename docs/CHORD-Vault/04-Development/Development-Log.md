@@ -2,6 +2,35 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 1: signed-in landing, sidebar links, Church CMS (branch `joy-ui-ux-v3`, not committed yet)
+
+- **Why:** the UI/UX owner's approved designs ([[Design-Decisions]],
+  "Signed-in website access and the Church CMS").
+- **What changed:** `/welcome/` (`landing`) and the account menu
+  (`includes/public_account.html`, `static/js/account_menu.js`) on the
+  landing page and church page; the sidebar logo links to the landing page
+  with a tooltip and the church panel to the church's page ("View page");
+  `church/homepage.html` rewritten with the back arrow, the overlapping
+  logo and header, and, for the people who manage the church, the camera
+  menus, View as visitor and the editor modal
+  (`church/includes/profile_editor.html`, `church/profile_edit.js`);
+  `ChurchProfileEditView` at `church:profile_edit`; toasts; icons
+  `camera`, `pencil`, `upload`, `arrow-up-right`. No model change, no
+  migration. A private church's page now opens for the people who manage
+  it: **awaiting the lead developer's approval** (it differs from slice
+  e). The landing pillar "Your wording" became "Your modules". The
+  personal profile is approved but waits for the fields to be agreed;
+  remaining tasks are listed in [[Design-Decisions]], "Remaining UI/UX
+  tasks".
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations, 1467 tests passed, 97% coverage. Headless Edge on a
+  throwaway test database: the landing page signed in and as a guest, the
+  logo tooltip, the church page as visitor, administrator, phone and dark
+  mode, real cover and logo uploads, the editor's error (400) and saved
+  states, View as visitor; no script errors or sideways scrolling. The
+  lead's visitor request still works end to end (sign-up pop-up, emailed
+  code, account made and joined, request sent).
+
 ## 2026-11-28: Sign up while requesting a service (branch `public-service-signup`)
 
 - **Why:** the owner: visitors should request a church's services and make

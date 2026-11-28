@@ -333,9 +333,14 @@ class HomepageTests(PublicPagesTestCase):
                 )
                 missing = reverse("churches:home", kwargs={"slug": "no-such-church"})
                 self.assertEqual(self.client.get(missing).status_code, 404)
-        # Even its own people.
-        self.visit_as(make_user(church=self.hidden, roles=["administrator"]))
+        # Its own members too; only the people who manage it (its Current
+        # Church and church.change_churchprofile) open it, to edit it (Church
+        # CMS, 28 Nov 2026), and they are told it isn't public.
+        self.visit_as(make_user(church=self.hidden, roles=["team_member"]))
         self.assertEqual(self.client.get(home_url(self.hidden)).status_code, 404)
+        self.visit_as(make_user(church=self.hidden, roles=["administrator"]))
+        page = self.client.get(home_url(self.hidden))
+        self.assertContains(page, "it isn't public yet")
 
     def test_upcoming_services_only_when_switched_on(self):
         self.set_church(show_upcoming_services=False)

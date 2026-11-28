@@ -35,6 +35,11 @@ A church's public page (`/churches/<slug>/`): what the church chose to
 publish, and Occasion Types anyone signed in may request.
 _Avoid_: profile page, landing page
 
+**Church CMS**:
+Editing the Church Homepage from the page itself (cover, logo, Edit
+profile, View as visitor), open only to the people who manage the church.
+_Avoid_: page builder, site editor
+
 **Directory**:
 The public list of churches that chose to appear in it (`/churches/`).
 _Avoid_: marketplace

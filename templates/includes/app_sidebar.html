@@ -12,18 +12,25 @@
   <div class="chord-sb__inner">
     <div class="chord-sb__top">
       <div class="chord-sb__brand">
-        <a class="chord-sb__logo" href="{% url 'home' %}" aria-label="CHORD, dashboard">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
+        {# The CHORD logo opens the landing page and keeps the person signed in (UI/UX owner, 28 Nov 2026). #}
+        <a class="chord-sb__logo" href="{% url 'landing' %}" aria-label="CHORD, go to the homepage" data-tip="Go to Homepage">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
         <button type="button" class="chord-sb__icon-btn chord-sb__collapse" data-chord-sidebar-toggle aria-pressed="false" aria-label="Shrink the menu to icons" title="Shrink the menu to icons">{% include "includes/icons/sidebar.html" %}</button>
         <button type="button" class="chord-sb__icon-btn chord-sb__close" data-bs-dismiss="offcanvas" data-bs-target="#chord-sidebar" aria-label="Close the menu">{% include "includes/icons/x.html" %}</button>
       </div>
       {% church_role_line as role_line %}
+      {% comment %}The church's identity panel opens its public page when the person may see it: it is public, or they manage it (UI/UX owner, 28 Nov 2026).{% endcomment %}
+      {% if church.show_in_directory or perms.church.change_churchprofile %}
+      <a class="chord-sb__church chord-sb__church--link" href="{% url 'churches:home' slug=church.slug %}" title="Open {{ church.name }}'s public page">
+      {% else %}
       <div class="chord-sb__church" title="{{ church.name }}">
+      {% endif %}
         <span class="chord-sb__church-logo">{% if church.logo %}<img src="{{ church.logo.url }}" alt="">{% else %}<span aria-hidden="true">{{ church.name|initials }}</span>{% endif %}</span>
         <span class="chord-sb__church-text">
           <span class="chord-sb__church-name">{{ church.name }}</span>
           {% if role_line %}<span class="chord-sb__church-role">{{ role_line }}</span>{% endif %}
+          {% if church.show_in_directory or perms.church.change_churchprofile %}<span class="chord-sb__church-view">View page {% include "includes/icons/arrow-up-right.html" with size=12 %}</span>{% endif %}
         </span>
-      </div>
+      {% if church.show_in_directory or perms.church.change_churchprofile %}</a>{% else %}</div>{% endif %}
     </div>
 
     <nav class="chord-sb__nav" id="chord-sb-nav" aria-label="Main">

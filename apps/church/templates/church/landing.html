@@ -41,7 +41,7 @@
 
   <nav class="lp-nav" aria-label="Main" id="top">
     <div class="lp-wrap lp-nav__row">
-      <a class="lp-brand" href="{% url 'home' %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      <a class="lp-brand" href="{% if user.is_authenticated %}{% url 'landing' %}{% else %}{% url 'home' %}{% endif %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
       <ul class="lp-nav__links">
         <li><a href="#how-it-works">How it works</a></li>
         <li><a href="#features">Features</a></li>
@@ -56,11 +56,16 @@
             <li><a href="#features">Features</a></li>
             <li><a href="#rehearsal">Rehearsal</a></li>
             <li><a href="{% url 'churches:directory' %}">Churches</a></li>
-            <li class="lp-menu__auth"><a href="{% url 'accounts:login' %}">Sign in</a></li>
+            {% if not user.is_authenticated %}<li class="lp-menu__auth"><a href="{% url 'accounts:login' %}">Sign in</a></li>{% endif %}
           </ul>
         </details>
-        <a class="lp-btn lp-btn--ghost lp-btn--small lp-nav__signin" href="{% url 'accounts:login' %}">Sign in</a>
-        <a class="lp-btn lp-btn--gold lp-btn--small" href="{% url 'churches:register' %}">Sign up</a>
+        {% comment %}A signed-in person (who reached this page through the CHORD logo, /welcome/) gets their account menu instead of Sign in and Sign up (UI/UX owner, 28 Nov 2026).{% endcomment %}
+        {% if user.is_authenticated %}
+          {% include "includes/public_account.html" %}
+        {% else %}
+          <a class="lp-btn lp-btn--ghost lp-btn--small lp-nav__signin" href="{% url 'accounts:login' %}">Sign in</a>
+          <a class="lp-btn lp-btn--gold lp-btn--small" href="{% url 'churches:register' %}">Sign up</a>
+        {% endif %}
       </div>
     </div>
   </nav>
@@ -79,13 +84,13 @@
         <h1 class="lp-hero__title"><span>From a {{ labels.sermon|lower }}'s theme</span><span>to the songs</span><em>you sing.</em></h1>
         <p class="lp-hero__lead">Plan each {{ labels.worship_service|lower }} in four steps. Build the song {{ labels.lineup|lower }} slot by slot, with songs that fit the theme suggested beside you. Your {{ labels.pastor|lower }} reviews and confirms it, and the whole team rehearses from the same chord sheets, keys and playback.</p>
         <div class="lp-hero__actions">
-          <a class="lp-btn lp-btn--gold" href="{% url 'churches:directory' %}">Explore churches</a>
+          {% if not user.is_authenticated %}<a class="lp-btn lp-btn--gold" href="{% url 'churches:directory' %}">Explore churches</a>{% endif %}
           <a class="lp-btn lp-btn--outline" href="#how-it-works">See how it works {% include "includes/icons/chevron-down.html" %}</a>
         </div>
         <ul class="lp-pillars">
           <li>{% include "includes/icons/document.html" %}<strong>Chord sheets</strong><small>In any key</small></li>
           <li>{% include "includes/icons/play.html" %}<strong>Playback</strong><small>Beside every song</small></li>
-          <li>{% include "includes/icons/gear.html" %}<strong>Your wording</strong><small>Set by your church</small></li>
+          <li>{% include "includes/icons/gear.html" %}<strong>Your modules</strong><small>Switch on what you use</small></li>
         </ul>
       </div>
 
@@ -332,8 +337,13 @@ Was blind, but now I see</pre>
       <div>
         <h3>Get started</h3>
         <ul>
-          <li><a href="{% url 'accounts:login' %}">Sign in</a></li>
-          <li><a href="{% url 'churches:register' %}">Sign up</a></li>
+          {% if user.is_authenticated %}
+            <li><a href="{% url 'home' %}">Dashboard</a></li>
+            {% if church and church.show_in_directory or church and perms.church.change_churchprofile %}<li><a href="{% url 'churches:home' slug=church.slug %}">My Church</a></li>{% endif %}
+          {% else %}
+            <li><a href="{% url 'accounts:login' %}">Sign in</a></li>
+            <li><a href="{% url 'churches:register' %}">Sign up</a></li>
+          {% endif %}
           <li><a href="{% url 'churches:directory' %}">Find a church</a></li>
         </ul>
       </div>

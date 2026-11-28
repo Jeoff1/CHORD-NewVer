@@ -70,13 +70,13 @@ class ShellTests(TestCase):
         church.save()
         admin = make_user(roles=["administrator"])
         page = self.page(admin).content.decode()
-        panel = page[page.index('class="chord-sb__church"') :][:700]
+        panel = page[page.index('class="chord-sb__church') :][:900]
         self.assertIn("Grace Fellowship", panel)
         self.assertIn(">GF<", panel)
         church.logo.name = "church/example.png"
         church.save()
         page = self.page(admin).content.decode()
-        panel = page[page.index('class="chord-sb__church"') :][:700]
+        panel = page[page.index('class="chord-sb__church') :][:900]
         self.assertIn(f'src="{church.logo.url}"', panel)
         self.assertNotIn(">GF<", panel)
 

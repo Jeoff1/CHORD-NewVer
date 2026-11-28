@@ -1,0 +1,87 @@
+{% comment %}
+  The church page's editor (Church CMS, UI/UX owner, 28 Nov 2026): a modal with a live preview of the
+  cover and logo, the church's information, contact (with the OpenStreetMap location picker) and its
+  public settings. It posts both Settings forms (prefixes "details" and "homepage") to
+  church:profile_edit, which validates them exactly as Settings does; when that fails the page comes
+  back with these forms bound and the modal opens again showing the errors. Only fields the church
+  actually has are offered (no website, currency or time zone: removed 28 Nov 2026).
+  church/profile_edit.js: the previews, the unsaved-changes prompt and the Save button's spinner.
+{% endcomment %}
+<div class="modal fade pf-modal" id="pf-editor" tabindex="-1" aria-labelledby="pf-editor-title" aria-modal="true" role="dialog"{% if open_editor %} data-open-on-load{% endif %}>
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <form class="modal-content" method="post" action="{% url 'church:profile_edit' %}" enctype="multipart/form-data" novalidate data-editor-form>
+      {% csrf_token %}
+      <input type="hidden" name="part" value="all">
+      <div class="modal-header">
+        <h2 class="modal-title" id="pf-editor-title">Edit church profile</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if details_form.non_field_errors or homepage_form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">{{ details_form.non_field_errors }}{{ homepage_form.non_field_errors }}</div>
+        {% elif details_form.errors or homepage_form.errors %}
+          <div class="alert alert-danger" role="alert">Some details need fixing. Nothing was saved yet.</div>
+        {% endif %}
+
+        <div class="pf-prev" aria-label="Preview">
+          <div class="pf-prev__cover" data-prev-cover>
+            {% if public_church.banner %}<img alt="" src="{{ public_church.banner.url }}">{% endif %}
+            <div class="pf-prev__cover-actions">
+              <label class="pf-prev__chip" for="pf-banner-input">{% include "includes/icons/camera.html" with size=16 %}<span>Change cover</span></label>
+              <button type="button" class="pf-prev__chip" data-remove="banner"{% if not public_church.banner %} hidden{% endif %}>{% include "includes/icons/x.html" with size=16 %}<span>Remove</span></button>
+            </div>
+          </div>
+          <label class="pf-prev__logo" for="pf-logo-input" data-prev-logo>
+            {% if public_church.logo %}<img alt="" src="{{ public_church.logo.url }}">{% else %}<span class="pf-prev__initials">{{ public_church.name|slice:":1"|upper }}</span>{% endif %}
+            <span class="pf-prev__logo-overlay" aria-hidden="true">{% include "includes/icons/camera.html" with size=20 %}</span>
+            <span class="visually-hidden">Change the logo</span>
+          </label>
+          <div class="pf-prev__meta">
+            <strong data-prev-name>{{ public_church.name }}</strong>
+            <span>Logo 512 × 512 px (1:1) · Cover 1920 × 640 px (3:1)</span>
+            <button type="button" class="pf-linkbtn" data-remove="logo"{% if not public_church.logo %} hidden{% endif %}>Remove logo</button>
+          </div>
+          <input type="file" id="pf-logo-input" name="details-logo" accept="image/png,image/jpeg,image/gif,image/webp" class="visually-hidden" data-preview="logo">
+          <input type="checkbox" name="details-logo-clear" class="visually-hidden" tabindex="-1" aria-hidden="true" data-clear="logo">
+          <input type="file" id="pf-banner-input" name="homepage-banner" accept="image/jpeg,image/png,image/webp" class="visually-hidden" data-preview="banner">
+          <input type="checkbox" name="homepage-banner-clear" class="visually-hidden" tabindex="-1" aria-hidden="true" data-clear="banner">
+        </div>
+        {% if details_form.logo.errors %}<div class="pf-field-error" role="alert">{{ details_form.logo.errors|join:" " }}</div>{% endif %}
+        {% if homepage_form.banner.errors %}<div class="pf-field-error" role="alert">{{ homepage_form.banner.errors|join:" " }}</div>{% endif %}
+        <p class="pf-field-error" data-image-error hidden role="alert"></p>
+
+        <fieldset class="pf-fieldset">
+          <legend>Church information</legend>
+          {{ details_form.name.as_field_group }}
+          {{ homepage_form.about.as_field_group }}
+        </fieldset>
+
+        <fieldset class="pf-fieldset">
+          <legend>Contact</legend>
+          {{ details_form.address.as_field_group }}
+          {% include "church/includes/location_picker.html" with target=details_form.address.id_for_label %}
+          <div class="row g-3">
+            <div class="col-sm-6">{{ details_form.phone.as_field_group }}</div>
+            <div class="col-sm-6">{{ details_form.email.as_field_group }}</div>
+          </div>
+        </fieldset>
+
+        <fieldset class="pf-fieldset">
+          <legend>Public page</legend>
+          {{ homepage_form.show_in_directory.as_field_group }}
+          {{ homepage_form.show_upcoming_services.as_field_group }}
+          {{ homepage_form.accept_outside_requests.as_field_group }}
+        </fieldset>
+      </div>
+      <div class="modal-footer">
+        <div class="pf-discard" hidden data-discard>
+          <span>Discard your changes?</span>
+          <button type="button" class="pf-btn pf-btn--danger pf-btn--sm" data-discard-yes>Discard</button>
+          <button type="button" class="pf-btn pf-btn--ghost pf-btn--sm" data-discard-no>Keep editing</button>
+        </div>
+        <button type="button" class="pf-btn pf-btn--ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="pf-btn pf-btn--primary" data-save>Save changes</button>
+      </div>
+    </form>
+  </div>
+</div>

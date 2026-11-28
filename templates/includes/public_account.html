@@ -1,0 +1,27 @@
+{% load static church %}{% comment %}
+  The account button on public pages for a signed-in person (UI/UX owner, 28 Nov 2026): their initials, and a
+  compact menu with Dashboard, My Church (when they have a church whose page they may open) and Sign Out.
+  Styles in landing.css ("Account menu"); static/js/account_menu.js opens it (a plain link list without it).
+{% endcomment %}{% with name=user.get_full_name|default:user.get_username %}
+<div class="lp-acct" data-account-menu>
+  <button type="button" class="lp-acct__btn" aria-haspopup="menu" aria-expanded="false" aria-controls="lp-acct-menu" data-account-button>
+    <span class="lp-acct__av" aria-hidden="true">{{ name|initials|default:"?" }}</span>
+    <span class="visually-hidden">Your account</span>
+    {% include "includes/icons/chevron-down.html" with size=16 %}
+  </button>
+  <div class="lp-acct__menu" id="lp-acct-menu" role="menu" aria-label="Your account" hidden>
+    <div class="lp-acct__head">
+      <span class="lp-acct__av lp-acct__av--lg" aria-hidden="true">{{ name|initials|default:"?" }}</span>
+      <span class="lp-acct__who"><span class="lp-acct__name">{{ name }}</span>{% if church %}{% church_role_line as role %}{% if role %}<span class="lp-acct__role">{{ role }}</span>{% endif %}{% endif %}</span>
+    </div>
+    <a role="menuitem" href="{% url 'home' %}">{% include "includes/icons/home.html" with size=18 %}Dashboard</a>
+    {% if church and church.show_in_directory or church and perms.church.change_churchprofile %}<a role="menuitem" href="{% url 'churches:home' slug=church.slug %}">{% include "includes/icons/people.html" with size=18 %}My Church</a>{% endif %}
+    <hr>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" role="menuitem">{% include "includes/icons/log-out.html" with size=18 %}Sign Out</button>
+    </form>
+  </div>
+</div>
+<script src="{% static 'js/account_menu.js' %}" defer></script>
+{% endwith %}

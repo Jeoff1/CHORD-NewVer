@@ -127,8 +127,15 @@ Designed as an interactive mockup and approved by the UI/UX owner on
 `landing.css` and its own `static/css/profile.css` (classes `pf-*`) and
 `church/static/church/profile.js`; no other page loads them.
 
-- **Nav:** the gold logo (to `/`) and **Back to Churches** (the
-  Directory); "Churches" on narrow phones.
+- **Nav:** the gold logo (to `/`) and, signed in, the account menu (as on
+  the landing page). Since 28 Nov 2026 **Back to Churches** is a round
+  back-arrow button above the cover, on the left, with a "Back to
+  Churches" tooltip (`.pf-back`, `data-tip`).
+- **Header (28 Nov 2026, Facebook-style):** the logo circle
+  (`--pf-logo`, 150 px, 112 px on phones) overlaps the cover's lower left;
+  the name (and CHORD's "Church" eyebrow) sits beside it in `.pf-head`,
+  with **Edit profile** on the right for the people who manage the
+  church; less space below the cover. On phones the logo and name centre.
 - **Cover:** a rounded banner with the default green-and-gold gradient,
   no stock photos. Since 27 Nov 2026 a church's own banner, when it has
   one (`.pf-banner--image`): the cover takes the banner's 3:1 shape, at
@@ -136,9 +143,10 @@ Designed as an interactive mockup and approved by the UI/UX owner on
   stretched), without the texture lines. The church's logo (or the CHORD
   fallback, the people icon on green) in a circle overlapping its lower
   left either way.
-- **Sidebar, the only place for the church's details:** name, About
-  (clamped to five lines with Read more), then Contact: address (opens a
-  map search), phone (`tel:`), email (`mailto:`) and website, each with
+- **Sidebar, the only place for the church's details:** About
+  (clamped to five lines with Read more; the name moved to the header on
+  28 Nov 2026), then Contact: address (opens a
+  map search), phone (`tel:`) and email (`mailto:`), each with
   its icon and only when filled in; then Upcoming services when the church
   switches them on. Sticky beside the main area on wide screens.
 - **Main area, tabs** (ARIA tabs, arrow keys, Home and End; without
@@ -152,7 +160,25 @@ Designed as an interactive mockup and approved by the UI/UX owner on
   below 760 px (cover, logo, sidebar, tabs, sections); tab icons drop
   below 480 px so the labels stay on one line.
 - **Icons added:** `map-pin`, `phone`, `mail` and `globe` (the contact
-  rows), solid like the rest.
+  rows), solid like the rest; on 28 Nov 2026 `camera`, `pencil`, `upload`
+  and `arrow-up-right`.
+- **Editing tools (Church CMS, 28 Nov 2026),** only for the people who
+  manage the church: a pale admin bar ("You manage this page", View as
+  visitor); a camera button on the cover and a camera badge on the logo,
+  each opening a small menu (Upload, Remove) and showing the required size;
+  a picture shows at once with an "Uploading…" overlay while it is sent;
+  the **Edit profile** modal (`.pf-modal`): a preview card (cover, logo,
+  name, live while typing), then fieldsets Church information, Contact and
+  Public page, with Cancel and a Save button that spins while saving, and
+  an inline "Discard your changes?" prompt. Messages appear as toasts at
+  the top (`.pf-toast`, a timer bar, gone after 5 s or on dismiss). Motion
+  follows the Animation Plan (150–250 ms) and stops under
+  `prefers-reduced-motion`.
+- **Account menu (landing and profile, 28 Nov 2026):** initials button,
+  a menu card (name, role line, Dashboard, My Church, Sign Out) that fades
+  and slides in (160 ms), closes on outside click or Escape and moves with
+  the arrow keys; a sheet anchored under the nav on phones
+  (`.lp-acct*` in `landing.css`).
 
 ## The sign-in page (redesign, 27 Nov 2026)
 
@@ -337,7 +363,11 @@ top bar.
 - **Sidebar:** `#173630` (`#0B1F1B` in dark mode), the gold CHORD logo
   (`church/includes/landing_logo.html` with `variant="gold"`, unchanged),
   then the church panel: the church's own logo or initials on gold, its
-  name in Raleway, and the role line. Links in `#E6E2E1`, sub-links in
+  name in Raleway, and the role line. Since 28 Nov 2026 the logo opens the
+  landing page (a "Go to Homepage" tooltip on hover or focus), and the
+  panel is a link to the church's page with a small gold "View page ↗"
+  under the role line whenever that page can be opened (otherwise a plain
+  panel). Links in `#E6E2E1`, sub-links in
   `#A9BDB7`; the current page gold with a 4 px gold bar at the left edge.
   Categories open with a chevron (Bootstrap collapse); Management has two
   nested groups. Settings and Sign Out sit at the foot.

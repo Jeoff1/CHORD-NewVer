@@ -166,6 +166,9 @@ CRAWL_SKIP = {
     # Lists every public church, the other one too, by design
     # (apps/church/tests/test_public_pages.py).
     "churches:directory",
+    # The landing page for signed-in people (28 Nov 2026): its carousel lists
+    # public churches, by design, as it does for guests (test_landing.py).
+    "landing",
 }
 
 

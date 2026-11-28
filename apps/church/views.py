@@ -7,6 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -439,12 +440,160 @@ class ChurchHomepageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        public_church = get_object_or_404(public_churches(), slug=self.kwargs["slug"])
-        sections = homepage.sections(public_church, self.request)
-        context.update(
-            public_church=public_church,
-            sections=sections,
-            side_sections=[s for s in sections if s.slot == "side"],
-            tab_sections=[s for s in sections if s.slot != "side"],
-        )
+        church, manages = church_for_page(self.request, self.kwargs["slug"])
+        context.update(profile_context(self.request, church, manages))
         return context
+
+
+def manages_page(request, slug):
+    """Whether the person edits the church page at ``slug`` (Church CMS, UI/UX
+    owner, 28 Nov 2026): it is their Current Church and they may change its
+    profile. Permissions come only from the Current Church, so nobody edits
+    another church's page from here."""
+    church = getattr(request, "church", None)
+    user = request.user
+    return bool(
+        user.is_authenticated
+        and church is not None
+        and church.slug == slug
+        and user.has_perm(MANAGE_PERMISSION)
+    )
+
+
+def church_for_page(request, slug):
+    """The church whose page ``slug`` is, and whether the person manages it. A
+    church that isn't public is 404 to everyone except the people who manage
+    it, who see it (with a notice) so they can edit it."""
+    manages = manages_page(request, slug)
+    church = public_churches().filter(slug=slug).first()
+    if church is None and manages:
+        church = ChurchProfile.objects.get(pk=request.church.pk)
+    if church is None:
+        raise Http404("No such public church.")
+    return church, manages
+
+
+def profile_context(request, church, manages, details_form=None, homepage_form=None):
+    """What church/homepage.html needs: the Modules' sections and, for the
+    people who manage the page, the editor's forms (bound ones when saving
+    failed, so the editor reopens with the errors)."""
+    from .forms import ChurchDetailsForm, ChurchHomepageForm
+
+    sections = homepage.sections(church, request)
+    context = {
+        "public_church": church,
+        "sections": sections,
+        "side_sections": [s for s in sections if s.slot == "side"],
+        "tab_sections": [s for s in sections if s.slot != "side"],
+        "can_edit": manages,
+    }
+    if manages:
+        context.update(
+            details_form=details_form
+            or ChurchDetailsForm(instance=church, prefix="details"),
+            homepage_form=homepage_form
+            or ChurchHomepageForm(instance=church, prefix="homepage"),
+            open_editor=bool(details_form or homepage_form),
+        )
+    return context
+
+
+def form_as_data(form):
+    """A form's current values as POST data, files left out, so one field can
+    change while the rest stay as they are (the quick logo and banner
+    changes)."""
+    from django import forms as django_forms
+
+    data = {}
+    for name, field in form.fields.items():
+        if isinstance(field, django_forms.FileField):
+            continue
+        value = form.initial.get(name, field.initial)
+        key = form.add_prefix(name)
+        if isinstance(field, django_forms.BooleanField):
+            if value:
+                data[key] = "on"
+        elif value is not None:
+            data[key] = value
+    return data
+
+
+class ChurchProfileEditView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Save the church page's editor (Church CMS, UI/UX owner, 28 Nov 2026).
+
+    It edits only the Current Church, through the same forms, checks and
+    audit trail as Settings › Church details and Public homepage. ``part``
+    says what is saved: ``all`` (the editor: name, description, address,
+    contact, logo, banner, visibility), ``logo`` or ``banner`` (a new picture
+    from the page's camera buttons), ``logo-remove`` or ``banner-remove``."""
+
+    permission_required = MANAGE_PERMISSION
+    http_method_names = ["post"]
+    PICTURES = {"logo": "details", "banner": "homepage"}
+
+    def post(self, request):
+        from .forms import ChurchDetailsForm, ChurchHomepageForm
+
+        profile = ChurchProfile.objects.get(pk=request.church.pk)
+        before = snapshot(profile, profile_audit_fields())
+        part = request.POST.get("part", "all")
+        page = reverse("churches:home", kwargs={"slug": profile.slug})
+        if part == "all":
+            details = ChurchDetailsForm(
+                request.POST, request.FILES, instance=profile, prefix="details"
+            )
+            homepage_form = ChurchHomepageForm(
+                request.POST, request.FILES, instance=profile, prefix="homepage"
+            )
+            forms_to_save = [details, homepage_form]
+        else:
+            picture = part.removesuffix("-remove")
+            if picture not in self.PICTURES:
+                raise Http404("Unknown part.")
+            prefix = self.PICTURES[picture]
+            form_class = (
+                ChurchDetailsForm if prefix == "details" else ChurchHomepageForm
+            )
+            empty = form_class(instance=profile, prefix=prefix)
+            data = form_as_data(empty)
+            if part.endswith("-remove"):
+                data[empty.add_prefix(picture) + "-clear"] = "on"
+            forms_to_save = [
+                form_class(data, request.FILES, instance=profile, prefix=prefix)
+            ]
+        if not all(form.is_valid() for form in forms_to_save):
+            if part == "all":
+                context = profile_context(request, profile, True, *forms_to_save)
+                return TemplateResponse(
+                    request, "church/homepage.html", context, status=400
+                )
+            errors = (
+                "; ".join(
+                    error
+                    for form in forms_to_save
+                    for error in form.errors.get(part, [])
+                )
+                or "That picture couldn't be saved."
+            )
+            messages.error(request, errors)
+            return redirect(page)
+        for form in forms_to_save:
+            form.save()
+        profile.refresh_from_db()
+        record_change(
+            request.user,
+            profile,
+            AuditEvent.Action.CHANGED,
+            diff(before, snapshot(profile, profile_audit_fields())),
+        )
+        messages.success(
+            request,
+            {
+                "all": "Church profile saved.",
+                "logo": "Logo updated.",
+                "banner": "Cover photo updated.",
+                "logo-remove": "Logo removed.",
+                "banner-remove": "Cover photo removed.",
+            }[part],
+        )
+        return redirect(reverse("churches:home", kwargs={"slug": profile.slug}))

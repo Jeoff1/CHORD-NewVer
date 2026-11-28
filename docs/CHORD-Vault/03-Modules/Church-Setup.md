@@ -233,15 +233,37 @@ of the core and can't be switched off. App: `apps/church`.
   finished setup, the same rule as the Directory), newest first, with
   name, address on one line and logo only, each linking to its Church
   Homepage. No new field or migration. With none, a short note.
+- **Signed in** (28 Nov 2026): `/` is the dashboard, so the landing page
+  is also at `/welcome/` (`landing`). There its nav shows the account menu
+  (`includes/public_account.html`, `static/js/account_menu.js`: Dashboard,
+  My Church, Sign Out) in place of Sign in, Sign up and Explore churches.
+  The sidebar's CHORD logo links to it, and the church panel links to the
+  Church Homepage ("View page") whenever that page can be opened.
 - **Settings it reads:** a church's "Show the church publicly"
   (`show_in_directory`) and whether its setup is finished.
-- Tests: `apps/church/tests/test_landing.py`.
+- Tests: `apps/church/tests/test_landing.py`, `test_church_cms.py`.
 
 ## Public pages (Phase 9B)
 
 Only churches with "Show the church publicly" on have public pages; for
 any other church (and an unknown address) every public page is 404, to
-everyone, its own people too.
+everyone, its own people too, except that the people who manage a church
+(`church.change_churchprofile`) can open its own Church Homepage to edit
+it, with a notice that it isn't public yet (awaiting the lead developer's approval,
+[[Design-Decisions]], "Signed-in website access and the Church CMS").
+
+- **Church CMS** (UI/UX owner, 28 Nov 2026): on its own Church Homepage,
+  someone who manages the church gets camera menus on the cover and logo
+  (change or remove at once), **Edit profile** (a modal with a live
+  preview: name, About, address with the location picker, phone, email and
+  the three Public page switches), **View as visitor**, and shortcuts to a
+  new announcement and the services offered. Everything posts to
+  `church:profile_edit` (`ChurchProfileEditView`), which uses the Settings
+  forms `ChurchDetailsForm` and `ChurchHomepageForm` (prefixes `details`
+  and `homepage`), edits only the Current Church and records the audit
+  trail. Templates: `church/homepage.html`,
+  `church/includes/profile_editor.html`; script
+  `church/static/church/profile_edit.js`, loaded only for those people.
 
 - **Directory** (`/churches/`, `DirectoryView`; redesigned 27 Nov 2026,
   [[Design-System]], "The church directory"): the **listed churches**

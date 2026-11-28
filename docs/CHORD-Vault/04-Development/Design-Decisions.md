@@ -1062,6 +1062,72 @@ permission, not a role name (`AGENTS.md`); the pages, routes and
 permissions are unchanged, so the pages still open by their address. Test:
 `test_app_shell.py`, `test_people_who_approve_requests_do_not_get_the_request_links`.
 
+#### Signed-in website access and the Church CMS (UI/UX owner, 28 Nov 2026)
+
+Phase 1 of the approved UI/UX implementation (interactive mockup approved
+by the UI/UX owner; branch `joy-ui-ux-v3`).
+
+- **The landing page for signed-in people:** `/` stays the dashboard once
+  signed in; the landing page is also at `/welcome/` (`landing`), for
+  everyone. Signed in, its nav shows an account button (initials) with a
+  menu: name and role line, **Dashboard**, **My Church** (only when the
+  church's page can be opened: public, or the person manages it) and
+  **Sign Out** (POST). No hero buttons and no "signed in" banner; the
+  footer's Sign in and Sign up become Dashboard and My Church.
+- **Sidebar:** the CHORD logo opens the landing page (tooltip "Go to
+  Homepage"); there is no View Website link. The church panel links to the
+  church's page with a small "View page" mark, when that page can be
+  opened.
+- **Church CMS:** the people who manage the church
+  (`church.change_churchprofile`, a permission, not a role name) edit its
+  page from the page itself: hover or focus the cover or logo for a camera
+  menu (change or remove; logo 512 × 512 px, cover 1920 × 640 px), and
+  **Edit profile** opens a modal with a live preview, Church information
+  (name, About), Contact (address with the OpenStreetMap location picker,
+  phone, email) and Public page (the three switches). It saves through
+  `church:profile_edit` (POST `/church/profile/edit/`, `part` = `all`,
+  `logo`, `banner`, `logo-remove` or `banner-remove`; anything else 404),
+  which always edits the Current Church only, validates with the same two
+  Settings forms, records the audit trail, and on errors returns the page
+  (400) with the modal reopened. No new fields, no migration; Website,
+  Currency and Time zone stay removed. **View as visitor** hides every
+  editing tool until Exit preview.
+- **Awaiting the lead developer's approval: a private church's own page.** Slice e
+  ("Public pages", below) makes a church with "Show the church publicly"
+  off 404 to everyone. The CMS lets the people who manage it open their
+  own page anyway, with a notice that it isn't public yet, so they can
+  build it before going public. Everyone else, its team included, still
+  gets 404. If not approved, `church_for_page` goes back to public
+  churches only and the editor stays reachable only for public churches.
+- Tests: `apps/church/tests/test_church_cms.py`; `test_public_pages.py`
+  (`a hidden church` stays 404 for its team member).
+- The landing page's third pillar reads **Your modules / Switch on what
+  you use** (was "Your wording / Set by your church", untrue since Labels
+  stopped being editable on 28 Nov 2026).
+
+#### Personal profile (UI/UX owner, approved 28 Nov 2026; not built yet)
+
+A Discord-style popover from the account button, with **no personal
+banner**: avatar (profile picture), name, role line and a short bio; and a
+two-column **Edit Profile** modal with a live preview and hover-to-edit
+avatar. It needs two new fields on `accounts.User` (picture and bio) and a
+migration: **postponed** until the UI/UX owner agrees them with the lead
+developer. Don't add the fields before that.
+
+#### Remaining UI/UX tasks (28 Nov 2026)
+
+1. Lead developer's approval of the private-church preview (above).
+   Whatever the answer, everyone else keeps getting 404.
+2. Phase 2: the personal profile (above), after the fields are agreed.
+3. Then, module by module, each shown running before the next: shared UI
+   components; Management, Requests and Bookings; Worship Planning and
+   Song Recommendations; Lineup; Song Pool and Find Songs; Chord Viewer
+   and Editor; Rehearsal; Calendar and My Schedule; Team Roster; Users,
+   Roles and Audit Log; Announcements; Notifications; Settings; Reports;
+   error and empty states.
+4. Phase 1 is uncommitted on `joy-ui-ux-v3`; the UI/UX owner commits and
+   pushes it.
+
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 
 Approved by the owner on 2026-11-25. The full design is [[Phase-9B-Plan]];
