@@ -265,3 +265,20 @@ td > .chord-empty { padding-block: 1.75rem; }
   .chord-skeleton { animation: none; }
   .btn.is-busy::before, .chord-spinner { animation-duration: 1.6s; }
 }
+
+/* --- People and permissions (UI/UX Phase 8) ------------------------------------------------- */
+.chord-matrix { min-width: 40rem; }
+.chord-matrix thead th { position: sticky; top: 0; z-index: 2; }
+.chord-matrix tbody th[scope="row"], .chord-matrix thead th:first-child { position: sticky; left: 0; z-index: 1; min-width: 16rem; background: var(--bs-body-bg); }
+.chord-matrix thead th:first-child { z-index: 3; background: var(--bs-tertiary-bg); }
+.chord-matrix td { text-align: center; }
+.chord-matrix .form-check-input { width: 1.3em; height: 1.3em; margin: 0; cursor: pointer; }
+.chord-matrix .form-check-input:disabled { cursor: not-allowed; }
+.chord-matrix tbody tr:not(.chord-matrix__section):hover > * { background-color: var(--chord-row-hover); }
+.chord-matrix__section > th { padding-top: 1rem !important; background: var(--bs-body-bg) !important; color: var(--chord-heading); font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 800; letter-spacing: 0; text-transform: none; border-bottom: 2px solid var(--chord-gold) !important; }
+.chord-matrix-save { position: sticky; bottom: 0; z-index: 4; display: flex; justify-content: flex-end; padding: .75rem 0; background: linear-gradient(0deg, var(--chord-page) 60%, transparent); }
+.chord-diff { padding: 2px 0; overflow-wrap: anywhere; }
+.chord-diff__old { padding: 0 .25rem; border-radius: 4px; background: rgba(176, 42, 55, .08); color: var(--bs-secondary-color); }
+.chord-diff__new { padding: 0 .25rem; border-radius: 4px; background: rgba(20, 108, 67, .1); text-decoration: none; }
+[data-bs-theme=dark] .chord-diff__old { background: rgba(234, 134, 143, .12); }
+[data-bs-theme=dark] .chord-diff__new { background: rgba(117, 183, 152, .14); }

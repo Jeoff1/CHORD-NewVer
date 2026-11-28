@@ -1,18 +1,21 @@
 {% extends "base.html" %}
+{% load church ui %}
 
 {% block title %}Users{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">Users</h1>
-    {% if perms.accounts.add_user %}<a href="{% url 'accounts:user_add_existing' %}" class="btn btn-outline-secondary">Add an existing account</a> <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">Add user</a>{% endif %}
-  </div>
+  {# UI/UX Phase 8: a people table with initials (no pictures), role chips and status pills; Active, Inactive and All as a segmented filter. #}
+  {% page_header "Users" subtitle="Everyone with an account in this church, and the roles they hold here." %}
+    {% if perms.accounts.add_user %}<a href="{% url 'accounts:user_add_existing' %}" class="btn btn-outline-secondary">Add an existing account</a> <a href="{% url 'accounts:user_create' %}" class="btn btn-primary">{% include "includes/icons/person-plus.html" with size=18 %}Add user</a>{% endif %}
+  {% endpage_header %}
 
-  <ul class="nav nav-pills mb-3">
-    <li class="nav-item"><a class="nav-link{% if status == 'active' %} active{% endif %}" href="{% querystring status='active' page=None %}">Active</a></li>
-    <li class="nav-item"><a class="nav-link{% if status == 'inactive' %} active{% endif %}" href="{% querystring status='inactive' page=None %}">Inactive</a></li>
-    <li class="nav-item"><a class="nav-link{% if status == 'all' %} active{% endif %}" href="{% querystring status='all' page=None %}">All</a></li>
-  </ul>
+  <nav aria-label="Which users">
+    <ul class="chord-seg">
+      <li><a href="{% querystring status='active' page=None %}"{% if status == 'active' %} aria-current="page"{% endif %}>Active</a></li>
+      <li><a href="{% querystring status='inactive' page=None %}"{% if status == 'inactive' %} aria-current="page"{% endif %}>Inactive</a></li>
+      <li><a href="{% querystring status='all' page=None %}"{% if status == 'all' %} aria-current="page"{% endif %}>All</a></li>
+    </ul>
+  </nav>
 
   {% include "includes/list_toolbar.html" with placeholder="Search by name, username or email" %}
 
@@ -31,12 +34,12 @@
         </thead>
         <tbody>
           {% for person in object_list %}
-            <tr>
-              <td>{{ person.get_full_name|default:"—" }}</td>
+            <tr{% if perms.accounts.change_user %} data-href="{% url 'accounts:user_update' pk=person.pk %}"{% endif %}>
+              <td><span class="chord-song-cell"><span class="chord-person chord-person--sm" aria-hidden="true">{{ person.initials }}</span><span class="fw-semibold">{{ person.get_full_name|default:"—" }}</span></span></td>
               <td>{{ person.username }}</td>
               <td>{{ person.email|default:"—" }}</td>
-              <td>{% for membership in person.church_memberships %}{% for role in membership.roles.all %}<span class="badge text-bg-light border me-1">{{ role.title }}</span>{% empty %}<span class="text-body-secondary">None</span>{% endfor %}{% endfor %}</td>
-              <td>{% if person.is_active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-secondary">Inactive</span>{% endif %}</td>
+              <td>{% for membership in person.church_memberships %}{% for role in membership.roles.all %}<span class="chord-chip">{{ role.title }}</span>{% empty %}<span class="text-body-secondary">None</span>{% endfor %}{% endfor %}</td>
+              <td>{% if person.is_active %}<span class="chord-pill chord-pill--success">Active</span>{% else %}<span class="chord-pill chord-pill--neutral">Inactive</span>{% endif %}</td>
               <td class="text-end text-nowrap">
                 {% if perms.accounts.change_user %}
                   <a href="{% url 'accounts:user_update' pk=person.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
@@ -44,7 +47,7 @@
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="6" class="text-center text-body-secondary py-4">No users found.</td></tr>
+            <tr><td colspan="6">{% include "includes/empty_state.html" with icon="people" title="No users found." text="Try another search, or another status." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

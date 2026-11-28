@@ -97,6 +97,10 @@ Scheduling (Phase 7): `.chord-cal-bar`, `.chord-cal-title`,
 `--booking`, `--hidden`, `is-cancelled`; in `components.css`,
 `.chord-person` (initials avatar, 40 px, `--sm` 32 px).
 
+People (Phase 8, `components.css`): `.chord-matrix` (sticky header and
+first column, `__section` rows, roomy checkboxes), `.chord-matrix-save`
+(sticky Save), `.chord-diff` with `__old` and `__new`.
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

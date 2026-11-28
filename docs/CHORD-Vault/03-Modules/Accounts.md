@@ -208,6 +208,28 @@ they work whichever Modules a church switches on.
 - Tests: `apps/notifications/tests/test_notifications.py`, including the
   pages with every Module switched off.
 
+### Screens (UI/UX Phase 8, 28 Nov 2026)
+
+From [[UI-UX-Master-Plan]] §14 (the sidebar's Members category):
+
+- **Users** (`accounts/user_list.html`): a page header with Add an existing
+  account and Add user; Active, Inactive and All as a segmented filter;
+  the search toolbar; a table with initials (`User.initials`; no pictures),
+  full name, username, email, role chips, an Active or Inactive pill, Edit;
+  rows open the user for people who may edit; an empty state.
+- **Roles and permissions** (`accounts/role_list.html`): a page header with
+  the explanation, Permission matrix and Add role; roles with a Full access
+  pill and a user count chip; an empty state.
+- **Permission matrix** (`accounts/permission_matrix.html`): back link and
+  page header; the header row and the permission column stay in view while
+  scrolling (`.chord-matrix`), section rows in Raleway with a gold rule,
+  larger checkboxes, row hover, Save sticks to the bottom.
+- **Audit log** (`audit/auditevent_list.html`): page header, the types as a
+  segmented filter, the actor's initials, the action as a pill (created
+  green, deleted red), each change as a struck old value → the new value
+  (`.chord-diff`); an empty state.
+- Tests: `apps/accounts/tests/test_people_screens.py`.
+
 ### Settings hub (Phase 9A, A7 part 3)
 
 Users, Roles and Permissions and the Audit Log are not settings: since

@@ -2,6 +2,18 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 8: members and teams (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §14 (Members: Users, Roles and
+  permissions, Audit log; the team roster was Phase 7).
+- **What changed:** Users with initials, role chips, status pills, a
+  segmented status filter and whole-row links; Roles with page header and
+  pills; the permission matrix with sticky header, column and Save; the
+  Audit log with initials, action pills and before → after changes. No
+  Member Directory or Households. Templates and CSS only; no permission,
+  role or audit rule changed; no migration.
+- **Checks:** PHASE8_CHECKS
+
 ## 2026-11-28: UI/UX Phase 7: calendar and scheduling (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §13.
