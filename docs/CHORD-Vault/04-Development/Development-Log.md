@@ -2,6 +2,17 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Date and time as two boxes (branch `church-setup-simplify`)
+
+- **Why:** the owner asked for a date box and a time box with icons, as
+  in their example ([[Design-Decisions]], "Date and time as two boxes").
+- **What changed:** `MomentInput` and `MomentField` (`apps/core/widgets.py`),
+  `core/widgets/moment.html`, `core/moment_input.js`, styles in
+  `chord.css`; `moment_field` uses them, so every date-and-time form
+  changed at once; `worship/service_form.js` fills both boxes.
+- **Checks:** `scripts/check.ps1` (full): 1433 tests passed, 97% coverage.Screenshots of the new-service form at
+  1280 and 500 px: both rows show a date and a time box with their icons.
+
 ## 2026-11-28: The address map's tiles were blocked (branch `church-setup-simplify`)
 
 - **Why:** the owner saw OpenStreetMap's "Access blocked" tiles: Django's

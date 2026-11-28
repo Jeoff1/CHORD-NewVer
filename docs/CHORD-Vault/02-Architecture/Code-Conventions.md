@@ -112,6 +112,17 @@ description, sort order and active switch, plus `.active()` and
 
 Seed neutral defaults with a data migration.
 
+## Dates and times in forms
+
+Every date-and-time field is `moment_field()` (`apps/worship/forms.py`):
+a `MomentField` with a `MomentInput` (`apps/core/widgets.py`), shown as a
+date box and a time box side by side, each with its icon, the browser's
+own pickers opening on a click anywhere in the box
+(`core/moment_input.js`). It posts `<name>_0` and `<name>_1` and the
+field gets one value; a combined `<name>` post still works. A date without
+a time is refused ("Enter both a date and a time."), never read as
+midnight. Date-only fields stay `DateInput(attrs={"type": "date"})`.
+
 ## Custom Fields
 
 Church-defined fields ([[0004-custom-field-values-as-json]]):

@@ -1136,3 +1136,37 @@ a {
   color: var(--bs-secondary-color);
 }
 @media (max-width: 575.98px) { .chord-loc__map { height: 260px; } }
+
+/* --- Date and time boxes (core/widgets/moment.html): side by side, each with
+   its icon on the right; a click anywhere opens the picker -------------- */
+.chord-moment {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: .75rem;
+  max-width: 32rem;
+}
+.chord-moment__part { position: relative; }
+.chord-moment .form-control {
+  padding-right: 2.75rem;
+  cursor: pointer;
+}
+.chord-moment .form-control.is-invalid { background-image: none; padding-right: 2.75rem; }
+.chord-moment__icon {
+  position: absolute;
+  right: .85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--bs-secondary-color);
+}
+/* The browser's own small icon stays clickable but unseen, under ours. */
+.chord-moment input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 0;
+  width: 2.75rem;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+@media (max-width: 359.98px) { .chord-moment { grid-template-columns: minmax(0, 1fr); } }

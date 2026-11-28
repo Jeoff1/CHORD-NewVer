@@ -1006,6 +1006,20 @@ in headless Chrome against the dev server: the current location (a test
 position) filled in the address, the map loaded, and clicking the map
 changed the address.
 
+#### Date and time as two boxes (the owner, 28 Nov 2026)
+
+- Every date-and-time field (a service's date and rehearsal, booking and
+  requesting a service, the public request form) is a date box with a
+  calendar icon beside a time box with a clock icon, instead of one
+  combined box. A click anywhere in a box opens the browser's picker.
+- The browser shows the date in the device's own format (e.g. 11/28/2026);
+  matching "Nov 28, 2026" exactly would need a date-picker library.
+- A date without a time is refused rather than read as midnight.
+
+Tests: `apps/core/tests/test_moment_input.py`, and
+`apps/worship/tests/test_service_date.py`. Screenshots of the new-service
+form at desktop and narrow widths.
+
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 
 Approved by the owner on 2026-11-25. The full design is [[Phase-9B-Plan]];

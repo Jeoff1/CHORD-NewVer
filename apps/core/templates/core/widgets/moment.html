@@ -1,0 +1,15 @@
+{% load static %}{# A date and a time side by side (apps/core/widgets.py, MomentInput). The field's label is the fieldset's legend; each box has its own label for screen readers. #}
+<div class="chord-moment">
+  {% for widget in widget.subwidgets %}
+    <div class="chord-moment__part">
+      <label class="visually-hidden" for="{{ widget.attrs.id }}">{% if forloop.first %}Date{% else %}Time{% endif %}</label>
+      {% include widget.template_name %}
+      {% if forloop.first %}
+        <svg class="chord-moment__icon" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 2a1 1 0 0 1 1 1v1h6V3a1 1 0 1 1 2 0v1h1.5A2.5 2.5 0 0 1 21 6.5v12a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-12A2.5 2.5 0 0 1 5.5 4H7V3a1 1 0 0 1 1-1zM5 9.5v9c0 .28.22.5.5.5h13a.5.5 0 0 0 .5-.5v-9zm2.5 2.5h3v3h-3z"></path></svg>
+      {% else %}
+        <svg class="chord-moment__icon" aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 2a1 1 0 0 1 1 1v4.6l2.7 2.7a1 1 0 0 1-1.4 1.4l-3-3A1 1 0 0 1 11 12V7a1 1 0 0 1 1-1z"></path></svg>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+<script src="{% static 'core/moment_input.js' %}" defer></script>

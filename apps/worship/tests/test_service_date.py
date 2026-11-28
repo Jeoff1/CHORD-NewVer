@@ -70,7 +70,10 @@ class ServiceFormDateTests(TestCase):
         expected = suggested_start(first_church(), self.template)
         local = expected.astimezone(MANILA).strftime("%Y-%m-%dT%H:%M")
         self.assertEqual(expected.astimezone(MANILA).weekday(), 6)
-        self.assertContains(page, f'value="{local}"')
+        day, time = local.split("T")
+        # A date box and a time box (the owner, 28 Nov 2026).
+        self.assertContains(page, f'type="date" name="starts_at_0" value="{day}"')
+        self.assertContains(page, f'type="time" name="starts_at_1" value="{time}"')
         # Each template option carries its own next start, for the script.
         self.assertContains(page, f'data-next-start="{local}"')
         self.assertContains(page, "worship/service_form.js")
@@ -93,5 +96,6 @@ class ServiceFormDateTests(TestCase):
         page = self.client.get(
             reverse("worship:service_update", kwargs={"public_id": service.public_id})
         )
-        own = service.starts_at.astimezone(MANILA).strftime("%Y-%m-%dT%H:%M")
-        self.assertContains(page, f'value="{own}"')
+        local = service.starts_at.astimezone(MANILA)
+        self.assertContains(page, f'name="starts_at_0" value="{local:%Y-%m-%d}"')
+        self.assertContains(page, f'name="starts_at_1" value="{local:%H:%M}"')

@@ -6,6 +6,7 @@ from django.forms import inlineformset_factory
 
 from apps.church.scoping import ChurchFormMixin
 from apps.core.storage import PrivateFileInput
+from apps.core.widgets import MomentField
 from apps.songs.models import ThemeTag
 
 from . import sermons
@@ -25,12 +26,11 @@ MOMENT_FORMAT = "%Y-%m-%dT%H:%M"
 
 
 def moment_field(**kwargs):
-    """A date-and-time field using the browser's own picker."""
-    return forms.DateTimeField(
+    """A date-and-time field: a date box and a time box side by side, each
+    opening the browser's own picker (``MomentInput``; the owner, 28 Nov
+    2026). Every date-and-time field in CHORD is made here."""
+    return MomentField(
         input_formats=[MOMENT_FORMAT, "%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"],
-        widget=forms.DateTimeInput(
-            attrs={"type": "datetime-local"}, format=MOMENT_FORMAT
-        ),
         **kwargs,
     )
 
