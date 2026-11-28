@@ -20,8 +20,11 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
 - **Git:** Phase 2 and the plan commits pushed to `origin/joy-ui-ux-v3`
   (the UI/UX owner now authorises pushing each phase there).
 - **Checks:** `scripts/check.ps1 -Quick`: lint, format, Django checks,
-  migrations (none), 1496 tests passed; the full check (with coverage)
-  passed in the pre-commit hook before this commit was made. Also added
+  migrations (none), 1496 tests passed. The full `scripts/check.ps1`
+  (with coverage) then passed: 1496 tests, 97% coverage. (Correction: the
+  pre-commit hook was not switched on in this clone, so it ran for neither
+  the Phase 2 nor the Phase 3 commit; both phases' full checks were run by
+  hand and passed. The hook is now on: `core.hooksPath scripts/git-hooks`.) Also added
   for Phase 4 and later: the record patterns in `components.css`
   (`.chord-seg`, `.chord-date`, `.chord-rows`, `.chord-dl`,
   `.chord-record`, `.chord-stats`).
