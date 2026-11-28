@@ -17,7 +17,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   migration.
 - **All UI/UX phases are done**; open items are listed in
   [[UI-UX-Master-Plan]] ("Blocked", "Flagged conflicts").
-- **Checks:** PHASE11_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `c940b2b`: lint, format, Django checks, migrations (none), 1530 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 10: settings and reports (branch `joy-ui-ux-v3`)
 
