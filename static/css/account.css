@@ -1,0 +1,186 @@
+/* The account popover and Edit Profile modal (UI/UX Phase 2, 28 Nov 2026).
+ * templates/includes/account_popover.html, includes/profile_modal.html, static/js/account_menu.js.
+ * Loaded by base.html (signed-in pages), the landing page and the church page. Initials only: no
+ * profile picture, bio or banner (the lead developer's decision, 28 Nov 2026). Light and dark follow
+ * data-bs-theme; reduced motion turns every animation off. */
+
+.acct, .acct-modal, .acct-toast {
+  --acct-surface: #FFFFFF;
+  --acct-text: #1B2B27;
+  --acct-muted: #5E6B67;
+  --acct-border: rgba(23, 54, 48, .12);
+  --acct-tint: rgba(23, 54, 48, .06);
+  --acct-tint-strong: rgba(23, 54, 48, .1);
+  --acct-accent: #173630;
+  --acct-accent-text: #E5C690;
+  --acct-danger: #B02A37;
+  --acct-shadow: 0 24px 50px -20px rgba(11, 31, 27, .45), 0 2px 8px rgba(11, 31, 27, .08);
+  --acct-ease: cubic-bezier(.2, .8, .2, 1);
+}
+[data-bs-theme=dark] .acct, [data-bs-theme=dark] .acct-modal, [data-bs-theme=dark] .acct-toast {
+  --acct-surface: #12201D;
+  --acct-text: #EEF0EE;
+  --acct-muted: #A9B7B2;
+  --acct-border: rgba(229, 198, 144, .16);
+  --acct-tint: rgba(229, 198, 144, .07);
+  --acct-tint-strong: rgba(229, 198, 144, .13);
+  --acct-accent: #E5C690;
+  --acct-accent-text: #173630;
+  --acct-danger: #EA868F;
+  --acct-shadow: 0 24px 50px -16px rgba(0, 0, 0, .7), 0 0 0 1px rgba(229, 198, 144, .08);
+}
+
+/* --- The button -------------------------------------------------------- */
+.acct { position: relative; }
+.acct__btn { display: inline-flex; align-items: center; gap: 10px; max-width: 280px; min-height: 44px; padding: 4px 12px 4px 4px; border: 1px solid var(--bs-border-color); border-radius: 999px; background: transparent; color: var(--bs-body-color); font-weight: 600; cursor: pointer; transition: border-color .18s ease, background-color .18s ease, transform .12s ease, box-shadow .18s ease; }
+.acct__btn:hover { border-color: var(--chord-border-strong); background: var(--acct-tint); }
+.acct__btn:active { transform: scale(.97); }
+.acct__btn:focus-visible { outline: 3px solid var(--chord-gold); outline-offset: 2px; }
+.acct__btn[aria-expanded="true"] { border-color: var(--chord-border-strong); box-shadow: 0 0 0 3px var(--acct-tint-strong); }
+.acct__btn > .chord-icon { flex: none; color: var(--acct-muted); transition: transform .22s var(--acct-ease); }
+.acct__btn[aria-expanded="true"] > .chord-icon { transform: rotate(180deg); }
+.acct__btn-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* On the public pages' green bar: the Phase 1 look, initials only. */
+.acct--public .acct__btn { gap: .35rem; padding: 3px .7rem 3px 3px; border: 1.5px solid rgba(229, 198, 144, .45); background: rgba(229, 198, 144, .08); color: var(--lp-on-green, #F4F1F0); }
+.acct--public .acct__btn:hover { background: rgba(229, 198, 144, .16); border-color: #E5C690; }
+.acct--public .acct__btn > .chord-icon { color: inherit; }
+.acct--public .acct__btn-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.acct--public .acct__btn > .acct__av { background: #E5C690; color: #173630; }
+
+/* --- The initials avatar ------------------------------------------------- */
+.acct__av { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: #173630; color: #E5C690; font-family: "Raleway", system-ui, sans-serif; font-weight: 800; font-size: .85rem; letter-spacing: .02em; line-height: 1; user-select: none; }
+[data-bs-theme=dark] .acct__av { box-shadow: 0 0 0 1px #E5C690; }
+.acct__av--lg { width: 48px; height: 48px; font-size: 1.05rem; }
+.acct__av--xl { width: 72px; height: 72px; font-size: 1.55rem; box-shadow: 0 0 0 4px var(--acct-surface), 0 0 0 5px var(--acct-border); }
+.acct__av.is-changed { animation: acct-pop .32s var(--acct-ease); }
+@keyframes acct-pop { 40% { transform: scale(1.1); } }
+
+/* --- The popover --------------------------------------------------------- */
+.acct__pop { position: absolute; right: 0; top: calc(100% + 10px); z-index: 1060; width: 300px; max-height: calc(100vh - 90px); overflow-y: auto; padding: .45rem; border: 1px solid var(--acct-border); border-radius: 16px; background: var(--acct-surface); color: var(--acct-text); box-shadow: var(--acct-shadow); transform-origin: top right; animation: acct-in .2s var(--acct-ease) both; }
+.acct__pop.is-closing { animation: acct-out .15s ease both; }
+@keyframes acct-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes acct-out { to { opacity: 0; transform: translateY(-4px) scale(.98); } }
+
+.acct__card { display: flex; align-items: center; gap: .8rem; padding: .7rem .65rem .6rem; }
+.acct__who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.acct__name { font-weight: 700; font-size: 1rem; line-height: 1.25; overflow-wrap: anywhere; color: var(--acct-text); }
+.acct__role { font-size: .8rem; font-weight: 600; color: var(--acct-muted); }
+
+.acct__church { display: flex; align-items: center; gap: .6rem; margin: 0 .4rem .5rem; padding: .5rem .6rem; border-radius: 12px; background: var(--acct-tint); }
+.acct__church-logo { display: grid; place-items: center; flex: none; width: 28px; height: 28px; overflow: hidden; border-radius: 8px; background: #173630; color: #E5C690; font-size: .7rem; font-weight: 800; }
+.acct__church-logo img { width: 100%; height: 100%; object-fit: cover; }
+.acct__church-text { min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
+.acct__church-label { font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--acct-muted); }
+.acct__church-name { font-size: .88rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.acct__pop .acct__edit { display: flex; align-items: center; justify-content: center; gap: .5rem; width: calc(100% - .8rem); margin: 0 .4rem .2rem; min-height: 40px; padding: .45rem .8rem; border: 1px solid var(--acct-border); border-radius: 10px; background: var(--acct-surface); color: var(--acct-text); font: inherit; font-weight: 600; cursor: pointer; transition: background-color .18s ease, border-color .18s ease, transform .12s ease; }
+.acct__pop .acct__edit:hover, .acct__pop .acct__edit:focus-visible { background: var(--acct-tint-strong); border-color: var(--chord-border-strong); outline: none; }
+.acct__pop .acct__edit:active { transform: scale(.98); }
+
+.acct__label { margin: .55rem .65rem .2rem; font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--acct-muted); }
+.acct__pop hr { margin: .4rem .3rem; border: 0; border-top: 1px solid var(--acct-border); opacity: 1; }
+.acct__pop form { margin: 0; }
+.acct__item { display: flex; align-items: center; gap: .65rem; width: 100%; min-height: 40px; padding: .5rem .65rem; border: 0; border-radius: 10px; background: transparent; color: var(--acct-text); font: inherit; font-size: .93rem; text-align: left; text-decoration: none; cursor: pointer; transition: background-color .16s ease, padding-left .16s ease; }
+.acct__item > .chord-icon { color: var(--acct-muted); transition: color .16s ease; }
+.acct__item:hover, .acct__item:focus-visible { background: var(--acct-tint); color: var(--acct-text); outline: none; padding-left: .8rem; }
+.acct__item:hover > .chord-icon, .acct__item:focus-visible > .chord-icon { color: var(--acct-text); }
+.acct__item.is-current { font-weight: 700; }
+.acct__item.is-current > .chord-icon { margin-left: auto; color: var(--chord-success-text); }
+.acct__item--out:hover, .acct__item--out:focus-visible, .acct__item--out:hover > .chord-icon, .acct__item--out:focus-visible > .chord-icon { color: var(--acct-danger); }
+
+/* --- The Edit Profile modal ---------------------------------------------- */
+.acct-modal { width: min(520px, calc(100vw - 24px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid var(--acct-border); border-radius: 18px; background: var(--acct-surface); color: var(--acct-text); box-shadow: var(--acct-shadow); overflow: hidden; }
+.acct-modal[open] { animation: acct-modal-in .26s var(--acct-ease) both; }
+.acct-modal.is-closing { animation: acct-modal-out .16s ease both; }
+.acct-modal::backdrop { background: rgba(11, 31, 27, .55); backdrop-filter: blur(2px); }
+.acct-modal[open]::backdrop { animation: acct-fade .26s ease both; }
+.acct-modal.is-closing::backdrop { animation: acct-fade .16s ease reverse both; }
+@keyframes acct-modal-in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes acct-modal-out { to { opacity: 0; transform: translateY(8px) scale(.98); } }
+@keyframes acct-fade { from { opacity: 0; } to { opacity: 1; } }
+.acct-modal > form { display: flex; flex-direction: column; max-height: calc(100vh - 34px); margin: 0; }
+
+.acct-modal__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--acct-border); }
+.acct-modal__title { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--chord-heading); }
+.acct-modal__close { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--acct-muted); cursor: pointer; transition: background-color .16s ease, color .16s ease, transform .2s var(--acct-ease); }
+.acct-modal__close:hover, .acct-modal__close:focus-visible { background: var(--acct-tint-strong); color: var(--acct-text); outline: none; transform: rotate(90deg); }
+
+.acct-modal__body { overflow-y: auto; padding: 1.25rem; }
+.acct-modal__preview { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; padding: 1rem; border: 1px solid var(--acct-border); border-radius: 14px; background: var(--acct-tint); }
+.acct-modal__preview-text { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.acct-modal__preview-text strong { font-size: 1.1rem; line-height: 1.25; overflow-wrap: anywhere; transition: color .2s ease; }
+.acct-modal__preview-text span { font-size: .85rem; color: var(--acct-muted); }
+
+.acct-modal__fields { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem 1rem; margin: 0; padding: 0; border: 0; }
+.acct-field { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.acct-field label { font-size: .88rem; font-weight: 600; }
+.acct-field__req { color: var(--acct-danger); }
+.acct-field__opt { margin-left: .25rem; font-size: .75rem; font-weight: 500; color: var(--acct-muted); }
+.acct-field input { width: 100%; min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--chord-border-strong); border-radius: 10px; background: var(--bs-body-bg); color: var(--bs-body-color); font: inherit; transition: border-color .16s ease, box-shadow .16s ease; }
+.acct-field input:hover { border-color: var(--acct-muted); }
+.acct-field input:focus { border-color: var(--acct-accent); box-shadow: 0 0 0 3px var(--acct-tint-strong); outline: none; }
+.acct-field input[aria-invalid="true"] { border-color: var(--acct-danger); }
+.acct-field input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgba(176, 42, 55, .18); }
+.acct-field__error { margin: 0; font-size: .8rem; color: var(--acct-danger); }
+.acct-field__error:not([hidden]) { animation: acct-shake .32s ease; }
+@keyframes acct-shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.acct-modal__error { margin: 0 0 1rem; padding: .6rem .8rem; border-radius: 10px; background: rgba(176, 42, 55, .1); color: var(--acct-danger); font-size: .88rem; }
+.acct-modal__note { margin: 1.1rem 0 0; font-size: .83rem; color: var(--acct-muted); }
+.acct-modal__note a { color: inherit; font-weight: 600; }
+
+.acct-modal__foot { display: flex; justify-content: flex-end; gap: .6rem; padding: .9rem 1.25rem; border-top: 1px solid var(--acct-border); }
+.acct-modal__foot .btn { min-height: 44px; min-width: 104px; border-radius: 10px; font-weight: 600; }
+.acct-modal__save { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; transition: transform .12s ease; }
+.acct-modal__save:active { transform: scale(.97); }
+.acct-modal__spinner { display: none; width: 1em; height: 1em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: acct-spin .7s linear infinite; }
+.acct-modal__save.is-busy .acct-modal__spinner { display: inline-block; }
+@keyframes acct-spin { to { transform: rotate(360deg); } }
+
+/* --- The "saved" toast ---------------------------------------------------- */
+.acct-toast { position: fixed; right: 20px; bottom: 20px; z-index: 1090; display: flex; align-items: center; gap: .55rem; padding: .7rem 1rem; border-radius: 12px; background: #173630; color: #F4F1F0; font-weight: 600; box-shadow: var(--acct-shadow); animation: acct-toast-in .28s var(--acct-ease) both; }
+.acct-toast .chord-icon { color: #E5C690; }
+.acct-toast.is-leaving { animation: acct-toast-out .2s ease both; }
+@keyframes acct-toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes acct-toast-out { to { opacity: 0; transform: translateY(8px); } }
+
+/* --- Phones ---------------------------------------------------------------- */
+@media (max-width: 575.98px) {
+  .acct--app .acct__btn { gap: 0; padding: 4px; }
+  .acct--app .acct__btn-name, .acct--app .acct__btn > .chord-icon { display: none; }
+  .acct__pop { position: fixed; left: .5rem; right: .5rem; top: 64px; width: auto; }
+  .acct-modal { width: 100vw; max-width: 100vw; max-height: 92vh; margin: auto 0 0; border-radius: 18px 18px 0 0; }
+  .acct-modal[open] { animation-name: acct-sheet-in; }
+  .acct-modal.is-closing { animation-name: acct-sheet-out; }
+  .acct-modal > form { max-height: 92vh; }
+  .acct-modal__fields { grid-template-columns: 1fr; }
+  .acct-modal__foot .btn { flex: 1; }
+  .acct-toast { left: 12px; right: 12px; bottom: 12px; }
+  @keyframes acct-sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+  @keyframes acct-sheet-out { to { transform: translateY(100%); } }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acct__pop, .acct__pop.is-closing, .acct-modal[open], .acct-modal.is-closing, .acct-modal::backdrop,
+  .acct__av.is-changed, .acct-field__error:not([hidden]), .acct-toast, .acct-toast.is-leaving { animation: none; }
+  .acct__btn, .acct__btn > .chord-icon, .acct__item, .acct-modal__close { transition: none; }
+  .acct-modal__spinner { animation-duration: 1.6s; }
+}
+
+/* --- Appearance, in the popover (UI/UX owner, 28 Nov 2026) ----------------
+ * Light, Dark, Device: a segmented switch whose thumb slides to the choice. */
+.acct__theme { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin: .1rem 0 .15rem; padding: .35rem .4rem .35rem .65rem; }
+.acct__theme-label { font-size: .93rem; color: var(--acct-text); }
+.acct__seg { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); flex: none; width: 168px; padding: 3px; border-radius: 999px; background: var(--acct-tint-strong); }
+.acct__seg-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / 3); border-radius: 999px; background: var(--acct-surface); box-shadow: 0 1px 3px rgba(11, 31, 27, .22); transition: transform .26s var(--acct-ease); }
+[data-bs-theme=dark] .acct__seg-thumb { background: #E5C690; }
+.acct__theme[data-current="dark"] .acct__seg-thumb { transform: translateX(100%); }
+.acct__theme[data-current="device"] .acct__seg-thumb { transform: translateX(200%); }
+.acct__seg button { position: relative; z-index: 1; min-height: 30px; padding: 0 .3rem; border: 0; border-radius: 999px; background: transparent; color: var(--acct-muted); font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; transition: color .2s ease; }
+.acct__seg button:hover { color: var(--acct-text); }
+.acct__seg button[aria-checked="true"] { color: var(--acct-text); }
+[data-bs-theme=dark] .acct__seg button[aria-checked="true"] { color: #173630; }
+.acct__seg button:focus-visible { outline: 2px solid var(--chord-gold); outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { .acct__seg-thumb, .acct__seg button { transition: none; } }
+.acct-toast.is-error { background: #B02A37; }
+.acct-toast.is-error .chord-icon { color: #FFFFFF; }

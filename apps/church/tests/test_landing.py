@@ -110,7 +110,9 @@ class LandingRedesignTests(TestCase):
     def test_every_image_is_decorative_or_labelled(self):
         content = self.client.get(HOME).content.decode()
         self.assertNotRegex(content, r'<img (?![^>]*alt="")')
-        self.assertContains(self.client.get(HOME), 'aria-label="CHORD, home"')
+        self.assertContains(
+            self.client.get(HOME), 'aria-label="CHORD, go to the homepage"'
+        )
 
     def test_the_intro_shows_once_a_session_and_can_never_block_the_page(self):
         content = self.client.get(HOME).content.decode()

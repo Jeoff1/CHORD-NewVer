@@ -18,7 +18,7 @@
       {% if kept_warning %}<div class="alert alert-warning small">{{ kept_warning }} Saving keeps them.</div>{% endif %}
       <div class="card shadow-sm">
         <div class="card-body p-4">
-          <form method="post" enctype="multipart/form-data" novalidate>
+          <form method="post" enctype="multipart/form-data" novalidate class="chord-editor">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
             {{ form.key.as_field_group }}

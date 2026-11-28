@@ -8,15 +8,38 @@ development task.
 
 ## Current status
 
-**UI/UX Phase 1 (28 Nov 2026), branch `joy-ui-ux-v3`, not committed
-yet:** signed-in people get an account menu on the landing page
+**UI/UX Phase 1 (28 Nov 2026), branch `joy-ui-ux-v3`, committed and
+pushed (`02b00ea`):** signed-in people get an account menu on the landing page
 (`/welcome/`); the sidebar logo opens the landing page and the church
 panel opens the church's page; the people who manage a church edit its
 page in place (cover, logo, Edit profile modal, View as visitor)
 ([[Church-Setup]], [[Design-Decisions]], "Signed-in website access and the
 Church CMS"). Opening a private church's page for its managers awaits the
-lead developer's approval; the personal profile waits for its fields to be
-agreed ([[Design-Decisions]], "Remaining UI/UX tasks").
+lead developer's approval ([[Design-Decisions]], "Remaining UI/UX tasks").
+
+**UI/UX plan:** [[UI-UX-Master-Plan]] (phases 1 to 11, rules, backend
+restrictions, workflow) and [[Animation-Plan]], both holding the UI/UX
+owner's full written handoff (28 Nov 2026). Phases 3 to 11 are built from
+it and the existing design system (the artifact itself can't be opened
+from Claude Code), one commit per phase, each pushed to
+`origin/joy-ui-ux-v3`. **Done: Phase 3 (shared UI components:
+`components.css`, `components.js`, toasts, confirm dialog, empty states;
+[[Design-System]], "Shared components") and Phase 4 (Bookings and
+service requests; [[Occasions]]) and Phase 5 (worship planning,
+suggestions, lineup; [[Worship]]) Phase 6 (songs, chord sheets,
+rehearsal) Phase 7 (calendar and scheduling) and Phase 8 (Users, Roles,
+Audit log) Phase 9 (announcements feed, notifications and the bell
+popover), Phase 10 (settings and reports) and Phase 11 (the final audit).
+All UI/UX phases are done and pushed; the UI/UX owner's whole-site review
+is next.**
+
+**UI/UX Phase 2 (28 Nov 2026), branch `joy-ui-ux-v3`, approved by the
+UI/UX owner and committed locally (not pushed):** one account popover on
+every signed-in page (initials avatar, full name, role, church, Edit
+Profile, Appearance, Account Settings, Sign Out), an Edit Profile modal for
+the name fields only, and the CHORD logo going to `/welcome/` when signed in. The lead developer
+rejected profile pictures and bios, so there are no new fields and no
+migration ([[Design-Decisions]], "Personal profile").
 
 **Sign up while requesting a service (28 Nov 2026), branch
 `public-service-signup`:** a visitor without an account fills in a public

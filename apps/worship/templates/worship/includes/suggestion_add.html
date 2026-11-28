@@ -1,6 +1,6 @@
 {# One suggestion's "Add" (decision 0015): the person picks it for the lineup. Expects `suggestion`, `can_add_suggestions` and `lineup_song_ids` from panel_context(). #}
 {% if suggestion.song_id in lineup_song_ids %}
-  <span class="chord-pill chord-pill--success flex-shrink-0">In the lineup</span>
+  <span class="chord-pill chord-pill--success chord-in-lineup flex-shrink-0">In the lineup</span>
 {% elif can_add_suggestions %}
   <form method="post" action="{% url 'worship:lineup_add_suggestion' public_id=service.public_id pk=suggestion.pk %}" class="flex-shrink-0">
     {% csrf_token %}

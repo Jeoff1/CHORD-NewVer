@@ -1,7 +1,7 @@
-{# The worship check of `song`, as a badge. #}
-{% if song.worship_check == "accepted" %}<span class="badge text-bg-success">{{ song.get_worship_check_display }}</span>
-{% elif song.worship_check == "rejected" %}<span class="badge text-bg-secondary">{{ song.get_worship_check_display }}</span>
-{% elif song.lyrics_status == "pending" %}<span class="badge text-bg-light border">Waiting for lyrics</span>
-{% elif song.lyrics_status == "found" %}<span class="badge text-bg-light border">Waiting for analysis</span>
-{% elif song.lyrics_status == "failed" %}<span class="badge text-bg-warning">Lyrics lookup failed</span>
-{% else %}<span class="badge text-bg-warning">Set aside: no lyrics</span>{% endif %}
+{# The worship check of `song`, as a status pill (UI/UX Phase 6: a dot and the word, never colour alone). #}
+{% if song.worship_check == "accepted" %}<span class="chord-pill chord-pill--success">{{ song.get_worship_check_display }}</span>
+{% elif song.worship_check == "rejected" %}<span class="chord-pill chord-pill--neutral">{{ song.get_worship_check_display }}</span>
+{% elif song.lyrics_status == "pending" %}<span class="chord-pill chord-pill--neutral">Waiting for lyrics</span>
+{% elif song.lyrics_status == "found" %}<span class="chord-pill chord-pill--neutral">Waiting for analysis</span>
+{% elif song.lyrics_status == "failed" %}<span class="chord-pill chord-pill--warning">Lyrics lookup failed</span>
+{% else %}<span class="chord-pill chord-pill--warning">Set aside: no lyrics</span>{% endif %}

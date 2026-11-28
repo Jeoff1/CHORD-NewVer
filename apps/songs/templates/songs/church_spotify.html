@@ -15,7 +15,7 @@
             <p class="mb-0">Spotify isn't set up on this installation, so the church's account can't be connected. An administrator adds the Spotify settings to the server's <code>.env</code> file.</p>
           {% elif account %}
             <p>The church's Spotify account is connected{% if account.connected_by %} by {{ account.connected_by|person_name }}{% endif %}, since {{ account.created_at|date:"M j, Y" }}. {{ lineup_word }} playlists are saved on it, as public playlists.</p>
-            <form method="post" action="{% url 'songs:church_spotify_disconnect' %}" onsubmit="return confirm('Disconnect the church\'s Spotify account? Playlists already saved stay on it.')">
+            <form method="post" action="{% url 'songs:church_spotify_disconnect' %}" data-confirm="Playlists already saved stay on it." data-confirm-title="Disconnect the church&#x27;s Spotify account?" data-confirm-action="Disconnect">
               {% csrf_token %}
               <button type="submit" class="btn btn-outline-danger">Disconnect the church's account</button>
             </form>

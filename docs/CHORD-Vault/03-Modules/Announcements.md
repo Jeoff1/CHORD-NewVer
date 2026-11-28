@@ -40,6 +40,27 @@ Teams-off case, archiving, permissions, module switching).
 Phase 9A, A7 part 3: the dashboard's side column shows the latest two
 announcements the person may see (`dashboard.py`).
 
+### Screens (UI/UX Phase 9, 28 Nov 2026)
+
+From [[UI-UX-Master-Plan]] §15: `announcements/list.html` is a news feed
+(`.chord-feed` of `.chord-post` cards): the author's initials and name, the
+date, who it is for as a chip (everyone, or one service's team, linked),
+the title and text; Archive (author only, as before) asks first; an empty
+state offers Post an announcement. Only public announcements reach the
+church page (unchanged). Notifications are a core app; their screens,
+redesigned in the same phase, are described below.
+
+### Notifications screens (UI/UX Phase 9)
+
+`notifications/list.html`: page header with Mark all as read, rows with an
+icon, a red dot and gold wash when unread (and "New:" for screen readers),
+the time and Open or Mark as read; an empty state. The header bell
+(`includes/app_header.html`) opens a popover (`.chord-bell__pop`) that
+loads this page in the background and shows its first eight rows, with Mark
+all as read and See all notifications; a click outside or Escape closes it;
+without JavaScript, or with Ctrl or Shift, the bell is the plain link. No
+new endpoint. Tests: `apps/notifications/tests/test_notification_screens.py`.
+
 ## Church settings this module depends on
 
 - Whether the Announcements module is switched on; "one service's team"

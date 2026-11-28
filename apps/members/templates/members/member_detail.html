@@ -29,7 +29,7 @@
               {% else %}
                 <input type="hidden" name="archive" value="1">
                 <button type="submit" class="btn btn-outline-danger"
-                        onclick="return confirm('Archive {{ member.full_name|escapejs }}? Their record is kept and can be restored.')">Archive</button>
+                        data-confirm="Archive {{ member.full_name }}? Their record is kept and can be restored." data-confirm-title="Archive this record?" data-confirm-action="Archive">Archive</button>
               {% endif %}
             </form>
           {% endif %}

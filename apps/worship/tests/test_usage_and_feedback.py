@@ -377,7 +377,9 @@ class AttendanceReportTests(ReportTestCase):
             # Checked in the data, not the HTML: "999" can turn up in a
             # username or an id on the page.
             self.assertNotIn(999, [s.attendance for s in page.context["services"]])
-            self.assertContains(page, "average 120")
+            # UI/UX Phase 10: the average is a summary count.
+            self.assertContains(page, '<span class="chord-stat__value">120</span>')
+            self.assertContains(page, "average headcount")
             self.assertContains(self.client.get(self.REPORTS), "Attendance")
 
     def test_hidden_when_no_headcount_was_ever_recorded(self):

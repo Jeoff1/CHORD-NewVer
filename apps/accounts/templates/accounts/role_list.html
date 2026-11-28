@@ -1,20 +1,14 @@
 {% extends "base.html" %}
+{% load ui %}
 
 {% block title %}Roles{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">Roles and permissions</h1>
-    <div class="d-flex gap-2">
-      <a href="{% url 'accounts:permission_matrix' %}" class="btn btn-outline-primary">Permission matrix</a>
-      {% if perms.accounts.add_role %}<a href="{% url 'accounts:role_create' %}" class="btn btn-primary">Add role</a>{% endif %}
-    </div>
-  </div>
-  <p class="text-body-secondary">
-    A role is a set of permissions. Give users roles on their user page, and choose
-    what each role may do in the permission matrix. The Administrator role always has
-    full access.
-  </p>
+  {# UI/UX Phase 8: a page header, then roles as a table with a Full access pill and user counts. #}
+  {% page_header "Roles and permissions" subtitle="A role is a set of permissions. Give users roles on their user page, and choose what each role may do in the permission matrix. The Administrator role always has full access." %}
+    <a href="{% url 'accounts:permission_matrix' %}" class="btn btn-outline-primary">Permission matrix</a>
+    {% if perms.accounts.add_role %}<a href="{% url 'accounts:role_create' %}" class="btn btn-primary">{% include "includes/icons/plus.html" with size=18 %}Add role</a>{% endif %}
+  {% endpage_header %}
 
   <div class="card shadow-sm">
     <div class="table-responsive">
@@ -30,16 +24,16 @@
         <tbody>
           {% for role in object_list %}
             <tr>
-              <td class="fw-semibold">{{ role.title }}{% if role.is_administrator %} <span class="badge text-bg-primary fw-normal">Full access</span>{% endif %}</td>
+              <td class="fw-semibold">{{ role.title }}{% if role.is_administrator %} <span class="chord-pill chord-pill--accent fw-normal">Full access</span>{% endif %}</td>
               <td>{{ role.description|default:"—" }}</td>
-              <td>{{ role.user_count }}</td>
+              <td><span class="chord-chip">{{ role.user_count }} user{{ role.user_count|pluralize }}</span></td>
               <td class="text-end text-nowrap">
                 {% if perms.accounts.change_role %}<a href="{% url 'accounts:role_update' pk=role.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>{% endif %}
                 {% if perms.accounts.delete_role and not role.is_administrator %}<a href="{% url 'accounts:role_delete' pk=role.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>{% endif %}
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" class="text-center text-body-secondary py-4">No roles yet.</td></tr>
+            <tr><td colspan="4">{% include "includes/empty_state.html" with icon="lock" title="No roles yet." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

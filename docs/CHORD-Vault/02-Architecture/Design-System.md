@@ -37,6 +37,88 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Sign-in page | `accounts/auth_base.html` (with `login.html`), its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/auth.js` | Sign in, full-page, redesigned 27 Nov 2026: see "The sign-in page" below. Signing up is registering a church |
 | Church registration | `church/register.html`, `auth.css` with its own `static/css/register.css` and `church/static/church/register.js` | Register your church as a four-step wizard, 27 Nov 2026: see "Registering a church" below |
 
+## Shared components (UI/UX Phase 3, 28 Nov 2026)
+
+`static/css/components.css` and `static/js/components.js`, loaded by
+`base.html` after `chord.css` on every page that extends it
+([[UI-UX-Master-Plan]] §8, [[Animation-Plan]]). Templates keep Bootstrap's
+classes; this layer shapes them, so every Module looks and behaves the same.
+
+| Component | What it does |
+|---|---|
+| Buttons (`.btn`) | radius 10 px, weight 600, at least 42 px tall (`btn-sm` 32 px), icon gap; primary and danger lift 1 px with a shadow on hover; press scales to .97; 3 px gold focus outline; disabled at 55 %; `.btn-danger` at passing shades in both modes |
+| Busy button | the button that sent a POST form gets `.is-busy` (a spinner before its label, `aria-busy`) and the form can't be sent twice; it resets after 8 s or when the page returns from the browser cache. `data-no-busy` on a form opts out; htmx forms are left alone |
+| Forms | inputs 44 px, radius 10 px, border `#6E8A83`, hover and focus borders, labels weight 600, errors under the field with a round "!" mark that fades in; `.chord-fieldset` (a titled group of related fields) and `.chord-form-actions` |
+| Cards | radius 12 px, a softer shadow; `.chord-card-link` lifts 2 px on hover for a whole-card link |
+| Tables (`.table`) | uppercase muted header on the tertiary surface, roomier rows, row hover, no last border, rounded inside cards, bold links; `tr[data-href]` opens the record from anywhere in the row (its own link stays the real one); inside a card on phones the table scrolls in its own box |
+| Search (`includes/list_toolbar.html`) | a search icon, the clear X (a link when a search is active, a button while typing), Search, and the result count (`aria-live`) |
+| Pagination | chevrons, 40 px targets, green current page (gold in dark mode) |
+| Dropdowns | radius 12 px, a large shadow, a fade-and-drop entrance (.18 s), the caret turns |
+| Modals | radius 18 px, rise and scale in (.26 s), Raleway titles, a darker backdrop |
+| Confirm dialog | `data-confirm="…"` on a form, its submit button or a link (with `data-confirm-title`, `data-confirm-action`, and `data-confirm-danger="false"` for a non-destructive action) opens CHORD's dialog instead of the browser's; `hx-confirm` uses it too. Cancel has focus; Escape cancels |
+| Toasts (`includes/messages.html`) | Django messages float at the top right as cards with a coloured edge, icon and X: success and info close after 5 s with a countdown bar (hover or focus pauses); warnings and errors (`danger`) stay until dismissed (`role="alert"`). Without JavaScript they stay in the page. The registration welcome keeps its own toast |
+| Empty state (`includes/empty_state.html`) | `icon`, `title`, optional `text`, optional `action_url` and `action_label`; never fake records |
+| Loading | `.chord-spinner` (gold), `.chord-skeleton` (shimmer), `.htmx-indicator` and `.chord-loading-dim` while an htmx request runs |
+| Status pills | a dot before the word, so status never relies on colour alone |
+| Reveal | `.chord-reveal` with `--i` staggers items by 60 ms |
+| Segmented filter (`.chord-seg`) | a pill group of links; the current one (`aria-current`) green with gold text (gold in dark mode); optional `.chord-seg__count` |
+| Date tile (`.chord-date`) | 56 × 60 px: month (small caps) over the day (Raleway 800); green for services, `--gold` for bookings, `--muted` for past or cancelled |
+| Record rows (`.chord-rows` > `.chord-row`) | a list where the title is a `stretched-link`: date tile, `__main` (title, `__meta` lines), `__side` (pills, buttons kept clickable above the link, `__chev` nudges right on hover); `.is-muted` strikes a cancelled title |
+| Details grid (`.chord-dl`) | labels and values in two columns, one column on phones |
+| Record header (`.chord-record`) | date tile, `__title`, `__when` (time and status pill), `__actions` |
+| Summary counts (`.chord-stats` > `.chord-stat`) | a value in Raleway 800 and a label; real counts only |
+| Card header (`.card-header-plain`) | a plain card heading row with an optional note on the right |
+
+Everything stops under `prefers-reduced-motion`. Tests:
+`apps/core/tests/test_shared_components.py`.
+
+## Worship planning (UI/UX Phase 5, 28 Nov 2026)
+
+`static/css/planning.css`: `.chord-steps` (stepper cards, thread, check
+pop, current ring), `.chord-next-step__icon`, `.chord-when` (date tile in a
+table cell), `form.chord-seg` (segmented GET buttons, `aria-pressed`),
+`.chord-list-bar`, `.chord-lineup-head` and `.chord-lineup-count`,
+`.chord-song-row` states (`is-locked`, `:target` flash), `.chord-finding`
+with `.chord-wave` (five bars, 1.1 s loop, only while a run works),
+`.chord-skel-song`, `.chord-suggest-list` and `.chord-suggest` (numbered
+cards, `is-in`), `.chord-in-lineup`, `.chord-rundown` (numbered rows),
+`.chord-theme-title` and `.chord-theme-scripture`. Details in [[Worship]].
+
+Songs (Phase 6, same file): `.chord-art` (a 44 px green-to-gold tile with
+the song's initial; `--lg` 88 px; it lifts on row hover), `.chord-song-cell`,
+`.chord-chip` (tags, with `__score`), `.chord-filters` (a folding filter
+panel), `.chord-song-head`, `.chord-big-search`, `.chord-tracks`, chord sheet
+readability rules, `.chord-editor`, `.chord-order` (numbered rehearsal
+order).
+
+Scheduling (Phase 7): `.chord-cal-bar`, `.chord-cal-title`,
+`.chord-cal-legend` and `.chord-cal-key--*`, `.chord-cal` with
+`__day` (`is-today`, `is-outside`), `__num` and `__event--service`,
+`--booking`, `--hidden`, `is-cancelled`; in `components.css`,
+`.chord-person` (initials avatar, 40 px, `--sm` 32 px).
+
+People (Phase 8, `components.css`): `.chord-matrix` (sticky header and
+first column, `__section` rows, roomy checkboxes), `.chord-matrix-save`
+(sticky Save), `.chord-diff` with `__old` and `__new`.
+
+Notifications and announcements (Phase 9, `components.css`):
+`.chord-notifs` and `.chord-notif` (`is-unread`: dot, wash, bold),
+`.chord-bell` and `.chord-bell__pop` (head, body, loading, See all; full
+width under the header on phones), `.chord-feed` and `.chord-post`
+(`__head`, `__who`, `__meta`, `__title`, `__body`).
+
+Settings and reports (Phase 10, `components.css`): the Settings hub's
+menu gets a soft shadow, small-caps category titles and items that nudge
+on hover; `.chord-report-cards` and `.chord-report-card` (`__icon`,
+`__label`), `.chord-period` (the period toolbar), `.chord-report-summary`.
+
+Final audit (Phase 11): the last Bootstrap badges became status pills and
+the last tab-style filter a `.chord-seg`; empty table rows became empty
+states; `.chord-error` gives 403 and 404 the empty-state look; every link,
+summary and focusable element shows a 3 px gold focus outline; on phones
+the main area never scrolls sideways; the dashboard's figures count up once
+per browser session (real numbers, not with reduced motion).
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's
@@ -174,11 +256,23 @@ Designed as an interactive mockup and approved by the UI/UX owner on
   the top (`.pf-toast`, a timer bar, gone after 5 s or on dismiss). Motion
   follows the Animation Plan (150–250 ms) and stops under
   `prefers-reduced-motion`.
-- **Account menu (landing and profile, 28 Nov 2026):** initials button,
-  a menu card (name, role line, Dashboard, My Church, Sign Out) that fades
-  and slides in (160 ms), closes on outside click or Escape and moves with
-  the arrow keys; a sheet anchored under the nav on phones
-  (`.lp-acct*` in `landing.css`).
+- **Account popover (UI/UX Phase 2, 28 Nov 2026; every signed-in page):**
+  `static/css/account.css` (`.acct*`). A 300 px card that fades and scales
+  in (200 ms) from the initials button: initials avatar (48 px), full name,
+  role line, a tinted church card (logo or initials, name), a full-width
+  text-only Edit Profile button, the links, a Light | Dark | Device
+  segmented switch whose thumb slides (260 ms) while the page cross-fades
+  (300 ms), Account Settings, and Sign Out (red on hover). Items nudge right
+  on hover. In the app header the button shows initials and name (initials
+  only on phones); on the green public nav, initials on gold. Edit Profile
+  is a native `<dialog>` (520 px; a bottom sheet on phones): a preview card
+  with a 72 px avatar whose initials pop when they change, a two-column
+  name grid, errors that shake in under the field, a spinning Save, and a
+  "saved" toast. No picture, bio, banner or camera overlay. Every animation
+  stops under `prefers-reduced-motion`.
+- **The CHORD logo goes home** on every page that shows it: `/welcome/`
+  signed in, `/` for a guest (`{% homepage_url %}`), with a "Go to
+  Homepage" tooltip (`.chord-home-tip` in `chord.css`).
 
 ## The sign-in page (redesign, 27 Nov 2026)
 

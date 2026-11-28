@@ -14,7 +14,7 @@
         <li class="d-flex flex-wrap align-items-center gap-2 py-1{% if not forloop.last %} border-bottom{% endif %}">
           <span><span class="text-body-secondary">{{ assignment.part }}</span> · <span{% if assignment.reply == 'declined' %} class="text-decoration-line-through"{% endif %}>{{ assignment.person|person_name }}</span></span>
           {% include "includes/status_pill.html" with status=assignment.reply %}
-          {% if assignment.open_swap_request %}<span class="badge text-bg-warning">Swap requested</span>{% endif %}
+          {% if assignment.open_swap_request %}<span class="chord-pill chord-pill--warning">Swap requested</span>{% endif %}
           {% if assignment.reply == 'declined' and perms.teams.add_assignment and not team_closed %}<span class="text-danger">Needs filling</span>{% endif %}
           {% if assignment.person_id == user.pk and assignment.reply == 'pending' and not team_closed %}
             {% include "teams/includes/reply_buttons.html" with back="service" %}

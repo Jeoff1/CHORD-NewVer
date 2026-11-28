@@ -3,29 +3,33 @@
 {% block title %}Notifications{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h3 mb-0">Notifications</h1>
+  {% load ui %}
+  {# UI/UX Phase 9: unread items marked with a dot and a tint, icons and times; the header bell's popover shows this same list (data-notif-list), loaded in the background. #}
+  {% page_header "Notifications" %}
     {% if unread_notifications %}
       <form method="post" action="{% url 'notifications:read_all' %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-outline-secondary">Mark all as read</button>
+        <button type="submit" class="btn btn-outline-secondary">{% include "includes/icons/check-circle.html" with size=18 %}Mark all as read</button>
       </form>
     {% endif %}
-  </div>
+  {% endpage_header %}
 
   <div class="card shadow-sm">
-    <ul class="list-group list-group-flush">
+    <ul class="chord-notifs" data-notif-list>
       {% for notification in object_list %}
-        <li class="list-group-item d-flex flex-wrap align-items-center gap-2{% if not notification.is_read %} fw-semibold{% endif %}">
-          <span class="me-auto">{% if not notification.is_read %}<span class="badge text-bg-primary me-1">New</span>{% endif %}{{ notification.text }}</span>
-          <span class="small text-body-secondary fw-normal">{{ notification.created_at|date:"M j · g:i A" }}</span>
+        <li class="chord-notif{% if not notification.is_read %} is-unread{% endif %}">
+          <span class="chord-notif__icon" aria-hidden="true">{% include "includes/icons/bell.html" with size=16 %}</span>
+          <div class="chord-notif__body">
+            <p class="chord-notif__text">{% if not notification.is_read %}<span class="visually-hidden">New: </span>{% endif %}{{ notification.text }}</p>
+            <span class="chord-notif__time">{{ notification.created_at|date:"M j · g:i A" }}</span>
+          </div>
           <form method="post" action="{% url 'notifications:open' pk=notification.pk %}">
             {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-link p-0">{% if notification.url %}Open{% else %}Mark as read{% endif %}</button>
+            <button type="submit" class="btn btn-sm {% if notification.url %}btn-outline-primary{% else %}btn-link{% endif %}">{% if notification.url %}Open{% else %}Mark as read{% endif %}</button>
           </form>
         </li>
       {% empty %}
-        <li class="list-group-item text-body-secondary">No notifications.</li>
+        <li>{% include "includes/empty_state.html" with icon="bell" title="No notifications." text="You'll hear here about lineups, assignments, swaps and requests." %}</li>
       {% endfor %}
     </ul>
   </div>

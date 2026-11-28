@@ -1,0 +1,360 @@
+/* Shared UI components (UI/UX Phase 3, 28 Nov 2026; UI-UX-Master-Plan.md §8, Animation-Plan.md).
+ * Loaded by base.html right after chord.css, so every signed-in page and form page uses the same
+ * buttons, forms, tables, cards, search, pagination, modals, toasts, empty states and loading states.
+ * Tokens stay in chord.css; this file only shapes and animates. Light and dark follow data-bs-theme;
+ * prefers-reduced-motion turns every animation and transition off (the block at the end). */
+
+:root {
+  --chord-radius: 12px;
+  --chord-radius-sm: 10px;
+  --chord-input-border: #6E8A83;
+  --chord-ease: cubic-bezier(.2, .8, .2, 1);
+  --chord-shadow-sm: 0 1px 2px rgba(11, 31, 27, .06), 0 1px 3px rgba(11, 31, 27, .05);
+  --chord-shadow-md: 0 10px 24px -14px rgba(11, 31, 27, .35), 0 2px 6px rgba(11, 31, 27, .06);
+  --chord-shadow-lg: 0 24px 50px -20px rgba(11, 31, 27, .45), 0 2px 8px rgba(11, 31, 27, .08);
+  --chord-row-hover: rgba(23, 54, 48, .04);
+}
+[data-bs-theme=dark] {
+  --chord-shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --chord-shadow-md: 0 10px 24px -12px rgba(0, 0, 0, .6);
+  --chord-shadow-lg: 0 24px 50px -16px rgba(0, 0, 0, .7), 0 0 0 1px rgba(229, 198, 144, .08);
+  --chord-row-hover: rgba(229, 198, 144, .05);
+}
+
+/* --- Buttons ------------------------------------------------------------- */
+.btn { --bs-btn-border-radius: var(--chord-radius-sm); --bs-btn-font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .12s ease; }
+.btn:not(.btn-sm):not(.btn-link):not(.btn-close) { min-height: 42px; }
+.btn-sm { --bs-btn-border-radius: 8px; min-height: 32px; }
+.btn-lg { min-height: 50px; }
+.btn:focus-visible { outline: 3px solid var(--chord-gold); outline-offset: 2px; box-shadow: none; }
+.btn:active:not(:disabled):not(.disabled) { transform: scale(.97); }
+.btn-primary:hover:not(:disabled), .btn-danger:hover:not(:disabled) { box-shadow: var(--chord-shadow-md); transform: translateY(-1px); }
+.btn:disabled, .btn.disabled { opacity: .55; }
+.btn > .chord-icon { margin-inline: -.1rem; }
+.btn-danger { --bs-btn-bg: #B02A37; --bs-btn-border-color: #B02A37; --bs-btn-hover-bg: #8E1F2B; --bs-btn-hover-border-color: #8E1F2B; --bs-btn-active-bg: #8E1F2B; --bs-btn-active-border-color: #8E1F2B; --bs-btn-disabled-bg: #B02A37; --bs-btn-disabled-border-color: #B02A37; }
+[data-bs-theme=dark] .btn-danger { --bs-btn-color: #060F00; --bs-btn-bg: #EA868F; --bs-btn-border-color: #EA868F; --bs-btn-hover-color: #060F00; --bs-btn-hover-bg: #F0A5AC; --bs-btn-hover-border-color: #F0A5AC; --bs-btn-active-color: #060F00; --bs-btn-active-bg: #F0A5AC; }
+.btn-link { text-underline-offset: 3px; }
+
+/* Busy: the button that sent the form, until the next page arrives (components.js). */
+.btn.is-busy { position: relative; pointer-events: none; cursor: progress; }
+.btn.is-busy::before { content: ""; width: 1em; height: 1em; flex: none; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: chord-spin .7s linear infinite; }
+@keyframes chord-spin { to { transform: rotate(360deg); } }
+
+/* --- Forms ----------------------------------------------------------------- */
+.form-control, .form-select { min-height: 44px; border-radius: var(--chord-radius-sm); border-color: var(--chord-input-border); transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
+.form-control-sm, .form-select-sm { min-height: 34px; border-radius: 8px; }
+textarea.form-control { min-height: 6rem; }
+.form-control:hover:not(:focus):not(:disabled), .form-select:hover:not(:focus):not(:disabled) { border-color: var(--bs-body-color); }
+.form-control::placeholder { color: var(--bs-secondary-color); opacity: .75; }
+.form-control.is-invalid, .form-select.is-invalid { border-color: var(--chord-danger-text); }
+.form-control.is-invalid:focus, .form-select.is-invalid:focus { box-shadow: 0 0 0 .25rem rgba(176, 42, 55, .18); }
+.form-check-input { width: 1.15em; height: 1.15em; border-color: var(--chord-input-border); transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.form-check-input:focus { box-shadow: 0 0 0 .25rem var(--bs-focus-ring-color); }
+.form-switch .form-check-input { width: 2.2em; }
+.form-check { min-height: 1.75rem; }
+form label:not(.form-check-label):not(.btn):not(.visually-hidden), .form-label { display: inline-block; margin-bottom: .35rem; font-weight: 600; }
+legend.form-label { font-size: 1rem; }
+.form-text { color: var(--bs-secondary-color); }
+.invalid-feedback { display: flex; align-items: flex-start; gap: .35rem; color: var(--chord-danger-text); font-weight: 500; animation: chord-fade-up .2s ease both; }
+.invalid-feedback::before { content: "!"; display: inline-grid; place-items: center; flex: none; width: 1.05rem; height: 1.05rem; margin-top: .1rem; border-radius: 50%; background: var(--chord-danger-text); color: var(--bs-body-bg); font-size: .7rem; font-weight: 800; }
+.alert { border-radius: var(--chord-radius); }
+/* A group of related fields inside a long form. */
+.chord-fieldset { margin: 0 0 1.5rem; padding: 1.25rem 1.25rem .5rem; border: 1px solid var(--bs-border-color); border-radius: var(--chord-radius); }
+.chord-fieldset > legend { float: none; width: auto; margin: 0 0 .5rem; padding: 0 .4rem; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1rem; font-weight: 700; color: var(--chord-heading); }
+.chord-form-actions { display: flex; flex-wrap: wrap; gap: .6rem; padding-top: .5rem; }
+
+/* --- Cards ----------------------------------------------------------------- */
+.card { --bs-card-border-radius: var(--chord-radius); --bs-card-inner-border-radius: calc(var(--chord-radius) - 1px); }
+.card.shadow-sm { box-shadow: var(--chord-shadow-sm) !important; }
+.chord-card-link { transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.chord-card-link:hover { border-color: var(--chord-border-strong); box-shadow: var(--chord-shadow-md); transform: translateY(-2px); }
+
+/* --- Page header and breadcrumbs ------------------------------------------- */
+.chord-page-header__text h1, .chord-page-header__text h2 { font-weight: 800; letter-spacing: -.01em; }
+.chord-page-header__subtitle { max-width: 60ch; }
+.chord-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin: 0 0 .5rem; padding: 0; list-style: none; font-size: .88rem; color: var(--bs-secondary-color); }
+.chord-crumbs li + li::before { content: "/"; margin-right: .35rem; opacity: .6; }
+.chord-crumbs a { color: inherit; text-decoration: none; }
+.chord-crumbs a:hover { color: var(--bs-body-color); text-decoration: underline; }
+
+/* --- Tables ------------------------------------------------------------------ */
+.table { --bs-table-hover-bg: var(--chord-row-hover); --bs-table-striped-bg: var(--chord-row-hover); margin-bottom: 0; vertical-align: middle; }
+.table > :not(caption) > * > * { padding: .8rem .9rem; border-bottom-color: var(--bs-border-color); }
+.table > thead > tr > th, .table > thead > tr > td { padding-block: .65rem; background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; border-bottom-width: 1px; }
+.table > tbody > tr { transition: background-color .15s ease; }
+.table > tbody > tr:hover > * { background-color: var(--chord-row-hover); }
+.table > tbody > tr:last-child > * { border-bottom: 0; }
+.table-sm > :not(caption) > * > * { padding: .5rem .65rem; }
+.card > .table, .card > .table-responsive > .table { margin: 0; }
+.card > .table > thead > tr:first-child > *:first-child, .card > .table-responsive > .table > thead > tr:first-child > *:first-child { border-top-left-radius: var(--bs-card-inner-border-radius); }
+.card > .table > thead > tr:first-child > *:last-child, .card > .table-responsive > .table > thead > tr:first-child > *:last-child { border-top-right-radius: var(--bs-card-inner-border-radius); }
+.table a:not(.btn) { font-weight: 600; text-decoration: none; }
+.table a:not(.btn):hover { text-decoration: underline; }
+/* A whole row that opens its record (tr[data-href], components.js); its first link stays the real one. */
+tr[data-href] { cursor: pointer; }
+tr[data-href]:focus-within > * { background-color: var(--chord-row-hover); }
+/* Tables never push the page sideways on a phone: they scroll inside their own box. */
+.table-responsive { border-radius: inherit; }
+@media (max-width: 767.98px) {
+  .card > .table { display: block; overflow-x: auto; }
+}
+
+/* --- Search and list toolbar ------------------------------------------------- */
+.chord-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-bottom: 1rem; }
+.chord-search { position: relative; flex: 1 1 18rem; max-width: 26rem; }
+.chord-search > .chord-icon { position: absolute; left: .85rem; top: 50%; transform: translateY(-50%); color: var(--bs-secondary-color); pointer-events: none; }
+.chord-search .form-control { padding-left: 2.6rem; padding-right: 2.6rem; }
+.chord-search .form-control::-webkit-search-cancel-button { display: none; }
+.chord-search__clear { position: absolute; right: .35rem; top: 50%; display: grid; place-items: center; width: 34px; height: 34px; border: 0; border-radius: 50%; background: transparent; color: var(--bs-secondary-color); transform: translateY(-50%); text-decoration: none; transition: background-color .15s ease, color .15s ease; }
+.chord-search__clear:hover, .chord-search__clear:focus-visible { background: var(--bs-secondary-bg); color: var(--bs-body-color); outline: none; }
+.chord-search__clear[hidden] { display: none; }
+.chord-toolbar__count { margin-left: auto; color: var(--bs-secondary-color); font-size: .9rem; }
+
+/* --- Pagination ------------------------------------------------------------- */
+.pagination { --bs-pagination-border-radius: var(--chord-radius-sm); --bs-pagination-color: var(--bs-body-color); --bs-pagination-hover-color: var(--bs-body-color); --bs-pagination-hover-bg: var(--chord-gold-tint); --bs-pagination-active-color: #E5C690; --bs-pagination-active-bg: #173630; --bs-pagination-active-border-color: #173630; --bs-pagination-focus-box-shadow: 0 0 0 .25rem var(--bs-focus-ring-color); gap: .35rem; }
+.pagination .page-link { display: inline-flex; align-items: center; gap: .3rem; min-height: 40px; border-radius: var(--chord-radius-sm) !important; transition: background-color .15s ease, border-color .15s ease; }
+[data-bs-theme=dark] .pagination { --bs-pagination-active-color: #060F00; --bs-pagination-active-bg: #E5C690; --bs-pagination-active-border-color: #E5C690; }
+
+/* --- Dropdowns -------------------------------------------------------------- */
+.dropdown-menu { --bs-dropdown-border-radius: var(--chord-radius); --bs-dropdown-padding-x: .35rem; --bs-dropdown-item-border-radius: 8px; --bs-dropdown-item-padding-y: .5rem; box-shadow: var(--chord-shadow-lg); }
+.dropdown-menu.show { animation: chord-drop .18s var(--chord-ease) both; }
+.dropdown-item { border-radius: 8px; transition: background-color .15s ease; }
+.dropdown-toggle::after { transition: transform .2s ease; }
+.dropdown-toggle[aria-expanded="true"]::after { transform: rotate(180deg); }
+@keyframes chord-drop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+/* --- Modals ------------------------------------------------------------------- */
+.modal { --bs-modal-border-radius: 18px; --bs-modal-inner-border-radius: 17px; --bs-modal-box-shadow: var(--chord-shadow-lg); --bs-modal-header-padding: 1rem 1.25rem; --bs-modal-padding: 1.25rem; }
+.modal.fade .modal-dialog { transform: translateY(12px) scale(.97); transition: transform .26s var(--chord-ease); }
+.modal.show .modal-dialog { transform: none; }
+.modal-title { font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 700; color: var(--chord-heading); }
+.modal-backdrop.show { opacity: .55; }
+
+/* The shared confirm dialog (components.js: forms and buttons with data-confirm, and hx-confirm). */
+.chord-confirm { width: min(440px, calc(100vw - 24px)); padding: 0; border: 1px solid var(--bs-border-color); border-radius: 18px; background: var(--chord-raised); color: var(--bs-body-color); box-shadow: var(--chord-shadow-lg); }
+.chord-confirm[open] { animation: chord-pop-in .24s var(--chord-ease) both; }
+.chord-confirm.is-closing { animation: chord-pop-out .15s ease both; }
+.chord-confirm::backdrop { background: rgba(11, 31, 27, .55); }
+.chord-confirm[open]::backdrop { animation: chord-fade .24s ease both; }
+.chord-confirm__body { display: grid; grid-template-columns: auto 1fr; gap: .9rem; padding: 1.4rem 1.4rem 1rem; }
+.chord-confirm__icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--chord-gold-tint); color: var(--chord-green); }
+.chord-confirm.is-danger .chord-confirm__icon { background: rgba(176, 42, 55, .12); color: var(--chord-danger-text); }
+.chord-confirm__title { margin: 0 0 .25rem; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.1rem; font-weight: 700; color: var(--chord-heading); }
+.chord-confirm__text { margin: 0; color: var(--bs-secondary-color); }
+.chord-confirm__foot { display: flex; justify-content: flex-end; gap: .6rem; padding: .9rem 1.4rem 1.2rem; }
+@media (max-width: 575.98px) { .chord-confirm__foot .btn { flex: 1; } }
+@keyframes chord-pop-in { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes chord-pop-out { to { opacity: 0; transform: translateY(6px) scale(.98); } }
+@keyframes chord-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- Toasts: the page's messages (includes/messages.html, components.js) ------- */
+.chord-msgs { display: grid; gap: .6rem; margin-bottom: 1rem; }
+.chord-msgs.is-floating { position: fixed; z-index: 1085; top: 76px; right: 20px; width: min(400px, calc(100vw - 24px)); margin: 0; pointer-events: none; }
+.chord-msg { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: .7rem; padding: .8rem .5rem .85rem .85rem; overflow: hidden; border: 1px solid var(--bs-border-color); border-left: 4px solid var(--chord-msg-accent, #173630); border-radius: var(--chord-radius); background: var(--chord-raised); color: var(--bs-body-color); box-shadow: var(--chord-shadow-md); pointer-events: auto; }
+.chord-msgs.is-floating .chord-msg { animation: chord-toast-in .28s var(--chord-ease) both; }
+.chord-msg.is-leaving { animation: chord-toast-leave .22s ease both; }
+.chord-msg__icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--chord-msg-tint, #F3E6C9); color: var(--chord-msg-accent, #173630); }
+.chord-msg__text { margin: 0; padding-top: .3rem; line-height: 1.4; overflow-wrap: anywhere; }
+.chord-msg__close { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; color: var(--bs-secondary-color); transition: background-color .15s ease, color .15s ease; }
+.chord-msg__close:hover, .chord-msg__close:focus-visible { background: var(--bs-secondary-bg); color: var(--bs-body-color); outline: none; }
+.chord-msg__bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--chord-msg-accent, #173630); opacity: .5; transform-origin: left; animation: chord-count var(--chord-msg-ms, 5000ms) linear forwards; }
+.chord-msg.is-paused .chord-msg__bar { animation-play-state: paused; }
+.chord-msg--success { --chord-msg-accent: #146C43; --chord-msg-tint: #D1E7DD; }
+.chord-msg--info { --chord-msg-accent: #173630; --chord-msg-tint: #F3E6C9; }
+.chord-msg--warning { --chord-msg-accent: #8A5A00; --chord-msg-tint: #FFF3CD; }
+.chord-msg--error, .chord-msg--danger { --chord-msg-accent: #B02A37; --chord-msg-tint: #F8D7DA; }
+[data-bs-theme=dark] .chord-msg--success { --chord-msg-accent: #75B798; --chord-msg-tint: rgba(117, 183, 152, .15); }
+[data-bs-theme=dark] .chord-msg--info { --chord-msg-accent: #E5C690; --chord-msg-tint: rgba(229, 198, 144, .15); }
+[data-bs-theme=dark] .chord-msg--warning { --chord-msg-accent: #FFDA6A; --chord-msg-tint: rgba(255, 218, 106, .14); }
+[data-bs-theme=dark] .chord-msg--error, [data-bs-theme=dark] .chord-msg--danger { --chord-msg-accent: #EA868F; --chord-msg-tint: rgba(234, 134, 143, .15); }
+@keyframes chord-toast-in { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: none; } }
+@keyframes chord-toast-leave { to { opacity: 0; transform: translateX(12px); } }
+@keyframes chord-count { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (max-width: 575.98px) { .chord-msgs.is-floating { top: 66px; right: 12px; left: 12px; width: auto; } }
+
+/* --- Empty states (includes/empty_state.html) ----------------------------------- */
+.chord-empty { display: grid; justify-items: center; gap: .4rem; padding: 2.5rem 1.25rem; text-align: center; animation: chord-fade-up .3s ease both; }
+.chord-empty__icon { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: .35rem; border-radius: 50%; background: var(--chord-gold-tint); color: var(--chord-green); }
+[data-bs-theme=dark] .chord-empty__icon { color: #E5C690; }
+.chord-empty__title { margin: 0; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--chord-heading); }
+.chord-empty__text { max-width: 44ch; margin: 0; color: var(--bs-secondary-color); }
+.chord-empty .btn { margin-top: .6rem; }
+td > .chord-empty { padding-block: 1.75rem; }
+
+/* --- Loading: spinner and skeletons ------------------------------------------- */
+.chord-spinner { display: inline-block; width: 1.25rem; height: 1.25rem; border: 2.5px solid var(--chord-gold); border-right-color: transparent; border-radius: 50%; animation: chord-spin .7s linear infinite; vertical-align: -.25em; }
+.chord-skeleton { display: block; height: 1em; border-radius: 6px; background: linear-gradient(90deg, var(--bs-secondary-bg) 0%, var(--bs-tertiary-bg) 50%, var(--bs-secondary-bg) 100%); background-size: 200% 100%; animation: chord-shimmer 1.3s ease-in-out infinite; }
+@keyframes chord-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+/* htmx: a request in flight dims what it will replace and shows its indicator. */
+.htmx-request.chord-loading-dim, .htmx-request .chord-loading-dim { opacity: .55; transition: opacity .15s ease; }
+.htmx-indicator { opacity: 0; transition: opacity .15s ease; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
+
+/* --- Status pills: never colour alone (a dot plus the word) ---------------------- */
+.chord-pill { display: inline-flex; align-items: center; gap: .35rem; }
+.chord-pill::before { content: ""; width: .45rem; height: .45rem; flex: none; border-radius: 50%; background: currentColor; opacity: .8; }
+
+/* --- Record patterns (UI/UX Phase 4, used by every Module) ------------------------
+ * .chord-seg: a segmented filter (links with aria-current); .chord-date: a date tile; .chord-rows: a
+ * list of records whose whole row is the link; .chord-dl: label and value pairs; .chord-record: a
+ * record page's header (title, when, status, actions); .chord-stat: a small summary count. */
+.chord-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; margin: 0 0 1rem; padding: 4px; border: 1px solid var(--bs-border-color); border-radius: 999px; background: var(--bs-body-bg); list-style: none; }
+.chord-seg a { display: inline-flex; align-items: center; gap: .4rem; min-height: 36px; padding: 0 1rem; border-radius: 999px; color: var(--bs-secondary-color); font-weight: 600; text-decoration: none; transition: background-color .18s ease, color .18s ease; }
+.chord-seg a:hover { color: var(--bs-body-color); background: var(--bs-tertiary-bg); }
+.chord-seg a[aria-current] { background: #173630; color: #E5C690; }
+[data-bs-theme=dark] .chord-seg a[aria-current] { background: #E5C690; color: #060F00; }
+.chord-seg a:focus-visible { outline: 3px solid var(--chord-gold); outline-offset: 1px; }
+.chord-seg__count { min-width: 1.4rem; padding: 0 .4rem; border-radius: 999px; background: var(--bs-secondary-bg); color: var(--bs-body-color); font-size: .75rem; line-height: 1.4rem; text-align: center; }
+.chord-seg a[aria-current] .chord-seg__count { background: rgba(229, 198, 144, .2); color: inherit; }
+
+.chord-date { display: grid; place-items: center; align-content: center; flex: none; width: 56px; height: 60px; border-radius: 12px; background: #173630; color: #E5C690; line-height: 1; text-align: center; }
+.chord-date__month { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.chord-date__day { margin-top: 3px; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.45rem; font-weight: 800; }
+.chord-date--gold { background: #F3E6C9; color: #173630; }
+.chord-date--muted { background: var(--bs-secondary-bg); color: var(--bs-secondary-color); }
+[data-bs-theme=dark] .chord-date { box-shadow: inset 0 0 0 1px rgba(229, 198, 144, .35); }
+[data-bs-theme=dark] .chord-date--gold { background: #2E4A44; color: #E5C690; }
+
+.chord-rows { margin: 0; padding: 0; list-style: none; }
+.chord-row { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--bs-border-color); transition: background-color .15s ease; }
+.chord-row:last-child { border-bottom: 0; }
+.chord-row:hover, .chord-row:focus-within { background: var(--chord-row-hover); }
+.chord-row__main { flex: 1 1 14rem; min-width: 0; }
+.chord-row__title { display: block; font-weight: 700; color: var(--bs-body-color); text-decoration: none; overflow-wrap: anywhere; }
+.chord-row__title.stretched-link:focus-visible { outline: none; }
+.chord-row:has(.stretched-link:focus-visible) { outline: 3px solid var(--chord-gold); outline-offset: -3px; }
+.chord-row__meta { margin-top: 2px; color: var(--bs-secondary-color); font-size: .9rem; }
+.chord-row__side { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.chord-row__side > .btn, .chord-row__side > form { position: relative; z-index: 2; }
+.chord-row__chev { color: var(--bs-secondary-color); transition: transform .18s ease, color .18s ease; }
+.chord-row:hover .chord-row__chev { transform: translateX(3px); color: var(--bs-body-color); }
+.chord-row.is-muted .chord-row__title { color: var(--bs-secondary-color); text-decoration: line-through; }
+
+.chord-dl { display: grid; grid-template-columns: minmax(8rem, max-content) 1fr; gap: .75rem 1.5rem; margin: 0; }
+.chord-dl dt { color: var(--bs-secondary-color); font-weight: 600; }
+.chord-dl dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 575.98px) { .chord-dl { grid-template-columns: 1fr; gap: .15rem; } .chord-dl dd { margin-bottom: .6rem; } }
+
+.chord-record { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+.chord-record__main { flex: 1 1 18rem; min-width: 0; }
+.chord-record__title { margin: 0 0 .3rem; font-weight: 800; letter-spacing: -.01em; }
+.chord-record__when { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .8rem; color: var(--bs-secondary-color); }
+.chord-record__when .chord-icon { color: var(--bs-secondary-color); }
+.chord-record__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+.chord-stats { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }
+.chord-stat { display: flex; align-items: center; gap: .7rem; min-width: 11rem; padding: .75rem 1rem; border: 1px solid var(--bs-border-color); border-radius: var(--chord-radius); background: var(--bs-body-bg); }
+.chord-stat__value { font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.5rem; font-weight: 800; line-height: 1; color: var(--chord-heading); }
+.chord-stat__label { color: var(--bs-secondary-color); font-size: .88rem; line-height: 1.2; }
+.card-header-plain { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--bs-border-color); }
+.card-header-plain h2 { margin: 0; font-size: 1.05rem; }
+
+/* A person's initials (rosters, users, audit; UI/UX Phase 7). No pictures: rejected by the lead developer. */
+.chord-person { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: #173630; color: #E5C690; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: .85rem; font-weight: 800; }
+[data-bs-theme=dark] .chord-person { box-shadow: 0 0 0 1px #E5C690; }
+.chord-person--sm { width: 32px; height: 32px; font-size: .75rem; }
+
+/* --- Shared motion --------------------------------------------------------------- */
+@keyframes chord-fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.chord-reveal { animation: chord-fade-up .3s var(--chord-ease) both; animation-delay: calc(var(--i, 0) * 60ms); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .form-control, .form-select, .form-check-input, .table > tbody > tr, .chord-card-link, .chord-seg a, .chord-row, .chord-row__chev, .dropdown-item, .dropdown-toggle::after, .pagination .page-link, .chord-search__clear, .chord-msg__close, .modal.fade .modal-dialog, .htmx-indicator { transition: none !important; }
+  .btn:active:not(:disabled), .btn-primary:hover:not(:disabled), .btn-danger:hover:not(:disabled), .chord-card-link:hover, .chord-row:hover .chord-row__chev { transform: none; }
+  .dropdown-menu.show, .chord-confirm[open], .chord-confirm.is-closing, .chord-confirm[open]::backdrop, .chord-msgs.is-floating .chord-msg, .chord-msg.is-leaving, .chord-msg__bar, .invalid-feedback, .chord-empty, .chord-reveal { animation: none !important; }
+  .chord-skeleton { animation: none; }
+  .btn.is-busy::before, .chord-spinner { animation-duration: 1.6s; }
+}
+
+/* --- People and permissions (UI/UX Phase 8) ------------------------------------------------- */
+.chord-matrix { min-width: 40rem; }
+.chord-matrix thead th { position: sticky; top: 0; z-index: 2; }
+.chord-matrix tbody th[scope="row"], .chord-matrix thead th:first-child { position: sticky; left: 0; z-index: 1; min-width: 16rem; background: var(--bs-body-bg); }
+.chord-matrix thead th:first-child { z-index: 3; background: var(--bs-tertiary-bg); }
+.chord-matrix td { text-align: center; }
+.chord-matrix .form-check-input { width: 1.3em; height: 1.3em; margin: 0; cursor: pointer; }
+.chord-matrix .form-check-input:disabled { cursor: not-allowed; }
+.chord-matrix tbody tr:not(.chord-matrix__section):hover > * { background-color: var(--chord-row-hover); }
+.chord-matrix__section > th { padding-top: 1rem !important; background: var(--bs-body-bg) !important; color: var(--chord-heading); font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 800; letter-spacing: 0; text-transform: none; border-bottom: 2px solid var(--chord-gold) !important; }
+.chord-matrix-save { position: sticky; bottom: 0; z-index: 4; display: flex; justify-content: flex-end; padding: .75rem 0; background: linear-gradient(0deg, var(--chord-page) 60%, transparent); }
+.chord-diff { padding: 2px 0; overflow-wrap: anywhere; }
+.chord-diff__old { padding: 0 .25rem; border-radius: 4px; background: rgba(176, 42, 55, .08); color: var(--bs-secondary-color); }
+.chord-diff__new { padding: 0 .25rem; border-radius: 4px; background: rgba(20, 108, 67, .1); text-decoration: none; }
+[data-bs-theme=dark] .chord-diff__old { background: rgba(234, 134, 143, .12); }
+[data-bs-theme=dark] .chord-diff__new { background: rgba(117, 183, 152, .14); }
+
+/* --- Notifications and announcements (UI/UX Phase 9) ------------------------------------------ */
+.chord-notifs { margin: 0; padding: 0; list-style: none; }
+.chord-notif { display: flex; align-items: center; gap: .75rem; padding: .8rem 1rem; border-bottom: 1px solid var(--bs-border-color); transition: background-color .2s ease; }
+.chord-notif:last-child { border-bottom: 0; }
+.chord-notif:hover { background: var(--chord-row-hover); }
+.chord-notif form { margin: 0; }
+.chord-notif__icon { position: relative; display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--bs-secondary-bg); color: var(--bs-secondary-color); }
+.chord-notif.is-unread { background: linear-gradient(90deg, rgba(229, 198, 144, .14), transparent 70%); }
+.chord-notif.is-unread .chord-notif__icon { background: var(--chord-gold-tint); color: #173630; }
+.chord-notif.is-unread .chord-notif__icon::after { content: ""; position: absolute; top: 0; right: 0; width: 10px; height: 10px; border: 2px solid var(--bs-body-bg); border-radius: 50%; background: #B02A37; }
+.chord-notif__body { flex: 1; min-width: 0; }
+.chord-notif__text { margin: 0; overflow-wrap: anywhere; }
+.chord-notif.is-unread .chord-notif__text { font-weight: 600; }
+.chord-notif__time { color: var(--bs-secondary-color); font-size: .82rem; }
+.chord-bell { position: relative; }
+.chord-bell__pop { position: absolute; right: 0; top: calc(100% + 10px); z-index: 1060; width: 380px; max-width: calc(100vw - 24px); border: 1px solid var(--bs-border-color); border-radius: 16px; background: var(--chord-raised); box-shadow: var(--chord-shadow-lg); overflow: hidden; transform-origin: top right; animation: chord-drop .2s var(--chord-ease) both; }
+.chord-bell__pop.is-closing { animation: chord-pop-out .15s ease both; }
+.chord-bell__head { display: flex; align-items: center; justify-content: space-between; padding: .7rem .9rem; border-bottom: 1px solid var(--bs-border-color); }
+.chord-bell__head form { margin: 0; }
+.chord-bell__title { font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 800; color: var(--chord-heading); }
+.chord-bell__body { max-height: 26rem; overflow-y: auto; }
+.chord-bell__body .chord-notif { padding: .65rem .9rem; animation: chord-fade-up .2s ease both; }
+.chord-bell__body .chord-notif form .btn { min-height: 30px; }
+.chord-bell__body .chord-empty { padding-block: 1.5rem; }
+.chord-bell__loading { display: flex; align-items: center; justify-content: center; gap: .5rem; margin: 0; padding: 1.5rem; color: var(--bs-secondary-color); }
+.chord-bell__all { display: block; padding: .7rem; border-top: 1px solid var(--bs-border-color); font-weight: 600; text-align: center; text-decoration: none; }
+.chord-bell__all:hover { background: var(--chord-row-hover); }
+@media (max-width: 575.98px) { .chord-bell__pop { position: fixed; left: .5rem; right: .5rem; top: 64px; width: auto; } }
+.chord-feed { display: grid; gap: 1rem; max-width: 52rem; }
+.chord-post { transition: box-shadow .2s ease; }
+.chord-post:hover { box-shadow: var(--chord-shadow-md) !important; }
+.chord-post__head { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin-bottom: .75rem; }
+.chord-post__who { display: flex; flex-direction: column; min-width: 0; }
+.chord-post__author { font-weight: 700; }
+.chord-post__meta { color: var(--bs-secondary-color); font-size: .85rem; }
+.chord-post__meta .chord-chip { margin: 0; }
+.chord-post__title { margin: 0 0 .4rem; font-size: 1.2rem; font-weight: 800; }
+.chord-post__body { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) {
+  .chord-notif, .chord-post { transition: none; }
+  .chord-bell__pop, .chord-bell__pop.is-closing, .chord-bell__body .chord-notif { animation: none; }
+}
+
+/* --- Settings and reports (UI/UX Phase 10) ------------------------------------------------------ */
+.chord-settings-menu { box-shadow: var(--chord-shadow-sm); }
+.chord-settings-menu__title { font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; }
+.chord-settings-menu a { transition: background-color .15s ease, padding-left .15s ease, border-color .15s ease; }
+.chord-settings-menu a:hover { padding-left: 1rem; }
+.chord-settings-menu a[aria-current="page"]:hover { padding-left: .75rem; }
+.chord-report-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1rem; max-width: 52rem; }
+.chord-report-card { display: flex; flex-direction: row; align-items: center; gap: .9rem; padding: 1.1rem 1.15rem; color: var(--bs-body-color); text-decoration: none; }
+.chord-report-card:hover .chord-row__chev { transform: translateX(3px); }
+.chord-report-card__icon { display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 12px; background: var(--chord-gold-tint); color: #173630; }
+[data-bs-theme=dark] .chord-report-card__icon { background: #2E4A44; color: #E5C690; }
+.chord-report-card__label { flex: 1; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.05rem; font-weight: 800; }
+.chord-period { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; margin-bottom: 1rem; padding: .85rem 1rem; }
+.chord-report-summary { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+.chord-report-summary .chord-stats { margin: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .chord-settings-menu a { transition: none; }
+  .chord-settings-menu a:hover { padding-left: .75rem; }
+}
+
+/* --- Final audit (UI/UX Phase 11) ------------------------------------------------------------- */
+.chord-error { display: grid; justify-items: center; gap: .5rem; max-width: 34rem; margin: 3rem auto; padding: 2.5rem 1.5rem; border: 1px solid var(--bs-border-color); border-radius: 18px; background: var(--bs-body-bg); text-align: center; box-shadow: var(--chord-shadow-sm); animation: chord-fade-up .3s var(--chord-ease) both; }
+.chord-error h1 { margin: .4rem 0 0; font-weight: 800; }
+.chord-error p { margin: 0 0 .6rem; }
+/* Every focusable thing shows where the keyboard is. */
+a:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--chord-gold); outline-offset: 2px; border-radius: 4px; }
+/* No page scrolls sideways on a phone; wide content scrolls in its own box. */
+@media (max-width: 575.98px) {
+  .chord-app__main { overflow-x: clip; }
+  .chord-page-header__actions { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .chord-error { animation: none; } }

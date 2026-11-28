@@ -1,0 +1,206 @@
+/* Worship planning, song suggestions and the lineup builder (UI/UX Phase 5, 28 Nov 2026;
+ * UI-UX-Master-Plan.md §11, Animation-Plan.md "Worship planning" and "Song recommendations").
+ * Loaded by base.html after components.css. Templates: worship/service_list.html, service_detail.html,
+ * lineup_detail.html, lineup_confirm.html and worship/includes/*. Motion stops under reduced motion. */
+
+/* --- The planning stepper (worship/includes/planning_steps.html) ------------------- */
+.chord-steps { position: relative; gap: .6rem; counter-reset: none; }
+.chord-steps__step { padding: .7rem .85rem; border-radius: 14px; box-shadow: var(--chord-shadow-sm); transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background-color .2s ease; }
+.chord-steps__step:has(.stretched-link):hover { transform: translateY(-2px); box-shadow: var(--chord-shadow-md); }
+.chord-steps__step:has(.stretched-link:focus-visible) { outline: 3px solid var(--chord-gold); outline-offset: 2px; }
+.chord-steps__mark { width: 2rem; height: 2rem; font-size: .85rem; transition: background-color .25s ease, color .25s ease; }
+.chord-steps__step.is-done { background: linear-gradient(0deg, rgba(23, 54, 48, .04), rgba(23, 54, 48, .04)), var(--bs-body-bg); }
+.chord-steps__step.is-done .chord-steps__mark svg { animation: chord-check-pop .35s var(--chord-ease) both; }
+.chord-steps__step.is-current { background: linear-gradient(0deg, rgba(229, 198, 144, .14), rgba(229, 198, 144, .14)), var(--bs-body-bg); }
+.chord-steps__step.is-current .chord-steps__mark { box-shadow: 0 0 0 0 rgba(229, 198, 144, .7); animation: chord-step-ring 1.6s ease-out 2; }
+.chord-steps__step.is-here .chord-steps__label { text-decoration: none; }
+.chord-steps__step.is-here { border-color: var(--chord-green); }
+[data-bs-theme=dark] .chord-steps__step.is-here { border-color: var(--chord-gold); }
+.chord-steps__step.is-here::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--chord-gold); }
+/* The thread between steps on wide screens. */
+@media (min-width: 992px) {
+  .chord-steps { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 1.25rem; }
+  .chord-steps__step:not(:last-child)::before { content: ""; position: absolute; top: 50%; right: -1.25rem; width: 1.25rem; height: 2px; background: var(--bs-border-color); }
+  .chord-steps__step.is-done:not(:last-child)::before { background: var(--chord-green); }
+  [data-bs-theme=dark] .chord-steps__step.is-done:not(:last-child)::before { background: var(--chord-gold); }
+}
+@keyframes chord-check-pop { 0% { transform: scale(.4); opacity: 0; } 70% { transform: scale(1.15); opacity: 1; } 100% { transform: none; } }
+@keyframes chord-step-ring { 0% { box-shadow: 0 0 0 0 rgba(229, 198, 144, .7); } 100% { box-shadow: 0 0 0 10px rgba(229, 198, 144, 0); } }
+
+/* --- The next-step panel ------------------------------------------------------------ */
+.chord-next-step { border-left-width: 5px; background: linear-gradient(90deg, rgba(229, 198, 144, .16), transparent 55%), var(--bs-body-bg); animation: chord-fade-up .3s var(--chord-ease) both; }
+.chord-next-step.is-done { background: linear-gradient(90deg, rgba(23, 54, 48, .06), transparent 55%), var(--bs-body-bg); }
+.chord-next-step__icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: #E5C690; color: #173630; }
+.chord-next-step.is-done .chord-next-step__icon { background: #173630; color: #E5C690; }
+
+/* --- Service list ------------------------------------------------------------------- */
+.chord-when { display: flex; align-items: center; gap: .75rem; }
+.chord-when .chord-date { width: 48px; height: 52px; }
+.chord-when .chord-date__day { font-size: 1.2rem; }
+form.chord-seg { margin: 0; }
+.chord-seg button { display: inline-flex; align-items: center; min-height: 36px; padding: 0 1rem; border: 0; border-radius: 999px; background: transparent; color: var(--bs-secondary-color); font-weight: 600; transition: background-color .18s ease, color .18s ease; }
+.chord-seg button:hover { color: var(--bs-body-color); background: var(--bs-tertiary-bg); }
+.chord-seg button[aria-pressed="true"] { background: #173630; color: #E5C690; }
+[data-bs-theme=dark] .chord-seg button[aria-pressed="true"] { background: #E5C690; color: #060F00; }
+.chord-seg button:focus-visible { outline: 3px solid var(--chord-gold); outline-offset: 1px; }
+.chord-list-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+.chord-list-bar .chord-toolbar { margin: 0; flex: 1 1 20rem; justify-content: flex-end; }
+
+/* --- The lineup (lineup_detail.html) ------------------------------------------------- */
+.chord-lineup-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .85rem 1rem; border-bottom: 1px solid var(--bs-border-color); }
+.chord-lineup-head h2 { margin: 0; font-size: 1.05rem; }
+.chord-lineup-count { display: inline-flex; align-items: center; min-width: 2rem; justify-content: center; padding: .1rem .6rem; border-radius: 999px; background: #173630; color: #E5C690; font-size: .8rem; font-weight: 700; transition: transform .2s var(--chord-ease); }
+[data-bs-theme=dark] .chord-lineup-count { background: #E5C690; color: #060F00; }
+.chord-song-row { transition: background-color .15s ease; }
+.chord-song-row:not(.chord-song-row--empty):hover { background: var(--chord-row-hover); }
+.chord-song-row--empty { border-style: dashed; }
+.chord-song-row--empty .text-body-secondary { font-style: italic; }
+.chord-song-row:target { animation: chord-flash 1.6s ease both; }
+.chord-song-row.is-locked { box-shadow: inset 4px 0 0 var(--chord-gold); }
+.chord-song-row__body .fw-semibold { font-size: 1.02rem; }
+@keyframes chord-flash { 0%, 30% { background: rgba(229, 198, 144, .35); } 100% { background: transparent; } }
+
+/* --- Song suggestions (worship/includes/suggestions.html) ------------------------------ */
+.chord-finding { display: grid; justify-items: center; gap: .6rem; padding: 1.25rem .5rem .75rem; text-align: center; }
+.chord-finding__title { margin: 0; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 700; color: var(--chord-heading); }
+.chord-wave { display: flex; align-items: center; gap: 5px; height: 34px; }
+.chord-wave span { width: 5px; height: 100%; border-radius: 5px; background: linear-gradient(180deg, #E5C690, #173630); transform: scaleY(.3); animation: chord-wave 1.1s ease-in-out infinite; }
+[data-bs-theme=dark] .chord-wave span { background: linear-gradient(180deg, #F0D9AE, #E5C690); }
+.chord-wave span:nth-child(2) { animation-delay: .12s; }
+.chord-wave span:nth-child(3) { animation-delay: .24s; }
+.chord-wave span:nth-child(4) { animation-delay: .36s; }
+.chord-wave span:nth-child(5) { animation-delay: .48s; }
+@keyframes chord-wave { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+.chord-skel-song { display: flex; gap: .75rem; align-items: center; padding: .7rem 0; border-top: 1px solid var(--bs-border-color); }
+.chord-skel-song__art { width: 44px; height: 44px; flex: none; border-radius: 8px; }
+.chord-skel-song__lines { flex: 1; display: grid; gap: .4rem; }
+.chord-suggest-list { margin: 0 0 1rem; padding: 0; list-style: none; counter-reset: suggest; }
+.chord-suggest { position: relative; display: flex; gap: .75rem; padding: .8rem .85rem; margin-bottom: .55rem; border: 1px solid var(--bs-border-color); border-radius: 12px; background: var(--bs-body-bg); counter-increment: suggest; transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.chord-suggest:hover { border-color: var(--chord-border-strong); box-shadow: var(--chord-shadow-md); transform: translateY(-1px); }
+.chord-suggest::before { content: counter(suggest); display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--chord-gold-tint); color: #173630; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 800; font-size: .9rem; }
+[data-bs-theme=dark] .chord-suggest::before { background: #2E4A44; color: #E5C690; }
+.chord-suggest.is-in { border-color: rgba(20, 108, 67, .45); background: linear-gradient(0deg, rgba(20, 108, 67, .05), rgba(20, 108, 67, .05)), var(--bs-body-bg); }
+.chord-suggest__body { flex: 1; min-width: 0; }
+.chord-suggest__slot { font-size: .78rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--bs-secondary-color); }
+.chord-suggest__title { font-weight: 700; }
+.chord-suggest__reasons { margin: .25rem 0 0; padding-left: 1rem; font-size: .88rem; color: var(--bs-secondary-color); }
+.chord-in-lineup::before { content: "✓"; font-weight: 800; }
+.chord-in-lineup { animation: chord-check-pop .35s var(--chord-ease) both; }
+.chord-in-lineup.chord-pill::before { width: auto; height: auto; border-radius: 0; background: none; opacity: 1; }
+
+/* --- Rundowns (lineup card, Confirm) --------------------------------------------------- */
+.chord-rundown { margin: 0; padding: 0; list-style: none; counter-reset: rundown; }
+.chord-rundown > li { position: relative; display: flex; gap: .75rem; padding: .65rem 0; border-bottom: 1px solid var(--bs-border-color); counter-increment: rundown; }
+.chord-rundown > li:last-child { border-bottom: 0; }
+.chord-rundown > li::before { content: counter(rundown); display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: #173630; color: #E5C690; font-size: .8rem; font-weight: 800; }
+[data-bs-theme=dark] .chord-rundown > li::before { background: #E5C690; color: #060F00; }
+.chord-rundown__body { flex: 1; min-width: 0; }
+
+/* --- Theme card --------------------------------------------------------------------- */
+.chord-theme-title { margin: 0 0 .2rem; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--chord-heading); }
+.chord-theme-scripture { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .65rem; border-radius: 999px; background: var(--chord-gold-tint); color: #173630; font-weight: 600; font-size: .9rem; }
+[data-bs-theme=dark] .chord-theme-scripture { background: #2E4A44; color: #E5C690; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chord-steps__step, .chord-steps__mark, .chord-song-row, .chord-suggest, .chord-seg button, .chord-lineup-count { transition: none; }
+  .chord-steps__step:has(.stretched-link):hover, .chord-suggest:hover { transform: none; }
+  .chord-steps__step.is-done .chord-steps__mark svg, .chord-steps__step.is-current .chord-steps__mark, .chord-next-step, .chord-song-row:target, .chord-in-lineup { animation: none; }
+  .chord-wave span { animation: none; transform: scaleY(.6); }
+}
+.chord-rundown > li.text-body-secondary::before { display: none; }
+
+/* --- Songs, chord sheets and rehearsal (UI/UX Phase 6, 28 Nov 2026; UI-UX-Master-Plan.md §12) -------
+ * No album artwork: CHORD stores only a track's ID, title, artist, album and length (AGENTS.md), so
+ * songs get a branded tile with their initial instead. */
+.chord-art { position: relative; display: grid; place-items: center; flex: none; width: 44px; height: 44px; overflow: hidden; border-radius: 10px; background: linear-gradient(135deg, #173630 0%, #2E4A44 60%, #8C7550 140%); color: #E5C690; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-weight: 800; font-size: 1.05rem; box-shadow: var(--chord-shadow-sm); transition: transform .2s var(--chord-ease), box-shadow .2s ease; }
+.chord-art::after { content: ""; position: absolute; right: -10px; bottom: -10px; width: 30px; height: 30px; border-radius: 50%; border: 5px solid rgba(229, 198, 144, .18); }
+.chord-art--lg { width: 88px; height: 88px; border-radius: 16px; font-size: 2rem; }
+tr:hover .chord-art, .chord-row:hover .chord-art { transform: scale(1.05); box-shadow: var(--chord-shadow-md); }
+.chord-song-cell { display: flex; align-items: center; gap: .75rem; min-width: 14rem; }
+.chord-song-cell__text { min-width: 0; }
+.chord-chip { display: inline-flex; align-items: center; margin: 0 .25rem .25rem 0; padding: .15rem .55rem; border: 1px solid var(--bs-border-color); border-radius: 999px; background: var(--bs-tertiary-bg); font-size: .8rem; font-weight: 600; color: var(--bs-body-color); white-space: nowrap; }
+.chord-chip__score { margin-left: .3rem; color: var(--bs-secondary-color); font-weight: 500; }
+.chord-filters { margin-bottom: 1rem; border: 1px solid var(--bs-border-color); border-radius: var(--chord-radius); background: var(--bs-body-bg); }
+.chord-filters > summary { display: flex; align-items: center; gap: .5rem; min-height: 48px; padding: 0 1rem; font-weight: 700; cursor: pointer; list-style: none; }
+.chord-filters > summary::-webkit-details-marker { display: none; }
+.chord-filters > summary .chord-icon { transition: transform .2s ease; }
+.chord-filters[open] > summary .chord-icon { transform: rotate(180deg); }
+.chord-filters__count { padding: 0 .5rem; border-radius: 999px; background: #173630; color: #E5C690; font-size: .75rem; line-height: 1.4rem; }
+[data-bs-theme=dark] .chord-filters__count { background: #E5C690; color: #060F00; }
+.chord-filters__body { padding: 0 1rem 1rem; animation: chord-fade-up .2s ease both; }
+.chord-song-head { display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem; margin-bottom: 1.25rem; }
+.chord-song-head__main { flex: 1 1 16rem; min-width: 0; }
+.chord-song-head__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chord-tracks .chord-row { padding-block: .75rem; }
+.chord-big-search { position: relative; flex: 1 1 22rem; max-width: 34rem; }
+.chord-big-search > .chord-icon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--bs-secondary-color); pointer-events: none; }
+.chord-big-search .form-control { min-height: 52px; padding-left: 2.9rem; border-radius: 999px; font-size: 1.05rem; }
+
+/* The chord sheet: readability first, no motion while reading. */
+.chord-sheet .sheet-body { max-width: 72ch; font-size: 1.08rem; line-height: 1.35; }
+.chord-sheet .seg .chord { color: var(--chord-chord-letter); letter-spacing: .01em; }
+.chord-sheet .sheet-block.chorus { border-left: 3px solid var(--chord-gold); background: linear-gradient(90deg, rgba(229, 198, 144, .08), transparent 70%); padding-block: .35rem; border-radius: 0 8px 8px 0; }
+.chord-sheet .sheet-label { color: var(--chord-heading); }
+.chord-sheet form[role="toolbar"] { position: sticky; top: 64px; z-index: 5; padding-top: .5rem; background: var(--bs-body-bg); }
+.htmx-request#chord-sheet .sheet-body, #chord-sheet.htmx-request .sheet-body { opacity: .5; transition: opacity .15s ease; }
+.chord-editor textarea { min-height: 28rem; font-family: var(--bs-font-monospace); font-size: .95rem; line-height: 1.5; tab-size: 4; }
+
+/* Rehearsal: the lineup order beside the sheet. */
+.chord-order { margin: 0; padding: 0; list-style: none; counter-reset: order; }
+.chord-order > li { display: flex; align-items: center; gap: .6rem; padding: .45rem .5rem; border-radius: 10px; counter-increment: order; transition: background-color .15s ease; }
+.chord-order > li::before { content: counter(order); display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--bs-secondary-bg); font-size: .78rem; font-weight: 800; }
+.chord-order > li:hover { background: var(--chord-row-hover); }
+.chord-order > li[aria-current] { background: var(--chord-gold-tint); color: #173630; }
+.chord-order > li[aria-current]::before { background: #173630; color: #E5C690; }
+[data-bs-theme=dark] .chord-order > li[aria-current] { background: #2E4A44; color: #E5C690; }
+.chord-order a { color: inherit; text-decoration: none; font-weight: 600; }
+.chord-order a:hover { text-decoration: underline; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chord-art, .chord-filters > summary .chord-icon, .chord-order > li { transition: none; }
+  tr:hover .chord-art, .chord-row:hover .chord-art { transform: none; }
+  .chord-filters__body { animation: none; }
+}
+
+/* --- Calendar and scheduling (UI/UX Phase 7, 28 Nov 2026; UI-UX-Master-Plan.md §13) ----------------- */
+.chord-cal-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; margin-bottom: 1rem; }
+.chord-cal-nav { display: flex; align-items: center; gap: .5rem; }
+.chord-cal-title { min-width: 10rem; margin: 0; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.3rem; font-weight: 800; text-align: center; color: var(--chord-heading); animation: chord-fade-up .25s var(--chord-ease) both; }
+.chord-cal-legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin: 0; padding: 0; list-style: none; font-size: .88rem; }
+.chord-cal-legend li { display: flex; align-items: center; gap: .45rem; }
+.chord-cal-key { width: 14px; height: 14px; border-radius: 4px; }
+.chord-cal-key--service { background: #173630; }
+.chord-cal-key--booking { background: #E5C690; }
+.chord-cal-key--hidden { border: 1px dashed var(--chord-border-strong); background: var(--bs-tertiary-bg); }
+.chord-cal-key--cancelled { background: var(--bs-secondary-bg); }
+[data-bs-theme=dark] .chord-cal-key--service { background: #6E8A83; }
+.chord-cal-card { overflow: hidden; }
+.chord-cal { width: 100%; min-width: 46rem; table-layout: fixed; border-collapse: collapse; }
+.chord-cal th { padding: .6rem; background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-align: center; text-transform: uppercase; border-bottom: 1px solid var(--bs-border-color); }
+.chord-cal__day { height: 7.25rem; padding: .35rem; vertical-align: top; border-right: 1px solid var(--bs-border-color); border-bottom: 1px solid var(--bs-border-color); transition: background-color .15s ease; animation: chord-fade-up .25s var(--chord-ease) both; }
+.chord-cal tr td:last-child { border-right: 0; }
+.chord-cal tbody tr:last-child td { border-bottom: 0; }
+.chord-cal__day:hover { background: var(--chord-row-hover); }
+.chord-cal__day.is-outside { background: var(--bs-tertiary-bg); }
+.chord-cal__day.is-outside .chord-cal__num { color: var(--bs-secondary-color); opacity: .7; }
+.chord-cal__num { display: grid; place-items: center; width: 28px; height: 28px; margin: 0 0 .25rem auto; border-radius: 50%; font-size: .85rem; font-weight: 600; }
+.chord-cal__day.is-today .chord-cal__num { background: #173630; color: #E5C690; font-weight: 800; }
+[data-bs-theme=dark] .chord-cal__day.is-today .chord-cal__num { background: #E5C690; color: #060F00; }
+.chord-cal__event { display: block; margin-bottom: 3px; padding: 3px 6px; overflow: hidden; border-radius: 6px; font-size: .78rem; line-height: 1.3; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+a.chord-cal__event:hover, a.chord-cal__event:focus-visible { transform: translateY(-1px); box-shadow: var(--chord-shadow-md); filter: brightness(1.05); outline: none; }
+a.chord-cal__event:focus-visible { outline: 2px solid var(--chord-gold); outline-offset: 1px; }
+.chord-cal__time { font-weight: 700; }
+.chord-cal__event--service { background: #173630; color: #F4F1F0; }
+.chord-cal__event--service .chord-cal__time { color: #E5C690; }
+.chord-cal__event--booking { background: #F3E6C9; color: #173630; box-shadow: inset 3px 0 0 #C9A764; }
+.chord-cal__event--hidden { border: 1px dashed var(--chord-border-strong); background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); }
+.chord-cal__event.is-cancelled { background: var(--bs-secondary-bg); color: var(--bs-secondary-color); text-decoration: line-through; box-shadow: none; }
+.chord-cal__event.is-cancelled .chord-cal__time { color: inherit; }
+[data-bs-theme=dark] .chord-cal__event--service { background: #2E4A44; }
+[data-bs-theme=dark] .chord-cal__event--booking { background: #E5C690; color: #060F00; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chord-cal-title, .chord-cal__day { animation: none; }
+  .chord-cal__day, .chord-cal__event { transition: none; }
+  a.chord-cal__event:hover, a.chord-cal__event:focus-visible { transform: none; }
+}

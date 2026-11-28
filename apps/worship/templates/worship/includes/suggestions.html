@@ -27,7 +27,13 @@
     {% elif not run %}
       <p class="text-body-secondary mb-0">No suggestions yet.</p>
     {% elif run.is_active %}
-      <div class="progress mb-2" role="progressbar" aria-label="Finding songs" aria-valuenow="{{ run.progress }}" aria-valuemin="0" aria-valuemax="100">
+      {# UI/UX Phase 5: a music-inspired indicator and skeleton songs while the real run works; the bar shows the worker's own progress. #}
+      <div class="chord-finding">
+        <div class="chord-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+        <p class="chord-finding__title">Finding songs for your worship theme…</p>
+      </div>
+      <div aria-hidden="true">{% for i in "123" %}<div class="chord-skel-song"><span class="chord-skeleton chord-skel-song__art"></span><span class="chord-skel-song__lines"><span class="chord-skeleton" style="width: 70%"></span><span class="chord-skeleton" style="width: 45%"></span></span></div>{% endfor %}</div>
+      <div class="progress mt-3 mb-2" role="progressbar" aria-label="Finding songs" aria-valuenow="{{ run.progress }}" aria-valuemin="0" aria-valuemax="100">
         <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: {{ run.progress }}%">{{ run.progress }}%</div>
       </div>
       <p class="small mb-0" aria-live="polite">{{ run.stage|default:"Waiting for the search worker" }}</p>
@@ -46,16 +52,16 @@
         </form>
       {% endif %}
       {% if placed %}
-        <ol class="list-group list-group-numbered mb-3">
+        <ol class="chord-suggest-list">
           {% for suggestion in placed %}
-            <li class="list-group-item d-flex gap-2">
-              <div class="ms-1 flex-grow-1">
+            <li class="chord-suggest chord-reveal{% if suggestion.song_id in lineup_song_ids %} is-in{% endif %}" style="--i: {{ forloop.counter0 }}">
+              <div class="chord-suggest__body">
                 <div class="d-flex justify-content-between align-items-start gap-2">
-                  <div class="small text-body-secondary">{{ suggestion.slot.name }}{% if suggestion.slot.feel %} ({{ suggestion.slot.get_feel_display|lower }}){% endif %}</div>
+                  <div class="chord-suggest__slot">{{ suggestion.slot.name }}{% if suggestion.slot.feel %} ({{ suggestion.slot.get_feel_display|lower }}){% endif %}</div>
                   {% include "worship/includes/suggestion_add.html" %}
                 </div>
-                <div class="fw-semibold">{% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} <span class="fw-normal text-body-secondary">· {{ suggestion.song.artist }}</span></div>
-                <ul class="small mb-1 ps-3">
+                <div class="chord-suggest__title">{% if perms.songs.view_song %}<a href="{% url 'songs:detail' public_id=suggestion.song.public_id %}">{{ suggestion.song.title }}</a>{% else %}{{ suggestion.song.title }}{% endif %} <span class="fw-normal text-body-secondary">· {{ suggestion.song.artist }}</span></div>
+                <ul class="chord-suggest__reasons">
                   {% for reason in suggestion.reasons %}<li>{{ reason }}</li>{% endfor %}
                   {% if suggestion.slot_reason %}<li>{{ suggestion.slot_reason }}</li>{% endif %}
                 </ul>

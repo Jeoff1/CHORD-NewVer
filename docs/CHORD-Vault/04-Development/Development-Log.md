@@ -2,6 +2,18 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phases 2–11 merged into master
+
+- **Why:** the owner approved merging the UI/UX branch `joy-ui-ux-v3`
+  (commit `ea1e3ca`) into `master`.
+- **What changed:** a merge commit; the only conflict was this log, where
+  both sides' entries are kept. No code was changed by the merge. Open
+  items stay as listed in [[UI-UX-Master-Plan]] ("Blocked", "Flagged
+  conflicts").
+- **Checks:** the full `scripts/check.ps1` on the merged code: lint,
+  format, Django checks, migrations (none), 1530 tests passed, 97%
+  coverage.
+
 ## 2026-11-28: Trusted form origins for an HTTPS tunnel
 
 - **Why:** the owner wants to open CHORD through a Cloudflare quick
@@ -15,7 +27,193 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
 - **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
   migrations, 1467 tests passed, 97% coverage.
 
-## 2026-11-28: UI/UX Phase 1: signed-in landing, sidebar links, Church CMS (branch `joy-ui-ux-v3`, not committed yet)
+## 2026-11-28: UI/UX Phase 11: final consistency, accessibility and animation audit (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §17 and [[Animation-Plan]].
+- **What changed:** remaining Bootstrap badges (user history, the locked
+  Modules, settings lists, service team, service templates) became status
+  pills; the part filter on Assign became a segmented filter; "Nothing here
+  yet" rows became empty states; 403 and 404 got the shared look; a global
+  gold focus outline; a phone overflow guard; the dashboard's figures count
+  up once per browser session. The retired Member Directory and Households
+  were left as they are. A smoke test of 27 pages as an administrator on
+  the development database answered 200 (Attendance 404s by design until
+  a headcount is recorded). No model, form, route or rule changed; no
+  migration.
+- **All UI/UX phases are done**; open items are listed in
+  [[UI-UX-Master-Plan]] ("Blocked", "Flagged conflicts").
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `c940b2b`: lint, format, Django checks, migrations (none), 1530 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 10: settings and reports (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §16.
+- **What changed:** report cards, a back link, a segmented switch between
+  reports, the period in a toolbar card, real summary counts, Download CSV
+  as a button, empty states; the Settings hub's menu refined (shadow,
+  category titles, hover). Labels, Sermon Series, Website, Currency, Time
+  zone and the hidden member modules stay gone; the Praise Team switch
+  stays under Worship. No report figure, setting or rule changed; no
+  migration. One test now finds the average headcount as a summary count.
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `815d914`: lint, format, Django checks, migrations (none), 1526 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 9: announcements and notifications (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §15.
+- **What changed:** announcements as a news feed (initials, audience chip,
+  Archive asks first, empty state); notifications with unread dots,
+  washes and icons; the header bell opens a popover that loads the
+  Notifications page's own list in the background (no new endpoint; the
+  bell stays a link without JavaScript). No notification or announcement
+  rule changed; no migration.
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `e3006d2`: lint, format, Django checks, migrations (none), 1523 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 8: members and teams (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §14 (Members: Users, Roles and
+  permissions, Audit log; the team roster was Phase 7).
+- **What changed:** Users with initials, role chips, status pills, a
+  segmented status filter and whole-row links; Roles with page header and
+  pills; the permission matrix with sticky header, column and Save; the
+  Audit log with initials, action pills and before → after changes. No
+  Member Directory or Households. Templates and CSS only; no permission,
+  role or audit rule changed; no migration.
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `e7eaa42`: lint, format, Django checks, migrations (none), 1519 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 7: calendar and scheduling (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §13.
+- **What changed:** the calendar's month grid, legend and event chips;
+  the team roster as rows with initials and part chips; My schedule with
+  date tiles, reply pills, chips and side cards; removing blackout dates
+  asks first; `.chord-person` in `components.css`. Templates and CSS only;
+  no scheduling, availability or blackout rule changed; no migration.
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `6da9bf6`: lint, format, Django checks, migrations (none), 1514 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 6: songs, chord sheets and rehearsal (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §12.
+- **What changed:** song pool (folding filters, tiles, pills, chips,
+  whole-row links, empty states), Find on Spotify (big search, result
+  rows), song page header, chord sheet readability (width, size, chorus
+  edge, sticky toolbar), the editor's text area, Discard asks first, and
+  the rehearsal order. Templates and CSS only; no Spotify call, field or
+  rule changed; no migration. **Blocked:** album artwork needs a policy
+  and backend decision (only the allowed Spotify fields are stored), so
+  songs show a branded tile ([[UI-UX-Master-Plan]], "Blocked").
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `14dd588`: lint, format, Django checks, migrations (none), 1511 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 5: worship planning, suggestions and lineup builder (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §11.
+- **What changed:** `static/css/planning.css`; the stepper, next-step
+  panel, worship service list (segmented control, date tiles, whole-row
+  links, empty states), theme card, Song Lineup (count, anchors, locked
+  marks, empty state), suggestions (waveform, skeletons, numbered cards
+  that stagger in, the in-lineup check) and the numbered rundowns.
+  Templates and CSS only: no view, form, route, permission, rule or
+  recommendation change; no migration. Two plan items resolved by source
+  order and flagged in [[UI-UX-Master-Plan]] ("Flagged conflicts"): the
+  lineup stays on the left (decision 0015), and Add and reordering stay
+  server actions.
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `1d9e4ff`: lint, format, Django checks, migrations (none), 1506 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 4: Management, Services and Bookings (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §10.
+- **What changed:** the Occasions Module's screens (on screen: Bookings and
+  Service requests) rebuilt with the shared record patterns: segmented
+  Upcoming and Past, booking rows with date tiles, record headers, details
+  grids, summary counts, status pills instead of badges, empty states, and
+  Book a service in four sections (`occasions/occasion_form.html`;
+  `form_page.html` gained a `form_fields` block). Withdraw asks first. Only
+  templates and one `template_name` changed: no model, form, route,
+  permission or rule changed; no migration. Worship services are Phase 5.
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `07cc51b`: lint, format, Django checks, migrations (none), 1501 tests passed, 97% coverage.
+
+## 2026-11-28: UI/UX Phase 3: shared UI components (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §8; built from the written plan and the
+  existing design system (the artifact can't be opened from Claude Code).
+- **What changed:** `static/css/components.css` and
+  `static/js/components.js`, loaded by `base.html`: buttons (sizes, hover,
+  press, focus, disabled, busy), forms (44 px inputs, `#6E8A83` borders,
+  errors with a mark, fieldsets), cards, tables (header, rows, hover,
+  clickable rows), the search toolbar (icon, clear, count), pagination,
+  dropdowns, modals, a shared confirm dialog (`data-confirm`, also for
+  `hx-confirm`) replacing the four native `confirm()` prompts, toasts for
+  every Django message (`includes/messages.html`, replacing the Bootstrap
+  alerts), an empty-state include, spinner, skeletons and htmx loading
+  states, status pills with a dot. No model change, no migration; every
+  route, form and permission unchanged.
+- **Git:** Phase 2 and the plan commits pushed to `origin/joy-ui-ux-v3`
+  (the UI/UX owner now authorises pushing each phase there).
+- **Checks:** `scripts/check.ps1 -Quick`: lint, format, Django checks,
+  migrations (none), 1496 tests passed. The full `scripts/check.ps1`
+  (with coverage) then passed: 1496 tests, 97% coverage. (Correction: the
+  pre-commit hook was not switched on in this clone, so it ran for neither
+  the Phase 2 nor the Phase 3 commit; both phases' full checks were run by
+  hand and passed. The hook is now on: `core.hooksPath scripts/git-hooks`.) Also added
+  for Phase 4 and later: the record patterns in `components.css`
+  (`.chord-seg`, `.chord-date`, `.chord-rows`, `.chord-dl`,
+  `.chord-record`, `.chord-stats`).
+
+## 2026-11-28: UI/UX plans completed from the owner's written handoff
+
+- **What changed:** [[UI-UX-Master-Plan]] and [[Animation-Plan]] now hold
+  the full written handoff (design system, preserved Phase 1 and lead
+  developer updates, Phase 2 as built, detailed Phases 3 to 11, research,
+  responsive and accessibility rules, backend restrictions, timing
+  standards, per-area motion, workflow). The UI/UX owner authorised
+  building from it and the existing design system, since the artifact
+  can't be opened from Claude Code.
+- **Checks:** docs only.
+
+## 2026-11-28: UI/UX master plan and Animation Plan saved; Phase 3 waits for the artifact
+
+- **Why:** the UI/UX owner asked for the plan to live in the vault so any
+  session can continue without the conversation.
+- **What changed:** [[UI-UX-Master-Plan]] (sources, rules for every phase,
+  backend restrictions including the rejected profile pictures, bios and
+  banners, the phase table 1 to 11 with each phase's current screens, the
+  workflow) and [[Animation-Plan]] (rules and every approved motion as
+  built, with timings and easings). [[Design-Decisions]] and [[00-Home]]
+  link them.
+- **Where work stopped:** before Phase 3. The approved artifact
+  (`https://claude.ai/artifact/XjV7jeDC63if6mbVNw2q6t`) returned "not
+  found, or not shared with this account" to Claude Code, so its screens
+  and per-screen motion are marked "Awaiting the artifact" in both notes.
+  No code changed.
+- **Checks:** docs only (the pre-commit hook skips the checks for docs).
+
+## 2026-11-28: UI/UX Phase 2: account popover and Edit Profile (branch `joy-ui-ux-v3`)
+
+- **Why:** the UI/UX owner's Phase 2, revised after the lead developer
+  rejected personal profile pictures and bios ([[Design-Decisions]],
+  "Personal profile").
+- **What changed:** one account popover on every signed-in page
+  (`includes/account_popover.html`, `static/css/account.css`,
+  `static/js/account_menu.js`) replacing the app header's dropdown and
+  Phase 1's public menu: initials avatar, full name, role line, church,
+  a text-only Edit Profile, the church switcher (more than one church
+  only), the person's links, a Light, Dark, Device switch, Account Settings
+  and Sign Out. Edit Profile (`includes/profile_modal.html`,
+  `PersonalInfoView` at `accounts:profile_edit`, `PersonalInfoForm`): the
+  four name fields with a live preview, saved in the background and
+  audited (the audit trail now records Middle name and Suffix). "My
+  profile" became Account settings, in the Settings hub as Personal ›
+  Account. `AppearanceView` answers JSON and honours `next`. The official
+  CHORD logo goes to `/welcome/` when signed in and `/` for a guest on
+  every page (`{% homepage_url %}`), with a "Go to Homepage" tooltip; the
+  landing page follows a signed-in person's Appearance. `User.display_name`
+  and `User.initials` are properties: **no new field, no migration**.
+- **After the UI/UX owner's review:** the pencil icon left Edit Profile,
+  Appearance moved into the popover, the logo rule above.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations (none needed), 1487 tests passed, 97% coverage. The UI/UX
+  owner reviewed the running site (popover, Edit Profile, Appearance, logo
+  links, light and dark, phone width) before approving.
+
+## 2026-11-28: UI/UX Phase 1: signed-in landing, sidebar links, Church CMS (branch `joy-ui-ux-v3`, committed `02b00ea`)
 
 - **Why:** the UI/UX owner's approved designs ([[Design-Decisions]],
   "Signed-in website access and the Church CMS").

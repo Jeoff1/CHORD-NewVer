@@ -49,9 +49,9 @@
             <h2 id="rundown-songs-title" class="card-title">{{ songs_label }} <span class="chord-card-head__extra fw-normal">{{ lineup_items|length }} song{{ lineup_items|length|pluralize }}</span></h2>
             {% if can_change_lineup %}<a href="{{ back_url }}" class="fw-semibold">Change</a>{% endif %}
           </div>
-          <ol class="mb-0 ps-3">
+          <ol class="chord-rundown">
             {% for item in lineup_items %}
-              <li class="py-1">
+              <li><div class="chord-rundown__body">
                 {% if item.slot %}<span class="text-body-secondary">{{ item.slot.name }}:</span> {% endif %}<span class="fw-semibold">{{ item.song.title }}</span> <span class="text-body-secondary">· {{ item.song.artist }}</span>
                 <div class="small">
                   {% if item.key %}Key {{ item.key }}{% else %}<span class="text-body-secondary">No key set</span>{% endif %}
@@ -59,7 +59,7 @@
                   {% if not item.song.spotify_id %} <span class="chord-pill">Not on Spotify</span>{% endif %}
                 </div>
                 {% if item.check_warning %}<div class="small text-warning-emphasis">{{ item.check_warning }}</div>{% endif %}
-              </li>
+              </div></li>
             {% empty %}
               <li class="text-body-secondary">No songs yet.</li>
             {% endfor %}

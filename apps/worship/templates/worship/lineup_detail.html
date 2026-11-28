@@ -20,7 +20,7 @@
       <div class="chord-page-header__actions">
         {% more_menu %}
           {% if can_change_lineup %}
-            <li><form method="post" action="{% url 'worship:lineup_regenerate' public_id=service.public_id %}" onsubmit="return confirm('Choose the unlocked songs again from the latest suggestions?')">{% csrf_token %}<button type="submit" class="dropdown-item">Regenerate around locked songs</button></form></li>
+            <li><form method="post" action="{% url 'worship:lineup_regenerate' public_id=service.public_id %}" data-confirm="The unlocked songs are chosen again from the latest suggestions; locked songs stay." data-confirm-title="Regenerate around locked songs?" data-confirm-action="Regenerate" data-confirm-danger="false">{% csrf_token %}<button type="submit" class="dropdown-item">Regenerate around locked songs</button></form></li>
           {% endif %}
           {% if has_final_say %}
             <li><a class="dropdown-item" href="{% url 'worship:lineup_send_back' public_id=service.public_id %}">Send back to the worship leader</a></li>
@@ -66,11 +66,12 @@
 
         {% if lineup_items %}<p class="small{% if lineup.is_confirmed and sheets_ready < lineup_items|length %} text-warning-emphasis{% else %} text-body-secondary{% endif %}">{{ sheets_ready }} of {{ lineup_items|length }} song{{ lineup_items|length|pluralize }} {{ lineup_items|length|pluralize:"has,have" }} a chord sheet.{% if lineup.is_confirmed and sheets_ready < lineup_items|length %} Every song needs one now that it is confirmed.{% endif %}</p>{% endif %}
 
-        <section class="card shadow-sm mb-3" aria-label="Songs">
+        <section class="card shadow-sm mb-3" aria-labelledby="lineup-songs-title">
+          <div class="chord-lineup-head"><h2 id="lineup-songs-title">Songs</h2><span class="chord-lineup-count" aria-label="{{ lineup_items|length }} song{{ lineup_items|length|pluralize }} chosen">{{ lineup_items|length }}</span></div>
           <ol class="list-unstyled mb-0">
             {% for kind, item in slot_rows %}
               {% if kind == "song" %}
-                <li class="chord-song-row">
+                <li class="chord-song-row{% if item.locked %} is-locked{% endif %}" id="item-{{ item.pk }}">
                   {% if can_change_lineup %}
                     <div class="chord-song-row__move">
                       {% if not item.locked and item.can_move_up %}
@@ -110,7 +111,7 @@
                           <li><a class="dropdown-item" href="{% url 'worship:lineup_item' public_id=service.public_id pk=item.pk %}">Key and notes</a></li>
                           <li><a class="dropdown-item" href="{% url 'worship:lineup_song' public_id=service.public_id pk=item.pk %}">Open the song page</a></li>
                           {% if not item.locked %}
-                            <li><form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action='remove' %}" onsubmit="return confirm('Remove {{ item.song.title|escapejs }}?')">{% csrf_token %}<button type="submit" class="dropdown-item text-danger">Remove from the {{ lineup_word|lower }}</button></form></li>
+                            <li><form method="post" action="{% url 'worship:lineup_item_action' public_id=service.public_id pk=item.pk action='remove' %}" data-confirm="{{ item.song.title }} leaves the {{ lineup_word|lower }}." data-confirm-title="Remove this song?" data-confirm-action="Remove">{% csrf_token %}<button type="submit" class="dropdown-item text-danger">Remove from the {{ lineup_word|lower }}</button></form></li>
                           {% endif %}
                         </ul>
                       </div>
@@ -127,7 +128,7 @@
                 </li>
               {% endif %}
             {% empty %}
-              <li class="chord-song-row text-body-secondary">No songs yet.</li>
+              <li>{% include "includes/empty_state.html" with icon="music-note" title="No songs yet." text="Add the songs you have in mind, or pick from the suggestions." %}</li>
             {% endfor %}
           </ol>
           {% if can_add_songs %}

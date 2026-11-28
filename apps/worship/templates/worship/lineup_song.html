@@ -41,12 +41,12 @@
       <section class="card shadow-sm" aria-labelledby="order-title">
         <div class="card-body">
           <div class="chord-card-head"><h2 id="order-title" class="card-title">This {{ lineup_word|lower }}</h2></div>
-          <ol class="mb-0 ps-3">
+          <ol class="chord-order">
             {% for entry in lineup_order %}
               {% if entry.pk == item.pk %}
-                <li class="py-1" aria-current="true"><strong>{{ entry.song.title }}</strong>{% if entry.key %} · {{ entry.key }}{% endif %}</li>
+                <li aria-current="true"><strong>{{ entry.song.title }}</strong>{% if entry.key %} · {{ entry.key }}{% endif %}</li>
               {% else %}
-                <li class="py-1"><a href="{% url 'worship:lineup_song' public_id=service.public_id pk=entry.pk %}">{{ entry.song.title }}</a>{% if entry.key %} · {{ entry.key }}{% endif %}</li>
+                <li><a href="{% url 'worship:lineup_song' public_id=service.public_id pk=entry.pk %}">{{ entry.song.title }}</a>{% if entry.key %} · {{ entry.key }}{% endif %}</li>
               {% endif %}
             {% endfor %}
           </ol>

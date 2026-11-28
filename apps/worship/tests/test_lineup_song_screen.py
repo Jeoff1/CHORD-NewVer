@@ -61,7 +61,7 @@ class LineupSongScreenTests(TestCase):
         self.assertContains(page, "Notes for the team")
         self.assertContains(page, "Piano alone first")
         self.assertContains(
-            page, '<li class="py-1" aria-current="true"><strong>Alpha</strong> · D</li>'
+            page, '<li aria-current="true"><strong>Alpha</strong> · D</li>'
         )
         self.assertContains(page, ">Beta</a> · G")
         self.assertContains(page, "Back to Lineup")

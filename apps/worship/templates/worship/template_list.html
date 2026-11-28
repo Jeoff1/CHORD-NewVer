@@ -32,11 +32,11 @@
               <td>{% if template.repeats_weekly %}{{ template.get_weekday_display }}s, {{ template.start_time|time:"g:i A" }}{% else %}—{% endif %}</td>
               <td class="text-nowrap">{{ template.length_minutes }} min</td>
               <td>{{ template.slot_summary|default:"—" }}</td>
-              <td>{% if template.is_active %}<span class="badge text-bg-success">Yes</span>{% else %}<span class="badge text-bg-secondary">No</span>{% endif %}</td>
+              <td>{% if template.is_active %}<span class="chord-pill chord-pill--success">Yes</span>{% else %}<span class="chord-pill chord-pill--neutral">No</span>{% endif %}</td>
               <td class="text-end">{% if perms.worship.change_servicetemplate %}<a href="{% url 'worship:template_update' pk=template.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>{% endif %}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="6" class="text-center text-body-secondary py-4">Nothing here yet.</td></tr>
+            <tr><td colspan="6">{% include "includes/empty_state.html" with icon="calendar" title="Nothing here yet." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

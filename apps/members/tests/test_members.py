@@ -236,7 +236,7 @@ class OwnRecordTests(MemberTestCase):
         self.client.force_login(user)
         response = self.client.get(reverse("members:me"))
         self.assertContains(response, "0917 555 0101")
-        self.assertNotContains(response, "Edit")
+        self.assertNotContains(response, 'class="btn btn-primary">Edit</a>')
 
     def test_unlinked_account_gets_a_message(self):
         self.client.force_login(make_user())

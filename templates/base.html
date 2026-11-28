@@ -5,15 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   {% comment %}Light or dark mode (design system, Phase 9A A7): the person's own choice (Settings › Personal › Appearance), else the device's. Set before the stylesheets load, so the page never flashes the other theme.{% endcomment %}
-  <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { var theme = choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light"); document.documentElement.setAttribute("data-bs-theme", theme); } apply(); dark.addEventListener("change", apply); })();</script>
+  <script>(function () { var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { var theme = choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light"); document.documentElement.setAttribute("data-bs-theme", theme); } apply(); dark.addEventListener("change", apply); window.chordSetTheme = function (next) { choice = next; apply(); }; })();</script>
   <title>{% block title %}{% endblock %} · {{ church.name|default:"CHORD" }}</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/chord.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <link rel="stylesheet" href="{% static 'css/planning.css' %}">
+  <script src="{% static 'js/components.js' %}" defer></script>
   <script src="{% static 'vendor/bootstrap-5.3.3/bootstrap.bundle.min.js' %}" defer></script>
   <script src="{% static 'vendor/htmx-2.0.4/htmx.min.js' %}" defer></script>
   {% if user.is_authenticated and church %}
     {% comment %}The signed-in sidebar (dashboard redesign, 27 Nov 2026): its stylesheet and script. The person's choice of a full or icon-only sidebar comes from the chord_sidebar cookie (on the html tag above), so the page arrives drawn that way; with no choice yet, a tablet starts icon-only.{% endcomment %}
     <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
+    <link rel="stylesheet" href="{% static 'css/account.css' %}">
+    <script src="{% static 'js/account_menu.js' %}" defer></script>
     {% if not request.COOKIES.chord_sidebar %}<script>(function () { if (window.innerWidth >= 768 && window.innerWidth < 1200) { document.documentElement.classList.add("chord-sb-icons"); } })();</script>{% endif %}
     <script src="{% static 'church/sidebar.js' %}" defer></script>
   {% endif %}
@@ -75,7 +80,7 @@
                   {% endfor %}
                   <li><hr class="dropdown-divider"></li>
                 {% endif %}
-                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">My profile</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Account settings</a></li>
                 <li><a class="dropdown-item" href="{% url 'churches:directory' %}">Churches</a></li>
                 <li><a class="dropdown-item" href="{% url 'public_requests:my_requests' %}">My requests at any church</a></li>
                 {% if "members" in enabled_modules and user.member %}<li><a class="dropdown-item" href="{% url 'members:me' %}">My {{ labels.member|lower }} record</a></li>{% endif %}
@@ -102,14 +107,7 @@
   {% for message in messages %}{% if "chord-welcome" in message.extra_tags %}{% include "includes/welcome_toast.html" %}{% endif %}{% endfor %}
 
   <main {% if user.is_authenticated and church %}class="chord-app__main" id="chord-main"{% else %}class="container py-4"{% endif %}>
-    {% for message in messages %}
-      {% if "chord-welcome" not in message.extra_tags %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      {% endif %}
-    {% endfor %}
+    {% include "includes/messages.html" %}
     {% if settings_menu.current %}
       {% comment %}The Settings hub (Phase 9A A7): every registered settings page, and its add and edit pages, sits beside the side menu.{% endcomment %}
       {% url 'home' as dashboard_url %}{% include "includes/back_link.html" with url=dashboard_url label="Dashboard" %}

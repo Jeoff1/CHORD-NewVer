@@ -5,29 +5,32 @@
 {% block content %}
   {% load ui %}
   {% page_header "My requests" subtitle="Special services you asked for, such as a wedding, a baptism or a funeral. You get a notification when one is approved or declined." %}
-    {% if can_request %}<a href="{% url 'occasions:request' %}" class="btn btn-primary">Request a service</a>{% endif %}
+    {% if can_request %}<a href="{% url 'occasions:request' %}" class="btn btn-primary">{% include "includes/icons/plus.html" with size=18 %}Request a service</a>{% endif %}
   {% endpage_header %}
-  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). UI/UX Phase 4: request rows with status pills. #}
 
   <div class="card shadow-sm">
-    <ul class="list-group list-group-flush">
+    <ul class="chord-rows">
       {% for record in object_list %}
-        <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
-          <div class="me-auto">
-            <div class="fw-semibold">{{ record.occasion_type.name }} for {{ record.occasion_for }}</div>
-            <div class="small text-body-secondary">{% if record.occasion %}{{ record.occasion.starts_at|date:"l, F j, Y · g:i A" }}{% else %}{{ record.starts_at|date:"l, F j, Y · g:i A" }}{% endif %}</div>
-            {% if record.status == "declined" and record.decline_reason %}<div class="small">Reason: {{ record.decline_reason }}</div>{% endif %}
+        <li class="chord-row">
+          {% with when=record.occasion.starts_at|default:record.starts_at %}<span class="chord-date chord-date--gold" aria-hidden="true"><span class="chord-date__month">{{ when|date:"M" }}</span><span class="chord-date__day">{{ when|date:"j" }}</span></span>{% endwith %}
+          <div class="chord-row__main">
+            <span class="chord-row__title">{{ record.occasion_type.name }} for {{ record.occasion_for }}</span>
+            <div class="chord-row__meta">{% if record.occasion %}{{ record.occasion.starts_at|date:"l, F j, Y · g:i A" }}{% else %}{{ record.starts_at|date:"l, F j, Y · g:i A" }}{% endif %}</div>
+            {% if record.status == "declined" and record.decline_reason %}<div class="chord-row__meta">Reason: {{ record.decline_reason }}</div>{% endif %}
           </div>
-          <span class="badge {% if record.status == 'approved' %}text-bg-success{% elif record.status == 'declined' %}text-bg-danger{% elif record.status == 'pending' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ record.get_status_display }}</span>
-          {% if record.is_pending %}
-            <form method="post" action="{% url 'occasions:withdraw' public_id=record.public_id %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
-            </form>
-          {% endif %}
+          <div class="chord-row__side">
+            {% if record.status == "approved" %}{% include "includes/status_pill.html" with status="accepted" pill_text=record.get_status_display %}{% elif record.status == "declined" %}{% include "includes/status_pill.html" with status="declined" pill_text=record.get_status_display %}{% elif record.status == "pending" %}{% include "includes/status_pill.html" with status="pending" pill_text=record.get_status_display %}{% else %}{% include "includes/status_pill.html" with status="none" pill_text=record.get_status_display %}{% endif %}
+            {% if record.is_pending %}
+              <form method="post" action="{% url 'occasions:withdraw' public_id=record.public_id %}" data-confirm="The church won't see this request any more." data-confirm-title="Withdraw this request?" data-confirm-action="Withdraw">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
+              </form>
+            {% endif %}
+          </div>
         </li>
       {% empty %}
-        <li class="list-group-item text-body-secondary">{% if can_request %}You haven't requested an occasion yet.{% else %}The church hasn't set up any occasions yet.{% endif %}</li>
+        <li>{% if can_request %}{% url 'occasions:request' as request_url %}{% include "includes/empty_state.html" with icon="inbox" title="You haven't requested an occasion yet." text="Ask your church for a wedding, baptism, funeral or another special service." action_url=request_url action_label="Request a service" %}{% else %}{% include "includes/empty_state.html" with icon="inbox" title="The church hasn't set up any occasions yet." %}{% endif %}</li>
       {% endfor %}
     </ul>
   </div>

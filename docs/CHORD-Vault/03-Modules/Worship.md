@@ -653,6 +653,81 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   `test_service_screen.py`, `test_lineup_screen.py`, `test_lineup_views.py`,
   `test_suggestion_views.py`.
 
+### Screens (UI/UX Phase 5, 28 Nov 2026)
+
+`static/css/planning.css` (loaded by `base.html`), from
+[[UI-UX-Master-Plan]] §11:
+
+- **Planning stepper** (`includes/planning_steps.html`): raised step cards,
+  a thread between them on wide screens (green once done), the done check
+  pops in, the current step's mark rings twice, the step of the page shown
+  carries a gold underline; whole steps stay links.
+- **Next-step panel**: a flag (or a check when done) and a gold wash.
+- **Worship services** (`service_list.html`): Upcoming and Past as a
+  segmented control (the same GET buttons with `aria-pressed`), date tiles,
+  rows that open the service from anywhere (`data-href`), empty states.
+- **Theme card**: the title in Raleway, the scripture as a gold pill with a
+  book icon.
+- **Song Lineup** (`lineup_detail.html`): a Songs heading with the count,
+  row anchors (`#item-<pk>`, highlighted when targeted), locked rows marked
+  with a gold edge, dashed empty slots, an empty state. Lineup on the left,
+  suggestions on the right (decision 0015).
+- **Suggestions** (`includes/suggestions.html`): while a run works, a
+  music waveform, "Finding songs for your worship theme…" and three
+  skeleton songs above the worker's own progress bar; results as numbered
+  cards that stagger in, with the slot, title, artist and reasons; a song
+  already chosen gets a green card and the "In the lineup" pill with a
+  popping check.
+- **Rundowns** (lineup card on the service page, Confirm): numbered song
+  rows.
+- Tests: `apps/worship/tests/test_planning_screens.py`.
+
+### Songs, chord sheets and rehearsal screens (UI/UX Phase 6, 28 Nov 2026)
+
+From [[UI-UX-Master-Plan]] §12 (`planning.css`, "Songs"):
+
+- **Song pool** (`songs/song_list.html`): the five filters fold into a
+  Filters panel (open while one is chosen, the same GET fields); rows with
+  a branded tile (no album art is stored), title and artist, the worship
+  check as a status pill (`songs/includes/check_badge.html`), feel, theme
+  tags as chips, Knows it or New as pills; whole rows open the song; empty
+  states (Find on Spotify for people who may add).
+- **Find on Spotify** (`songs/spotify_search.html`): a large rounded search
+  box, results as rows with tile, title, artist and album, Add (busy while
+  sent) or In the pool; an empty state.
+- **Song page** (`songs/song_detail.html`): a header with a large tile;
+  tags as chips with their score.
+- **Chord sheet viewer** (`songs/includes/chord_sheet.html`): a 72-character
+  reading width, larger text, chorus blocks with a gold edge and wash, the
+  toolbar sticks under the header while reading, the sheet dims while htmx
+  re-renders it; no other motion.
+- **Editor** (`songs/chordsheet_form.html`): a tall monospace text area.
+  Discarding a pending sheet asks first.
+- **Rehearsal** (`worship/lineup_song.html`): the lineup order as numbered
+  rows with the current song highlighted.
+- Tests: `apps/songs/tests/test_song_screens.py`.
+
+### Calendar (UI/UX Phase 7, 28 Nov 2026)
+
+`worship/calendar.html`: the month title in Raleway with previous, next
+and Today; a legend with swatches and words; a month grid (`.chord-cal`)
+whose today is a filled circle, days outside the month dimmed, events as
+chips (services green, occasions gold with a gold edge, hidden bookings
+dashed and labelled "Booked", cancelled struck through), each lifting on
+hover; the month fades in. Same data, links and visibility rules.
+
+### Reports (UI/UX Phase 10, 28 Nov 2026)
+
+`worship/reports.html` shows a card per report (icon, name, chevron; the
+whole card links) or an empty state. Each report
+(`includes/report_header.html`) has a back link, its title, a segmented
+switch between reports, and the period (From, To, Show, Clear) in a
+toolbar card. Song usage: summary counts (songs, sung again within the
+repeat window), Download CSV as a button, the table (repeats still
+highlighted), an empty state. Attendance: summary counts (services,
+average headcount), the table, an empty state. Same data and CSV.
+Tests: `apps/worship/tests/test_report_screens.py`.
+
 ## Permissions
 
 | Permission                                   | Allows                                   |

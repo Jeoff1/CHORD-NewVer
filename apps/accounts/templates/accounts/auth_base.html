@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static church %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -31,7 +31,7 @@
           <source type="image/webp" srcset="{% static 'images/landing/signup-worship-800.webp' %} 800w, {% static 'images/landing/signup-worship.webp' %} 1600w" sizes="(max-width: 719.98px) 100vw, (max-width: 991.98px) 42vw, 50vw">
           <img class="au-photo__img" src="{% static 'images/landing/signup-worship.jpg' %}" alt="" width="1600" height="2580" decoding="async" fetchpriority="high">
         </picture>
-        <a class="au-logo" href="{% url 'home' %}" aria-label="CHORD, home">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
+        <a class="au-logo chord-home-tip" href="{% homepage_url %}" aria-label="CHORD, go to the homepage" data-home-tip="Go to Homepage">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
         <a class="au-back au-back--light au-back--mobile" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" with size=16 %}Home</a>
         <div class="au-photo__text">
           <p class="au-photo__title">{% block photo_title %}Bringing Worship Together{% endblock %}</p>

@@ -92,6 +92,33 @@ Phase 9A, A7 part 3: Occasion types is in the Settings hub's "Teams and
 occasions" category; the dashboard shows waiting requests to approvers
 and the coming occasions to people who may see them (`dashboard.py`).
 
+### Screens (UI/UX Phase 4, 28 Nov 2026)
+
+Built from [[UI-UX-Master-Plan]] §10 with the shared record patterns
+([[Design-System]], "Shared components"):
+
+- **Bookings** (`occasions/list.html`): Upcoming and Past as a segmented
+  filter, the search toolbar, then booking rows (a gold date tile, the
+  occasion and who it is for as the row's link, the time, officiant and
+  venue, a Cancelled pill, a chevron), staggered in; an empty state with
+  Book a service for people who may book.
+- **Book a service and Edit** (`occasions/occasion_form.html`, set on
+  `OccasionFormMixin`): the same `OccasionForm` in four sections (The
+  service, When, Where and who, Notes); fields, the separate date and time
+  boxes and validation unchanged. `form_page.html` gained a
+  `form_fields` block for this.
+- **Booking details** (`occasions/detail.html`): a record header (date
+  tile, title, time, Cancelled pill, Edit), a Details card as a label and
+  value grid, and a Requested card beside it.
+- **Service requests** (`occasions/requests.html`): two summary counts,
+  Pending rows (date tile, link to Decide, pending pill, Decide) and
+  Decided rows (approved, declined or withdrawn pill, reason); empty states.
+- **Deciding** (`occasions/decide.html`): record header with the status
+  pill, The request card, Approve and Decline cards.
+- **My requests** (`my_requests.html`, `my_requests_everywhere.html`):
+  rows with status pills; Withdraw asks first in the shared confirm dialog.
+- Tests: `apps/occasions/tests/test_booking_screens.py`.
+
 ## Permissions
 
 | Permission                          | Allows                                          | Default roles |

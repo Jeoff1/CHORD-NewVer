@@ -8,7 +8,10 @@
   {% include "worship/includes/report_header.html" with title="Attendance" %}
   <p class="text-body-secondary">The headcount of each {{ service_word|lower }} held, where one was recorded.</p>
   {% if services %}
-    <p class="small">{{ services|length }} {{ service_word|lower }}{{ services|length|pluralize }}; average {{ average }}.</p>
+    <div class="chord-stats" aria-label="Summary">
+      <div class="chord-stat"><span class="chord-stat__value">{{ services|length }}</span><span class="chord-stat__label">{{ service_word|lower }}{{ services|length|pluralize }}</span></div>
+      <div class="chord-stat"><span class="chord-stat__value">{{ average }}</span><span class="chord-stat__label">average headcount</span></div>
+    </div>
     <div class="card shadow-sm">
       <div class="table-responsive">
         <table class="table align-middle mb-0">
@@ -22,6 +25,6 @@
       </div>
     </div>
   {% else %}
-    <p class="text-body-secondary">No headcount in this period.</p>
+    <div class="card shadow-sm">{% include "includes/empty_state.html" with icon="people" title="No headcount in this period." text="Headcounts are recorded on each service's page after it is held." %}</div>
   {% endif %}
 {% endblock %}

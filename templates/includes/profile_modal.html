@@ -1,0 +1,56 @@
+{% load church %}{% comment %}
+  Edit Profile (UI/UX Phase 2, 28 Nov 2026): a native dialog opened from the account popover. Only the
+  name fields the account already has (first, middle and last name, suffix), with a live preview of the
+  initials avatar and full name. No picture, bio, banner or camera overlay (the lead developer's decision,
+  28 Nov 2026). It posts to accounts:profile_edit: static/js/account_menu.js sends it in the background and
+  updates the name on the page; without JavaScript it posts normally and comes back to this page.
+{% endcomment %}
+<dialog class="acct-modal" id="acct-profile" aria-labelledby="acct-profile-title" data-profile-modal>
+  <form method="post" action="{% url 'accounts:profile_edit' %}" novalidate data-profile-form>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <header class="acct-modal__head">
+      <h2 class="acct-modal__title" id="acct-profile-title">Edit profile</h2>
+      <button type="button" class="acct-modal__close" data-profile-close aria-label="Close">{% include "includes/icons/x.html" with size=18 %}</button>
+    </header>
+    <div class="acct-modal__body">
+      <div class="acct-modal__preview" aria-hidden="true">
+        <span class="acct__av acct__av--xl" data-preview-initials>{{ user.initials }}</span>
+        <span class="acct-modal__preview-text">
+          <strong data-preview-name>{{ user.display_name }}</strong>
+          <span>{% if church %}{% church_role_line as role %}{% if role %}{{ role }} · {% endif %}{{ church.name }}{% else %}Your name as your church sees it{% endif %}</span>
+        </span>
+      </div>
+      <p class="acct-modal__error" role="alert" data-profile-error hidden></p>
+      <fieldset class="acct-modal__fields">
+        <legend class="visually-hidden">Your name</legend>
+        <div class="acct-field">
+          <label for="acct-first">First name <span class="acct-field__req" aria-hidden="true">*</span></label>
+          <input id="acct-first" name="first_name" value="{{ user.first_name }}" maxlength="150" required autocomplete="given-name" data-name-part="first">
+          <p class="acct-field__error" data-error-for="first_name" hidden></p>
+        </div>
+        <div class="acct-field">
+          <label for="acct-middle">Middle name <span class="acct-field__opt">Optional</span></label>
+          <input id="acct-middle" name="middle_name" value="{{ user.middle_name }}" maxlength="100" autocomplete="additional-name" data-name-part="middle">
+          <p class="acct-field__error" data-error-for="middle_name" hidden></p>
+        </div>
+        <div class="acct-field">
+          <label for="acct-last">Last name <span class="acct-field__req" aria-hidden="true">*</span></label>
+          <input id="acct-last" name="last_name" value="{{ user.last_name }}" maxlength="150" required autocomplete="family-name" data-name-part="last">
+          <p class="acct-field__error" data-error-for="last_name" hidden></p>
+        </div>
+        <div class="acct-field acct-field--short">
+          <label for="acct-suffix">Suffix <span class="acct-field__opt">Optional</span></label>
+          <input id="acct-suffix" name="suffix" value="{{ user.suffix }}" maxlength="20" autocomplete="honorific-suffix" placeholder="Jr., Sr., III" data-name-part="suffix">
+          <p class="acct-field__error" data-error-for="suffix" hidden></p>
+        </div>
+      </fieldset>
+      <p class="acct-modal__note">Your email, password and appearance are in <a href="{% url 'accounts:profile' %}">Account Settings</a>.</p>
+    </div>
+    <footer class="acct-modal__foot">
+      <button type="button" class="btn btn-outline-secondary" data-profile-close>Cancel</button>
+      <button type="submit" class="btn btn-primary acct-modal__save" data-profile-save><span class="acct-modal__spinner" aria-hidden="true"></span><span data-save-label>Save changes</span></button>
+    </footer>
+  </form>
+</dialog>
+<div class="acct-toast" role="status" aria-live="polite" data-account-toast hidden>{% include "includes/icons/check-circle.html" with size=18 %}<span data-toast-text></span></div>

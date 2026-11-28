@@ -72,6 +72,30 @@ class ProfileForm(forms.ModelForm):
         fields = ["first_name", "middle_name", "last_name", "suffix", "email"]
 
 
+class PersonalInfoForm(forms.ModelForm):
+    """Edit Profile (UI/UX Phase 2): only the name fields the account already
+    has. No picture or bio (the lead developer's decision, 28 Nov 2026)."""
+
+    class Meta:
+        model = User
+        fields = ["first_name", "middle_name", "last_name", "suffix"]
+        help_texts = {"suffix": "Optional, such as Jr., Sr. or III."}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # A full name, as registering asks for one.
+        self.fields["first_name"].required = True
+        self.fields["last_name"].required = True
+        self.fields["middle_name"].help_text = "Optional."
+
+    def clean(self):
+        cleaned = super().clean()
+        for name in self.Meta.fields:
+            if isinstance(cleaned.get(name), str):
+                cleaned[name] = " ".join(cleaned[name].split())
+        return cleaned
+
+
 class AppearanceForm(forms.ModelForm):
     """The person's own light or dark mode (Phase 9A, A7)."""
 

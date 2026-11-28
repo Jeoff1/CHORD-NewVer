@@ -10,8 +10,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count, Prefetch
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
 from django.views.generic import (
     CreateView,
@@ -31,6 +33,7 @@ from . import role_changes
 from .forms import (
     AddExistingAccountForm,
     AppearanceForm,
+    PersonalInfoForm,
     ProfileForm,
     RoleForm,
     UserCreateForm,
@@ -47,7 +50,9 @@ def user_audit_fields(church):
     return {
         "Username": "username",
         "First name": "first_name",
+        "Middle name": "middle_name",
         "Last name": "last_name",
+        "Suffix": "suffix",
         "Email": "email",
         "Active": "is_active",
         "Roles": lambda user: [role.title for role in user.roles_in(church)],
@@ -60,6 +65,17 @@ ROLE_AUDIT_FIELDS = {
     "Permissions": lambda role: [p.name for p in role.permissions.all()],
 }
 PASSWORD_CHANGE = {"Password": ["", "(new password set)"]}
+
+
+def safe_next(request):
+    """The ``next`` address of a POST or GET when it is on this site, else
+    None."""
+    target = request.POST.get("next") or request.GET.get("next")
+    if target and url_has_allowed_host_and_scheme(
+        target, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return target
+    return None
 
 
 def church_users(request):
@@ -87,14 +103,31 @@ class AppearanceView(LoginRequiredMixin, FormPageMixin, UpdateView):
         return self.request.user
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        self.object = form.save()
+        # The account popover's switch (UI/UX owner, 28 Nov 2026) saves in
+        # the background, or, without JavaScript, goes back to its page.
+        if "application/json" in self.request.headers.get("Accept", ""):
+            return JsonResponse({"theme": self.object.theme})
+        target = safe_next(self.request)
+        if target:
+            return redirect(target)
         messages.success(self.request, "Your appearance was saved.")
-        return response
+        return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        if "application/json" in self.request.headers.get("Accept", ""):
+            return JsonResponse(
+                {"errors": {k: list(v) for k, v in form.errors.items()}}, status=400
+            )
+        return super().form_invalid(form)
 
 
 class ProfileView(LoginRequiredMixin, FormPageMixin, UpdateView):
+    """Account settings: the person's name and sign-in email; the account
+    popover's **Account Settings** opens it (UI/UX Phase 2)."""
+
     form_class = ProfileForm
-    page_title = "My profile"
+    page_title = "Account settings"
     success_url = reverse_lazy("accounts:profile")
 
     def get_object(self, queryset=None):
@@ -103,7 +136,10 @@ class ProfileView(LoginRequiredMixin, FormPageMixin, UpdateView):
         return user
 
     def get_links(self):
-        return [("Change password", reverse("accounts:password_change"))]
+        return [
+            ("Change password", reverse("accounts:password_change")),
+            ("Appearance", reverse("accounts:appearance")),
+        ]
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -118,6 +154,64 @@ class ProfileView(LoginRequiredMixin, FormPageMixin, UpdateView):
         )
         messages.success(self.request, "Your profile was saved.")
         return response
+
+
+class PersonalInfoView(LoginRequiredMixin, FormPageMixin, UpdateView):
+    """Edit Profile (UI/UX Phase 2): the account popover's modal posts the
+    person's own first, middle and last name and suffix here. No picture,
+    bio or banner (the lead developer's decision, 28 Nov 2026).
+
+    The modal sends ``Accept: application/json`` and gets the new name and
+    initials back (400 with the errors when they don't validate), so the
+    page updates in place. Without JavaScript the form posts normally and
+    the person goes back to ``next``; when it fails this page shows the
+    errors."""
+
+    form_class = PersonalInfoForm
+    page_title = "Edit profile"
+    submit_label = "Save changes"
+
+    def get_object(self, queryset=None):
+        user = self.request.user
+        self.before = snapshot(user, user_audit_fields(self.request.church))
+        return user
+
+    def wants_json(self):
+        return "application/json" in self.request.headers.get("Accept", "")
+
+    def next_url(self):
+        return safe_next(self.request) or reverse("accounts:profile")
+
+    def get_cancel_url(self):
+        return self.next_url()
+
+    def get_success_url(self):
+        return self.next_url()
+
+    def form_valid(self, form):
+        self.object = form.save()
+        record_change(
+            self.request.user,
+            self.object,
+            AuditEvent.Action.CHANGED,
+            diff(
+                self.before,
+                snapshot(self.object, user_audit_fields(self.request.church)),
+            ),
+        )
+        if self.wants_json():
+            return JsonResponse(
+                {"name": self.object.display_name, "initials": self.object.initials}
+            )
+        messages.success(self.request, "Your profile was saved.")
+        return redirect(self.get_success_url())
+
+    def form_invalid(self, form):
+        if self.wants_json():
+            return JsonResponse(
+                {"errors": {k: list(v) for k, v in form.errors.items()}}, status=400
+            )
+        return super().form_invalid(form)
 
 
 class PasswordChangeView(FormPageMixin, auth_views.PasswordChangeView):

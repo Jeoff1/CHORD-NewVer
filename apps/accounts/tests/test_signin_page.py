@@ -25,7 +25,7 @@ class SignInPageTests(TestCase):
         ):
             self.assertContains(response, path)
         self.assertContains(response, "Bringing Worship Together")
-        self.assertContains(response, 'aria-label="CHORD, home"')
+        self.assertContains(response, 'aria-label="CHORD, go to the homepage"')
 
     def test_the_form_and_its_words(self):
         response = self.client.get(LOGIN)

@@ -122,6 +122,8 @@ class OccasionFormMixin(
 ):
     model = Occasion
     form_class = OccasionForm
+    # The same form in sections (UI/UX Phase 4).
+    template_name = "occasions/occasion_form.html"
 
     def form_valid(self, form):
         occasion = form.save(commit=False)

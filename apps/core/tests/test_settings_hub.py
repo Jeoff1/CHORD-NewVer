@@ -90,8 +90,9 @@ class MenuTests(TestCase):
     def test_everyone_has_their_own_appearance(self):
         # Phase 9A, A7: a church member's only settings page is their own.
         menu = menu_for(make_user(roles=["church_member"]))
-        self.assertEqual(labels(menu), {"Personal": ["Appearance"]})
-        self.assertEqual(menu.home_url, reverse("accounts:appearance"))
+        # UI/UX Phase 2: Account settings too, first.
+        self.assertEqual(labels(menu), {"Personal": ["Account", "Appearance"]})
+        self.assertEqual(menu.home_url, reverse("accounts:profile"))
 
     def test_a_switched_off_modules_pages_are_gone(self):
         complete_setup(disabled_modules=["teams", "members"])
@@ -133,7 +134,7 @@ class HubPageTests(TestCase):
         self.client.force_login(make_user(roles=["church_member"]))
         self.assertContains(
             self.client.get(reverse("home")),
-            f'href="{reverse("accounts:appearance")}" title="Settings"',
+            f'href="{reverse("accounts:profile")}" title="Settings"',
         )
 
     def test_a_settings_page_shows_the_menu_and_where_it_is(self):

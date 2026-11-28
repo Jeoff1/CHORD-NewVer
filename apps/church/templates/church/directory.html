@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static church %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -24,7 +24,7 @@
 
   <nav class="lp-nav" aria-label="Main">
     <div class="lp-wrap dir-nav__row">
-      <a class="lp-brand" href="{% url 'home' %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      <a class="lp-brand chord-home-tip" href="{% homepage_url %}" aria-label="CHORD, go to the homepage" data-home-tip="Go to Homepage"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
       {% comment %}A real link to the home page, never the browser's history: the landing page for a visitor, the dashboard for a signed-in person.{% endcomment %}
       <a class="lp-btn lp-btn--ghost lp-btn--small dir-back" href="{% url 'home' %}">{% include "includes/icons/chevron-left.html" %}<span class="dir-back__long">Back to Home</span><span class="dir-back__short">Home</span></a>
     </div>

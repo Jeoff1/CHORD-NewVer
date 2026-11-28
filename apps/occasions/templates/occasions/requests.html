@@ -6,46 +6,57 @@
 {% block content %}
   {% load ui %}
   {% page_header "Service requests" subtitle="Requests for weddings, baptisms, funerals and other special services. Approving one books it on the calendar." %}{% endpage_header %}
-  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). UI/UX Phase 4: summary, pending rows, decided rows. #}
 
-  <h2 class="h5">Pending ({{ paginator.count }})</h2>
-  <div class="card shadow-sm mb-4">
-    <ul class="list-group list-group-flush">
+  <div class="chord-stats" aria-label="Summary">
+    <div class="chord-stat"><span class="chord-stat__value">{{ paginator.count }}</span><span class="chord-stat__label">Pending</span></div>
+    <div class="chord-stat"><span class="chord-stat__value">{{ decided|length }}</span><span class="chord-stat__label">Decided, latest {{ decided_shown }}</span></div>
+  </div>
+
+  <section class="card shadow-sm mb-4" aria-labelledby="pending-title">
+    <div class="card-header-plain"><h2 id="pending-title">Pending ({{ paginator.count }})</h2></div>
+    <ul class="chord-rows">
       {% for record in object_list %}
-        <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
-          <div class="me-auto">
-            <a href="{% url 'occasions:decide' public_id=record.public_id %}" class="fw-semibold text-decoration-none">{{ record.occasion_type.name }} for {{ record.occasion_for }}</a>
-            <div class="small text-body-secondary">{{ record.starts_at|date:"l, F j, Y · g:i A" }} · asked by {{ record.requester|person_name }}</div>
+        <li class="chord-row chord-reveal" style="--i: {{ forloop.counter0 }}">
+          <span class="chord-date chord-date--gold" aria-hidden="true"><span class="chord-date__month">{{ record.starts_at|date:"M" }}</span><span class="chord-date__day">{{ record.starts_at|date:"j" }}</span></span>
+          <div class="chord-row__main">
+            <a href="{% url 'occasions:decide' public_id=record.public_id %}" class="chord-row__title stretched-link">{{ record.occasion_type.name }} for {{ record.occasion_for }}</a>
+            <div class="chord-row__meta">{{ record.starts_at|date:"l, F j, Y · g:i A" }} · asked by {{ record.requester|person_name }}</div>
           </div>
-          <a href="{% url 'occasions:decide' public_id=record.public_id %}" class="btn btn-sm btn-outline-primary">Decide</a>
+          <div class="chord-row__side">
+            {% include "includes/status_pill.html" with status="pending" %}
+            <a href="{% url 'occasions:decide' public_id=record.public_id %}" class="btn btn-sm btn-outline-primary">Decide</a>
+          </div>
         </li>
       {% empty %}
-        <li class="list-group-item text-body-secondary">No requests are waiting.</li>
+        <li>{% include "includes/empty_state.html" with icon="inbox" title="No requests are waiting." text="New requests from members and visitors appear here." %}</li>
       {% endfor %}
     </ul>
-  </div>
+  </section>
   {% include "includes/pagination.html" %}
 
-  <h2 class="h5">Decided</h2>
-  <p class="small text-body-secondary">The latest {{ decided_shown }}.</p>
-  <div class="card shadow-sm">
-    <ul class="list-group list-group-flush">
+  <section class="card shadow-sm" aria-labelledby="decided-title">
+    <div class="card-header-plain"><h2 id="decided-title">Decided</h2><span class="small text-body-secondary">The latest {{ decided_shown }}.</span></div>
+    <ul class="chord-rows">
       {% for record in decided %}
-        <li class="list-group-item d-flex flex-wrap align-items-center gap-2">
-          <div class="me-auto">
+        <li class="chord-row">
+          <span class="chord-date chord-date--muted" aria-hidden="true"><span class="chord-date__month">{{ record.starts_at|date:"M" }}</span><span class="chord-date__day">{{ record.starts_at|date:"j" }}</span></span>
+          <div class="chord-row__main">
             {% if record.occasion %}
-              <a href="{% url 'occasions:detail' public_id=record.occasion.public_id %}" class="fw-semibold text-decoration-none">{{ record.occasion_type.name }} for {{ record.occasion_for }}</a>
+              <a href="{% url 'occasions:detail' public_id=record.occasion.public_id %}" class="chord-row__title stretched-link">{{ record.occasion_type.name }} for {{ record.occasion_for }}</a>
             {% else %}
-              <span class="fw-semibold">{{ record.occasion_type.name }} for {{ record.occasion_for }}</span>
+              <span class="chord-row__title">{{ record.occasion_type.name }} for {{ record.occasion_for }}</span>
             {% endif %}
-            <div class="small text-body-secondary">{{ record.starts_at|date:"M j, Y · g:i A" }} · asked by {{ record.requester|person_name }}{% if record.decided_by %} · decided by {{ record.decided_by|person_name }}{% endif %}</div>
-            {% if record.decline_reason %}<div class="small">Reason: {{ record.decline_reason }}</div>{% endif %}
+            <div class="chord-row__meta">{{ record.starts_at|date:"M j, Y · g:i A" }} · asked by {{ record.requester|person_name }}{% if record.decided_by %} · decided by {{ record.decided_by|person_name }}{% endif %}</div>
+            {% if record.decline_reason %}<div class="chord-row__meta">Reason: {{ record.decline_reason }}</div>{% endif %}
           </div>
-          <span class="badge {% if record.status == 'approved' %}text-bg-success{% elif record.status == 'declined' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ record.get_status_display }}</span>
+          <div class="chord-row__side">
+            {% if record.status == "approved" %}{% include "includes/status_pill.html" with status="accepted" pill_text=record.get_status_display %}{% elif record.status == "declined" %}{% include "includes/status_pill.html" with status="declined" pill_text=record.get_status_display %}{% else %}{% include "includes/status_pill.html" with status="none" pill_text=record.get_status_display %}{% endif %}
+          </div>
         </li>
       {% empty %}
-        <li class="list-group-item text-body-secondary">Nothing decided yet.</li>
+        <li>{% include "includes/empty_state.html" with icon="check-circle" title="Nothing decided yet." %}</li>
       {% endfor %}
     </ul>
-  </div>
+  </section>
 {% endblock %}

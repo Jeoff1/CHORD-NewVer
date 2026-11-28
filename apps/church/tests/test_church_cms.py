@@ -65,8 +65,10 @@ class SignedInLandingTests(TestCase):
             page, 'class="lp-btn lp-btn--ghost lp-btn--small lp-nav__signin"'
         )
         self.assertNotContains(page, ">Explore churches</a>")
-        # Signed in, "/" is still the dashboard.
-        self.assertNotContains(self.client.get(reverse("home")), "data-account-menu")
+        # Signed in, "/" is still the dashboard, with the app's own popover.
+        dashboard = self.client.get(reverse("home"))
+        self.assertNotContains(dashboard, "acct--public")
+        self.assertContains(dashboard, "acct--app")
 
     def test_my_church_only_when_its_page_can_be_opened(self):
         church = first_church()

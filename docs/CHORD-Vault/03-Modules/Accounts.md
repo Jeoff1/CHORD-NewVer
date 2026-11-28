@@ -12,8 +12,13 @@ the core; it can't be switched off. App: `apps/accounts`.
 - **User** (`accounts.User`): Django's standard user, shared across
   churches, with an optional `middle_name` (100 characters) and `suffix`
   (20, "Jr., Sr., III"; migration `0011_user_middle_name_suffix`, 27 Nov
-  2026), also on My profile. Users are deactivated, never deleted, so the
-  audit trail keeps its actors (there is no delete permission).
+  2026), also on Account settings and Edit Profile. Users are deactivated,
+  never deleted, so the audit trail keeps its actors (there is no delete
+  permission). `User.display_name` (first, middle, last, suffix, else the
+  username) and `User.initials` (first and last initial, else the
+  username's first letter) feed the account popover; they are properties,
+  not fields. There is no profile picture or bio (the lead developer's
+  decision, 28 Nov 2026).
 - **Membership** (`accounts.Membership`; Phase 9B): a user's place in one
   church, with their roles there and whether it is active. At most one per
   church. Users, Add user and Edit user work on the Current Church's
@@ -128,7 +133,20 @@ the core; it can't be switched off. App: `apps/accounts`.
     button while sending, and "Sign up", which opens Register your
     church),
     and sign out with a POST to `/accounts/logout/`;
-  - My profile (name and email) at `/accounts/profile/`;
+  - **Account settings** (name and email) at `/accounts/profile/`, with
+    links to Change password and Appearance (Settings › Personal ›
+    Account since UI/UX Phase 2);
+  - **Edit Profile** (UI/UX Phase 2) at `/accounts/profile/edit/`
+    (`PersonalInfoView`, `PersonalInfoForm`): first and last name
+    (required), middle name and suffix, audited; the account popover's modal
+    posts it with `Accept: application/json` and gets the new name and
+    initials back, without JavaScript it returns to `next` (same site only);
+  - **the account popover** (`templates/includes/account_popover.html`,
+    `profile_modal.html`, `static/css/account.css`,
+    `static/js/account_menu.js`) on every signed-in page: initials, full
+    name, role line, church, Edit Profile, the church switcher (only with
+    more than one church), the person's links, Appearance, Account Settings
+    and Sign Out. Tests: `apps/accounts/tests/test_account_popover.py`;
   - change password;
   - reset password by email: the reset email prints to the console in
     development, and an SMTP server can be configured through `.env`.
@@ -190,19 +208,45 @@ they work whichever Modules a church switches on.
 - Tests: `apps/notifications/tests/test_notifications.py`, including the
   pages with every Module switched off.
 
+### Screens (UI/UX Phase 8, 28 Nov 2026)
+
+From [[UI-UX-Master-Plan]] §14 (the sidebar's Members category):
+
+- **Users** (`accounts/user_list.html`): a page header with Add an existing
+  account and Add user; Active, Inactive and All as a segmented filter;
+  the search toolbar; a table with initials (`User.initials`; no pictures),
+  full name, username, email, role chips, an Active or Inactive pill, Edit;
+  rows open the user for people who may edit; an empty state.
+- **Roles and permissions** (`accounts/role_list.html`): a page header with
+  the explanation, Permission matrix and Add role; roles with a Full access
+  pill and a user count chip; an empty state.
+- **Permission matrix** (`accounts/permission_matrix.html`): back link and
+  page header; the header row and the permission column stay in view while
+  scrolling (`.chord-matrix`), section rows in Raleway with a gold rule,
+  larger checkboxes, row hover, Save sticks to the bottom.
+- **Audit log** (`audit/auditevent_list.html`): page header, the types as a
+  segmented filter, the actor's initials, the action as a pill (created
+  green, deleted red), each change as a struck old value → the new value
+  (`.chord-diff`); an empty state.
+- Tests: `apps/accounts/tests/test_people_screens.py`.
+
 ### Settings hub (Phase 9A, A7 part 3)
 
 Users, Roles and Permissions and the Audit Log are not settings: since
 28 Nov 2026 they are links in the sidebar's Members category
 (`apps/church/navigation.py`), shown to people with `accounts.view_user`,
 `accounts.view_role` and `audit.view_auditevent`, and kept when the
-Members Module is off. The Settings hub holds only Appearance for this
-Module.
+Members Module is off. The Settings hub holds Account (first) and
+Appearance for this Module, both under Personal and open to everyone
+signed in, so the gear of a person without church settings opens Account.
 
 **Appearance** (Settings › Personal; `/accounts/appearance/`,
 `AppearanceView`, `AppearanceForm`): each person's own light or dark mode,
 or Match my device (the default), saved as `User.theme` and applied by
-`base.html` before the page draws. Anyone signed in; not audited. Tests:
+`base.html` before the page draws (and by the landing page and church
+page when signed in). The account popover's Light, Dark, Device switch
+saves it too: in the background (JSON), or without JavaScript returning to
+`next`. Anyone signed in; not audited. Tests:
 `apps/accounts/tests/test_appearance.py`.
 
 ## Permissions

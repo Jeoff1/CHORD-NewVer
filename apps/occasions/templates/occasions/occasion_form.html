@@ -1,0 +1,30 @@
+{% extends "form_page.html" %}
+{% comment %}
+  Book a service and Edit (UI/UX Phase 4): the same OccasionForm, its fields grouped into sections. Every field,
+  the separate date and time boxes and the validation are unchanged; only the layout differs from form_page.html.
+{% endcomment %}
+
+{% block form_fields %}
+  {% if form.non_field_errors %}<div class="alert alert-danger" role="alert">{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>{% endif %}
+  <fieldset class="chord-fieldset">
+    <legend>The service</legend>
+    <div class="mb-3">{{ form.occasion_type.as_field_group }}</div>
+    <div class="mb-3">{{ form.occasion_for.as_field_group }}</div>
+  </fieldset>
+  <fieldset class="chord-fieldset">
+    <legend>When</legend>
+    <div class="mb-3">{{ form.starts_at.as_field_group }}</div>
+    <div class="mb-3">{{ form.length_minutes.as_field_group }}</div>
+  </fieldset>
+  <fieldset class="chord-fieldset">
+    <legend>Where and who</legend>
+    <div class="mb-3">{{ form.officiant.as_field_group }}</div>
+    <div class="mb-3">{{ form.venue.as_field_group }}</div>
+  </fieldset>
+  <fieldset class="chord-fieldset">
+    <legend>Notes</legend>
+    <div class="mb-3">{{ form.notes.as_field_group }}</div>
+    {% if form.is_cancelled %}<div class="mb-3">{{ form.is_cancelled.as_field_group }}</div>{% endif %}
+  </fieldset>
+  {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+{% endblock %}

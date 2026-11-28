@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static church %}<!doctype html>
 <html lang="en" class="lp-html">
 <head>
   <meta charset="utf-8">
@@ -6,13 +6,13 @@
   <meta name="color-scheme" content="light dark">
   {% comment %}
     The public front page (redesigned 26-27 Nov 2026; Design-System.md, "Landing page").
-    Nobody is signed in, so the device chooses light or dark mode.
+    A guest's device chooses light or dark mode; a signed-in person's own Appearance choice wins.
     The loading intro: only on the first visit in a browser session (sessionStorage), never
     without JavaScript or when storage is blocked. It stays at least 0.8 s (the owner's approved
     exception; not with reduced motion), leaves when the page has loaded, and goes after 4 s at
     most; landing.css also fades it out after 6 s whatever happens. The page loads underneath.
   {% endcomment %}
-  <script>(function () { var root = document.documentElement; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { root.setAttribute("data-bs-theme", dark.matches ? "dark" : "light"); } apply(); dark.addEventListener("change", apply);
+  <script>(function () { var root = document.documentElement; var choice = "{{ user.theme|default:'device'|escapejs }}"; var dark = window.matchMedia("(prefers-color-scheme: dark)"); function apply() { root.setAttribute("data-bs-theme", choice === "light" || choice === "dark" ? choice : (dark.matches ? "dark" : "light")); } apply(); dark.addEventListener("change", apply); window.chordSetTheme = function (next) { choice = next; apply(); };
     try { if (sessionStorage.getItem("chord-intro-seen")) return; sessionStorage.setItem("chord-intro-seen", "1"); } catch (e) { return; }
     root.classList.add("is-intro"); var start = Date.now(), reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches, done = false;
     function hide() { if (done) return; done = true; var intro = document.getElementById("lp-intro"); if (!intro) { root.classList.remove("is-intro"); return; } root.classList.add("intro-reveal"); intro.classList.add("is-leaving"); setTimeout(function () { root.classList.remove("is-intro"); }, 800); setTimeout(function () { root.classList.remove("intro-reveal"); }, 1500); }
@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/chord.css' %}">
   <link rel="stylesheet" href="{% static 'css/landing.css' %}">
+  {% if user.is_authenticated %}<link rel="stylesheet" href="{% static 'css/account.css' %}">{% endif %}
   <script src="{% static 'church/landing.js' %}" defer></script>
 </head>
 <body class="chord-landing">
@@ -41,7 +42,7 @@
 
   <nav class="lp-nav" aria-label="Main" id="top">
     <div class="lp-wrap lp-nav__row">
-      <a class="lp-brand" href="{% if user.is_authenticated %}{% url 'landing' %}{% else %}{% url 'home' %}{% endif %}" aria-label="CHORD, home"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
+      <a class="lp-brand chord-home-tip" href="{% homepage_url %}" aria-label="CHORD, go to the homepage" data-home-tip="Go to Homepage"><span class="lp-logo-plate">{% include "church/includes/landing_logo.html" with variant="gold" %}</span></a>
       <ul class="lp-nav__links">
         <li><a href="#how-it-works">How it works</a></li>
         <li><a href="#features">Features</a></li>

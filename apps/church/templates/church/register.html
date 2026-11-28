@@ -1,4 +1,4 @@
-{% load static %}<!doctype html>
+{% load static church %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -28,7 +28,7 @@
 
   <div class="au-rg" data-au-wizard data-au-start="{{ start_step }}"{% if church_form.is_bound %} data-au-bound{% endif %}>
     <header class="au-rg__hdr">
-      <a class="au-rg__logo" href="{% url 'home' %}" aria-label="CHORD, home">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
+      <a class="au-rg__logo chord-home-tip" href="{% homepage_url %}" aria-label="CHORD, go to the homepage" data-home-tip="Go to Homepage">{% include "church/includes/landing_logo.html" with variant="gold" %}</a>
       <div class="au-rg__hdr-right">
         {% if not user.is_authenticated %}<span class="au-rg__ask">Already have an account? <a href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}">Sign in</a></span>{% endif %}
         <a class="au-back au-back--light" href="{% url 'home' %}">{% include "includes/icons/arrow-left.html" with size=16 %}Back to Home</a>

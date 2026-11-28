@@ -1,0 +1,81 @@
+{% load static church %}{% comment %}
+  The account popover (UI/UX Phase 2, 28 Nov 2026; Design-Decisions.md, "Personal profile"), one for every
+  signed-in page: the app header (variant "app": initials and name) and the public pages' nav (variant
+  "public": initials only, on the green bar). A compact card with the initials avatar, full name, role line
+  and church, then Edit Profile (the modal in includes/profile_modal.html), the person's own links, Account
+  Settings and Sign Out. No profile picture, bio or banner: the lead developer's decision, 28 Nov 2026.
+  The church switcher still shows only to people with more than one church. Styles: static/css/account.css;
+  behaviour: static/js/account_menu.js (without it, the popover never opens; Account Settings is reachable
+  from the Settings hub).
+{% endcomment %}
+<div class="acct acct--{{ variant|default:'app' }}" data-account-menu>
+  <button type="button" class="acct__btn" aria-haspopup="menu" aria-expanded="false" aria-controls="acct-pop" data-account-button>
+    <span class="acct__av" aria-hidden="true" data-account-initials>{{ user.initials }}</span>
+    <span class="acct__btn-name" data-account-name>{{ user.display_name }}</span>
+    <span class="visually-hidden">: your account</span>
+    {% include "includes/icons/chevron-down.html" with size=16 %}
+  </button>
+  <div class="acct__pop" id="acct-pop" role="menu" aria-label="Your account" hidden>
+    <div class="acct__card">
+      <span class="acct__av acct__av--lg" aria-hidden="true" data-account-initials>{{ user.initials }}</span>
+      <span class="acct__who">
+        <span class="acct__name" data-account-name>{{ user.display_name }}</span>
+        {% if church %}{% church_role_line as role %}{% if role %}<span class="acct__role">{{ role }}</span>{% endif %}{% endif %}
+      </span>
+    </div>
+    {% if church %}
+      <div class="acct__church">
+        <span class="acct__church-logo" aria-hidden="true">{% if church.logo %}<img src="{{ church.logo.url }}" alt="">{% else %}{{ church.name|initials }}{% endif %}</span>
+        <span class="acct__church-text"><span class="acct__church-label">Church</span><span class="acct__church-name">{{ church.name }}</span></span>
+      </div>
+    {% endif %}
+    <button type="button" role="menuitem" class="acct__edit" data-profile-open>Edit Profile</button>
+
+    {% if my_churches|length > 1 %}
+      {# The church switcher (Phase 9B): a POST with the CSRF token. #}
+      <p class="acct__label" id="acct-churches">Working in</p>
+      <div role="group" aria-labelledby="acct-churches">
+        {% for other in my_churches %}
+          <form method="post" action="{% url 'church:switch' slug=other.slug %}">
+            {% csrf_token %}
+            <button type="submit" role="menuitem" class="acct__item{% if other.pk == church.pk %} is-current{% endif %}"{% if other.pk == church.pk %} aria-current="true"{% endif %}>{{ other.name }}{% if other.pk == church.pk %}{% include "includes/icons/check-circle.html" with size=16 %}{% endif %}</button>
+          </form>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <hr>
+    {% if variant == "public" %}
+      <a role="menuitem" class="acct__item" href="{% url 'home' %}">{% include "includes/icons/home.html" with size=18 %}Dashboard</a>
+      {% if church and church.show_in_directory or church and perms.church.change_churchprofile %}<a role="menuitem" class="acct__item" href="{% url 'churches:home' slug=church.slug %}">{% include "includes/icons/people.html" with size=18 %}My Church</a>{% endif %}
+    {% else %}
+      {% if "teams" in enabled_modules and perms.teams.view_assignment %}<a role="menuitem" class="acct__item" href="{% url 'teams:my_schedule' %}">{% include "includes/icons/calendar.html" with size=18 %}My schedule</a>{% endif %}
+      <a role="menuitem" class="acct__item" href="{% url 'public_requests:my_requests' %}">{% include "includes/icons/inbox.html" with size=18 %}My requests at any church</a>
+      {% if "members" in enabled_modules and user.member %}<a role="menuitem" class="acct__item" href="{% url 'members:me' %}">{% include "includes/icons/person.html" with size=18 %}My {{ labels.member|lower }} record</a>{% endif %}
+      {% comment %}Only people who can see lineups have anything to play, and each connection takes one of Spotify's Development Mode slots (Phase 9A, A1).{% endcomment %}
+      {% if "worship" in enabled_modules and perms.worship.view_lineup %}<a role="menuitem" class="acct__item" href="{% url 'songs:spotify_account' %}">{% include "includes/icons/music-note.html" with size=18 %}Spotify account</a>{% endif %}
+      <a role="menuitem" class="acct__item" href="{% url 'churches:directory' %}">{% include "includes/icons/globe.html" with size=18 %}Churches</a>
+    {% endif %}
+    {% comment %}Appearance, right here (UI/UX owner, 28 Nov 2026): Light, Dark or the device's own setting. Each
+      is a submit button of a real form, so it works without JavaScript; account_menu.js switches the page at
+      once and saves in the background.{% endcomment %}
+    <form class="acct__theme" method="post" action="{% url 'accounts:appearance' %}" data-theme-form data-current="{{ user.theme }}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <span class="acct__theme-label" id="acct-theme-label">Appearance</span>
+      <span class="acct__seg" role="group" aria-labelledby="acct-theme-label">
+        <span class="acct__seg-thumb" aria-hidden="true"></span>
+        <button type="submit" name="theme" value="light" role="menuitemradio" aria-checked="{% if user.theme == 'light' %}true{% else %}false{% endif %}">Light</button>
+        <button type="submit" name="theme" value="dark" role="menuitemradio" aria-checked="{% if user.theme == 'dark' %}true{% else %}false{% endif %}">Dark</button>
+        <button type="submit" name="theme" value="device" role="menuitemradio" aria-checked="{% if user.theme == 'device' %}true{% else %}false{% endif %}" title="Match my device">Device</button>
+      </span>
+    </form>
+    <a role="menuitem" class="acct__item" href="{% url 'accounts:profile' %}">{% include "includes/icons/gear.html" with size=18 %}Account Settings</a>
+    <hr>
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" role="menuitem" class="acct__item acct__item--out">{% include "includes/icons/log-out.html" with size=18 %}Sign Out</button>
+    </form>
+  </div>
+</div>
+{% include "includes/profile_modal.html" %}

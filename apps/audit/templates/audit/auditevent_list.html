@@ -1,21 +1,21 @@
 {% extends "base.html" %}
+{% load church ui %}
 
 {% block title %}Audit log{% endblock %}
 
 {% block content %}
-  <h1 class="h3 mb-1">Audit log</h1>
-  <p class="text-body-secondary">Who changed what, and when. Entries can't be edited or removed.</p>
+  {# UI/UX Phase 8: a chronological log with the actor's initials, the action as a pill, and each change as before → after. #}
+  {% page_header "Audit log" subtitle="Who changed what, and when. Entries can't be edited or removed." %}{% endpage_header %}
 
   {% if type_choices %}
-    <ul class="nav nav-pills mb-3">
-      <li class="nav-item"><a class="nav-link{% if not type_filter %} active{% endif %}" href="{% querystring type=None page=None %}">Everything</a></li>
-      {% for content_type in type_choices %}
-        <li class="nav-item">
-          <a class="nav-link{% if type_filter == content_type.pk|stringformat:'s' %} active{% endif %}"
-             href="{% querystring type=content_type.pk page=None %}">{{ content_type.name|capfirst }}</a>
-        </li>
-      {% endfor %}
-    </ul>
+    <nav aria-label="What changed">
+      <ul class="chord-seg">
+        <li><a href="{% querystring type=None page=None %}"{% if not type_filter %} aria-current="page"{% endif %}>Everything</a></li>
+        {% for content_type in type_choices %}
+          <li><a href="{% querystring type=content_type.pk page=None %}"{% if type_filter == content_type.pk|stringformat:'s' %} aria-current="page"{% endif %}>{{ content_type.name|capfirst }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
   {% endif %}
 
   {% include "includes/list_toolbar.html" with placeholder="Search by item or username" %}
@@ -34,17 +34,17 @@
         <tbody>
           {% for event in object_list %}
             <tr>
-              <td class="text-nowrap small">{{ event.occurred_at|date:"M j, Y g:i A" }}</td>
-              <td>{{ event.actor.get_username|default:"System" }}</td>
+              <td class="text-nowrap small">{{ event.occurred_at|date:"M j, Y" }}<br><span class="text-body-secondary">{{ event.occurred_at|date:"g:i A" }}</span></td>
+              <td><span class="chord-song-cell" style="min-width: 0">{% if event.actor %}<span class="chord-person chord-person--sm" aria-hidden="true">{{ event.actor.initials }}</span>{% endif %}<span>{{ event.actor.get_username|default:"System" }}</span></span></td>
               <td>
-                <span class="badge {% if event.action == 'deleted' %}text-bg-danger{% elif event.action == 'created' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ event.get_action_display }}</span>
-                {{ event.content_type.name|capfirst }}: <span class="fw-semibold">{{ event.object_repr }}</span>
+                {% if event.action == 'deleted' %}<span class="chord-pill chord-pill--danger">{{ event.get_action_display }}</span>{% elif event.action == 'created' %}<span class="chord-pill chord-pill--success">{{ event.get_action_display }}</span>{% else %}<span class="chord-pill chord-pill--neutral">{{ event.get_action_display }}</span>{% endif %}
+                <div class="mt-1">{{ event.content_type.name|capfirst }}: <span class="fw-semibold">{{ event.object_repr }}</span></div>
               </td>
               <td class="small">
                 {% for field, values in event.changes.items %}
-                  <div>
+                  <div class="chord-diff">
                     <span class="fw-semibold">{{ field }}:</span>
-                    {% if values.0 %}<del class="text-body-secondary">{{ values.0 }}</del> → {% endif %}{{ values.1|default:"(empty)" }}
+                    {% if values.0 %}<del class="chord-diff__old">{{ values.0 }}</del> <span aria-hidden="true">→</span> {% endif %}<ins class="chord-diff__new">{{ values.1|default:"(empty)" }}</ins>
                   </div>
                 {% empty %}
                   <span class="text-body-secondary">—</span>
@@ -52,7 +52,7 @@
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" class="text-center text-body-secondary py-4">Nothing recorded yet.</td></tr>
+            <tr><td colspan="4">{% include "includes/empty_state.html" with icon="document" title="Nothing recorded yet." %}</td></tr>
           {% endfor %}
         </tbody>
       </table>

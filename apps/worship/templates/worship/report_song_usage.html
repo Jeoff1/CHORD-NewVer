@@ -8,7 +8,13 @@
   {% include "worship/includes/report_header.html" with title="Song usage" %}
   <p class="text-body-secondary">Songs in the confirmed {{ lineups_word|lower }} of {{ services_word|lower }} already held.{% if window_weeks %} Highlighted songs were sung again within {{ window_weeks }} week{{ window_weeks|pluralize }}, the repeat window: more often than the recent-use window allows.{% endif %}</p>
   {% if rows %}
-    <p class="small">{{ rows|length }} song{{ rows|length|pluralize }}{% if sung_again %}, {{ sung_again }} sung again within the repeat window{% endif %}. <a href="?{% if query %}{{ query }}&amp;{% endif %}format=csv">Download CSV</a></p>
+    <div class="chord-report-summary">
+      <div class="chord-stats" aria-label="Summary">
+        <div class="chord-stat"><span class="chord-stat__value">{{ rows|length }}</span><span class="chord-stat__label">song{{ rows|length|pluralize }}</span></div>
+        {% if window_weeks %}<div class="chord-stat"><span class="chord-stat__value">{{ sung_again|default:0 }}</span><span class="chord-stat__label">sung again within the repeat window</span></div>{% endif %}
+      </div>
+      <a href="?{% if query %}{{ query }}&amp;{% endif %}format=csv" class="btn btn-outline-secondary">{% include "includes/icons/upload.html" with size=16 %}Download CSV</a>
+    </div>
     <div class="card shadow-sm">
       <div class="table-responsive">
         <table class="table align-middle mb-0">
@@ -29,6 +35,6 @@
       </div>
     </div>
   {% else %}
-    <p class="text-body-secondary">No song has been sung in a confirmed {{ lineup_word|lower }} yet{% if form.is_bound %} in this period{% endif %}.</p>
+    <div class="card shadow-sm">{% if form.is_bound %}{% with none="No song has been sung in a confirmed "|add:lineup_word|lower|add:" yet in this period." %}{% include "includes/empty_state.html" with icon="music-note" title=none %}{% endwith %}{% else %}{% with none="No song has been sung in a confirmed "|add:lineup_word|lower|add:" yet." %}{% include "includes/empty_state.html" with icon="music-note" title=none %}{% endwith %}{% endif %}</div>
   {% endif %}
 {% endblock %}
