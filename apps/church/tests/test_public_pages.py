@@ -483,7 +483,17 @@ class RequestThisServiceTests(PublicPagesTestCase):
             },
         )
 
+    def test_a_visitor_sees_the_form_where_outsiders_may_ask(self):
+        # 28 Nov 2026: a visitor fills it in and makes an account on Send
+        # (apps/occasions/tests/test_visitor_signup.py).
+        page = self.client.get(request_url(self.church, self.wedding))
+        self.assertContains(page, "Request: Wedding")
+        self.assertContains(page, "No account yet?")
+
     def test_a_visitor_signs_in_and_comes_back_to_the_form(self):
+        # At a church that takes requests from its own people only: one of
+        # them signs in and comes back.
+        self.set_church(accept_outside_requests=False)
         url = request_url(self.church, self.wedding)
         response = self.client.get(url)
         self.assertRedirects(
@@ -492,7 +502,7 @@ class RequestThisServiceTests(PublicPagesTestCase):
         signed_in = self.client.post(
             f"{LOGIN}?next={url}",
             {
-                "username": self.outsider.username,
+                "username": self.member.username,
                 "password": TEST_PASSWORD,
                 "next": url,
             },

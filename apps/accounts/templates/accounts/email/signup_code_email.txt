@@ -1,0 +1,10 @@
+{% autoescape off %}Hello,
+
+Your code to create your CHORD account is:
+
+    {{ code }}
+
+Type it where you asked for it. It works for {{ minutes }} minutes, once.
+
+If you didn't ask for this, you can ignore this email; no account is made.
+{% endautoescape %}

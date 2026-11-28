@@ -18,6 +18,20 @@ the core; it can't be switched off. App: `apps/accounts`.
   church, with their roles there and whether it is active. At most one per
   church. Users, Add user and Edit user work on the Current Church's
   memberships; a user from another church gives 404.
+- **Signing up while requesting a service** (28 Nov 2026): a visitor
+  makes an account in the pop-up of a public service request
+  (`VisitorAccountForm`: first and last name, email, one password checked
+  by the usual rules). `verification.py` emails a 6-digit code: only a
+  keyed hash is stored (`EmailCode`), with the name and the *hashed*
+  password waiting in `pending`; a code lasts 10 minutes, 5 wrong tries
+  end it, a new one may be sent after 60 s and at most 5 an hour, and a
+  new code ends the earlier ones. On the right code `visitors.create_account`
+  makes the account and a Membership in that church with the Church Member
+  role (`roles.CHURCH_MEMBER`), audited as "Made when requesting a service".
+  An email that is an account's already signs in instead
+  (`PasswordOnlyForm`); that account isn't added to the church. Emails go
+  through Django's email settings (`DJANGO_EMAIL_*` in `.env`; the console
+  by default). Tests: `apps/occasions/tests/test_visitor_signup.py`.
 - **Signing up** (owner, 27 Nov 2026): there is no personal sign-up page.
   A person's own account is made in the first step of registering a
   church ([[Church-Setup]]), with `SignUpForm`: first and last name

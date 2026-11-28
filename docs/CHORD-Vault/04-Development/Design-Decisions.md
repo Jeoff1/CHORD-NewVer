@@ -1020,6 +1020,37 @@ Tests: `apps/core/tests/test_moment_input.py`, and
 `apps/worship/tests/test_service_date.py`. Screenshots of the new-service
 form at desktop and narrow widths.
 
+#### Sign up while requesting a service (the owner, 28 Nov 2026)
+
+- **Design change:** on 27 Nov signing up for CHORD meant registering a
+  church. Now a visitor can also make an account while requesting a
+  service from a church's public page. Registering a church is unchanged.
+- **The flow:** the visitor fills in the request (date and time, who it's
+  for, a note) and presses Send. A pop-up asks their first and last name,
+  email and a password; a 6-digit code is emailed; the right code makes
+  the account, signs them in and sends the request.
+- **The account joins that church** with the Church Member role (the
+  schedule and announcements; requesting services). It can still request
+  services from other churches, without joining them.
+- **Only where the church accepts requests from outside**; at a church for
+  its own people, a visitor signs in first as before, so nobody joins a
+  closed church by asking for a service.
+- **An email with an account already** signs in right there and sends the
+  request; that account isn't added to the church. This tells a visitor
+  that the email has an account, which the owner accepted for the
+  convenience.
+- **Safeguards:** only a keyed hash of each code is stored; the password
+  waits only as Django's hash; codes last 10 minutes, end after 5 wrong
+  tries, can be resent after 60 s, and at most 5 go to one address an
+  hour. Nothing is made before the code is right.
+- **Email delivery** uses Django's email settings: the console by default,
+  a real mail server once `DJANGO_EMAIL_*` is set in `.env`.
+
+Tests: `apps/occasions/tests/test_visitor_signup.py`; updated
+`RequestThisServiceTests` (`apps/church/tests/test_public_pages.py`).
+Walked through the first two steps in headless Chrome on Test Church's
+Wedding (no account made).
+
 #### Request links only for people who request (UI/UX owner, 28 Nov 2026)
 
 The sidebar leaves out Request a Service and My Requests for anyone who may

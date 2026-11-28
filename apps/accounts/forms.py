@@ -252,3 +252,75 @@ class AddExistingAccountForm(forms.Form):
         )
         membership.roles.set(self.cleaned_data["roles"])
         return membership
+
+
+class VisitorAccountForm(forms.Form):
+    """A visitor's account, asked in the pop-up when they request a service
+    without one (28 Nov 2026): their name, email and a password. Nothing is
+    made until they type the code emailed to them (``verification.py``)."""
+
+    first_name = forms.CharField(max_length=150)
+    last_name = forms.CharField(max_length=150)
+    email = forms.EmailField(label="Email address", max_length=254)
+    password = forms.CharField(
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        help_text="At least 8 characters, not only numbers, and unlike your "
+        "name or email.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["first_name"].widget.attrs["autocomplete"] = "given-name"
+        self.fields["last_name"].widget.attrs["autocomplete"] = "family-name"
+        self.fields["email"].widget.attrs["autocomplete"] = "email"
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip()
+
+    @property
+    def has_account(self):
+        """Whether the email (valid so far) is an account's already."""
+        email = self.cleaned_data.get("email") if hasattr(self, "cleaned_data") else ""
+        return bool(email) and User.objects.filter(email__iexact=email).exists()
+
+    def clean(self):
+        cleaned = super().clean()
+        password = cleaned.get("password")
+        email = cleaned.get("email")
+        if password and email and not self.has_account:
+            # The same rules as every other password in CHORD.
+            from django.contrib.auth import password_validation
+
+            person = User(
+                username=username_from_email(email),
+                email=email,
+                first_name=cleaned.get("first_name", ""),
+                last_name=cleaned.get("last_name", ""),
+            )
+            try:
+                password_validation.validate_password(password, person)
+            except forms.ValidationError as error:
+                self.add_error("password", error)
+        return cleaned
+
+
+class EmailCodeForm(forms.Form):
+    code = forms.CharField(
+        label="Code",
+        max_length=12,
+        widget=forms.TextInput(
+            attrs={
+                "autocomplete": "one-time-code",
+                "inputmode": "numeric",
+                "pattern": "[0-9 ]*",
+            }
+        ),
+    )
+
+
+class PasswordOnlyForm(forms.Form):
+    password = forms.CharField(
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )

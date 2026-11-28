@@ -1,0 +1,79 @@
+{% load static %}{% comment %}
+  The pop-up a visitor without an account sees after pressing Send request (28 Nov 2026;
+  PublicRequestView). Steps: "account" (name, email, password), "code" (the 6-digit code emailed to
+  them), "signin" (an email that is an account's already: its password). Each step posts back to
+  the request page with a hidden "step"; the request itself waits in the visitor's session. Opened
+  on load by occasions/request_signup.js.
+{% endcomment %}
+<div class="modal fade" id="signup-modal" tabindex="-1" aria-labelledby="signup-title" aria-modal="true" role="dialog" data-open-on-load>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="signup-title">
+          {% if signup_step == "code" %}Check your email{% elif signup_step == "signin" %}Sign in to send your request{% else %}Create your account to send it{% endif %}
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% if signup_notice %}<div class="alert alert-info py-2" role="status">{{ signup_notice }}</div>{% endif %}
+
+        {% if signup_step == "account" %}
+          <p class="text-body-secondary small">Your request to {{ public_church.name }} is ready. Make a CHORD account to send it: we'll email you a code to prove the address is yours. Your account joins {{ public_church.name }}, and you can still request services from other churches.</p>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="step" value="account">
+            {{ signup_form.non_field_errors }}
+            <div class="row g-2">
+              <div class="col-sm-6">{{ signup_form.first_name.as_field_group }}</div>
+              <div class="col-sm-6">{{ signup_form.last_name.as_field_group }}</div>
+            </div>
+            {{ signup_form.email.as_field_group }}
+            {{ signup_form.password.as_field_group }}
+            <button type="submit" class="btn btn-primary w-100 mt-2">Email me a code</button>
+          </form>
+          <p class="small text-body-secondary mt-3 mb-0">Already have an account? Type its email above and we'll ask for your password instead.</p>
+
+        {% elif signup_step == "code" %}
+          <p>We sent a 6-digit code to <strong>{{ signup_email }}</strong>. Type it here to create your account and send your request.</p>
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="step" value="code">
+            {{ signup_form.code.as_field_group }}
+            <button type="submit" class="btn btn-primary w-100 mt-2">Create account and send request</button>
+          </form>
+          <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="step" value="resend">
+              <button type="submit" class="btn btn-link btn-sm px-0" data-resend-wait="{{ resend_wait }}">Send a new code</button>
+            </form>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="step" value="change">
+              <button type="submit" class="btn btn-link btn-sm px-0">Use another email</button>
+            </form>
+          </div>
+          <p class="small text-body-secondary mb-0">The code works for 10 minutes. Not there? Check your spam folder.</p>
+
+        {% elif signup_step == "signin" %}
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="step" value="signin">
+            <p class="mb-2">Email: <strong>{{ signup_email }}</strong></p>
+            {{ signup_form.password.as_field_group }}
+            <button type="submit" class="btn btn-primary w-100 mt-2">Sign in and send request</button>
+          </form>
+          <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
+            <a class="small" href="{% url 'accounts:password_reset' %}">Forgot your password?</a>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="step" value="change">
+              <button type="submit" class="btn btn-link btn-sm p-0">Use another email</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'occasions/request_signup.js' %}" defer></script>

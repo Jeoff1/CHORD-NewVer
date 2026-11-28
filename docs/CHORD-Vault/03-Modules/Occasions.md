@@ -25,8 +25,13 @@ Built in Phase 9A, A5 (2026-11-24):
 - **Request this service** (Phase 9B, `public_views.py`,
   `/churches/<slug>/request/<type>/`): for a public church's active,
   publicly offered type while Occasions is on; anything else is 404 to
-  everyone. A visitor signs in first and comes back to the form (Django
-  follows only a safe `next`). The church's own people may always ask;
+  everyone. At a church that accepts requests from outside, a visitor
+  without an account fills in the form and, on Send, makes their account
+  in a pop-up (`occasions/includes/signup_modal.html`; steps: account,
+  code, or sign-in for an email that has an account); the request waits
+  in their session and is sent once they are signed in (28 Nov 2026,
+  [[Accounts]]). At a church for its own people only, a visitor signs in
+  first and comes back to the form (Django follows only a safe `next`). The church's own people may always ask;
   anyone else only while the church accepts requests from outside (403
   otherwise). Times are in that church's time zone, the usual overlap
   check applies, and the church's approvers get a notification.

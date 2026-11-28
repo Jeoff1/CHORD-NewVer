@@ -13,6 +13,8 @@ from django.contrib.auth.models import Permission
 from django.db.models import Q
 
 ADMINISTRATOR = "administrator"
+# The role a visitor gets in a church they join by requesting a service there.
+CHURCH_MEMBER = "church_member"
 
 # key, title, description: what a new church starts with. Matches the
 # first church's roles as the data migrations left them.
