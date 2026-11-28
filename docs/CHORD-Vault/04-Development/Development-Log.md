@@ -11,7 +11,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   Notifications page's own list in the background (no new endpoint; the
   bell stays a link without JavaScript). No notification or announcement
   rule changed; no migration.
-- **Checks:** PHASE9_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `e3006d2`: lint, format, Django checks, migrations (none), 1523 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 8: members and teams (branch `joy-ui-ux-v3`)
 
