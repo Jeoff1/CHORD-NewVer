@@ -1,0 +1,19 @@
+{% comment %}
+  The page's messages as toasts (UI/UX Phase 3; components.css "Toasts", components.js). In the page
+  without JavaScript; with it they float at the top right. Success and info close after 5 s (data-msg-auto);
+  warnings and errors stay until dismissed. The registration welcome is its own toast (welcome_toast.html).
+{% endcomment %}
+{% if messages %}
+<div class="chord-msgs" data-chord-msgs>
+  {% for message in messages %}{% if "chord-welcome" not in message.extra_tags %}
+    {% with level=message.level_tag|default:"info" %}
+    <div class="chord-msg chord-msg--{{ level }}" role="{% if level == 'error' or level == 'danger' or level == 'warning' %}alert{% else %}status{% endif %}"{% if level == "success" or level == "info" %} data-msg-auto{% endif %}>
+      <span class="chord-msg__icon" aria-hidden="true">{% if level == "success" %}{% include "includes/icons/check-circle.html" with size=18 %}{% elif level == "error" or level == "danger" or level == "warning" %}{% include "includes/icons/alert-circle.html" with size=18 %}{% else %}{% include "includes/icons/bell.html" with size=16 %}{% endif %}</span>
+      <p class="chord-msg__text">{{ message }}</p>
+      <button type="button" class="chord-msg__close" data-msg-close aria-label="Dismiss" hidden>{% include "includes/icons/x.html" with size=16 %}</button>
+      {% if level == "success" or level == "info" %}<span class="chord-msg__bar" aria-hidden="true"></span>{% endif %}
+    </div>
+    {% endwith %}
+  {% endif %}{% endfor %}
+</div>
+{% endif %}

@@ -1,19 +1,19 @@
 {% if is_paginated %}
-  <nav aria-label="Pages" class="d-flex align-items-center justify-content-between mt-3">
+  <nav aria-label="Pages" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-3">
     <span class="text-body-secondary small">
       {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }}
     </span>
     <ul class="pagination mb-0">
       {% if page_obj.has_previous %}
-        <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">Previous</a></li>
+        <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">{% include "includes/icons/chevron-left.html" with size=16 %}Previous</a></li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        <li class="page-item disabled"><span class="page-link">{% include "includes/icons/chevron-left.html" with size=16 %}Previous</span></li>
       {% endif %}
       <li class="page-item active" aria-current="page"><span class="page-link">{{ page_obj.number }} / {{ paginator.num_pages }}</span></li>
       {% if page_obj.has_next %}
-        <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Next</a></li>
+        <li class="page-item"><a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Next{% include "includes/icons/chevron-right.html" with size=16 %}</a></li>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <li class="page-item disabled"><span class="page-link">Next{% include "includes/icons/chevron-right.html" with size=16 %}</span></li>
       {% endif %}
     </ul>
   </nav>

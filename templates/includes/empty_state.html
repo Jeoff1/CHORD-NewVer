@@ -1,0 +1,11 @@
+{% comment %}
+  An empty state (UI/UX Phase 3): an icon, a short title, an optional line and an optional action. Never fake
+  records. {% include "includes/empty_state.html" with icon="music-note" title="No songs yet" text="…" action_url=… action_label="Add a song" %}
+  icon names a file in includes/icons/ (default "inbox").
+{% endcomment %}
+<div class="chord-empty">
+  <span class="chord-empty__icon" aria-hidden="true">{% with name=icon|default:"inbox" %}{% include "includes/icons/"|add:name|add:".html" with size=26 %}{% endwith %}</span>
+  <p class="chord-empty__title">{{ title }}</p>
+  {% if text %}<p class="chord-empty__text">{{ text }}</p>{% endif %}
+  {% if action_url and action_label %}<a href="{{ action_url }}" class="btn btn-primary">{% include "includes/icons/plus.html" with size=18 %}{{ action_label }}</a>{% endif %}
+</div>

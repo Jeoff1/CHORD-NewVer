@@ -20,7 +20,7 @@
             {% csrf_token %}
             {{ form }}
             {% block form_extra %}{% endblock %}
-            <div class="d-flex gap-2">
+            <div class="chord-form-actions">
               <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
               {% if cancel_url %}<a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancel</a>{% endif %}
             </div>

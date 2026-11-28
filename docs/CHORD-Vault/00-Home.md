@@ -21,7 +21,10 @@ lead developer's approval ([[Design-Decisions]], "Remaining UI/UX tasks").
 restrictions, workflow) and [[Animation-Plan]], both holding the UI/UX
 owner's full written handoff (28 Nov 2026). Phases 3 to 11 are built from
 it and the existing design system (the artifact itself can't be opened
-from Claude Code), one local commit per phase, nothing pushed.
+from Claude Code), one commit per phase, each pushed to
+`origin/joy-ui-ux-v3`. **Done: Phase 3 (shared UI components:
+`components.css`, `components.js`, toasts, confirm dialog, empty states;
+[[Design-System]], "Shared components").**
 
 **UI/UX Phase 2 (28 Nov 2026), branch `joy-ui-ux-v3`, approved by the
 UI/UX owner and committed locally (not pushed):** one account popover on

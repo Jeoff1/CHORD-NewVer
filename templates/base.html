@@ -9,6 +9,8 @@
   <title>{% block title %}{% endblock %} · {{ church.name|default:"CHORD" }}</title>
   <link rel="stylesheet" href="{% static 'vendor/bootstrap-5.3.3/bootstrap.min.css' %}">
   <link rel="stylesheet" href="{% static 'css/chord.css' %}">
+  <link rel="stylesheet" href="{% static 'css/components.css' %}">
+  <script src="{% static 'js/components.js' %}" defer></script>
   <script src="{% static 'vendor/bootstrap-5.3.3/bootstrap.bundle.min.js' %}" defer></script>
   <script src="{% static 'vendor/htmx-2.0.4/htmx.min.js' %}" defer></script>
   {% if user.is_authenticated and church %}
@@ -104,14 +106,7 @@
   {% for message in messages %}{% if "chord-welcome" in message.extra_tags %}{% include "includes/welcome_toast.html" %}{% endif %}{% endfor %}
 
   <main {% if user.is_authenticated and church %}class="chord-app__main" id="chord-main"{% else %}class="container py-4"{% endif %}>
-    {% for message in messages %}
-      {% if "chord-welcome" not in message.extra_tags %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-      {% endif %}
-    {% endfor %}
+    {% include "includes/messages.html" %}
     {% if settings_menu.current %}
       {% comment %}The Settings hub (Phase 9A A7): every registered settings page, and its add and edit pages, sits beside the side menu.{% endcomment %}
       {% url 'home' as dashboard_url %}{% include "includes/back_link.html" with url=dashboard_url label="Dashboard" %}

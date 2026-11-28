@@ -1,10 +1,13 @@
-{# Search box for FilteredListView pages; keeps the page's other filters. #}
-<form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
-  <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 20rem"
-         placeholder="{{ placeholder|default:'Search' }}" aria-label="Search">
+{# Search box for FilteredListView pages (UI/UX Phase 3: icon, clear button, the count); keeps the page's other filters. #}
+<form method="get" class="chord-toolbar" role="search">
+  <div class="chord-search" data-chord-search>
+    {% include "includes/icons/search.html" with size=18 %}
+    <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="{{ placeholder|default:'Search' }}" aria-label="{{ placeholder|default:'Search' }}">
+    {% if q %}<a href="{% querystring q=None page=None %}" class="chord-search__clear" data-search-clear aria-label="Clear the search">{% include "includes/icons/x.html" with size=16 %}</a>{% else %}<button type="button" class="chord-search__clear" data-search-clear aria-label="Clear the search" hidden>{% include "includes/icons/x.html" with size=16 %}</button>{% endif %}
+  </div>
   {% for name, value in request.GET.items %}
     {% if name != "q" and name != "page" %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endif %}
   {% endfor %}
   <button type="submit" class="btn btn-outline-secondary">Search</button>
-  {% if q %}<a href="{% querystring q=None page=None %}" class="btn btn-link">Clear</a>{% endif %}
+  {% if paginator %}<span class="chord-toolbar__count" aria-live="polite">{{ paginator.count }} result{{ paginator.count|pluralize }}</span>{% endif %}
 </form>

@@ -1181,8 +1181,8 @@ profile plan: personal profile pictures, bios and banners are rejected.
    Viewer, Chord Editor and Rehearsal; Calendar and Scheduling; Members and
    Teams; Announcements and Notifications; Settings and Reports; the final
    consistency, responsiveness, accessibility and animation audit. Each is
-   committed locally on its own; nothing is pushed before the UI/UX owner's
-   final review.
+   committed on its own and pushed to `origin/joy-ui-ux-v3`; the UI/UX
+   owner reviews the whole site at the end. Phase 3 is done.
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 

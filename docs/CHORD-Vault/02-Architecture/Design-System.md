@@ -37,6 +37,34 @@ sets its CSS variables and a few classes. `--bs-body-bg` is the **surface**
 | Sign-in page | `accounts/auth_base.html` (with `login.html`), its own `static/css/auth.css` (classes `au-*`) and `accounts/static/accounts/auth.js` | Sign in, full-page, redesigned 27 Nov 2026: see "The sign-in page" below. Signing up is registering a church |
 | Church registration | `church/register.html`, `auth.css` with its own `static/css/register.css` and `church/static/church/register.js` | Register your church as a four-step wizard, 27 Nov 2026: see "Registering a church" below |
 
+## Shared components (UI/UX Phase 3, 28 Nov 2026)
+
+`static/css/components.css` and `static/js/components.js`, loaded by
+`base.html` after `chord.css` on every page that extends it
+([[UI-UX-Master-Plan]] §8, [[Animation-Plan]]). Templates keep Bootstrap's
+classes; this layer shapes them, so every Module looks and behaves the same.
+
+| Component | What it does |
+|---|---|
+| Buttons (`.btn`) | radius 10 px, weight 600, at least 42 px tall (`btn-sm` 32 px), icon gap; primary and danger lift 1 px with a shadow on hover; press scales to .97; 3 px gold focus outline; disabled at 55 %; `.btn-danger` at passing shades in both modes |
+| Busy button | the button that sent a POST form gets `.is-busy` (a spinner before its label, `aria-busy`) and the form can't be sent twice; it resets after 8 s or when the page returns from the browser cache. `data-no-busy` on a form opts out; htmx forms are left alone |
+| Forms | inputs 44 px, radius 10 px, border `#6E8A83`, hover and focus borders, labels weight 600, errors under the field with a round "!" mark that fades in; `.chord-fieldset` (a titled group of related fields) and `.chord-form-actions` |
+| Cards | radius 12 px, a softer shadow; `.chord-card-link` lifts 2 px on hover for a whole-card link |
+| Tables (`.table`) | uppercase muted header on the tertiary surface, roomier rows, row hover, no last border, rounded inside cards, bold links; `tr[data-href]` opens the record from anywhere in the row (its own link stays the real one); inside a card on phones the table scrolls in its own box |
+| Search (`includes/list_toolbar.html`) | a search icon, the clear X (a link when a search is active, a button while typing), Search, and the result count (`aria-live`) |
+| Pagination | chevrons, 40 px targets, green current page (gold in dark mode) |
+| Dropdowns | radius 12 px, a large shadow, a fade-and-drop entrance (.18 s), the caret turns |
+| Modals | radius 18 px, rise and scale in (.26 s), Raleway titles, a darker backdrop |
+| Confirm dialog | `data-confirm="…"` on a form, its submit button or a link (with `data-confirm-title`, `data-confirm-action`, and `data-confirm-danger="false"` for a non-destructive action) opens CHORD's dialog instead of the browser's; `hx-confirm` uses it too. Cancel has focus; Escape cancels |
+| Toasts (`includes/messages.html`) | Django messages float at the top right as cards with a coloured edge, icon and X: success and info close after 5 s with a countdown bar (hover or focus pauses); warnings and errors (`danger`) stay until dismissed (`role="alert"`). Without JavaScript they stay in the page. The registration welcome keeps its own toast |
+| Empty state (`includes/empty_state.html`) | `icon`, `title`, optional `text`, optional `action_url` and `action_label`; never fake records |
+| Loading | `.chord-spinner` (gold), `.chord-skeleton` (shimmer), `.htmx-indicator` and `.chord-loading-dim` while an htmx request runs |
+| Status pills | a dot before the word, so status never relies on colour alone |
+| Reveal | `.chord-reveal` with `--i` staggers items by 60 ms |
+
+Everything stops under `prefers-reduced-motion`. Tests:
+`apps/core/tests/test_shared_components.py`.
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

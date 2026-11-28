@@ -443,17 +443,23 @@ ministries, events, per-person attendance, SMS.
    module notes, [[Design-System]] for new patterns, [[Design-Decisions]]
    for approved changes, the phase table below, [[00-Home]]. Prototype
    explanations go in the docs, never in the interface.
-6. **A separate local commit per phase** after the checks pass (the
-   pre-commit hook runs the full check; never `--no-verify`). **No push**,
-   pull request, merge or rebase: the UI/UX owner pushes manually after
-   the final whole-site review.
+6. **A separate commit per phase** after the checks pass (the pre-commit
+   hook runs the full check; never `--no-verify`), then **push it with
+   exactly `git push origin joy-ui-ux-v3`** and verify the push (the UI/UX
+   owner's instruction of 28 Nov 2026, superseding the earlier no-push
+   rule). Before every commit and push, check the branch is `joy-ui-ux-v3`.
+   Never commit to, push to or merge into `master`, never force-push, no
+   pull requests: only the lead developer merges into `master`. If the
+   branch is wrong or a push is rejected, stop and tell the UI/UX owner.
 7. Continue to the next phase without per-phase approval. Stop only for a
    critical error, a substantial design deviation, or a backend or
    security decision. Skip and document blocked backend features.
-8. After Phase 11: showcase the whole running site (desktop, mobile, light,
+8. If `origin/master` gets new commits, report the synchronisation
+   concern before continuing; never merge it on your own.
+9. After Phase 11: showcase the whole running site (desktop, mobile, light,
    dark, interactions, animations) for the final review. Report honestly
    if browser verification isn't available.
-9. Work efficiently: reuse components, don't redo approved designs, keep
+10. Work efficiently: reuse components, don't redo approved designs, keep
    reports short, document progress before a session ends; if interrupted,
    inspect the state first and record where work stopped.
 
@@ -462,8 +468,8 @@ ministries, events, per-person attendance, SMS.
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Church CMS and public navigation | Done, pushed (`02b00ea`) |
-| 2 | Personal profile (simplified) | Done, local (`2d51a37`) |
-| 3 | Shared UI components | In progress |
+| 2 | Personal profile (simplified) | Done, pushed (`2d51a37`) |
+| 3 | Shared UI components | Done |
 | 4 | Management: Services and Bookings | Not started |
 | 5 | Worship planning, recommendations, lineup builder | Not started |
 | 6 | Songs, chord sheets and rehearsal | Not started |

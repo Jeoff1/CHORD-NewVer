@@ -2,6 +2,30 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 3: shared UI components (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §8; built from the written plan and the
+  existing design system (the artifact can't be opened from Claude Code).
+- **What changed:** `static/css/components.css` and
+  `static/js/components.js`, loaded by `base.html`: buttons (sizes, hover,
+  press, focus, disabled, busy), forms (44 px inputs, `#6E8A83` borders,
+  errors with a mark, fieldsets), cards, tables (header, rows, hover,
+  clickable rows), the search toolbar (icon, clear, count), pagination,
+  dropdowns, modals, a shared confirm dialog (`data-confirm`, also for
+  `hx-confirm`) replacing the four native `confirm()` prompts, toasts for
+  every Django message (`includes/messages.html`, replacing the Bootstrap
+  alerts), an empty-state include, spinner, skeletons and htmx loading
+  states, status pills with a dot. No model change, no migration; every
+  route, form and permission unchanged.
+- **Git:** Phase 2 and the plan commits pushed to `origin/joy-ui-ux-v3`
+  (the UI/UX owner now authorises pushing each phase there).
+- **Checks:** `scripts/check.ps1 -Quick`: lint, format, Django checks,
+  migrations (none), 1496 tests passed; the full check (with coverage)
+  passed in the pre-commit hook before this commit was made. Also added
+  for Phase 4 and later: the record patterns in `components.css`
+  (`.chord-seg`, `.chord-date`, `.chord-rows`, `.chord-dl`,
+  `.chord-record`, `.chord-stats`).
+
 ## 2026-11-28: UI/UX plans completed from the owner's written handoff
 
 - **What changed:** [[UI-UX-Master-Plan]] and [[Animation-Plan]] now hold
