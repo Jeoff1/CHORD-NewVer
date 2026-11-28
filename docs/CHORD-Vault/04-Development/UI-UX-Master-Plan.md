@@ -470,7 +470,7 @@ ministries, events, per-person attendance, SMS.
 | 1 | Church CMS and public navigation | Done, pushed (`02b00ea`) |
 | 2 | Personal profile (simplified) | Done, pushed (`2d51a37`) |
 | 3 | Shared UI components | Done |
-| 4 | Management: Services and Bookings | Not started |
+| 4 | Management: Services and Bookings | Done |
 | 5 | Worship planning, recommendations, lineup builder | Not started |
 | 6 | Songs, chord sheets and rehearsal | Not started |
 | 7 | Calendar and scheduling | Not started |

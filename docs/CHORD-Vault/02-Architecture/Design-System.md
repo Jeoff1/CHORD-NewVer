@@ -61,6 +61,13 @@ classes; this layer shapes them, so every Module looks and behaves the same.
 | Loading | `.chord-spinner` (gold), `.chord-skeleton` (shimmer), `.htmx-indicator` and `.chord-loading-dim` while an htmx request runs |
 | Status pills | a dot before the word, so status never relies on colour alone |
 | Reveal | `.chord-reveal` with `--i` staggers items by 60 ms |
+| Segmented filter (`.chord-seg`) | a pill group of links; the current one (`aria-current`) green with gold text (gold in dark mode); optional `.chord-seg__count` |
+| Date tile (`.chord-date`) | 56 × 60 px: month (small caps) over the day (Raleway 800); green for services, `--gold` for bookings, `--muted` for past or cancelled |
+| Record rows (`.chord-rows` > `.chord-row`) | a list where the title is a `stretched-link`: date tile, `__main` (title, `__meta` lines), `__side` (pills, buttons kept clickable above the link, `__chev` nudges right on hover); `.is-muted` strikes a cancelled title |
+| Details grid (`.chord-dl`) | labels and values in two columns, one column on phones |
+| Record header (`.chord-record`) | date tile, `__title`, `__when` (time and status pill), `__actions` |
+| Summary counts (`.chord-stats` > `.chord-stat`) | a value in Raleway 800 and a label; real counts only |
+| Card header (`.card-header-plain`) | a plain card heading row with an optional note on the right |
 
 Everything stops under `prefers-reduced-motion`. Tests:
 `apps/core/tests/test_shared_components.py`.

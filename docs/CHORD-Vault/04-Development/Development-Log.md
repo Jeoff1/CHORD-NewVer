@@ -2,6 +2,19 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 4: Management, Services and Bookings (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §10.
+- **What changed:** the Occasions Module's screens (on screen: Bookings and
+  Service requests) rebuilt with the shared record patterns: segmented
+  Upcoming and Past, booking rows with date tiles, record headers, details
+  grids, summary counts, status pills instead of badges, empty states, and
+  Book a service in four sections (`occasions/occasion_form.html`;
+  `form_page.html` gained a `form_fields` block). Withdraw asks first. Only
+  templates and one `template_name` changed: no model, form, route,
+  permission or rule changed; no migration. Worship services are Phase 5.
+- **Checks:** PHASE4_CHECKS
+
 ## 2026-11-28: UI/UX Phase 3: shared UI components (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §8; built from the written plan and the

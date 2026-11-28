@@ -24,7 +24,8 @@ it and the existing design system (the artifact itself can't be opened
 from Claude Code), one commit per phase, each pushed to
 `origin/joy-ui-ux-v3`. **Done: Phase 3 (shared UI components:
 `components.css`, `components.js`, toasts, confirm dialog, empty states;
-[[Design-System]], "Shared components").**
+[[Design-System]], "Shared components") and Phase 4 (Bookings and
+service requests; [[Occasions]]).**
 
 **UI/UX Phase 2 (28 Nov 2026), branch `joy-ui-ux-v3`, approved by the
 UI/UX owner and committed locally (not pushed):** one account popover on

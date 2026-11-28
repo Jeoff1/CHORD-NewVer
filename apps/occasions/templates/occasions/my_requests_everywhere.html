@@ -3,26 +3,32 @@
 {% block title %}My requests{% endblock %}
 
 {% block content %}
-  {# A person's own Occasion Requests at every church (Phase 9B). #}
-  <h1 class="h3 mb-2">My requests</h1>
-  <p class="text-body-secondary">Your requests for special services, at every church.</p>
-  <div class="list-group shadow-sm">
-    {% for record in object_list %}
-      <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <span>
-          <span class="fw-semibold d-block">{{ record.occasion_type.name }} for {{ record.occasion_for }}</span>
-          <span class="small text-body-secondary">{{ record.church.name }} · {{ record.starts_at|date:"M j, Y g:i A" }} · {{ record.get_status_display }}</span>
-        </span>
-        {% if record.is_pending %}
-          <form method="post" action="{% url 'public_requests:withdraw' public_id=record.public_id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
-          </form>
-        {% endif %}
-      </div>
-    {% empty %}
-      <div class="list-group-item text-body-secondary">You haven't requested anything yet. <a href="{% url 'churches:directory' %}">Find a church</a>.</div>
-    {% endfor %}
+  {# A person's own Occasion Requests at every church (Phase 9B; UI/UX Phase 4 rows). #}
+  {% load ui %}
+  {% page_header "My requests" subtitle="Your requests for special services, at every church." %}{% endpage_header %}
+  <div class="card shadow-sm">
+    <ul class="chord-rows">
+      {% for record in object_list %}
+        <li class="chord-row">
+          <span class="chord-date chord-date--gold" aria-hidden="true"><span class="chord-date__month">{{ record.starts_at|date:"M" }}</span><span class="chord-date__day">{{ record.starts_at|date:"j" }}</span></span>
+          <div class="chord-row__main">
+            <span class="chord-row__title">{{ record.occasion_type.name }} for {{ record.occasion_for }}</span>
+            <div class="chord-row__meta">{{ record.church.name }} · {{ record.starts_at|date:"M j, Y g:i A" }} · {{ record.get_status_display }}</div>
+          </div>
+          <div class="chord-row__side">
+            {% if record.status == "approved" %}{% include "includes/status_pill.html" with status="accepted" pill_text=record.get_status_display %}{% elif record.status == "declined" %}{% include "includes/status_pill.html" with status="declined" pill_text=record.get_status_display %}{% elif record.status == "pending" %}{% include "includes/status_pill.html" with status="pending" pill_text=record.get_status_display %}{% else %}{% include "includes/status_pill.html" with status="none" pill_text=record.get_status_display %}{% endif %}
+            {% if record.is_pending %}
+              <form method="post" action="{% url 'public_requests:withdraw' public_id=record.public_id %}" data-confirm="The church won't see this request any more." data-confirm-title="Withdraw this request?" data-confirm-action="Withdraw">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Withdraw</button>
+              </form>
+            {% endif %}
+          </div>
+        </li>
+      {% empty %}
+        <li>{% url 'churches:directory' as directory_url %}{% include "includes/empty_state.html" with icon="inbox" title="You haven't requested anything yet." text="Find a church and ask for a special service from its page." %}<p class="text-center pb-4 mb-0"><a href="{{ directory_url }}">Find a church</a>.</p></li>
+      {% endfor %}
+    </ul>
   </div>
   {% include "includes/pagination.html" %}
 {% endblock %}

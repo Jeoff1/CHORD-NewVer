@@ -4,46 +4,55 @@
 {% block title %}{{ record }}{% endblock %}
 
 {% block content %}
-  {% url 'occasions:requests' as back_url %}{% include "includes/back_link.html" with url=back_url label="Occasion requests" %}
-  <h1 class="h3 mb-1">{{ record.occasion_type.name }} for {{ record.occasion_for }}</h1>
-  <p class="text-body-secondary">Asked by {{ record.requester|person_name }} on {{ record.created_at|date:"M j, Y" }} · <span class="badge {% if record.status == 'approved' %}text-bg-success{% elif record.status == 'declined' %}text-bg-danger{% elif record.status == 'pending' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ record.get_status_display }}</span></p>
+  {# Deciding a service request (UI/UX Phase 4): the record header, the request, then Approve and Decline. #}
+  {% url 'occasions:requests' as back_url %}{% include "includes/back_link.html" with url=back_url label="Service requests" %}
+  <div class="chord-record">
+    <span class="chord-date chord-date--gold" aria-hidden="true"><span class="chord-date__month">{{ record.starts_at|date:"M" }}</span><span class="chord-date__day">{{ record.starts_at|date:"j" }}</span></span>
+    <div class="chord-record__main">
+      <h1 class="h3 chord-record__title">{{ record.occasion_type.name }} for {{ record.occasion_for }}</h1>
+      <div class="chord-record__when">
+        <span>Asked by {{ record.requester|person_name }} on {{ record.created_at|date:"M j, Y" }}</span>
+        {% if record.status == "approved" %}{% include "includes/status_pill.html" with status="accepted" pill_text=record.get_status_display %}{% elif record.status == "declined" %}{% include "includes/status_pill.html" with status="declined" pill_text=record.get_status_display %}{% elif record.status == "pending" %}{% include "includes/status_pill.html" with status="pending" pill_text=record.get_status_display %}{% else %}{% include "includes/status_pill.html" with status="none" pill_text=record.get_status_display %}{% endif %}
+      </div>
+    </div>
+  </div>
 
   {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
 
   <div class="row g-3">
     <div class="col-lg-5">
-      <div class="card shadow-sm mb-3">
+      <section class="card shadow-sm mb-3" aria-labelledby="request-title">
+        <div class="card-header-plain"><h2 id="request-title">The request</h2></div>
         <div class="card-body">
-          <h2 class="h5">The request</h2>
-          <dl class="mb-0">
+          <dl class="chord-dl">
             <dt>Preferred time</dt><dd>{{ record.starts_at|date:"l, F j, Y · g:i A" }} to {{ record.ends_at|date:"g:i A" }}</dd>
             <dt>For</dt><dd>{{ record.occasion_for }}</dd>
-            <dt>Note</dt><dd class="mb-0">{{ record.note|linebreaksbr|default:"None" }}</dd>
-            {% if record.decline_reason %}<dt class="mt-2">Reason declined</dt><dd class="mb-0">{{ record.decline_reason }}</dd>{% endif %}
-            {% if record.occasion %}<dt class="mt-2">Booked as</dt><dd class="mb-0"><a href="{% url 'occasions:detail' public_id=record.occasion.public_id %}">{{ record.occasion }}</a></dd>{% endif %}
+            <dt>Note</dt><dd>{{ record.note|linebreaksbr|default:"None" }}</dd>
+            {% if record.decline_reason %}<dt>Reason declined</dt><dd>{{ record.decline_reason }}</dd>{% endif %}
+            {% if record.occasion %}<dt>Booked as</dt><dd><a href="{% url 'occasions:detail' public_id=record.occasion.public_id %}">{{ record.occasion }}</a></dd>{% endif %}
           </dl>
         </div>
-      </div>
+      </section>
       {% if clash %}<div class="alert alert-warning" role="alert">{{ clash }}</div>{% endif %}
     </div>
 
     {% if record.is_pending %}
       <div class="col-lg-7">
-        <div class="card shadow-sm mb-3">
-          <div class="card-body p-4">
-            <h2 class="h5">Approve</h2>
+        <section class="card shadow-sm mb-3" aria-labelledby="approve-title">
+          <div class="card-header-plain"><h2 id="approve-title">Approve</h2></div>
+          <div class="card-body">
             <p class="small text-body-secondary">Approving books the occasion. You may change the date and time first; a time that overlaps another booking is refused.</p>
             <form method="post" novalidate>
               {% csrf_token %}
               <input type="hidden" name="action" value="approve">
               {{ approve_form }}
-              <button type="submit" class="btn btn-primary">Approve</button>
+              <button type="submit" class="btn btn-primary">{% include "includes/icons/check-circle.html" with size=18 %}Approve</button>
             </form>
           </div>
-        </div>
-        <div class="card shadow-sm">
-          <div class="card-body p-4">
-            <h2 class="h5">Decline</h2>
+        </section>
+        <section class="card shadow-sm" aria-labelledby="decline-title">
+          <div class="card-header-plain"><h2 id="decline-title">Decline</h2></div>
+          <div class="card-body">
             <form method="post" novalidate>
               {% csrf_token %}
               <input type="hidden" name="action" value="decline">
@@ -51,7 +60,7 @@
               <button type="submit" class="btn btn-outline-danger">Decline</button>
             </form>
           </div>
-        </div>
+        </section>
       </div>
     {% endif %}
   </div>

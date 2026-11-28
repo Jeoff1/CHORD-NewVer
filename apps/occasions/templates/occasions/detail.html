@@ -4,40 +4,45 @@
 {% block title %}{{ occasion }}{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-      {% url 'occasions:list' as back_url %}{% include "includes/back_link.html" with url=back_url label="Occasions" %}
-      <h1 class="h3 mb-1{% if occasion.is_cancelled %} text-decoration-line-through{% endif %}">{{ occasion.occasion_type.name }}: {{ occasion.occasion_for }}</h1>
-      <div class="text-body-secondary">{{ occasion.starts_at|date:"l, F j, Y · g:i A" }} to {{ occasion.ends_at|date:"g:i A" }}</div>
-      {% if occasion.is_cancelled %}<span class="badge text-bg-secondary mt-1">Cancelled</span>{% endif %}
+  {# A booking (UI/UX Phase 4): the record header, its details and how it was requested. #}
+  {% url 'occasions:list' as back_url %}{% include "includes/back_link.html" with url=back_url label="Bookings" %}
+  <div class="chord-record">
+    <span class="chord-date chord-date--gold{% if occasion.is_cancelled %} chord-date--muted{% endif %}" aria-hidden="true"><span class="chord-date__month">{{ occasion.starts_at|date:"M" }}</span><span class="chord-date__day">{{ occasion.starts_at|date:"j" }}</span></span>
+    <div class="chord-record__main">
+      <h1 class="h3 chord-record__title{% if occasion.is_cancelled %} text-decoration-line-through{% endif %}">{{ occasion.occasion_type.name }}: {{ occasion.occasion_for }}</h1>
+      <div class="chord-record__when">
+        <span>{% include "includes/icons/clock.html" with size=16 %} {{ occasion.starts_at|date:"l, F j, Y · g:i A" }} to {{ occasion.ends_at|date:"g:i A" }}</span>
+        {% if occasion.is_cancelled %}{% include "includes/status_pill.html" with status="cancelled" %}{% endif %}
+      </div>
     </div>
-    {% if perms.occasions.change_occasion %}<a href="{% url 'occasions:update' public_id=occasion.public_id %}" class="btn btn-outline-primary">Edit</a>{% endif %}
+    {% if perms.occasions.change_occasion %}<div class="chord-record__actions"><a href="{% url 'occasions:update' public_id=occasion.public_id %}" class="btn btn-outline-primary">{% include "includes/icons/pencil.html" with size=16 %}Edit</a></div>{% endif %}
   </div>
 
-  <div class="row g-3">
-    <div class="col-lg-7">
-      <div class="card shadow-sm">
+  <div class="chord-columns">
+    <div class="chord-main">
+      <section class="card shadow-sm" aria-labelledby="booking-details">
+        <div class="card-header-plain"><h2 id="booking-details">Details</h2></div>
         <div class="card-body">
-          <dl class="mb-0">
+          <dl class="chord-dl">
             <dt>Occasion</dt><dd>{{ occasion.occasion_type.name }}</dd>
             <dt>For</dt><dd>{{ occasion.occasion_for }}</dd>
             <dt>Officiant</dt><dd>{% if occasion.officiant %}{{ occasion.officiant|person_name }}{% else %}Not set{% endif %}</dd>
             <dt>Venue</dt><dd>{{ occasion.venue|default:"The usual place" }}</dd>
             <dt>Length</dt><dd>{{ occasion.length_minutes }} minutes</dd>
-            <dt>Notes</dt><dd class="mb-0">{{ occasion.notes|linebreaksbr|default:"None" }}</dd>
+            <dt>Notes</dt><dd>{{ occasion.notes|linebreaksbr|default:"None" }}</dd>
           </dl>
         </div>
-      </div>
+      </section>
     </div>
     {% if request_record %}
-      <div class="col-lg-5">
-        <div class="card shadow-sm">
+      <aside class="chord-side">
+        <section class="card shadow-sm" aria-labelledby="booking-requested">
+          <div class="card-header-plain"><h2 id="booking-requested">Requested</h2></div>
           <div class="card-body">
-            <h2 class="h5">Requested</h2>
             <p class="mb-0">By {{ request_record.requester|person_name }} on {{ request_record.created_at|date:"M j, Y" }}{% if request_record.decided_by %}; approved by {{ request_record.decided_by|person_name }}{% endif %}.</p>
           </div>
-        </div>
-      </div>
+        </section>
+      </aside>
     {% endif %}
   </div>
 {% endblock %}

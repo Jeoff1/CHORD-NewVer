@@ -6,46 +6,44 @@
 {% block content %}
   {% load ui %}
   {% page_header "Bookings" subtitle="Weddings, baptisms, funerals and other special services. They share the calendar with worship services: the same time can't be booked twice." %}
-    {% if perms.occasions.add_occasion %}<a href="{% url 'occasions:create' %}" class="btn btn-primary">Book a service</a>{% endif %}
+    {% if perms.occasions.add_occasion %}<a href="{% url 'occasions:create' %}" class="btn btn-primary">{% include "includes/icons/plus.html" with size=18 %}Book a service</a>{% endif %}
   {% endpage_header %}
-  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). UI/UX Phase 4: a segmented filter and a list of booking rows. #}
 
-  <ul class="nav nav-pills mb-3">
-    {% for key, title in when_choices %}
-      <li class="nav-item"><a class="nav-link{% if when == key %} active{% endif %}" href="{% querystring when=key page=None %}">{{ title }}</a></li>
-    {% endfor %}
-  </ul>
+  <nav aria-label="Which bookings">
+    <ul class="chord-seg">
+      {% for key, title in when_choices %}
+        <li><a href="{% querystring when=key page=None %}"{% if when == key %} aria-current="page"{% endif %}>{{ title }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
 
   {% include "includes/list_toolbar.html" with placeholder="Search by name, occasion or venue" %}
 
   <div class="card shadow-sm">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead>
-          <tr>
-            <th scope="col">When</th>
-            <th scope="col">Occasion</th>
-            <th scope="col">Officiant</th>
-            <th scope="col">Venue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for occasion in object_list %}
-            <tr{% if occasion.is_cancelled %} class="text-body-secondary"{% endif %}>
-              <td class="text-nowrap">{{ occasion.starts_at|date:"D, M j, Y" }}<br><span class="small text-body-secondary">{{ occasion.starts_at|date:"g:i A" }} to {{ occasion.ends_at|date:"g:i A" }}</span></td>
-              <td>
-                <a href="{% url 'occasions:detail' public_id=occasion.public_id %}" class="fw-semibold text-decoration-none{% if occasion.is_cancelled %} text-decoration-line-through{% endif %}">{{ occasion.occasion_type.name }}: {{ occasion.occasion_for }}</a>
-                {% if occasion.is_cancelled %}<span class="badge text-bg-secondary ms-1">Cancelled</span>{% endif %}
-              </td>
-              <td>{% if occasion.officiant %}{{ occasion.officiant|person_name }}{% else %}<span class="text-body-secondary">Not set</span>{% endif %}</td>
-              <td>{{ occasion.venue|default:"The usual place" }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="4" class="text-center text-body-secondary py-4">{% if q %}Nothing matches your search.{% elif when == "past" %}No past occasions yet.{% else %}No occasions are booked.{% endif %}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <ul class="chord-rows">
+      {% for occasion in object_list %}
+        <li class="chord-row chord-reveal{% if occasion.is_cancelled %} is-muted{% endif %}" style="--i: {{ forloop.counter0 }}">
+          <span class="chord-date chord-date--gold{% if occasion.is_cancelled %} chord-date--muted{% endif %}" aria-hidden="true"><span class="chord-date__month">{{ occasion.starts_at|date:"M" }}</span><span class="chord-date__day">{{ occasion.starts_at|date:"j" }}</span></span>
+          <div class="chord-row__main">
+            <a href="{% url 'occasions:detail' public_id=occasion.public_id %}" class="chord-row__title stretched-link">{{ occasion.occasion_type.name }}: {{ occasion.occasion_for }}</a>
+            <div class="chord-row__meta">{{ occasion.starts_at|date:"D, M j, Y" }} · {{ occasion.starts_at|date:"g:i A" }} to {{ occasion.ends_at|date:"g:i A" }}</div>
+            <div class="chord-row__meta">{% if occasion.officiant %}{{ occasion.officiant|person_name }}{% else %}Officiant not set{% endif %} · {{ occasion.venue|default:"The usual place" }}</div>
+          </div>
+          <div class="chord-row__side">
+            {% if occasion.is_cancelled %}{% include "includes/status_pill.html" with status="cancelled" %}{% endif %}
+            <span class="chord-row__chev">{% include "includes/icons/chevron-right.html" with size=18 %}</span>
+          </div>
+        </li>
+      {% empty %}
+        <li>
+          {% if q %}{% include "includes/empty_state.html" with icon="search" title="Nothing matches your search" text="Try another name, occasion or venue." %}
+          {% elif when == "past" %}{% include "includes/empty_state.html" with icon="calendar" title="No past occasions yet" %}
+          {% elif perms.occasions.add_occasion %}{% url 'occasions:create' as create_url %}{% include "includes/empty_state.html" with icon="calendar" title="No occasions are booked" text="Book a wedding, baptism, funeral or another special service; it takes its time on the calendar." action_url=create_url action_label="Book a service" %}
+          {% else %}{% include "includes/empty_state.html" with icon="calendar" title="No occasions are booked" %}{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
   </div>
   {% include "includes/pagination.html" %}
 {% endblock %}
