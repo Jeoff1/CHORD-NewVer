@@ -994,6 +994,12 @@ longer exempt in `apps/church/tests/test_isolation.py`;
   `static/vendor/leaflet-1.9.4` (checked against the npm registry's
   sha512), like Bootstrap and htmx.
 - Without JavaScript the picker stays hidden and the field works as before.
+- **The Referer:** OpenStreetMap's tile and Nominatim servers refuse
+  browser requests that don't say which site they come from ("Access
+  blocked" tiles), and Django's default `Referrer-Policy: same-origin`
+  drops the Referer on them. The map and the lookups ask for
+  `strict-origin-when-cross-origin`, so OpenStreetMap gets the site's
+  origin only, never a page's path; the rest of CHORD keeps `same-origin`.
 
 Tests: `LocationPickerTests` (`apps/church/tests/test_views.py`). Checked
 in headless Chrome against the dev server: the current location (a test

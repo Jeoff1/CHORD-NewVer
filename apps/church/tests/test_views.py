@@ -296,3 +296,16 @@ class LocationPickerTests(TestCase):
         profile = first_church()
         self.assertEqual(profile.address, "1 Hill Road")
         self.assertFalse(hasattr(profile, "latitude"))
+
+    def test_the_map_says_which_site_it_comes_from(self):
+        # OpenStreetMap refuses tiles and lookups without a Referer, and
+        # Django's "Referrer-Policy: same-origin" would drop it: the script
+        # asks for the site's origin only (28 Nov 2026).
+        from django.contrib.staticfiles import finders
+
+        with open(
+            finders.find("church/location_picker.js"), encoding="utf-8"
+        ) as script:
+            source = script.read()
+        self.assertIn('REFERRER = "strict-origin-when-cross-origin"', source)
+        self.assertEqual(source.count("referrerPolicy: REFERRER"), 2)

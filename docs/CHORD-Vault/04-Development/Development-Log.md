@@ -2,6 +2,17 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: The address map's tiles were blocked (branch `church-setup-simplify`)
+
+- **Why:** the owner saw OpenStreetMap's "Access blocked" tiles: Django's
+  `Referrer-Policy: same-origin` left the Referer off the map's requests.
+- **What changed:** the tile layer and the Nominatim lookups in
+  `church/location_picker.js` send the site's origin
+  (`strict-origin-when-cross-origin`).
+- **Checks:** `scripts/check.ps1` (full): 1425 tests passed, 97% coverage.Headless Chrome against the dev server:
+  all 10 OpenStreetMap requests (tiles and lookups) answered 200, each
+  with the origin only as Referer.
+
 ## 2026-11-28: Location picker for the church address (branch `church-setup-simplify`)
 
 - **Why:** the owner's list of 28 Nov ([[Design-Decisions]], "A location

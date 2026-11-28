@@ -8,6 +8,11 @@
  *
  * Nominatim's usage policy: at most one lookup a second, made only when the person acts, with
  * OpenStreetMap credited on the map. Lookups wait their turn and only the latest one counts.
+ *
+ * OpenStreetMap's tile and Nominatim servers refuse browser requests that don't say which site
+ * they come from. CHORD's pages send "Referrer-Policy: same-origin" (Django's default), which
+ * would leave the Referer off, so the map and the lookups ask for the site's origin only
+ * (never the page's path) to be sent.
  */
 (function () {
   "use strict";
@@ -16,6 +21,7 @@
   var TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
   var CREDIT = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
   var WORLD = { lat: 20, lon: 0, zoom: 2 };
+  var REFERRER = "strict-origin-when-cross-origin";
   var lastCall = 0;
 
   // One request a second at most, across every picker on the page.
@@ -28,7 +34,10 @@
   }
 
   function getJson(url) {
-    return fetch(url, { headers: { Accept: "application/json" } }).then(function (response) {
+    return fetch(url, {
+      headers: { Accept: "application/json" },
+      referrerPolicy: REFERRER,
+    }).then(function (response) {
       if (!response.ok) throw new Error("lookup failed");
       return response.json();
     });
@@ -56,7 +65,11 @@
       openButton.setAttribute("aria-expanded", "true");
       if (!map) {
         map = window.L.map(mapBox).setView([lat, lon], zoom);
-        window.L.tileLayer(TILES, { maxZoom: 19, attribution: CREDIT }).addTo(map);
+        window.L.tileLayer(TILES, {
+          maxZoom: 19,
+          attribution: CREDIT,
+          referrerPolicy: REFERRER,
+        }).addTo(map);
         map.on("click", function (event) {
           pin(event.latlng.lat, event.latlng.lng, true);
         });
