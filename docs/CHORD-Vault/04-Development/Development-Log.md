@@ -13,7 +13,7 @@ Newest entries first. Template: `Templates/Development-Log-Entry`.
   `form_page.html` gained a `form_fields` block). Withdraw asks first. Only
   templates and one `template_name` changed: no model, form, route,
   permission or rule changed; no migration. Worship services are Phase 5.
-- **Checks:** PHASE4_CHECKS
+- **Checks:** the full `scripts/check.ps1` in the pre-commit hook of commit `07cc51b`: lint, format, Django checks, migrations (none), 1501 tests passed, 97% coverage.
 
 ## 2026-11-28: UI/UX Phase 3: shared UI components (branch `joy-ui-ux-v3`)
 
