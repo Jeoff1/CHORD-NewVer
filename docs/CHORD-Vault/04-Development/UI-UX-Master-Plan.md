@@ -473,7 +473,7 @@ ministries, events, per-person attendance, SMS.
 | 4 | Management: Services and Bookings | Done |
 | 5 | Worship planning, recommendations, lineup builder | Done |
 | 6 | Songs, chord sheets and rehearsal | Done |
-| 7 | Calendar and scheduling | Not started |
+| 7 | Calendar and scheduling | Done |
 | 8 | Members and teams | Not started |
 | 9 | Announcements and notifications | Not started |
 | 10 | Settings and reports | Not started |

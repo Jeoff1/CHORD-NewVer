@@ -155,6 +155,21 @@ accepted" and a status pill per person; the dashboard's **My schedule**
 card shows the person's next assignment (`dashboard.py`); Team parts is in
 the Settings hub's "Teams and occasions" category.
 
+### Screens (UI/UX Phase 7, 28 Nov 2026)
+
+From [[UI-UX-Master-Plan]] §13:
+
+- **Team roster** (`teams/roster.html`): people as rows with initials
+  (`.chord-person`; no pictures), their parts as chips, "No parts yet"
+  marked, Edit parts; an empty state.
+- **My schedule** (`teams/my_schedule.html`): a page header, Where I serve
+  in date order with date tiles, the part as a chip, replies as status
+  pills (`teams/includes/reply_badge.html`), Swap requested, the existing
+  reply and swap actions; Swaps I can take; My team parts as chips;
+  Blackout dates, where Remove asks first.
+- The calendar is in [[Worship]] (`worship/calendar.html`).
+- Tests: `apps/teams/tests/test_schedule_screens_ui.py`.
+
 ## Church settings this module depends on
 
 - The **Team Parts** list (names, order, switched on or off).

@@ -161,3 +161,46 @@ tr:hover .chord-art, .chord-row:hover .chord-art { transform: scale(1.05); box-s
   tr:hover .chord-art, .chord-row:hover .chord-art { transform: none; }
   .chord-filters__body { animation: none; }
 }
+
+/* --- Calendar and scheduling (UI/UX Phase 7, 28 Nov 2026; UI-UX-Master-Plan.md §13) ----------------- */
+.chord-cal-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1.5rem; margin-bottom: 1rem; }
+.chord-cal-nav { display: flex; align-items: center; gap: .5rem; }
+.chord-cal-title { min-width: 10rem; margin: 0; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: 1.3rem; font-weight: 800; text-align: center; color: var(--chord-heading); animation: chord-fade-up .25s var(--chord-ease) both; }
+.chord-cal-legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin: 0; padding: 0; list-style: none; font-size: .88rem; }
+.chord-cal-legend li { display: flex; align-items: center; gap: .45rem; }
+.chord-cal-key { width: 14px; height: 14px; border-radius: 4px; }
+.chord-cal-key--service { background: #173630; }
+.chord-cal-key--booking { background: #E5C690; }
+.chord-cal-key--hidden { border: 1px dashed var(--chord-border-strong); background: var(--bs-tertiary-bg); }
+.chord-cal-key--cancelled { background: var(--bs-secondary-bg); }
+[data-bs-theme=dark] .chord-cal-key--service { background: #6E8A83; }
+.chord-cal-card { overflow: hidden; }
+.chord-cal { width: 100%; min-width: 46rem; table-layout: fixed; border-collapse: collapse; }
+.chord-cal th { padding: .6rem; background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-align: center; text-transform: uppercase; border-bottom: 1px solid var(--bs-border-color); }
+.chord-cal__day { height: 7.25rem; padding: .35rem; vertical-align: top; border-right: 1px solid var(--bs-border-color); border-bottom: 1px solid var(--bs-border-color); transition: background-color .15s ease; animation: chord-fade-up .25s var(--chord-ease) both; }
+.chord-cal tr td:last-child { border-right: 0; }
+.chord-cal tbody tr:last-child td { border-bottom: 0; }
+.chord-cal__day:hover { background: var(--chord-row-hover); }
+.chord-cal__day.is-outside { background: var(--bs-tertiary-bg); }
+.chord-cal__day.is-outside .chord-cal__num { color: var(--bs-secondary-color); opacity: .7; }
+.chord-cal__num { display: grid; place-items: center; width: 28px; height: 28px; margin: 0 0 .25rem auto; border-radius: 50%; font-size: .85rem; font-weight: 600; }
+.chord-cal__day.is-today .chord-cal__num { background: #173630; color: #E5C690; font-weight: 800; }
+[data-bs-theme=dark] .chord-cal__day.is-today .chord-cal__num { background: #E5C690; color: #060F00; }
+.chord-cal__event { display: block; margin-bottom: 3px; padding: 3px 6px; overflow: hidden; border-radius: 6px; font-size: .78rem; line-height: 1.3; text-decoration: none; text-overflow: ellipsis; white-space: nowrap; transition: transform .15s ease, box-shadow .15s ease, filter .15s ease; }
+a.chord-cal__event:hover, a.chord-cal__event:focus-visible { transform: translateY(-1px); box-shadow: var(--chord-shadow-md); filter: brightness(1.05); outline: none; }
+a.chord-cal__event:focus-visible { outline: 2px solid var(--chord-gold); outline-offset: 1px; }
+.chord-cal__time { font-weight: 700; }
+.chord-cal__event--service { background: #173630; color: #F4F1F0; }
+.chord-cal__event--service .chord-cal__time { color: #E5C690; }
+.chord-cal__event--booking { background: #F3E6C9; color: #173630; box-shadow: inset 3px 0 0 #C9A764; }
+.chord-cal__event--hidden { border: 1px dashed var(--chord-border-strong); background: var(--bs-tertiary-bg); color: var(--bs-secondary-color); }
+.chord-cal__event.is-cancelled { background: var(--bs-secondary-bg); color: var(--bs-secondary-color); text-decoration: line-through; box-shadow: none; }
+.chord-cal__event.is-cancelled .chord-cal__time { color: inherit; }
+[data-bs-theme=dark] .chord-cal__event--service { background: #2E4A44; }
+[data-bs-theme=dark] .chord-cal__event--booking { background: #E5C690; color: #060F00; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chord-cal-title, .chord-cal__day { animation: none; }
+  .chord-cal__day, .chord-cal__event { transition: none; }
+  a.chord-cal__event:hover, a.chord-cal__event:focus-visible { transform: none; }
+}

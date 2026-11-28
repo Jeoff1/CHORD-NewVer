@@ -91,6 +91,12 @@ panel), `.chord-song-head`, `.chord-big-search`, `.chord-tracks`, chord sheet
 readability rules, `.chord-editor`, `.chord-order` (numbered rehearsal
 order).
 
+Scheduling (Phase 7): `.chord-cal-bar`, `.chord-cal-title`,
+`.chord-cal-legend` and `.chord-cal-key--*`, `.chord-cal` with
+`__day` (`is-today`, `is-outside`), `__num` and `__event--service`,
+`--booking`, `--hidden`, `is-cancelled`; in `components.css`,
+`.chord-person` (initials avatar, 40 px, `--sm` 32 px).
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

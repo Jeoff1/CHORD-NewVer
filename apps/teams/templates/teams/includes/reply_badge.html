@@ -1,2 +1,2 @@
-{# An assignment's reply as a badge; expects `assignment`. #}
-<span class="badge {% if assignment.reply == 'accepted' %}text-bg-success{% elif assignment.reply == 'declined' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">{{ assignment.get_reply_display }}</span>
+{# An assignment's reply as a status pill (UI/UX Phase 7); expects `assignment`. #}
+{% if assignment.reply == 'accepted' %}{% include "includes/status_pill.html" with status="accepted" pill_text=assignment.get_reply_display %}{% elif assignment.reply == 'declined' %}{% include "includes/status_pill.html" with status="declined" pill_text=assignment.get_reply_display %}{% else %}{% include "includes/status_pill.html" with status="pending" pill_text=assignment.get_reply_display %}{% endif %}

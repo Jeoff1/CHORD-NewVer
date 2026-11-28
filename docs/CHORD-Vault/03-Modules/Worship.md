@@ -707,6 +707,15 @@ From [[UI-UX-Master-Plan]] §12 (`planning.css`, "Songs"):
   rows with the current song highlighted.
 - Tests: `apps/songs/tests/test_song_screens.py`.
 
+### Calendar (UI/UX Phase 7, 28 Nov 2026)
+
+`worship/calendar.html`: the month title in Raleway with previous, next
+and Today; a legend with swatches and words; a month grid (`.chord-cal`)
+whose today is a filled circle, days outside the month dimmed, events as
+chips (services green, occasions gold with a gold edge, hidden bookings
+dashed and labelled "Booked", cancelled struck through), each lifting on
+hover; the month fades in. Same data, links and visibility rules.
+
 ## Permissions
 
 | Permission                                   | Allows                                   |

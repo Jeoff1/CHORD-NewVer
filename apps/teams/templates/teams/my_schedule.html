@@ -1,27 +1,28 @@
 {% extends "base.html" %}
-{% load church people %}
+{% load church people ui %}
 
 {% block title %}My schedule{% endblock %}
 
 {% block content %}
-  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
-  <h1 class="h3 mb-3">My schedule</h1>
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). UI/UX Phase 7: a chronological list with date tiles, the part, replies as pills; parts and blackout dates beside it. #}
+  {% page_header "My schedule" subtitle="Where you serve, the swaps you can take, your parts and the days you're away." %}{% endpage_header %}
 
-  <div class="row g-3">
-    <div class="col-lg-8">
-      <div class="card shadow-sm mb-3">
-        <div class="card-body">
-          <h2 class="h5">Where I serve</h2>
-          <ul class="list-unstyled mb-0">
-            {% for assignment, closed, swap in assignments %}
-              <li class="d-flex flex-wrap align-items-center gap-2 py-2{% if not forloop.last %} border-bottom{% endif %}">
-                <div class="me-auto">
-                  <a href="{% url 'worship:service' public_id=assignment.service.public_id %}"{% if assignment.service.is_cancelled %} class="text-decoration-line-through"{% endif %}>{{ assignment.service.name }}</a>
-                  <span class="text-body-secondary">· {{ assignment.service.starts_at|date:"D, M j · g:i A" }} · {{ assignment.part }}</span>
-                  {% if assignment.service.is_cancelled %}<span class="badge text-bg-secondary">Cancelled</span>{% endif %}
-                </div>
+  <div class="chord-columns">
+    <div class="chord-main">
+      <section class="card shadow-sm" aria-labelledby="serve-title">
+        <div class="card-header-plain"><h2 id="serve-title">Where I serve</h2></div>
+        <ul class="chord-rows">
+          {% for assignment, closed, swap in assignments %}
+            <li class="chord-row{% if assignment.service.is_cancelled %} is-muted{% endif %}">
+              <span class="chord-date{% if assignment.service.is_cancelled %} chord-date--muted{% endif %}" aria-hidden="true"><span class="chord-date__month">{{ assignment.service.starts_at|date:"M" }}</span><span class="chord-date__day">{{ assignment.service.starts_at|date:"j" }}</span></span>
+              <div class="chord-row__main">
+                <a href="{% url 'worship:service' public_id=assignment.service.public_id %}" class="chord-row__title{% if assignment.service.is_cancelled %} text-decoration-line-through{% endif %}">{{ assignment.service.name }}</a>
+                <div class="chord-row__meta">{{ assignment.service.starts_at|date:"D, M j · g:i A" }} · <span class="chord-chip">{{ assignment.part }}</span></div>
+              </div>
+              <div class="chord-row__side">
+                {% if assignment.service.is_cancelled %}{% include "includes/status_pill.html" with status="cancelled" %}{% endif %}
                 {% include "teams/includes/reply_badge.html" %}
-                {% if swap %}<span class="badge text-bg-warning">Swap requested</span>{% endif %}
+                {% if swap %}<span class="chord-pill chord-pill--warning">Swap requested</span>{% endif %}
                 {% if not closed %}
                   {% if assignment.reply == 'pending' %}{% include "teams/includes/reply_buttons.html" %}{% endif %}
                   {% if swap %}
@@ -33,75 +34,69 @@
                     <a href="{% url 'teams:swap_request' public_id=assignment.public_id %}" class="btn btn-sm btn-outline-primary">Ask for a swap</a>
                   {% endif %}
                 {% endif %}
-              </li>
-            {% empty %}
-              {% label "worship_service" plural=True as services_word %}
-              <li class="text-body-secondary">You aren't assigned to any coming {{ services_word|lower }}.</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
+              </div>
+            </li>
+          {% empty %}
+            {% label "worship_service" plural=True as services_word %}
+            <li>{% with none="You aren't assigned to any coming "|add:services_word|lower|add:"." %}{% include "includes/empty_state.html" with icon="calendar" title=none %}{% endwith %}</li>
+          {% endfor %}
+        </ul>
+      </section>
 
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h2 class="h5">Swaps I can take</h2>
-          <p class="small text-body-secondary">The first person to take one gets it.</p>
-          <ul class="list-unstyled mb-0">
-            {% for swap in open_swaps %}
-              <li class="d-flex flex-wrap align-items-center gap-2 py-2{% if not forloop.last %} border-bottom{% endif %}">
-                <div class="me-auto">
-                  <a href="{% url 'worship:service' public_id=swap.service.public_id %}">{{ swap.service.name }}</a>
-                  <span class="text-body-secondary">· {{ swap.service.starts_at|date:"D, M j · g:i A" }} · {{ swap.part }} · from {{ swap.requested_by|person_name }}</span>
-                </div>
+      <section class="card shadow-sm" aria-labelledby="swaps-title">
+        <div class="card-header-plain"><h2 id="swaps-title">Swaps I can take</h2><span class="small text-body-secondary">The first person to take one gets it.</span></div>
+        <ul class="chord-rows">
+          {% for swap in open_swaps %}
+            <li class="chord-row">
+              <span class="chord-date chord-date--gold" aria-hidden="true"><span class="chord-date__month">{{ swap.service.starts_at|date:"M" }}</span><span class="chord-date__day">{{ swap.service.starts_at|date:"j" }}</span></span>
+              <div class="chord-row__main">
+                <a href="{% url 'worship:service' public_id=swap.service.public_id %}" class="chord-row__title">{{ swap.service.name }}</a>
+                <div class="chord-row__meta">{{ swap.service.starts_at|date:"D, M j · g:i A" }} · {{ swap.part }} · from {{ swap.requested_by|person_name }}</div>
+              </div>
+              <div class="chord-row__side">
                 <form method="post" action="{% url 'teams:swap_action' public_id=swap.public_id action='take' %}">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-sm btn-primary">Take it</button>
                 </form>
-              </li>
-            {% empty %}
-              <li class="text-body-secondary">No swaps you can take right now.</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
+              </div>
+            </li>
+          {% empty %}
+            <li>{% include "includes/empty_state.html" with icon="check-circle" title="No swaps you can take right now." %}</li>
+          {% endfor %}
+        </ul>
+      </section>
     </div>
 
-    <div class="col-lg-4">
-      <div class="card shadow-sm mb-3">
+    <aside class="chord-side">
+      <section class="card shadow-sm" aria-labelledby="parts-title">
+        <div class="card-header-plain"><h2 id="parts-title">My team parts</h2><a href="{% url 'teams:my_parts' %}" class="btn btn-sm btn-outline-primary">Edit</a></div>
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start gap-2">
-            <h2 class="h5">My team parts</h2>
-            <a href="{% url 'teams:my_parts' %}" class="btn btn-sm btn-outline-primary">Edit</a>
-          </div>
           {% if parts %}
-            <p class="mb-0">{{ parts|join:", " }}</p>
+            <p class="mb-0">{% for part in parts %}<span class="chord-chip">{{ part }}</span>{% endfor %}</p>
           {% else %}
             <p class="text-body-secondary mb-0">None yet. Add the parts you can take, so you can be assigned.</p>
           {% endif %}
         </div>
-      </div>
+      </section>
 
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start gap-2">
-            <h2 class="h5">Blackout dates</h2>
-            <a href="{% url 'teams:blackout_create' %}" class="btn btn-sm btn-outline-primary">Add</a>
-          </div>
-          <ul class="list-unstyled mb-0">
-            {% for blackout in blackouts %}
-              <li class="d-flex align-items-center gap-2 py-1">
-                <span class="me-auto">{{ blackout.date_range }}{% if blackout.note %} <span class="text-body-secondary small">· {{ blackout.note }}</span>{% endif %}</span>
-                <form method="post" action="{% url 'teams:blackout_delete' pk=blackout.pk %}">
+      <section class="card shadow-sm" aria-labelledby="blackout-title">
+        <div class="card-header-plain"><h2 id="blackout-title">Blackout dates</h2><a href="{% url 'teams:blackout_create' %}" class="btn btn-sm btn-outline-primary">{% include "includes/icons/plus.html" with size=14 %}Add</a></div>
+        <ul class="chord-rows">
+          {% for blackout in blackouts %}
+            <li class="chord-row">
+              <div class="chord-row__main"><span class="chord-row__title">{{ blackout.date_range }}</span>{% if blackout.note %}<div class="chord-row__meta">{{ blackout.note }}</div>{% endif %}</div>
+              <div class="chord-row__side">
+                <form method="post" action="{% url 'teams:blackout_delete' pk=blackout.pk %}" data-confirm="You can be assigned on these days again." data-confirm-title="Remove these blackout dates?" data-confirm-action="Remove">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-sm btn-link text-danger p-0">Remove</button>
                 </form>
-              </li>
-            {% empty %}
-              <li class="text-body-secondary">No days blocked out.</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    </div>
+              </div>
+            </li>
+          {% empty %}
+            <li class="chord-row"><span class="text-body-secondary">No days blocked out.</span></li>
+          {% endfor %}
+        </ul>
+      </section>
+    </aside>
   </div>
 {% endblock %}

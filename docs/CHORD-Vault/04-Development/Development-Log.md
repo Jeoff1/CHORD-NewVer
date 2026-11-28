@@ -2,6 +2,16 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 7: calendar and scheduling (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §13.
+- **What changed:** the calendar's month grid, legend and event chips;
+  the team roster as rows with initials and part chips; My schedule with
+  date tiles, reply pills, chips and side cards; removing blackout dates
+  asks first; `.chord-person` in `components.css`. Templates and CSS only;
+  no scheduling, availability or blackout rule changed; no migration.
+- **Checks:** PHASE7_CHECKS
+
 ## 2026-11-28: UI/UX Phase 6: songs, chord sheets and rehearsal (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §12.

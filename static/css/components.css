@@ -249,6 +249,11 @@ td > .chord-empty { padding-block: 1.75rem; }
 .card-header-plain { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .9rem 1.1rem; border-bottom: 1px solid var(--bs-border-color); }
 .card-header-plain h2 { margin: 0; font-size: 1.05rem; }
 
+/* A person's initials (rosters, users, audit; UI/UX Phase 7). No pictures: rejected by the lead developer. */
+.chord-person { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%; background: #173630; color: #E5C690; font-family: Raleway, "Fira Sans Condensed", sans-serif; font-size: .85rem; font-weight: 800; }
+[data-bs-theme=dark] .chord-person { box-shadow: 0 0 0 1px #E5C690; }
+.chord-person--sm { width: 32px; height: 32px; font-size: .75rem; }
+
 /* --- Shared motion --------------------------------------------------------------- */
 @keyframes chord-fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .chord-reveal { animation: chord-fade-up .3s var(--chord-ease) both; animation-delay: calc(var(--i, 0) * 60ms); }

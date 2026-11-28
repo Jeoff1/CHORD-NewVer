@@ -5,38 +5,38 @@
 
 {% block content %}
   {% include "worship/includes/schedule_header.html" with page_title="Calendar" %}
-  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
+  {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). UI/UX Phase 7: a month grid with event chips coloured by kind (and labelled, never colour alone), today marked, the month sliding in. #}
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
-    <div class="d-flex align-items-center gap-2">
+  <div class="chord-cal-bar">
+    <div class="chord-cal-nav">
       <a href="?month={{ previous_month }}" class="btn btn-outline-secondary chord-icon-btn" aria-label="Previous month">{% include "includes/icons/chevron-left.html" %}</a>
-      <h2 class="h5 mb-0 text-center" style="min-width: 10rem">{{ month|date:"F Y" }}</h2>
+      <h2 class="chord-cal-title" aria-live="polite">{{ month|date:"F Y" }}</h2>
       <a href="?month={{ next_month }}" class="btn btn-outline-secondary chord-icon-btn" aria-label="Next month">{% include "includes/icons/chevron-right.html" %}</a>
       <a href="{% url 'worship:calendar' %}" class="btn btn-outline-secondary chord-btn">Today</a>
     </div>
-    <ul class="list-unstyled d-flex flex-wrap gap-3 mb-0 small" aria-label="Legend">
-      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-primary" aria-hidden="true"></span>{% label "worship_service" %}</li>
-      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-info" aria-hidden="true"></span>Occasion</li>
-      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-light border" aria-hidden="true"></span>Booked (details hidden)</li>
-      <li class="d-flex align-items-center gap-2"><span class="chord-swatch text-bg-secondary" aria-hidden="true"></span><span class="text-decoration-line-through">Cancelled</span></li>
+    <ul class="chord-cal-legend" aria-label="Legend">
+      <li><span class="chord-cal-key chord-cal-key--service" aria-hidden="true"></span>{% label "worship_service" %}</li>
+      <li><span class="chord-cal-key chord-cal-key--booking" aria-hidden="true"></span>Occasion</li>
+      <li><span class="chord-cal-key chord-cal-key--hidden" aria-hidden="true"></span>Booked (details hidden)</li>
+      <li><span class="chord-cal-key chord-cal-key--cancelled" aria-hidden="true"></span><span class="text-decoration-line-through">Cancelled</span></li>
     </ul>
   </div>
 
-  <div class="card shadow-sm">
+  <div class="card shadow-sm chord-cal-card">
     <div class="table-responsive">
-      <table class="table table-bordered mb-0" style="table-layout: fixed; min-width: 44rem">
+      <table class="chord-cal">
         <thead>
-          <tr>{% for name in weekday_names %}<th scope="col" class="text-center small text-body-secondary">{{ name }}</th>{% endfor %}</tr>
+          <tr>{% for name in weekday_names %}<th scope="col">{{ name }}</th>{% endfor %}</tr>
         </thead>
         <tbody>
           {% for week in weeks %}
             <tr>
               {% for day in week %}
-                <td class="align-top p-1{% if not day.in_month %} bg-body-tertiary{% endif %}" style="height: 6.5rem">
-                  <div class="small text-end{% if day.is_today %} fw-bold text-primary{% elif not day.in_month %} text-body-secondary{% endif %}">{{ day.date.day }}</div>
+                <td class="chord-cal__day{% if not day.in_month %} is-outside{% endif %}{% if day.is_today %} is-today{% endif %}">
+                  <div class="chord-cal__num"{% if day.is_today %} aria-label="Today, {{ day.date|date:'F j' }}"{% endif %}>{{ day.date.day }}</div>
                   {% for service in day.services %}
                     <a href="{% url 'worship:service' public_id=service.public_id %}"
-                       class="d-block small rounded px-1 mb-1 text-decoration-none {% if service.is_cancelled %}text-bg-secondary text-decoration-line-through{% else %}text-bg-primary{% endif %}"
+                       class="chord-cal__event chord-cal__event--service{% if service.is_cancelled %} is-cancelled{% endif %}"
                        title="{{ service.name }}{% if service.posted_theme %}: {{ service.posted_theme.title }}{% endif %}">
                       {{ service.starts_at|date:"g:i A" }} {{ service.name }}
                     </a>
@@ -44,9 +44,9 @@
                   {% for booking in day.bookings %}
                     {% comment %}Other Modules' bookings, such as Occasions (Phase 9A, A5). Without a link, only "Booked" shows.{% endcomment %}
                     {% if booking.url %}
-                      <a href="{{ booking.url }}" class="d-block small rounded px-1 mb-1 text-decoration-none {% if booking.is_cancelled %}text-bg-secondary text-decoration-line-through{% else %}text-bg-info{% endif %}" title="{{ booking.label }}">{{ booking.starts_at|date:"g:i A" }} {{ booking.label }}</a>
+                      <a href="{{ booking.url }}" class="chord-cal__event chord-cal__event--booking{% if booking.is_cancelled %} is-cancelled{% endif %}" title="{{ booking.label }}">{{ booking.starts_at|date:"g:i A" }} {{ booking.label }}</a>
                     {% else %}
-                      <span class="d-block small rounded px-1 mb-1 text-bg-light border">{{ booking.starts_at|date:"g:i A" }} to {{ booking.ends_at|date:"g:i A" }} Booked</span>
+                      <span class="chord-cal__event chord-cal__event--hidden">{{ booking.starts_at|date:"g:i A" }} to {{ booking.ends_at|date:"g:i A" }} Booked</span>
                     {% endif %}
                   {% endfor %}
                 </td>
