@@ -159,6 +159,32 @@ class ShellTests(TestCase):
         self.assertEqual([link.label for link in active], ["Calendar"])
         self.assertEqual(nav["section"], "Planning")
 
+    def test_members_holds_users_roles_and_the_audit_log(self):
+        # They are pages of their own under Members, not Settings pages
+        # (the owner, 28 Nov 2026).
+        admin = make_user(roles=["administrator"])
+        for url, label in (
+            (reverse("accounts:user_list"), "Users"),
+            (reverse("accounts:user_create"), "Users"),
+            (reverse("accounts:user_history", kwargs={"pk": admin.pk}), "Users"),
+            (reverse("accounts:role_list"), "Roles and Permissions"),
+            (reverse("accounts:permission_matrix"), "Roles and Permissions"),
+            (reverse("audit:log"), "Audit Log"),
+        ):
+            with self.subTest(url):
+                page = self.page(admin, url)
+                self.assertEqual(page.status_code, 200)
+                self.assertContains(page, f'aria-current="page">{label}</a>')
+                self.assertContains(page, 'class="collapse show" id="chord-sb-members"')
+                self.assertNotContains(page, "chord-settings-menu")
+                self.assertContains(page, '<h1 class="h3')
+
+    def test_the_members_links_follow_permissions(self):
+        page = self.page(make_user(perms=["accounts.view_user"]))
+        self.assertContains(page, f'href="{reverse("accounts:user_list")}"')
+        self.assertNotContains(page, f'href="{reverse("accounts:role_list")}"')
+        self.assertNotContains(page, f'href="{reverse("audit:log")}"')
+
 
 class NoModuleTabsTests(TestCase):
     """The Modules' own tab bars are gone: the sidebar holds those pages

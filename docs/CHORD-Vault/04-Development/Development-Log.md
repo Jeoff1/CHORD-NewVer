@@ -2,6 +2,21 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Users, roles and the Audit log move under Members (branch `joy-ui-ux-v3`, not committed yet)
+
+- **Why:** the owner: the sidebar's Members links sent people into the
+  Settings hub; they should open their own pages, like the other links
+  ([[Design-Decisions]], "Users, roles and the Audit log move under
+  Members").
+- **What changed:** the three pages are no longer registered in the
+  Settings hub (`apps/accounts/apps.py`, `apps/audit/apps.py`; the
+  "People and access" category is removed from
+  `apps/core/settings_menu.py`). The sidebar's Members category lists
+  Users, Roles and Permissions and Audit Log (`apps/church/navigation.py`);
+  their headings became `<h1>`.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations and 1405 tests passed, 97% coverage.
+
 ## 2026-11-28: The sidebar replaces the Modules' tab bars (branch `joy-ui-ux-v3`, not committed yet)
 
 - **Why:** the UI/UX owner: the old tab bars (Occasions, Requests, My

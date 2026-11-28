@@ -36,7 +36,6 @@ class MenuTests(TestCase):
             [category.title for category in menu.categories],
             [
                 "General",
-                "People and access",
                 "Members",
                 "Worship",
                 "Teams and occasions",
@@ -49,9 +48,10 @@ class MenuTests(TestCase):
             found["General"],
             ["Church details", "Labels", "Modules", "Public homepage"],
         )
-        self.assertEqual(
-            found["People and access"], ["Users", "Roles and permissions", "Audit log"]
-        )
+        # Users, roles and the Audit log are sidebar pages, not settings.
+        every_page = [label for pages in found.values() for label in pages]
+        for page in ("Users", "Roles and permissions", "Audit log"):
+            self.assertNotIn(page, every_page)
         self.assertEqual(found["Teams and occasions"], ["Team parts", "Occasion types"])
         self.assertEqual(found["Integrations"], ["Spotify"])
 
@@ -78,7 +78,6 @@ class MenuTests(TestCase):
         pastor = make_user(roles=["pastoral_staff"])
         found = labels(menu_for(pastor))
         self.assertNotIn("General", found)
-        self.assertNotIn("People and access", found)
         self.assertNotIn("Integrations", found)
         self.assertIn("Service templates", found["Worship"])
         self.assertNotIn("Trusted artists", found["Worship"])

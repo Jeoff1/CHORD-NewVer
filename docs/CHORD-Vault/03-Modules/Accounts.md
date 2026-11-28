@@ -178,9 +178,12 @@ they work whichever Modules a church switches on.
 
 ### Settings hub (Phase 9A, A7 part 3)
 
-Users, Roles and permissions and the Audit log are the Settings hub's
-"People and access" category (`apps/core/settings_menu.py`); the gear in
-the navbar replaced the Administration menu.
+Users, Roles and Permissions and the Audit Log are not settings: since
+28 Nov 2026 they are links in the sidebar's Members category
+(`apps/church/navigation.py`), shown to people with `accounts.view_user`,
+`accounts.view_role` and `audit.view_auditevent`, and kept when the
+Members Module is off. The Settings hub holds only Appearance for this
+Module.
 
 **Appearance** (Settings › Personal; `/accounts/appearance/`,
 `AppearanceView`, `AppearanceForm`): each person's own light or dark mode,

@@ -11,16 +11,10 @@ class AuditConfig(AppConfig):
     def ready(self):
         from django.contrib.auth import signals
 
-        from apps.core.settings_menu import SettingsPage, register
-
         from . import signins
 
-        register(
-            SettingsPage(
-                "people", "Audit log", "audit:log", "audit.view_auditevent", order=30
-            )
-        )
-
+        # The Audit log is a page of its own, under Members in the sidebar
+        # (apps/church/navigation.py), not a settings page.
         signals.user_logged_in.connect(
             signins.on_signed_in, dispatch_uid="audit_signed_in"
         )

@@ -272,20 +272,29 @@ def build(request, settings_menu=None):
         )
         if on["members"]
         else None,
-        # Accounts and roles are core, so they stay when Members is off.
+        # Accounts, roles and the audit trail are core, so they stay when
+        # Members is off. They are pages of their own, not Settings pages
+        # (the owner, 28 Nov 2026).
         _link(
             user,
             "accounts.view_user",
-            "User Accounts",
+            "Users",
             "accounts:user_list",
             prefixes=("accounts:user",),
         ),
         _link(
             user,
             "accounts.view_role",
-            "Roles & Permissions",
+            "Roles and Permissions",
             "accounts:role_list",
             prefixes=("accounts:role", "accounts:permission_matrix"),
+        ),
+        _link(
+            user,
+            "audit.view_auditevent",
+            "Audit Log",
+            "audit:log",
+            prefixes=("audit:",),
         ),
     )
 

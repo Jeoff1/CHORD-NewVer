@@ -18,7 +18,8 @@ from django.urls import reverse
 
 CATEGORIES = (
     ("general", "General"),
-    ("people", "People and access"),
+    # Users, roles and the Audit log left the hub for the sidebar's Members
+    # category (28 Nov 2026): they are records to manage, not settings.
     ("members", "Members"),
     ("worship", "Worship"),
     ("teams_occasions", "Teams and occasions"),

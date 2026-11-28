@@ -31,16 +31,8 @@ class AccountsConfig(AppConfig):
 
         post_migrate.connect(_sync_roles, dispatch_uid="chord_sync_default_roles")
         register(
-            # Everyone's own light or dark mode (Phase 9A, A7).
+            # Everyone's own light or dark mode (Phase 9A, A7). Users and
+            # Roles and permissions are pages of their own, under Members in
+            # the sidebar (apps/church/navigation.py), not settings.
             SettingsPage("personal", "Appearance", "accounts:appearance", None),
-            SettingsPage(
-                "people", "Users", "accounts:user_list", "accounts.view_user", order=10
-            ),
-            SettingsPage(
-                "people",
-                "Roles and permissions",
-                "accounts:role_list",
-                "accounts.view_role",
-                order=20,
-            ),
         )

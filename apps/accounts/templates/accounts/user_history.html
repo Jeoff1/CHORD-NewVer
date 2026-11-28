@@ -5,7 +5,7 @@
 
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
-    <h2 class="h3 mb-0">History: {{ person|person_name }}</h2>
+    <h1 class="h3 mb-0">History: {{ person|person_name }}</h1>
     {% if can_edit %}<a href="{% url 'accounts:user_update' pk=person.pk %}" class="btn btn-outline-secondary">Edit user</a>{% endif %}
   </div>
   <p class="text-body-secondary">From the audit trail: the latest {{ history_length }} sign-ins and the latest {{ history_length }} changes this person made. Entries can't be edited or removed. Passwords are never recorded.</p>

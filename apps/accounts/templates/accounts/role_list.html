@@ -4,7 +4,7 @@
 
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h2 class="h3 mb-0">Roles and permissions</h2>
+    <h1 class="h3 mb-0">Roles and permissions</h1>
     <div class="d-flex gap-2">
       <a href="{% url 'accounts:permission_matrix' %}" class="btn btn-outline-primary">Permission matrix</a>
       {% if perms.accounts.add_role %}<a href="{% url 'accounts:role_create' %}" class="btn btn-primary">Add role</a>{% endif %}

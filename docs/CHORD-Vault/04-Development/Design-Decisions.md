@@ -635,7 +635,7 @@ The owner approved the A7 wireframes on 2026-11-25, in the design system above. 
 
 **Shared patterns** ([[Design-System]], "Page patterns"): a page header with one primary button and the rest under "More" (`{% page_header %}`, `{% more_menu %}`: an item the person may not use doesn't show, and an empty "More" doesn't show); section tabs with a gold underline (`includes/section_tabs.html`); status pills (`includes/status_pill.html`); cards with a title row; two columns that stack on a phone.
 
-**Design change: the Settings hub.** Settings were spread over the Administration menu and a "Settings" button in each Module. Now there is one hub: a gear in the navbar (it replaces the Administration menu) opens the first settings page the person may open, and every settings page shows a side menu of collapsible categories (General; People and access; Members; Worship, in two groups, Services and Songs and suggestions; Teams and occasions; Integrations), with "Category · Group" above its heading. Each app registers its pages in `apps/core/settings_menu.py`; the menu shows only pages of switched-on Modules that the person holds the permission for. The Modules' "Settings" buttons became "<Module> settings" in their "More" menus. No numbered decision: it changes navigation only, and the registry is easy to change back.
+**Design change: the Settings hub.** Settings were spread over the Administration menu and a "Settings" button in each Module. Now there is one hub: a gear in the navbar (it replaces the Administration menu) opens the first settings page the person may open, and every settings page shows a side menu of collapsible categories (General; People and access, until 28 Nov 2026; Members; Worship, in two groups, Services and Songs and suggestions; Teams and occasions; Integrations), with "Category · Group" above its heading. Each app registers its pages in `apps/core/settings_menu.py`; the menu shows only pages of switched-on Modules that the person holds the permission for. The Modules' "Settings" buttons became "<Module> settings" in their "More" menus. No numbered decision: it changes navigation only, and the registry is easy to change back.
 
 **The screens:**
 - **Worship schedule and calendar:** Add service; Schedule weeks ahead and Worship settings under More; tabs Schedule, Calendar, Songs, Reports (each only for people who may open it). The schedule has an Upcoming/Past toggle, the search, and the columns When, Service, Theme, Lineup, Team and Open; a draft shows as one only to people who plan, and Team only while Teams is on, for people who may see teams. The calendar has icon buttons for the months, Today and a legend; decision 0013's "Booked" rule is unchanged.
@@ -801,7 +801,7 @@ with the lead developer's menu layout. Built on branch `joy-ui-ux-v3`.
   a Service, My Requests; Bookings: All Bookings, Book a Service); Planning
   (worship services, Calendar, My Schedule, Team Roster, Reports); Songs
   (Song Pool, Find Songs); Members (the church's word: directory,
-  Households, User Accounts, Roles & Permissions); Announcements; Settings;
+  Households, Users, Roles and Permissions, Audit Log); Announcements; Settings;
   Sign Out. A link shows only when its Module is switched on and the
   person may open its page; an empty group or category disappears.
   Configuration (Occasion Types, the worship check) stays in Settings.
@@ -899,6 +899,27 @@ updated `test_views.py`, `test_public_settings.py`, `test_welcome.py` and
 Tests: `apps/church/tests/test_app_shell.py` (`NoModuleTabsTests`), and
 updated `test_members_screen.py`, `apps/teams/tests/test_views.py` and
 `test_schedule_screens.py`.
+
+#### Users, roles and the Audit log move under Members (the owner, 28 Nov 2026)
+
+- **Design change:** Users, Roles and Permissions and the Audit Log left
+  the Settings hub (its "People and access" category is gone) and are
+  links of their own in the sidebar's Members category, after the
+  directory and Households. Opening one shows its own page with the
+  sidebar marking it, instead of the Settings side menu. They are records
+  to manage, not settings.
+- They are core, so they stay when the Members Module is switched off;
+  each shows only to people with its permission (`accounts.view_user`,
+  `accounts.view_role`, `audit.view_auditevent`). A user's add, edit and
+  history pages mark Users; the permission matrix marks Roles and
+  Permissions.
+- Their headings are now each page's `<h1>`, as on other sidebar pages.
+  No numbered decision: navigation only, easy to change back.
+
+Tests: `apps/church/tests/test_app_shell.py`
+(`test_members_holds_users_roles_and_the_audit_log`,
+`test_the_members_links_follow_permissions`) and
+`apps/core/tests/test_settings_hub.py`.
 
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 
