@@ -114,6 +114,11 @@ condition against this rule.
   The worker holds a PostgreSQL advisory lock (`apps/core/locks.py`), so a
   second worker or `process_songs` refuses to start.
 - **LRCLIB requests go one at a time,** and every result is cached.
+- **OpenStreetMap** (map tiles and Nominatim's address lookup) is used
+  only by the browser, in the church address's location picker
+  (`church/location_picker.js`), only when the person acts, at most one
+  lookup a second, with OpenStreetMap credited. The spot is never stored
+  or sent to CHORD: only the address text is saved.
 - **Tests never use the network or load a model.** Use the stand-ins the
   project provides; a test that needs Spotify, LRCLIB or a real model is
   wrong.

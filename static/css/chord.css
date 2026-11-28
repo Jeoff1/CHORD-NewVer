@@ -1116,3 +1116,23 @@ a {
   border-bottom: 2px solid var(--bs-border-color);
   border-bottom-left-radius: 4px;
 }
+
+/* --- The church address's location picker (church/includes/location_picker.html) --- */
+.chord-loc { display: grid; gap: .5rem; margin: -.25rem 0 1rem; }
+.chord-loc[hidden] { display: none; }
+.chord-loc__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.chord-loc__btn { display: inline-flex; align-items: center; gap: .4rem; }
+.chord-loc__map {
+  height: 320px;
+  border: 1px solid var(--bs-border-color);
+  border-radius: .5rem;
+  overflow: hidden;
+}
+.chord-loc__map[hidden] { display: none; }
+.chord-loc__status:empty { display: none; }
+.chord-loc__status, .chord-loc__note {
+  margin: 0;
+  font-size: .8125rem;
+  color: var(--bs-secondary-color);
+}
+@media (max-width: 575.98px) { .chord-loc__map { height: 260px; } }

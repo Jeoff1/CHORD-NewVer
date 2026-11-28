@@ -61,6 +61,13 @@
                   {% endwith %}
                 {% endfor %}
               </div>
+            {% elif section == "details" %}
+              {# The address has the location picker under it (28 Nov 2026). #}
+              {{ form.non_field_errors }}
+              {% for field in form %}
+                {{ field.as_field_group }}
+                {% if field.name == "address" %}{% include "church/includes/location_picker.html" with target=field.id_for_label %}{% endif %}
+              {% endfor %}
             {% else %}
               {{ form }}
             {% endif %}

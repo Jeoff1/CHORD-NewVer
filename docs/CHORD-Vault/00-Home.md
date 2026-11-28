@@ -12,8 +12,8 @@ development task.
 no sermon series, a service date that fills itself in, no Labels page,
 no Website, Currency or Time zone in Church details, the Praise Team as
 its own switch under Worship, the Member Directory retired, and Teams
-kept per church, so every church has the Praise Team step. Still to come
-on this branch: a location picker for the church address.
+kept per church, so every church has the Praise Team step, and a
+location picker (current location or a map pin) for the church address.
 
 **Dashboard and sidebar redesign (A7), 2026-11-27, on branch
 `joy-ui-ux-v3`: built and checked, not committed yet** (the UI/UX owner

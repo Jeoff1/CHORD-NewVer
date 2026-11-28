@@ -979,6 +979,27 @@ Tests: `apps/teams/tests/test_church_teams.py`; the Teams pages are no
 longer exempt in `apps/church/tests/test_isolation.py`;
 `ModuleAvailabilityTests` (`apps/church/tests/test_platform_accounts.py`).
 
+#### A location picker for the church address (the owner, 28 Nov 2026)
+
+- Under the address at registration and in Church details: **Use my
+  current location** (the browser asks the person's permission) and
+  **Pick on the map** (click, or drag the pin). OpenStreetMap's Nominatim
+  turns the spot into an address that fills the field; the person can
+  still edit it.
+- **Only the address text is saved** (the owner chose this over storing
+  coordinates). The spot goes from the browser to OpenStreetMap only, to
+  look up the address; CHORD never sees or stores it.
+- **OpenStreetMap's rules:** at most one lookup a second, only when the
+  person acts, OpenStreetMap credited on the map. Leaflet is served from
+  `static/vendor/leaflet-1.9.4` (checked against the npm registry's
+  sha512), like Bootstrap and htmx.
+- Without JavaScript the picker stays hidden and the field works as before.
+
+Tests: `LocationPickerTests` (`apps/church/tests/test_views.py`). Checked
+in headless Chrome against the dev server: the current location (a test
+position) filled in the address, the map loaded, and clicking the map
+changed the address.
+
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 
 Approved by the owner on 2026-11-25. The full design is [[Phase-9B-Plan]];

@@ -18,7 +18,16 @@ of the core and can't be switched off. App: `apps/church`.
   Labels and whether setup is finished. Since 28 Nov 2026 Church details
   edits only the name, address, phone, email and logo: website, currency
   and time zone keep their saved values, the website isn't shown
-  publicly, and the time zone comes from registration. Since Phase 9B it also has
+  publicly, and the time zone comes from registration.
+  - **Location picker** (`church/includes/location_picker.html`,
+    `static/church/location_picker.js`, Leaflet 1.9.4 in
+    `static/vendor/leaflet-1.9.4`): under the address at registration and
+    in Church details. "Use my current location" asks the browser for the
+    device's position; "Pick on the map" opens an OpenStreetMap map (on
+    the typed address, if Nominatim finds it) to click or drag a pin on.
+    Nominatim turns the spot into an address that fills the field, still
+    editable. Only the address text is saved; no coordinates are stored.
+    Hidden without JavaScript. Since Phase 9B it also has
   `about`, `show_in_directory` (on), `show_upcoming_services` (off) and
   `members_teams_unlocked` (only the church migrated from before 9B). A
   new installation starts with one church.

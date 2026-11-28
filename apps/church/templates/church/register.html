@@ -86,6 +86,7 @@
               <div class="au-grid2">
                 {% include "accounts/includes/auth_field.html" with field=church_form.name wide=True %}
                 {% include "accounts/includes/auth_field.html" with field=church_form.address wide=True optional=True %}
+                {% include "church/includes/location_picker.html" with target=church_form.address.id_for_label wide=True %}
                 {% include "accounts/includes/auth_field.html" with field=church_form.phone optional=True %}
                 {% include "accounts/includes/auth_field.html" with field=church_form.email optional=True %}
               </div>

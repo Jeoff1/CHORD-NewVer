@@ -1,0 +1,20 @@
+{% load static %}{% comment %}
+  The church address's location picker (the owner, 28 Nov 2026): "Use my current location" asks the
+  browser for the device's location, and "Pick on the map" opens an OpenStreetMap map to click or
+  drag a pin on. Either way OpenStreetMap's address lookup (Nominatim) turns the spot into an address,
+  which fills the address field for the person to check and edit. Only the address text is saved;
+  the spot itself is never stored or sent to CHORD. Expects `target`, the address field's id.
+  Hidden until church/location_picker.js runs, so without the script the field works as before.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'vendor/leaflet-1.9.4/leaflet.css' %}">
+<script src="{% static 'vendor/leaflet-1.9.4/leaflet.js' %}" defer></script>
+<script src="{% static 'church/location_picker.js' %}" defer></script>
+<div class="chord-loc{% if wide %} au-field--wide{% endif %}" data-location-picker data-target="{{ target }}" hidden>
+  <div class="chord-loc__actions">
+    <button type="button" class="btn btn-outline-secondary btn-sm chord-loc__btn" data-loc-here>{% include "includes/icons/map-pin.html" with size=16 %}<span>Use my current location</span></button>
+    <button type="button" class="btn btn-outline-secondary btn-sm chord-loc__btn" data-loc-open aria-expanded="false">{% include "includes/icons/globe.html" with size=16 %}<span>Pick on the map</span></button>
+  </div>
+  <div class="chord-loc__map" data-loc-map hidden aria-label="Map: click where the church is, or drag the pin"></div>
+  <p class="chord-loc__status" data-loc-status aria-live="polite"></p>
+  <p class="chord-loc__note">The spot goes to OpenStreetMap only to look up the address. CHORD saves just the address text.</p>
+</div>

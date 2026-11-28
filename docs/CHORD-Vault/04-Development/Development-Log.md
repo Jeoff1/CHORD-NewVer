@@ -2,6 +2,20 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Location picker for the church address (branch `church-setup-simplify`)
+
+- **Why:** the owner's list of 28 Nov ([[Design-Decisions]], "A location
+  picker for the church address").
+- **What changed:** `church/includes/location_picker.html` and
+  `static/church/location_picker.js` under the address at registration
+  and in Church details (now rendered field by field); Leaflet 1.9.4
+  vendored; styles in `chord.css`; AGENTS.md lists OpenStreetMap among the
+  outside services.
+- **Checks:** `scripts/check.ps1` (full): lint, format, Django checks,
+  migrations and 1424 tests passed, 97% coverage. Headless Chrome against the dev server:
+  the picker shows, a test position filled in the address, the map's
+  tiles loaded and a map click changed the address.
+
 ## 2026-11-28: Teams for every church (branch `church-setup-simplify`)
 
 - **Why:** the Praise Team step was missing in churches registered after

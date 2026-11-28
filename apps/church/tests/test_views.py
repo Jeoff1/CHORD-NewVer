@@ -249,3 +249,50 @@ class SettingsTests(TestCase):
             sorted(first_church().disabled_modules),
             ["announcements", "occasions", "teams"],
         )
+
+
+class LocationPickerTests(TestCase):
+    """The church address's location picker (the owner, 28 Nov 2026): under
+    the address at registration and in Church details, hidden until its
+    script runs, and only the address text is posted."""
+
+    def assert_picker_for(self, page, field_id):
+        self.assertContains(
+            page, f'data-location-picker data-target="{field_id}" hidden'
+        )
+        self.assertContains(page, "Use my current location")
+        self.assertContains(page, "Pick on the map")
+        self.assertContains(page, "vendor/leaflet-1.9.4/leaflet.js")
+        self.assertContains(page, "church/location_picker.js")
+        self.assertContains(page, "CHORD saves just the address text.")
+
+    def test_registration_has_it_under_the_address(self):
+        page = self.client.get(reverse("churches:register"))
+        self.assert_picker_for(page, "id_church-address")
+        content = page.content.decode()
+        self.assertLess(
+            content.index('name="church-address"'),
+            content.index("data-location-picker"),
+        )
+
+    def test_church_details_has_it_under_the_address(self):
+        complete_setup()
+        self.client.force_login(make_administrator())
+        page = self.client.get(
+            reverse("church:settings", kwargs={"section": "details"})
+        )
+        self.assert_picker_for(page, "id_address")
+        content = page.content.decode()
+        address = content.index('name="address"')
+        picker = content.index("data-location-picker")
+        self.assertLess(address, picker)
+        self.assertLess(picker, content.index('name="phone"'))
+
+    def test_no_coordinates_are_saved(self):
+        complete_setup()
+        self.client.force_login(make_administrator())
+        url = reverse("church:settings", kwargs={"section": "details"})
+        self.client.post(url, details_data(latitude="14.6", longitude="121.0"))
+        profile = first_church()
+        self.assertEqual(profile.address, "1 Hill Road")
+        self.assertFalse(hasattr(profile, "latitude"))
