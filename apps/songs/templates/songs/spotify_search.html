@@ -8,8 +8,8 @@
   <p class="text-body-secondary">Search by title or artist, and add a track to the song pool. Its lyrics are then fetched and analysed like every other song.</p>
   {% if block_message %}<div class="alert alert-warning">{{ block_message }}</div>{% endif %}
 
-  <form method="get" class="d-flex flex-wrap gap-2 mb-3" role="search">
-    <input type="search" name="q" value="{{ q }}" class="form-control" style="max-width: 24rem" placeholder="Title or artist" aria-label="Title or artist" maxlength="200">
+  <form method="get" class="d-flex flex-wrap align-items-center gap-2 mb-3" role="search">
+    <div class="chord-big-search">{% include "includes/icons/search.html" with size=20 %}<input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Title or artist" aria-label="Title or artist" maxlength="200" autofocus></div>
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     <button type="submit" class="btn btn-primary">Search</button>
   </form>
@@ -17,22 +17,15 @@
   {% if problem %}
     <div class="alert alert-warning">{{ problem }}</div>
   {% elif tracks is not None %}
-    <div class="card shadow-sm">
-      <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead>
-            <tr>
-              <th scope="col">Track</th>
-              <th scope="col">Album</th>
-              <th scope="col"><span class="visually-hidden">Actions</span></th>
-            </tr>
-          </thead>
-          <tbody>
+    {# UI/UX Phase 6: results as rows with a tile, the album, and Add (busy while it is sent) or In the pool. #}
+    <div class="card shadow-sm chord-tracks">
+      {% if tracks %}<div class="card-header-plain"><h2>Results</h2><span class="small text-body-secondary">{{ tracks|length }} for "{{ q }}"</span></div>{% endif %}
+        <ul class="chord-rows">
             {% for track, public_id in tracks %}
-              <tr>
-                <td><span class="fw-semibold">{{ track.title }}</span><div class="small text-body-secondary">{{ track.artist }}</div></td>
-                <td class="small">{{ track.album }}</td>
-                <td class="text-end">
+              <li class="chord-row chord-reveal" style="--i: {{ forloop.counter0 }}">
+                <span class="chord-art" aria-hidden="true">{{ track.title|slice:":1"|upper }}</span>
+                <div class="chord-row__main"><span class="chord-row__title">{{ track.title }}</span><div class="chord-row__meta">{{ track.artist }}{% if track.album %} · {{ track.album }}{% endif %}</div></div>
+                <div class="chord-row__side">
                   {% if public_id %}
                     <a href="{% url 'songs:detail' public_id=public_id %}" class="btn btn-sm btn-outline-secondary">In the pool</a>
                   {% else %}
@@ -40,17 +33,15 @@
                       {% csrf_token %}
                       <input type="hidden" name="spotify_id" value="{{ track.spotify_id }}">
                       {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-                      <button type="submit" class="btn btn-sm btn-outline-primary">Add</button>
+                      <button type="submit" class="btn btn-sm btn-outline-primary" aria-label="Add {{ track.title }} to the song pool">{% include "includes/icons/plus.html" with size=16 %}Add</button>
                     </form>
                   {% endif %}
-                </td>
-              </tr>
+                </div>
+              </li>
             {% empty %}
-              <tr><td colspan="3" class="text-center text-body-secondary py-4">Spotify found nothing for "{{ q }}".</td></tr>
+              <li>{% with nothing="Spotify found nothing for “"|add:q|add:"”." %}{% include "includes/empty_state.html" with icon="search" title=nothing text="Try the title alone, or the artist's name." %}{% endwith %}</li>
             {% endfor %}
-          </tbody>
-        </table>
-      </div>
+        </ul>
     </div>
   {% endif %}
 {% endblock %}

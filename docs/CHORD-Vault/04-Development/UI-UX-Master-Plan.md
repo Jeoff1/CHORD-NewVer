@@ -472,7 +472,7 @@ ministries, events, per-person attendance, SMS.
 | 3 | Shared UI components | Done |
 | 4 | Management: Services and Bookings | Done |
 | 5 | Worship planning, recommendations, lineup builder | Done |
-| 6 | Songs, chord sheets and rehearsal | Not started |
+| 6 | Songs, chord sheets and rehearsal | Done |
 | 7 | Calendar and scheduling | Not started |
 | 8 | Members and teams | Not started |
 | 9 | Announcements and notifications | Not started |
@@ -481,7 +481,13 @@ ministries, events, per-person attendance, SMS.
 
 ### Blocked: needs backend approval
 
-None yet.
+- **Album artwork (Phases 5 and 6).** CHORD stores only a track's ID,
+  title, artist, album and length, plus its own playlist IDs (`AGENTS.md`,
+  decision 0010); cover art reaches the browser only inside the Spotify
+  player. Showing artwork in the song pool, Find Songs or suggestions would
+  need a new stored field or new Spotify calls: a policy and backend
+  decision for the owner and lead developer. Meanwhile songs show a branded
+  tile with their initial (`.chord-art`).
 
 ### Flagged conflicts (resolved by source order, not by preference)
 

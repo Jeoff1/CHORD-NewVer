@@ -2,6 +2,19 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: UI/UX Phase 6: songs, chord sheets and rehearsal (branch `joy-ui-ux-v3`)
+
+- **Why:** [[UI-UX-Master-Plan]] §12.
+- **What changed:** song pool (folding filters, tiles, pills, chips,
+  whole-row links, empty states), Find on Spotify (big search, result
+  rows), song page header, chord sheet readability (width, size, chorus
+  edge, sticky toolbar), the editor's text area, Discard asks first, and
+  the rehearsal order. Templates and CSS only; no Spotify call, field or
+  rule changed; no migration. **Blocked:** album artwork needs a policy
+  and backend decision (only the allowed Spotify fields are stored), so
+  songs show a branded tile ([[UI-UX-Master-Plan]], "Blocked").
+- **Checks:** PHASE6_CHECKS
+
 ## 2026-11-28: UI/UX Phase 5: worship planning, suggestions and lineup builder (branch `joy-ui-ux-v3`)
 
 - **Why:** [[UI-UX-Master-Plan]] §11.

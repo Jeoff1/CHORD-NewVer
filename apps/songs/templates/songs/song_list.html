@@ -8,12 +8,16 @@
     {% more_menu %}
       {% if settings_menu.category_urls.worship %}<li><a class="dropdown-item" href="{{ settings_menu.category_urls.worship }}">Worship settings</a></li>{% endif %}
     {% endmore_menu %}
-    {% if perms.songs.add_song %}<a href="{% url 'songs:spotify_search' %}" class="btn btn-primary">Find on Spotify</a>{% endif %}
+    {% if perms.songs.add_song %}<a href="{% url 'songs:spotify_search' %}" class="btn btn-primary">{% include "includes/icons/search.html" with size=18 %}Find on Spotify</a>{% endif %}
   {% endpage_header %}
 
   {# The Module's tabs are gone: the sidebar holds these pages (UI/UX owner, 28 Nov 2026). #}
 
-  <form method="get" class="row g-2 align-items-end mb-3" aria-label="Filter songs">
+  {# UI/UX Phase 6: the filters fold into one panel (open while any is chosen); the same GET fields. #}
+  <details class="chord-filters"{% if chosen.check or chosen.tag or chosen.feel or chosen.known or chosen.lyrics %} open{% endif %}>
+  <summary>Filters{% if chosen.check or chosen.tag or chosen.feel or chosen.known or chosen.lyrics %} <span class="chord-filters__count">On</span>{% endif %}{% include "includes/icons/chevron-down.html" with size=16 %}</summary>
+  <div class="chord-filters__body">
+  <form method="get" class="row g-2 align-items-end" aria-label="Filter songs">
     {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
     <div class="col-sm-6 col-lg">
       <label for="filter-check" class="form-label small mb-1">Worship check</label>
@@ -55,6 +59,8 @@
       <a href="{% url 'songs:list' %}" class="btn btn-sm btn-link">Clear</a>
     </div>
   </form>
+  </div>
+  </details>
 
   {% include "includes/list_toolbar.html" with placeholder="Search by title, artist or album" %}
 
@@ -72,19 +78,23 @@
         </thead>
         <tbody>
           {% for song in object_list %}
-            <tr>
+            {% url 'songs:detail' public_id=song.public_id as song_url %}
+            <tr data-href="{{ song_url }}">
               <td>
-                <a href="{% url 'songs:detail' public_id=song.public_id %}" class="fw-semibold text-decoration-none">{{ song.title }}</a>
-                <div class="small text-body-secondary">{{ song.artist }}</div>
+                <span class="chord-song-cell"><span class="chord-art" aria-hidden="true">{{ song.title|slice:":1"|upper }}</span><span class="chord-song-cell__text">
+                <a href="{{ song_url }}" class="fw-semibold text-decoration-none">{{ song.title }}</a>
+                <span class="d-block small text-body-secondary">{{ song.artist }}</span></span></span>
               </td>
               <td>{% include "songs/includes/check_badge.html" %}</td>
               <td>{{ song.get_feel_display|default:"—" }}</td>
-              <td>{% for tag in song.tags.all %}<span class="badge text-bg-light border me-1">{{ tag.name }}</span>{% empty %}<span class="text-body-secondary">—</span>{% endfor %}</td>
-              <td>{% if song.team_knows %}<span class="badge text-bg-success">Knows it</span>{% else %}<span class="text-body-secondary small">New</span>{% endif %}</td>
+              <td>{% for tag in song.tags.all %}<span class="chord-chip">{{ tag.name }}</span>{% empty %}<span class="text-body-secondary">—</span>{% endfor %}</td>
+              <td>{% if song.team_knows %}<span class="chord-pill chord-pill--success">Knows it</span>{% else %}<span class="chord-pill chord-pill--neutral">New</span>{% endif %}</td>
             </tr>
           {% empty %}
-            <tr><td colspan="5" class="text-center text-body-secondary py-4">
-              {% if q or chosen.check or chosen.tag or chosen.feel or chosen.known or chosen.lyrics %}No songs match.{% else %}The song pool is empty. Songs are added as services' themes are searched{% if perms.songs.add_song %}, or with Find on Spotify{% endif %}.{% endif %}
+            <tr><td colspan="5">
+              {% if q or chosen.check or chosen.tag or chosen.feel or chosen.known or chosen.lyrics %}{% include "includes/empty_state.html" with icon="search" title="No songs match." text="Change the search or clear the filters." %}
+              {% elif perms.songs.add_song %}{% url 'songs:spotify_search' as find_url %}{% include "includes/empty_state.html" with icon="music-note" title="The song pool is empty." text="Songs are added as services' themes are searched, or with Find on Spotify." action_url=find_url action_label="Find on Spotify" %}
+              {% else %}{% include "includes/empty_state.html" with icon="music-note" title="The song pool is empty." text="Songs are added as services' themes are searched." %}{% endif %}
             </td></tr>
           {% endfor %}
         </tbody>

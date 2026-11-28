@@ -84,6 +84,13 @@ with `.chord-wave` (five bars, 1.1 s loop, only while a run works),
 cards, `is-in`), `.chord-in-lineup`, `.chord-rundown` (numbered rows),
 `.chord-theme-title` and `.chord-theme-scripture`. Details in [[Worship]].
 
+Songs (Phase 6, same file): `.chord-art` (a 44 px green-to-gold tile with
+the song's initial; `--lg` 88 px; it lifts on row hover), `.chord-song-cell`,
+`.chord-chip` (tags, with `__score`), `.chord-filters` (a folding filter
+panel), `.chord-song-head`, `.chord-big-search`, `.chord-tracks`, chord sheet
+readability rules, `.chord-editor`, `.chord-order` (numbered rehearsal
+order).
+
 ## The landing page (redesign, 26-27 Nov 2026)
 
 Approved by the UI/UX owner on 2026-11-27, subject to the lead developer's

@@ -682,6 +682,31 @@ Phase 9C (2026-11-26), **guided service planning** ([[Design-Decisions]],
   rows.
 - Tests: `apps/worship/tests/test_planning_screens.py`.
 
+### Songs, chord sheets and rehearsal screens (UI/UX Phase 6, 28 Nov 2026)
+
+From [[UI-UX-Master-Plan]] §12 (`planning.css`, "Songs"):
+
+- **Song pool** (`songs/song_list.html`): the five filters fold into a
+  Filters panel (open while one is chosen, the same GET fields); rows with
+  a branded tile (no album art is stored), title and artist, the worship
+  check as a status pill (`songs/includes/check_badge.html`), feel, theme
+  tags as chips, Knows it or New as pills; whole rows open the song; empty
+  states (Find on Spotify for people who may add).
+- **Find on Spotify** (`songs/spotify_search.html`): a large rounded search
+  box, results as rows with tile, title, artist and album, Add (busy while
+  sent) or In the pool; an empty state.
+- **Song page** (`songs/song_detail.html`): a header with a large tile;
+  tags as chips with their score.
+- **Chord sheet viewer** (`songs/includes/chord_sheet.html`): a 72-character
+  reading width, larger text, chorus blocks with a gold edge and wash, the
+  toolbar sticks under the header while reading, the sheet dims while htmx
+  re-renders it; no other motion.
+- **Editor** (`songs/chordsheet_form.html`): a tall monospace text area.
+  Discarding a pending sheet asks first.
+- **Rehearsal** (`worship/lineup_song.html`): the lineup order as numbered
+  rows with the current song highlighted.
+- Tests: `apps/songs/tests/test_song_screens.py`.
+
 ## Permissions
 
 | Permission                                   | Allows                                   |

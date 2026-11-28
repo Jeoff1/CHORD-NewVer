@@ -4,9 +4,11 @@
 {% block title %}{{ song.title }}{% endblock %}
 
 {% block content %}
-  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-      {% url 'songs:list' as back_url %}{% include "includes/back_link.html" with url=back_url label="Songs" %}
+  {% url 'songs:list' as back_url %}{% include "includes/back_link.html" with url=back_url label="Songs" %}
+  {# UI/UX Phase 6: a song header with its tile (no album art is stored). #}
+  <div class="chord-song-head">
+    <span class="chord-art chord-art--lg" aria-hidden="true">{{ song.title|slice:":1"|upper }}</span>
+    <div class="chord-song-head__main">
       <h1 class="h3 mb-1">{{ song.title }}</h1>
       <div class="text-body-secondary">
         {{ song.artist }}{% if song.album %} · {{ song.album }}{% endif %}{% if song.length_display %} · {{ song.length_display }}{% endif %}
@@ -14,7 +16,7 @@
       {% if song.spotify_url %}<a href="{{ song.spotify_url }}" class="small" target="_blank" rel="noopener">Open in Spotify</a>{% endif %}
     </div>
     {% if perms.songs.change_song %}
-      <div class="d-flex flex-wrap gap-2">
+      <div class="chord-song-head__actions">
         <form method="post" action="{% url 'songs:check_again' public_id=song.public_id %}">
           {% csrf_token %}
           <button type="submit" class="btn btn-outline-secondary">Check again</button>
@@ -47,7 +49,7 @@
           {% if ranked_tags %}
             <ul class="list-inline mb-0">
               {% for tag, score in ranked_tags %}
-                <li class="list-inline-item"><span class="badge text-bg-light border">{{ tag.name }}{% if score is not None %} <span class="text-body-secondary">{% widthratio score 1 100 %}%</span>{% endif %}</span></li>
+                <li class="list-inline-item"><span class="chord-chip">{{ tag.name }}{% if score is not None %}<span class="chord-chip__score">{% widthratio score 1 100 %}%</span>{% endif %}</span></li>
               {% endfor %}
             </ul>
           {% else %}

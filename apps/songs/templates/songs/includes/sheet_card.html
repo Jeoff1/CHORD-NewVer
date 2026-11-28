@@ -14,7 +14,7 @@
         {% if may_approve_sheets %}
           <span class="d-flex gap-2">
             <form method="post" action="{% url 'songs:chordsheet_approve' pk=pending.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}"><button type="submit" class="btn btn-sm btn-success">Approve</button></form>
-            <form method="post" action="{% url 'songs:chordsheet_discard' pk=pending.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}"><button type="submit" class="btn btn-sm btn-outline-danger">Discard</button></form>
+            <form method="post" action="{% url 'songs:chordsheet_discard' pk=pending.pk %}" data-confirm="The pending sheet is thrown away; the song keeps its approved sheet, if any." data-confirm-title="Discard this chord sheet?" data-confirm-action="Discard">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}"><button type="submit" class="btn btn-sm btn-outline-danger">Discard</button></form>
           </span>
         {% endif %}
       </div>
