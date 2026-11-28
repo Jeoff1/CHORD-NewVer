@@ -113,6 +113,27 @@ class ShellTests(TestCase):
         self.assertContains(page, request_one)
         self.assertNotContains(page, f'href="{reverse("accounts:role_list")}"')
 
+    def test_people_who_approve_requests_do_not_get_the_request_links(self):
+        # Administrators manage incoming requests (UI/UX owner, 28 Nov 2026):
+        # the menu leaves out Request a Service and My Requests for anyone
+        # who may approve, while the pages themselves stay open to them.
+        request_one = f'href="{reverse("occasions:request")}"'
+        mine = f'href="{reverse("occasions:my_requests")}"'
+        for role in ("administrator", "pastoral_staff"):
+            with self.subTest(role):
+                page = self.page(make_user(roles=[role]))
+                self.assertContains(page, f'href="{reverse("occasions:requests")}"')
+                self.assertNotContains(page, request_one)
+                self.assertNotContains(page, mine)
+        admin = make_user(roles=["administrator"])
+        self.client.force_login(admin)
+        self.assertEqual(
+            self.client.get(reverse("occasions:my_requests")).status_code, 200
+        )
+        page = self.page(make_user(roles=["church_member"]))
+        self.assertContains(page, request_one)
+        self.assertContains(page, mine)
+
     def test_a_switched_off_module_and_empty_categories_disappear(self):
         complete_setup(disabled_modules=["occasions"])
         page = self.page(make_user(roles=["administrator"]))
@@ -197,7 +218,6 @@ class NoModuleTabsTests(TestCase):
         for name in (
             "occasions:list",
             "occasions:requests",
-            "occasions:my_requests",
             "teams:my_schedule",
             "teams:roster",
             "worship:home",
@@ -211,6 +231,11 @@ class NoModuleTabsTests(TestCase):
                 self.assertNotContains(page, "nav-tabs")
                 self.assertNotContains(page, 'class="chord-tabs"')
                 self.assertContains(page, 'class="chord-sb__sublink is-active"')
+        # My Requests is for people who request without approving.
+        self.client.force_login(make_user(roles=["church_member"]))
+        page = self.client.get(reverse("occasions:my_requests"))
+        self.assertNotContains(page, "nav-tabs")
+        self.assertContains(page, 'class="chord-sb__sublink is-active"')
 
     def test_the_sidebar_shows_waiting_requests(self):
         complete_setup()

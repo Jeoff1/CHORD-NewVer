@@ -2,6 +2,18 @@
 
 Newest entries first. Template: `Templates/Development-Log-Entry`.
 
+## 2026-11-28: Request links hidden from people who approve requests (branch `joy-ui-ux-v3`, not committed yet)
+
+- **What changed:** `apps/church/navigation.py` leaves Request a Service
+  and My Requests out of the sidebar for anyone holding
+  `occasions.approve_occasion` (administrators, and the pastoral staff by
+  default); everyone who may only request keeps them. Menu only: pages,
+  routes and permissions unchanged ([[Design-Decisions]], "Request links
+  only for people who request").
+- **Checks:** `test_app_shell.py` and the Occasions tests passed (69);
+  `scripts/check.ps1 -Quick`: lint, format, Django checks, migrations
+  and all 1434 tests passed.
+
 ## 2026-11-28: Date and time as two boxes (branch `church-setup-simplify`)
 
 - **Why:** the owner asked for a date box and a time box with icons, as

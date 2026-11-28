@@ -1020,6 +1020,17 @@ Tests: `apps/core/tests/test_moment_input.py`, and
 `apps/worship/tests/test_service_date.py`. Screenshots of the new-service
 form at desktop and narrow widths.
 
+#### Request links only for people who request (UI/UX owner, 28 Nov 2026)
+
+The sidebar leaves out Request a Service and My Requests for anyone who may
+approve service requests (`occasions.approve_occasion`: every
+administrator, and any role the church gives that power, such as the
+pastoral staff by default). They manage the incoming requests and book
+directly. People who may request without approving keep both links. A
+permission, not a role name (`AGENTS.md`); the pages, routes and
+permissions are unchanged, so the pages still open by their address. Test:
+`test_app_shell.py`, `test_people_who_approve_requests_do_not_get_the_request_links`.
+
 ## Phase 9B: Church Platform ([[0014-church-platform]])
 
 Approved by the owner on 2026-11-25. The full design is [[Phase-9B-Plan]];

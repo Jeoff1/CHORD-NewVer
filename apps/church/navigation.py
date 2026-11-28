@@ -141,6 +141,12 @@ def build(request, settings_menu=None):
 
     management = NavCategory("management", "Management", "inbox")
     if on["occasions"]:
+        # People who approve requests manage the incoming ones; asking their
+        # own church for a service has no use for them, so Request a Service
+        # and My Requests are only for people who request without approving
+        # (UI/UX owner, 28 Nov 2026). Only the menu changes: the pages and
+        # their permissions are as before.
+        requests_only = not user.has_perm(APPROVE_REQUESTS)
         services = NavGroup(
             "services",
             "Services",
@@ -158,14 +164,18 @@ def build(request, settings_menu=None):
                     "Request a Service",
                     "occasions:request",
                     exact=("occasions:request",),
-                ),
+                )
+                if requests_only
+                else None,
                 _link(
                     user,
                     REQUEST_SERVICE,
                     "My Requests",
                     "occasions:my_requests",
                     exact=("occasions:my_requests", "occasions:withdraw"),
-                ),
+                )
+                if requests_only
+                else None,
             ),
         )
         bookings = NavGroup(
